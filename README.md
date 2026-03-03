@@ -11,7 +11,7 @@ A browser-based balloon-shooting game built with TypeScript and HTML5 Canvas.
 
 ```bash
 git clone <repo-url>
-cd archer-issue-6
+cd archer
 npm install
 npm run dev
 ```
