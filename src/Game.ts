@@ -50,8 +50,36 @@ export class Game {
     this.spawner = new Spawner();
     this.collisions = new CollisionSystem();
     this.upgradeManager = new UpgradeManager();
-    this.hud = new HUD();
-    this.bow = new Bow(width, height);
+    this.hud = new HUD(this.input.isTouchDevice);
+    this.bow = new Bow(width, height, this.input.isTouchDevice ? 60 : 30);
+
+    this.setupResize();
+  }
+
+  private setupResize(): void {
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    const resize = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const targetRatio = this.width / this.height;
+      let cssW: number, cssH: number;
+      if (vw / vh < targetRatio) {
+        cssW = vw;
+        cssH = vw / targetRatio;
+      } else {
+        cssH = vh;
+        cssW = vh * targetRatio;
+      }
+      this.canvas.style.width = `${cssW}px`;
+      this.canvas.style.height = `${cssH}px`;
+    };
+    const debouncedResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resize, 100);
+    };
+    window.addEventListener("resize", debouncedResize);
+    window.addEventListener("orientationchange", debouncedResize);
+    resize();
   }
 
   start(): void {
@@ -173,7 +201,7 @@ export class Game {
     this.balloonsEscaped = 0;
     this.balloons = [];
     this.arrows = [];
-    this.bow = new Bow(this.width, this.height);
+    this.bow = new Bow(this.width, this.height, this.input.isTouchDevice ? 60 : 30);
     this.spawner.reset();
     this.upgradeManager.reset();
   }
@@ -213,10 +241,10 @@ export class Game {
     this.ctx.fillRect(0, 0, this.width, this.height);
 
     this.ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-    this.drawCloud(this.ctx, 120, 80, 50);
-    this.drawCloud(this.ctx, 350, 130, 40);
-    this.drawCloud(this.ctx, 600, 60, 55);
-    this.drawCloud(this.ctx, 700, 170, 35);
+    this.drawCloud(this.ctx, this.width * 0.15, this.height * 0.133, 50);
+    this.drawCloud(this.ctx, this.width * 0.4375, this.height * 0.217, 40);
+    this.drawCloud(this.ctx, this.width * 0.75, this.height * 0.1, 55);
+    this.drawCloud(this.ctx, this.width * 0.875, this.height * 0.283, 35);
   }
 
   private drawCloud(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {

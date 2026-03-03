@@ -7,6 +7,8 @@ const UPGRADE_DISPLAY: Record<string, { icon: string; color: string; label: stri
 };
 
 export class HUD {
+  constructor(private isTouchDevice = false) {}
+
   render(
     ctx: CanvasRenderingContext2D,
     state: GameState,
@@ -40,11 +42,14 @@ export class HUD {
 
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "22px sans-serif";
-    ctx.fillText("Click to Start", w / 2, h / 2 + 30);
+    ctx.fillText(this.isTouchDevice ? "Tap to Start" : "Click to Start", w / 2, h / 2 + 30);
 
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     ctx.font = "16px sans-serif";
-    ctx.fillText("Aim with mouse \u2022 Click to shoot", w / 2, h / 2 + 70);
+    ctx.fillText(
+      this.isTouchDevice ? "Tap to aim & shoot" : "Aim with mouse \u2022 Click to shoot",
+      w / 2, h / 2 + 70
+    );
 
     ctx.restore();
   }
@@ -122,7 +127,7 @@ export class HUD {
 
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "20px sans-serif";
-    ctx.fillText("Click to Restart", w / 2, h / 2 + 60);
+    ctx.fillText(this.isTouchDevice ? "Tap to Restart" : "Click to Restart", w / 2, h / 2 + 60);
 
     ctx.restore();
   }
