@@ -26,7 +26,7 @@ export class Balloon {
   private time = 0;
   private flashTimer = 0;
 
-  constructor(x: number, y: number, speed: number, upgrade?: UpgradeType | "boss") {
+  constructor(x: number, y: number, speed: number, upgrade?: UpgradeType | "boss", bossHitPoints = 5) {
     this.radius = 20 + Math.random() * 15;
     this.pos = { x, y };
     this.vel = { x: 0, y: -speed };
@@ -38,8 +38,8 @@ export class Balloon {
       this.color = "#8B0000";
       this.radius *= 2.0;
       this.wobbleAmplitude = 50;
-      this.hitPoints = 5;
-      this.maxHitPoints = 5;
+      this.hitPoints = bossHitPoints;
+      this.maxHitPoints = bossHitPoints;
     } else if (upgrade) {
       this.variant = "upgrade";
       this.upgradeType = upgrade;
