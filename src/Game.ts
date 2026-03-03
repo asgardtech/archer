@@ -11,17 +11,23 @@ import { HUD } from "./rendering/HUD";
 const MAX_ARROWS = 100;
 const DT_CAP = 0.1;
 const UPGRADE_BALLOON_SCORE = 3;
+const BOSS_BALLOON_SCORE = 10;
+const MILESTONE_INTERVAL = 25;
+const MILESTONE_AMMO_BONUS = 5;
+const BOSS_KILL_AMMO_BONUS = 15;
 
 export class Game {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private lastTime = 0;
   private running = false;
+  private dt = 0;
 
   private state: GameState = "menu";
   private score = 0;
   private arrowsRemaining = MAX_ARROWS;
   private balloonsEscaped = 0;
+  private nextAmmoMilestone = MILESTONE_INTERVAL;
 
   private balloons: Balloon[] = [];
   private arrows: Arrow[] = [];
@@ -95,10 +101,10 @@ export class Game {
   private loop(time: number): void {
     if (!this.running) return;
 
-    const dt = Math.min((time - this.lastTime) / 1000, DT_CAP);
+    this.dt = Math.min((time - this.lastTime) / 1000, DT_CAP);
     this.lastTime = time;
 
-    this.update(dt);
+    this.update(this.dt);
     this.render();
 
     requestAnimationFrame((t) => this.loop(t));
@@ -172,7 +178,13 @@ export class Game {
     // Collisions
     const hits = this.collisions.check(this.arrows, this.balloons);
     for (const hit of hits) {
-      if (hit.balloon.variant === "upgrade") {
+      if (hit.isBossKill) {
+        this.score += BOSS_BALLOON_SCORE;
+        this.arrowsRemaining += BOSS_KILL_AMMO_BONUS;
+        this.hud.showAmmoGain(BOSS_KILL_AMMO_BONUS);
+      } else if (hit.balloon.variant === "boss") {
+        // Boss was hit but not killed — no score
+      } else if (hit.balloon.variant === "upgrade") {
         this.score += UPGRADE_BALLOON_SCORE;
       } else {
         this.score += 1;
@@ -181,8 +193,16 @@ export class Game {
       if (hit.grantedUpgrade) {
         this.upgradeManager.activate(hit.grantedUpgrade, () => {
           this.arrowsRemaining += 10;
+          this.hud.showAmmoGain(10);
         });
       }
+    }
+
+    // Ammo milestones
+    while (this.score >= this.nextAmmoMilestone) {
+      this.arrowsRemaining += MILESTONE_AMMO_BONUS;
+      this.hud.showAmmoGain(MILESTONE_AMMO_BONUS);
+      this.nextAmmoMilestone += MILESTONE_INTERVAL;
     }
 
     // Cleanup dead entities
@@ -199,11 +219,13 @@ export class Game {
     this.score = 0;
     this.arrowsRemaining = MAX_ARROWS;
     this.balloonsEscaped = 0;
+    this.nextAmmoMilestone = MILESTONE_INTERVAL;
     this.balloons = [];
     this.arrows = [];
     this.bow = new Bow(this.width, this.height, this.input.isTouchDevice ? 60 : 30);
     this.spawner.reset();
     this.upgradeManager.reset();
+    this.hud.reset();
   }
 
   private render(): void {
@@ -229,7 +251,8 @@ export class Game {
       this.arrowsRemaining,
       this.width,
       this.height,
-      this.upgradeManager.getActive()
+      this.upgradeManager.getActive(),
+      this.dt
     );
   }
 

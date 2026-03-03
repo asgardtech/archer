@@ -12,7 +12,7 @@ export interface EntityBase {
   alive: boolean;
 }
 
-export type BalloonVariant = "standard" | "upgrade";
+export type BalloonVariant = "standard" | "upgrade" | "boss";
 
 export type UpgradeType = "multi-shot" | "piercing" | "rapid-fire" | "bonus-arrows";
 

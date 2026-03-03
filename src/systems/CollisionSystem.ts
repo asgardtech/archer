@@ -6,6 +6,7 @@ export interface CollisionEvent {
   arrow: Arrow;
   balloon: Balloon;
   grantedUpgrade?: UpgradeType;
+  isBossKill?: boolean;
 }
 
 export class CollisionSystem {
@@ -45,11 +46,18 @@ export class CollisionSystem {
         const dy = arrow.pos.y - balloon.pos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
         if (dist < balloon.radius) {
-          balloon.alive = false;
-
           const event: CollisionEvent = { arrow, balloon };
-          if (balloon.variant === "upgrade" && balloon.upgradeType) {
-            event.grantedUpgrade = balloon.upgradeType;
+
+          if (balloon.variant === "boss") {
+            const killed = balloon.hit();
+            if (killed) {
+              event.isBossKill = true;
+            }
+          } else {
+            balloon.alive = false;
+            if (balloon.variant === "upgrade" && balloon.upgradeType) {
+              event.grantedUpgrade = balloon.upgradeType;
+            }
           }
           events.push(event);
 

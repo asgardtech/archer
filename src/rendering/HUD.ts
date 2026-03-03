@@ -6,8 +6,31 @@ const UPGRADE_DISPLAY: Record<string, { icon: string; color: string; label: stri
   "rapid-fire": { icon: "⚡", color: "#f1c40f", label: "Rapid Fire" },
 };
 
+interface AmmoGainText {
+  amount: number;
+  age: number;
+  offsetY: number;
+}
+
+const AMMO_GAIN_DURATION = 1.5;
+const AMMO_GAIN_DRIFT = 30;
+
 export class HUD {
+  private ammoGainTexts: AmmoGainText[] = [];
+
   constructor(private isTouchDevice = false) {}
+
+  showAmmoGain(amount: number): void {
+    this.ammoGainTexts.push({
+      amount,
+      age: 0,
+      offsetY: this.ammoGainTexts.length * 22,
+    });
+  }
+
+  reset(): void {
+    this.ammoGainTexts = [];
+  }
 
   render(
     ctx: CanvasRenderingContext2D,
@@ -16,8 +39,15 @@ export class HUD {
     arrowsRemaining: number,
     canvasW: number,
     canvasH: number,
-    activeUpgrades: ReadonlyArray<UpgradeState> = []
+    activeUpgrades: ReadonlyArray<UpgradeState> = [],
+    dt = 0
   ): void {
+    // Update ammo gain animations
+    for (const t of this.ammoGainTexts) {
+      t.age += dt;
+    }
+    this.ammoGainTexts = this.ammoGainTexts.filter((t) => t.age < AMMO_GAIN_DURATION);
+
     switch (state) {
       case "menu":
         this.renderMenu(ctx, canvasW, canvasH);
@@ -98,6 +128,17 @@ export class HUD {
       ctx.fillRect(barX, barY, barW * fillRatio, barH);
 
       yOffset += 26;
+    }
+
+    // Ammo gain floating text
+    ctx.textAlign = "right";
+    for (const t of this.ammoGainTexts) {
+      const progress = t.age / AMMO_GAIN_DURATION;
+      const alpha = 1 - progress;
+      const drift = progress * AMMO_GAIN_DRIFT;
+      ctx.font = "bold 18px sans-serif";
+      ctx.fillStyle = `rgba(46, 204, 113, ${alpha})`;
+      ctx.fillText(`+${t.amount}`, w - 16, 50 + t.offsetY - drift);
     }
 
     ctx.restore();

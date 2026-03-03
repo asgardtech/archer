@@ -358,6 +358,8 @@ function getGameInternals(game: any) {
     set balloons(v: any[]) { game["balloons"] = v; },
     get score() { return game["score"]; },
     set score(v: number) { game["score"] = v; },
+    get nextAmmoMilestone() { return game["nextAmmoMilestone"]; },
+    set nextAmmoMilestone(v: number) { game["nextAmmoMilestone"] = v; },
     get upgradeManager() { return game["upgradeManager"]; },
     resetGame: () => game["resetGame"](),
     updatePlaying: (dt: number) => game["updatePlaying"](dt),
@@ -587,5 +589,286 @@ describe("HUD displays active upgrades", () => {
       (c: { text: string }) => c.text.includes("Rapid Fire") || c.text.includes("Multi-Shot") || c.text.includes("Piercing")
     );
     expect(upgradeCall).toBeUndefined();
+  });
+});
+
+// --- Boss Balloon ---
+
+describe("Boss Balloon", () => {
+  it("creates a boss balloon with 5 HP, larger radius, and distinct color", () => {
+    const b = new Balloon(100, 500, 35, "boss");
+    expect(b.variant).toBe("boss");
+    expect(b.hitPoints).toBe(5);
+    expect(b.maxHitPoints).toBe(5);
+    expect(b.color).toBe("#8B0000");
+    expect(b.radius).toBeGreaterThanOrEqual(40);
+  });
+
+  it("hit() decrements HP and returns false when HP > 0", () => {
+    const b = new Balloon(100, 500, 35, "boss");
+    const killed = b.hit();
+    expect(killed).toBe(false);
+    expect(b.hitPoints).toBe(4);
+    expect(b.alive).toBe(true);
+  });
+
+  it("hit() returns true and sets alive=false when HP reaches 0", () => {
+    const b = new Balloon(100, 500, 35, "boss");
+    for (let i = 0; i < 4; i++) b.hit();
+    expect(b.hitPoints).toBe(1);
+    expect(b.alive).toBe(true);
+
+    const killed = b.hit();
+    expect(killed).toBe(true);
+    expect(b.hitPoints).toBe(0);
+    expect(b.alive).toBe(false);
+  });
+
+  it("hit() returns false if already dead", () => {
+    const b = new Balloon(100, 500, 35, "boss");
+    for (let i = 0; i < 5; i++) b.hit();
+    expect(b.alive).toBe(false);
+    const result = b.hit();
+    expect(result).toBe(false);
+  });
+
+  it("boss balloon escaping counts as missed (alive becomes false)", () => {
+    const b = new Balloon(100, 500, 35, "boss");
+    for (let i = 0; i < 500; i++) b.update(0.1);
+    expect(b.alive).toBe(false);
+  });
+});
+
+describe("CollisionSystem with boss balloon", () => {
+  let cs: CollisionSystem;
+
+  beforeEach(() => {
+    cs = new CollisionSystem();
+  });
+
+  it("boss balloon survives a single arrow hit", () => {
+    const arrow = new Arrow({ x: 100, y: 100 }, 0);
+    const boss = new Balloon(100, 100, 35, "boss");
+    const events = cs.check([arrow], [boss]);
+    expect(events).toHaveLength(1);
+    expect(events[0].isBossKill).toBeUndefined();
+    expect(boss.alive).toBe(true);
+    expect(boss.hitPoints).toBe(4);
+    expect(arrow.alive).toBe(false);
+  });
+
+  it("boss balloon dies after 5 hits and isBossKill is true", () => {
+    const boss = new Balloon(100, 100, 35, "boss");
+    for (let i = 0; i < 4; i++) {
+      const a = new Arrow({ x: 100, y: 100 }, 0);
+      cs.check([a], [boss]);
+    }
+    expect(boss.hitPoints).toBe(1);
+
+    const finalArrow = new Arrow({ x: 100, y: 100 }, 0);
+    const events = cs.check([finalArrow], [boss]);
+    expect(events).toHaveLength(1);
+    expect(events[0].isBossKill).toBe(true);
+    expect(boss.alive).toBe(false);
+  });
+
+  it("piercing arrow damages boss and continues to other balloons", () => {
+    const arrow = new Arrow({ x: 100, y: 100 }, 0);
+    arrow.piercing = true;
+    const boss = new Balloon(100, 100, 35, "boss");
+    const standard = new Balloon(100, 100, 60);
+    const events = cs.check([arrow], [boss, standard]);
+    expect(events).toHaveLength(2);
+    expect(boss.alive).toBe(true);
+    expect(boss.hitPoints).toBe(4);
+    expect(standard.alive).toBe(false);
+    expect(arrow.alive).toBe(true);
+  });
+
+  it("multi-shot arrows can each hit the boss dealing multiple HP", () => {
+    const boss = new Balloon(100, 100, 35, "boss");
+    const a1 = new Arrow({ x: 100, y: 100 }, 0);
+    const a2 = new Arrow({ x: 100, y: 100 }, 0);
+    const a3 = new Arrow({ x: 100, y: 100 }, 0);
+    cs.check([a1, a2, a3], [boss]);
+    expect(boss.hitPoints).toBe(2);
+    expect(boss.alive).toBe(true);
+  });
+});
+
+describe("Game integration: boss balloon and ammo milestones", () => {
+  let game: any;
+  let internals: ReturnType<typeof getGameInternals>;
+  let randomSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    randomSpy = jest.spyOn(Math, "random").mockReturnValue(0.5);
+    const canvas = createMockCanvas();
+    setupDom(canvas);
+    game = new Game("test-canvas");
+    internals = getGameInternals(game);
+    internals.resetGame();
+    internals.state = "playing";
+  });
+
+  afterEach(() => {
+    randomSpy.mockRestore();
+  });
+
+  it("defeating a boss balloon awards 10 points and 15 arrows", () => {
+    internals.score = 0;
+    internals.arrowsRemaining = 50;
+    internals.nextAmmoMilestone = 100;
+
+    const boss = new Balloon(400, 300, 35, "boss");
+    boss.hitPoints = 1;
+    internals.balloons = [boss];
+
+    const arrow = new Arrow({ x: 400, y: 300 }, -Math.PI / 2);
+    internals.arrows = [arrow];
+
+    (internals.input as any).wasClicked = false;
+    internals.updatePlaying(0.016);
+
+    expect(internals.score).toBe(10);
+    expect(internals.arrowsRemaining).toBe(65);
+  });
+
+  it("score milestone at 25 grants +5 arrows", () => {
+    internals.score = 24;
+    internals.arrowsRemaining = 80;
+    internals.nextAmmoMilestone = 25;
+
+    const balloon = new Balloon(400, 300, 60);
+    internals.balloons = [balloon];
+    const arrow = new Arrow({ x: 400, y: 300 }, -Math.PI / 2);
+    internals.arrows = [arrow];
+
+    (internals.input as any).wasClicked = false;
+    internals.updatePlaying(0.016);
+
+    expect(internals.score).toBe(25);
+    expect(internals.arrowsRemaining).toBe(85);
+    expect(internals.nextAmmoMilestone).toBe(50);
+  });
+
+  it("multiple milestones can trigger in a single frame", () => {
+    internals.score = 20;
+    internals.arrowsRemaining = 50;
+    internals.nextAmmoMilestone = 25;
+
+    const boss = new Balloon(400, 300, 35, "boss");
+    boss.hitPoints = 1;
+    internals.balloons = [boss];
+    const arrow = new Arrow({ x: 400, y: 300 }, -Math.PI / 2);
+    internals.arrows = [arrow];
+
+    (internals.input as any).wasClicked = false;
+    internals.updatePlaying(0.016);
+
+    // Score: 20 + 10 = 30, crosses 25 milestone
+    expect(internals.score).toBe(30);
+    // 50 + 15 (boss kill) + 5 (milestone at 25) = 70
+    expect(internals.arrowsRemaining).toBe(70);
+    expect(internals.nextAmmoMilestone).toBe(50);
+  });
+
+  it("boss kill ammo stacks with milestone ammo", () => {
+    internals.score = 23;
+    internals.arrowsRemaining = 50;
+    internals.nextAmmoMilestone = 25;
+
+    const boss = new Balloon(400, 300, 35, "boss");
+    boss.hitPoints = 1;
+    internals.balloons = [boss];
+    const arrow = new Arrow({ x: 400, y: 300 }, -Math.PI / 2);
+    internals.arrows = [arrow];
+
+    (internals.input as any).wasClicked = false;
+    internals.updatePlaying(0.016);
+
+    // Score: 23 + 10 = 33, crosses 25 milestone
+    expect(internals.score).toBe(33);
+    // 50 + 15 (boss) + 5 (milestone) = 70
+    expect(internals.arrowsRemaining).toBe(70);
+  });
+
+  it("ammo has no upper cap", () => {
+    internals.arrowsRemaining = 120;
+    internals.score = 24;
+    internals.nextAmmoMilestone = 25;
+
+    const balloon = new Balloon(400, 300, 60);
+    internals.balloons = [balloon];
+    const arrow = new Arrow({ x: 400, y: 300 }, -Math.PI / 2);
+    internals.arrows = [arrow];
+
+    (internals.input as any).wasClicked = false;
+    internals.updatePlaying(0.016);
+
+    expect(internals.arrowsRemaining).toBe(125);
+  });
+
+  it("game reset clears milestone progress", () => {
+    internals.score = 60;
+    internals.nextAmmoMilestone = 75;
+    internals.resetGame();
+    expect(internals.nextAmmoMilestone).toBe(25);
+    expect(internals.arrowsRemaining).toBe(100);
+    expect(internals.score).toBe(0);
+  });
+
+  it("hitting a boss without killing it awards no score", () => {
+    internals.score = 0;
+    internals.arrowsRemaining = 50;
+
+    const boss = new Balloon(400, 300, 35, "boss");
+    internals.balloons = [boss];
+    const arrow = new Arrow({ x: 400, y: 300 }, -Math.PI / 2);
+    internals.arrows = [arrow];
+
+    (internals.input as any).wasClicked = false;
+    internals.updatePlaying(0.016);
+
+    expect(internals.score).toBe(0);
+    expect(internals.arrowsRemaining).toBe(50);
+  });
+});
+
+describe("Spawner boss balloon spawning", () => {
+  it("spawns a boss balloon after 45 seconds", () => {
+    const spawner = new Spawner();
+    const allBalloons: Balloon[] = [];
+
+    for (let i = 0; i < 460; i++) {
+      const spawned = spawner.update(0.1, 800, 600);
+      allBalloons.push(...spawned);
+    }
+
+    const bossBalloons = allBalloons.filter((b) => b.variant === "boss");
+    expect(bossBalloons.length).toBeGreaterThan(0);
+    expect(bossBalloons[0].hitPoints).toBe(5);
+  });
+
+  it("does not spawn a boss balloon before 45 seconds", () => {
+    const spawner = new Spawner();
+    const allBalloons: Balloon[] = [];
+
+    for (let i = 0; i < 440; i++) {
+      const spawned = spawner.update(0.1, 800, 600);
+      allBalloons.push(...spawned);
+    }
+
+    const bossBalloons = allBalloons.filter((b) => b.variant === "boss");
+    expect(bossBalloons.length).toBe(0);
+  });
+
+  it("reset clears boss timer", () => {
+    const spawner = new Spawner();
+    spawner.update(40, 800, 600);
+    spawner.reset();
+    const spawned = spawner.update(0.016, 800, 600);
+    const bossBalloons = spawned.filter((b) => b.variant === "boss");
+    expect(bossBalloons).toHaveLength(0);
   });
 });

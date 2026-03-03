@@ -17,20 +17,30 @@ export class Balloon {
   public alive = true;
   public variant: BalloonVariant = "standard";
   public upgradeType?: UpgradeType;
+  public hitPoints = 1;
+  public maxHitPoints = 1;
 
   private wobbleOffset: number;
   private wobbleAmplitude = 30;
   private baseX: number;
   private time = 0;
+  private flashTimer = 0;
 
-  constructor(x: number, y: number, speed: number, upgrade?: UpgradeType) {
+  constructor(x: number, y: number, speed: number, upgrade?: UpgradeType | "boss") {
     this.radius = 20 + Math.random() * 15;
     this.pos = { x, y };
     this.vel = { x: 0, y: -speed };
     this.baseX = x;
     this.wobbleOffset = Math.random() * Math.PI * 2;
 
-    if (upgrade) {
+    if (upgrade === "boss") {
+      this.variant = "boss";
+      this.color = "#8B0000";
+      this.radius *= 2.0;
+      this.wobbleAmplitude = 50;
+      this.hitPoints = 5;
+      this.maxHitPoints = 5;
+    } else if (upgrade) {
       this.variant = "upgrade";
       this.upgradeType = upgrade;
       this.color = "#FFD700";
@@ -40,9 +50,21 @@ export class Balloon {
     }
   }
 
+  hit(): boolean {
+    if (!this.alive || this.hitPoints <= 0) return false;
+    this.hitPoints--;
+    this.flashTimer = 0.1;
+    if (this.hitPoints <= 0) {
+      this.alive = false;
+      return true;
+    }
+    return false;
+  }
+
   update(dt: number): void {
     if (!this.alive) return;
     this.time += dt;
+    if (this.flashTimer > 0) this.flashTimer -= dt;
     this.pos.y += this.vel.y * dt;
     this.pos.x = this.baseX + Math.sin(this.time * 1.5 + this.wobbleOffset) * this.wobbleAmplitude;
 
@@ -57,7 +79,9 @@ export class Balloon {
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
 
-    if (this.variant === "upgrade") {
+    if (this.variant === "boss") {
+      this.renderBossBalloon(ctx);
+    } else if (this.variant === "upgrade") {
       this.renderUpgradeBalloon(ctx);
     } else {
       this.renderStandardBalloon(ctx);
@@ -104,6 +128,55 @@ export class Balloon {
     );
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     ctx.fill();
+  }
+
+  private renderBossBalloon(ctx: CanvasRenderingContext2D): void {
+    const hpFrac = this.hitPoints / this.maxHitPoints;
+    const displayRadius = this.radius * (0.7 + 0.3 * hpFrac);
+    const pulse = 1 + Math.sin(this.time * 3) * 0.04;
+    const r = displayRadius * pulse;
+    const isFlashing = this.flashTimer > 0;
+
+    // Dark pulsing glow
+    const glowAlpha = 0.2 + Math.sin(this.time * 2.5) * 0.1;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 1.3, r * 1.5, 0, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(139, 0, 0, ${glowAlpha})`;
+    ctx.fill();
+
+    // Body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.8, r, 0, 0, Math.PI * 2);
+    ctx.fillStyle = isFlashing ? "#FFFFFF" : this.color;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Specular highlight
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.25, -r * 0.35, r * 0.2, r * 0.3, -0.4, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.3)";
+    ctx.fill();
+
+    // Skull icon
+    ctx.fillStyle = isFlashing ? "#333" : "rgba(255,255,255,0.8)";
+    ctx.font = `bold ${r * 0.55}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("☠", 0, 0);
+
+    // HP bar above balloon
+    const barW = r * 1.6;
+    const barH = 6;
+    const barX = -barW / 2;
+    const barY = -r - 14;
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(barX, barY, barW, barH);
+
+    const fillColor = hpFrac > 0.5 ? "#2ecc71" : hpFrac > 0.25 ? "#f1c40f" : "#e74c3c";
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(barX, barY, barW * hpFrac, barH);
   }
 
   private renderUpgradeBalloon(ctx: CanvasRenderingContext2D): void {
