@@ -16,6 +16,8 @@ export type BalloonVariant = "standard" | "upgrade" | "boss";
 
 export type UpgradeType = "multi-shot" | "piercing" | "rapid-fire" | "bonus-arrows";
 
+export type ObstacleType = "bird" | "airplane" | "ufo";
+
 export interface UpgradeState {
   type: UpgradeType;
   remainingTime: number;

@@ -1,5 +1,6 @@
 import { Arrow } from "../entities/Arrow";
 import { Balloon } from "../entities/Balloon";
+import { Obstacle } from "../entities/Obstacle";
 import { UpgradeType } from "../types";
 
 export interface CollisionEvent {
@@ -7,6 +8,11 @@ export interface CollisionEvent {
   balloon: Balloon;
   grantedUpgrade?: UpgradeType;
   isBossKill?: boolean;
+}
+
+export interface ObstacleCollisionEvent {
+  arrow: Arrow;
+  obstacle: Obstacle;
 }
 
 export class CollisionSystem {
@@ -69,6 +75,28 @@ export class CollisionSystem {
             arrow.alive = false;
             break;
           }
+        }
+      }
+    }
+    return events;
+  }
+
+  checkObstacles(arrows: Arrow[], obstacles: Obstacle[]): ObstacleCollisionEvent[] {
+    const events: ObstacleCollisionEvent[] = [];
+
+    for (const arrow of arrows) {
+      if (!arrow.alive) continue;
+      for (const obstacle of obstacles) {
+        if (!obstacle.alive) continue;
+
+        const dx = arrow.pos.x - obstacle.pos.x;
+        const dy = arrow.pos.y - obstacle.pos.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < obstacle.radius) {
+          events.push({ arrow, obstacle });
+          obstacle.alive = false;
+          arrow.alive = false;
+          break;
         }
       }
     }

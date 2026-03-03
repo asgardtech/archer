@@ -1,5 +1,6 @@
 import { Balloon } from "../entities/Balloon";
-import { UpgradeType } from "../types";
+import { Obstacle } from "../entities/Obstacle";
+import { UpgradeType, ObstacleType } from "../types";
 import { LevelConfig } from "../levels";
 
 const UPGRADE_TYPES: UpgradeType[] = ["multi-shot", "piercing", "rapid-fire", "bonus-arrows"];
@@ -22,6 +23,12 @@ const DEFAULT_CONFIG: LevelConfig = {
   bossIntervalMax: 90,
   bossHitPoints: 5,
   skyGradient: ["#87CEEB", "#4682B4"],
+  obstacleEnabled: true,
+  obstacleTypes: ["bird"],
+  obstacleMinInterval: 8,
+  obstacleMaxInterval: 15,
+  obstacleSpeedMin: 80,
+  obstacleSpeedMax: 140,
 };
 
 export class Spawner {
@@ -33,6 +40,8 @@ export class Spawner {
   private bossTimer = 0;
   private bossSpawned = false;
   private bossInterval: number;
+  private obstacleTimer = 0;
+  private obstacleInterval: number;
 
   private config: LevelConfig;
 
@@ -41,6 +50,7 @@ export class Spawner {
     this.interval = this.config.spawnInterval;
     this.upgradeInterval = this.randomUpgradeInterval();
     this.bossInterval = this.randomBossInterval();
+    this.obstacleInterval = this.randomObstacleInterval();
   }
 
   configure(config: LevelConfig): void {
@@ -53,6 +63,8 @@ export class Spawner {
     this.bossTimer = 0;
     this.bossSpawned = false;
     this.bossInterval = this.randomBossInterval();
+    this.obstacleTimer = 0;
+    this.obstacleInterval = this.randomObstacleInterval();
   }
 
   reset(): void {
@@ -64,6 +76,8 @@ export class Spawner {
     this.bossTimer = 0;
     this.bossSpawned = false;
     this.bossInterval = this.randomBossInterval();
+    this.obstacleTimer = 0;
+    this.obstacleInterval = this.randomObstacleInterval();
   }
 
   update(dt: number, canvasW: number, canvasH: number): Balloon[] {
@@ -113,11 +127,49 @@ export class Spawner {
     return spawned;
   }
 
+  updateObstacles(dt: number, canvasW: number, canvasH: number): Obstacle[] {
+    const cfg = this.config;
+    if (!cfg.obstacleEnabled || cfg.obstacleTypes.length === 0) return [];
+
+    const spawned: Obstacle[] = [];
+    this.obstacleTimer += dt;
+
+    if (this.obstacleTimer >= this.obstacleInterval) {
+      this.obstacleTimer -= this.obstacleInterval;
+      this.obstacleInterval = this.randomObstacleInterval();
+
+      const obstacleType = cfg.obstacleTypes[Math.floor(Math.random() * cfg.obstacleTypes.length)];
+      const direction: 1 | -1 = Math.random() < 0.5 ? 1 : -1;
+
+      let speedMin = cfg.obstacleSpeedMin;
+      let speedMax = cfg.obstacleSpeedMax;
+      if (obstacleType === "bird") {
+        speedMin = Math.max(speedMin, 80);
+        speedMax = Math.min(speedMax, 140);
+      } else if (obstacleType === "airplane") {
+        speedMin = Math.max(speedMin, 150);
+        speedMax = Math.max(speedMax, 250);
+      } else if (obstacleType === "ufo") {
+        speedMin = Math.max(speedMin, 60);
+        speedMax = Math.min(speedMax, 100);
+      }
+
+      const speed = speedMin + Math.random() * (speedMax - speedMin);
+      spawned.push(new Obstacle(obstacleType, canvasW, canvasH, speed, direction));
+    }
+
+    return spawned;
+  }
+
   private randomUpgradeInterval(): number {
     return this.config.upgradeMinInterval + Math.random() * (this.config.upgradeMaxInterval - this.config.upgradeMinInterval);
   }
 
   private randomBossInterval(): number {
     return this.config.bossIntervalMin + Math.random() * (this.config.bossIntervalMax - this.config.bossIntervalMin);
+  }
+
+  private randomObstacleInterval(): number {
+    return this.config.obstacleMinInterval + Math.random() * (this.config.obstacleMaxInterval - this.config.obstacleMinInterval);
   }
 }
