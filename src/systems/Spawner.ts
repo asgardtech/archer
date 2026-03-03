@@ -15,6 +15,10 @@ export class Spawner {
   private elapsed = 0;
   private upgradeTimer = 0;
   private upgradeInterval = this.randomUpgradeInterval();
+  private bossTimer = 0;
+  private bossSpawned = false;
+  private readonly firstBossDelay = 45;
+  private bossInterval = this.randomBossInterval();
 
   reset(): void {
     this.timer = 0;
@@ -22,6 +26,9 @@ export class Spawner {
     this.elapsed = 0;
     this.upgradeTimer = 0;
     this.upgradeInterval = this.randomUpgradeInterval();
+    this.bossTimer = 0;
+    this.bossSpawned = false;
+    this.bossInterval = this.randomBossInterval();
   }
 
   update(dt: number, canvasW: number, canvasH: number): Balloon[] {
@@ -49,10 +56,27 @@ export class Spawner {
       spawned.push(new Balloon(x, canvasH + 40, speed, type));
     }
 
+    // Boss balloon spawning
+    this.bossTimer += dt;
+    const bossThreshold = this.bossSpawned ? this.bossInterval : this.firstBossDelay;
+    if (this.bossTimer >= bossThreshold) {
+      this.bossTimer = 0;
+      this.bossSpawned = true;
+      this.bossInterval = this.randomBossInterval();
+      const margin = 80;
+      const x = margin + Math.random() * (canvasW - margin * 2);
+      const speed = 30 + Math.random() * 10;
+      spawned.push(new Balloon(x, canvasH + 60, speed, "boss"));
+    }
+
     return spawned;
   }
 
   private randomUpgradeInterval(): number {
     return UPGRADE_MIN_INTERVAL + Math.random() * (UPGRADE_MAX_INTERVAL - UPGRADE_MIN_INTERVAL);
+  }
+
+  private randomBossInterval(): number {
+    return 60 + Math.random() * 30;
   }
 }
