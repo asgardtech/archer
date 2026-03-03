@@ -8,10 +8,18 @@
     "dev": "webpack serve --mode development",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["game", "browser", "typescript", "canvas"],
+  "keywords": [
+    "game",
+    "browser",
+    "typescript",
+    "canvas"
+  ],
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "html-webpack-plugin": "^5.6.6",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
     "webpack": "^5.105.3",
