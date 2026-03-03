@@ -8,6 +8,7 @@ export class Arrow {
   public vel: Vec2;
   public angle: number;
   public alive = true;
+  public piercing = false;
 
   constructor(origin: Vec2, angle: number) {
     this.pos = { x: origin.x, y: origin.y };
