@@ -40,9 +40,11 @@ export class HUD {
     canvasW: number,
     canvasH: number,
     activeUpgrades: ReadonlyArray<UpgradeState> = [],
-    dt = 0
+    dt = 0,
+    level = 1,
+    levelName = "",
+    totalScore = 0
   ): void {
-    // Update ammo gain animations
     for (const t of this.ammoGainTexts) {
       t.age += dt;
     }
@@ -53,10 +55,16 @@ export class HUD {
         this.renderMenu(ctx, canvasW, canvasH);
         break;
       case "playing":
-        this.renderPlaying(ctx, score, arrowsRemaining, canvasW, activeUpgrades);
+        this.renderPlaying(ctx, score, arrowsRemaining, canvasW, activeUpgrades, level, levelName);
+        break;
+      case "level_complete":
+        this.renderLevelComplete(ctx, score, level, levelName, canvasW, canvasH);
         break;
       case "gameover":
-        this.renderGameOver(ctx, score, canvasW, canvasH);
+        this.renderGameOver(ctx, totalScore, canvasW, canvasH, level, levelName);
+        break;
+      case "victory":
+        this.renderVictory(ctx, totalScore, canvasW, canvasH);
         break;
     }
   }
@@ -89,7 +97,9 @@ export class HUD {
     score: number,
     arrowsRemaining: number,
     w: number,
-    activeUpgrades: ReadonlyArray<UpgradeState>
+    activeUpgrades: ReadonlyArray<UpgradeState>,
+    level: number,
+    levelName: string
   ): void {
     ctx.save();
     ctx.font = "bold 20px sans-serif";
@@ -102,7 +112,11 @@ export class HUD {
     ctx.fillStyle = arrowsRemaining > 10 ? "#fff" : "#e74c3c";
     ctx.fillText(`Arrows: ${arrowsRemaining}`, w - 16, 30);
 
-    // Active upgrades
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText(`Level ${level} \u2014 ${levelName}`, w / 2, 24);
+
     ctx.textAlign = "left";
     let yOffset = 55;
     for (const upgrade of activeUpgrades) {
@@ -113,7 +127,6 @@ export class HUD {
       ctx.fillStyle = info.color;
       ctx.fillText(`${info.icon} ${info.label} ${upgrade.remainingTime.toFixed(1)}s`, 16, yOffset);
 
-      // Timer bar background
       const barX = 16;
       const barW = 120;
       const barH = 4;
@@ -121,7 +134,6 @@ export class HUD {
       ctx.fillStyle = "rgba(255,255,255,0.2)";
       ctx.fillRect(barX, barY, barW, barH);
 
-      // Timer bar fill
       const maxDuration = upgrade.type === "multi-shot" ? 8 : upgrade.type === "piercing" ? 6 : 5;
       const fillRatio = Math.max(0, upgrade.remainingTime / maxDuration);
       ctx.fillStyle = info.color;
@@ -130,7 +142,6 @@ export class HUD {
       yOffset += 26;
     }
 
-    // Ammo gain floating text
     ctx.textAlign = "right";
     for (const t of this.ammoGainTexts) {
       const progress = t.age / AMMO_GAIN_DURATION;
@@ -144,9 +155,11 @@ export class HUD {
     ctx.restore();
   }
 
-  private renderGameOver(
+  private renderLevelComplete(
     ctx: CanvasRenderingContext2D,
-    score: number,
+    levelScore: number,
+    level: number,
+    levelName: string,
     w: number,
     h: number
   ): void {
@@ -160,15 +173,93 @@ export class HUD {
 
     ctx.fillStyle = "#fff";
     ctx.font = "bold 44px sans-serif";
-    ctx.fillText("Game Over", w / 2, h / 2 - 50);
+    ctx.fillText(`Level ${level} Complete!`, w / 2, h / 2 - 60);
+
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "24px sans-serif";
+    ctx.fillText(levelName, w / 2, h / 2 - 15);
 
     ctx.font = "bold 28px sans-serif";
     ctx.fillStyle = "#f1c40f";
-    ctx.fillText(`Final Score: ${score}`, w / 2, h / 2 + 10);
+    ctx.fillText(`Score: ${levelScore}`, w / 2, h / 2 + 30);
 
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "20px sans-serif";
-    ctx.fillText(this.isTouchDevice ? "Tap to Restart" : "Click to Restart", w / 2, h / 2 + 60);
+    ctx.fillText(
+      this.isTouchDevice ? "Tap to Continue" : "Click to Continue",
+      w / 2, h / 2 + 80
+    );
+
+    ctx.restore();
+  }
+
+  private renderGameOver(
+    ctx: CanvasRenderingContext2D,
+    totalScore: number,
+    w: number,
+    h: number,
+    level: number,
+    levelName: string
+  ): void {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 44px sans-serif";
+    ctx.fillText("Game Over", w / 2, h / 2 - 60);
+
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "22px sans-serif";
+    ctx.fillText(`Reached: Level ${level} \u2014 ${levelName}`, w / 2, h / 2 - 15);
+
+    ctx.font = "bold 28px sans-serif";
+    ctx.fillStyle = "#f1c40f";
+    ctx.fillText(`Total Score: ${totalScore}`, w / 2, h / 2 + 30);
+
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "20px sans-serif";
+    ctx.fillText(this.isTouchDevice ? "Tap to Restart" : "Click to Restart", w / 2, h / 2 + 80);
+
+    ctx.restore();
+  }
+
+  private renderVictory(
+    ctx: CanvasRenderingContext2D,
+    totalScore: number,
+    w: number,
+    h: number
+  ): void {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillStyle = "#f1c40f";
+    ctx.font = "bold 52px sans-serif";
+    ctx.fillText("Victory!", w / 2, h / 2 - 60);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "24px sans-serif";
+    ctx.fillText("You conquered all 5 levels!", w / 2, h / 2 - 10);
+
+    ctx.font = "bold 28px sans-serif";
+    ctx.fillStyle = "#f1c40f";
+    ctx.fillText(`Total Score: ${totalScore}`, w / 2, h / 2 + 35);
+
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.font = "20px sans-serif";
+    ctx.fillText(
+      this.isTouchDevice ? "Tap to Play Again" : "Click to Play Again",
+      w / 2, h / 2 + 85
+    );
 
     ctx.restore();
   }

@@ -7,8 +7,8 @@ import { Balloon } from "./entities/Balloon";
 import { Arrow } from "./entities/Arrow";
 import { Bow } from "./entities/Bow";
 import { HUD } from "./rendering/HUD";
+import { LEVELS, LevelConfig } from "./levels";
 
-const MAX_ARROWS = 100;
 const DT_CAP = 0.1;
 const UPGRADE_BALLOON_SCORE = 3;
 const BOSS_BALLOON_SCORE = 10;
@@ -24,8 +24,10 @@ export class Game {
   private dt = 0;
 
   private state: GameState = "menu";
+  private currentLevel = 0;
   private score = 0;
-  private arrowsRemaining = MAX_ARROWS;
+  private totalScore = 0;
+  private arrowsRemaining = 0;
   private balloonsEscaped = 0;
   private nextAmmoMilestone = MILESTONE_INTERVAL;
 
@@ -60,6 +62,10 @@ export class Game {
     this.bow = new Bow(width, height, this.input.isTouchDevice ? 60 : 30);
 
     this.setupResize();
+  }
+
+  private get currentLevelConfig(): LevelConfig {
+    return LEVELS[this.currentLevel];
   }
 
   private setupResize(): void {
@@ -123,7 +129,20 @@ export class Game {
         this.updatePlaying(dt);
         break;
 
+      case "level_complete":
+        if (this.input.wasClicked) {
+          this.startLevel(this.currentLevel + 1);
+          this.state = "playing";
+        }
+        break;
+
       case "gameover":
+        if (this.input.wasClicked) {
+          this.state = "menu";
+        }
+        break;
+
+      case "victory":
         if (this.input.wasClicked) {
           this.state = "menu";
         }
@@ -136,7 +155,6 @@ export class Game {
     this.bow.update(this.input.mousePos);
     this.upgradeManager.update(dt);
 
-    // Shooting
     if (this.input.wasClicked && this.arrowsRemaining > 0) {
       const multiShot = this.upgradeManager.hasUpgrade("multi-shot");
       const isPiercing = this.upgradeManager.hasUpgrade("piercing");
@@ -157,13 +175,11 @@ export class Game {
       }
     }
 
-    // Spawner
     const newBalloons = this.spawner.update(dt, this.width, this.height);
     for (const b of newBalloons) {
       this.balloons.push(b);
     }
 
-    // Update entities
     for (const balloon of this.balloons) {
       const wasAlive = balloon.alive;
       balloon.update(dt);
@@ -175,7 +191,6 @@ export class Game {
       arrow.update(dt, this.width, this.height);
     }
 
-    // Collisions
     const hits = this.collisions.check(this.arrows, this.balloons);
     for (const hit of hits) {
       if (hit.isBossKill) {
@@ -183,7 +198,7 @@ export class Game {
         this.arrowsRemaining += BOSS_KILL_AMMO_BONUS;
         this.hud.showAmmoGain(BOSS_KILL_AMMO_BONUS);
       } else if (hit.balloon.variant === "boss") {
-        // Boss was hit but not killed — no score
+        // Boss hit but not killed
       } else if (hit.balloon.variant === "upgrade") {
         this.score += UPGRADE_BALLOON_SCORE;
       } else {
@@ -198,32 +213,51 @@ export class Game {
       }
     }
 
-    // Ammo milestones
     while (this.score >= this.nextAmmoMilestone) {
       this.arrowsRemaining += MILESTONE_AMMO_BONUS;
       this.hud.showAmmoGain(MILESTONE_AMMO_BONUS);
       this.nextAmmoMilestone += MILESTONE_INTERVAL;
     }
 
-    // Cleanup dead entities
     this.balloons = this.balloons.filter((b) => b.alive);
     this.arrows = this.arrows.filter((a) => a.alive);
 
-    // Game-over check
+    if (this.score >= this.currentLevelConfig.targetScore) {
+      this.totalScore += this.score;
+      this.balloons = [];
+      this.arrows = [];
+      if (this.currentLevel >= LEVELS.length - 1) {
+        this.state = "victory";
+      } else {
+        this.state = "level_complete";
+      }
+      return;
+    }
+
     if (this.arrowsRemaining <= 0 && this.arrows.length === 0) {
+      this.totalScore += this.score;
       this.state = "gameover";
     }
   }
 
   private resetGame(): void {
+    this.totalScore = 0;
+    this.arrowsRemaining = 0;
+    this.startLevel(0);
+  }
+
+  private startLevel(levelIndex: number): void {
+    this.currentLevel = levelIndex;
+    const config = this.currentLevelConfig;
+
     this.score = 0;
-    this.arrowsRemaining = MAX_ARROWS;
+    this.arrowsRemaining += config.arrowsGranted;
     this.balloonsEscaped = 0;
     this.nextAmmoMilestone = MILESTONE_INTERVAL;
     this.balloons = [];
     this.arrows = [];
     this.bow = new Bow(this.width, this.height, this.input.isTouchDevice ? 60 : 30);
-    this.spawner.reset();
+    this.spawner.configure(config);
     this.upgradeManager.reset();
     this.hud.reset();
   }
@@ -231,7 +265,7 @@ export class Game {
   private render(): void {
     this.renderSky();
 
-    if (this.state === "playing" || this.state === "gameover") {
+    if (this.state === "playing" || this.state === "gameover" || this.state === "level_complete") {
       for (const balloon of this.balloons) {
         balloon.render(this.ctx);
       }
@@ -244,6 +278,7 @@ export class Game {
       this.ctx.fillRect(0, this.height - 15, this.width, 15);
     }
 
+    const config = this.currentLevelConfig;
     this.hud.render(
       this.ctx,
       this.state,
@@ -252,14 +287,18 @@ export class Game {
       this.width,
       this.height,
       this.upgradeManager.getActive(),
-      this.dt
+      this.dt,
+      config.level,
+      config.name,
+      this.totalScore + (this.state === "playing" ? this.score : 0)
     );
   }
 
   private renderSky(): void {
+    const config = this.currentLevelConfig;
     const grad = this.ctx.createLinearGradient(0, 0, 0, this.height);
-    grad.addColorStop(0, "#87CEEB");
-    grad.addColorStop(1, "#4682B4");
+    grad.addColorStop(0, config.skyGradient[0]);
+    grad.addColorStop(1, config.skyGradient[1]);
     this.ctx.fillStyle = grad;
     this.ctx.fillRect(0, 0, this.width, this.height);
 
