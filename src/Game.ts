@@ -7,7 +7,7 @@ import { Arrow } from "./entities/Arrow";
 import { Bow } from "./entities/Bow";
 import { HUD } from "./rendering/HUD";
 
-const MAX_ARROWS = 20;
+const MAX_ARROWS = 100;
 const DT_CAP = 0.1;
 
 export class Game {
