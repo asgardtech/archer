@@ -318,6 +318,7 @@ function createMockCanvas(): HTMLCanvasElement {
     getContext: jest.fn(() => ctx),
     width: 800,
     height: 600,
+    style: {} as CSSStyleDeclaration,
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
     getBoundingClientRect: jest.fn(() => ({
@@ -336,6 +337,13 @@ function setupDom(canvas: HTMLCanvasElement): void {
   };
   (global as any).HTMLCanvasElement = class HTMLCanvasElement {};
   Object.setPrototypeOf(canvas, (global as any).HTMLCanvasElement.prototype);
+  (global as any).window = {
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    innerWidth: 800,
+    innerHeight: 600,
+  };
+  (global as any).navigator = { maxTouchPoints: 0 };
 }
 
 function getGameInternals(game: any) {
@@ -372,14 +380,20 @@ beforeAll(async () => {
 describe("Game integration: upgrades", () => {
   let game: any;
   let internals: ReturnType<typeof getGameInternals>;
+  let randomSpy: jest.SpyInstance;
 
   beforeEach(() => {
+    randomSpy = jest.spyOn(Math, "random").mockReturnValue(0.5);
     const canvas = createMockCanvas();
     setupDom(canvas);
     game = new Game("test-canvas");
     internals = getGameInternals(game);
     internals.resetGame();
     internals.state = "playing";
+  });
+
+  afterEach(() => {
+    randomSpy.mockRestore();
   });
 
   it("popping an upgrade balloon grants the upgrade", () => {

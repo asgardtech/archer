@@ -12,8 +12,8 @@ export class Bow {
   public pos: Vec2;
   public angle = -Math.PI / 2;
 
-  constructor(canvasW: number, canvasH: number) {
-    this.pos = { x: canvasW / 2, y: canvasH - 30 };
+  constructor(canvasW: number, canvasH: number, bottomOffset = 30) {
+    this.pos = { x: canvasW / 2, y: canvasH - bottomOffset };
   }
 
   update(mousePos: Vec2): void {
