@@ -11,3 +11,12 @@ export interface EntityBase {
   radius: number;
   alive: boolean;
 }
+
+export type BalloonVariant = "standard" | "upgrade";
+
+export type UpgradeType = "multi-shot" | "piercing" | "rapid-fire" | "bonus-arrows";
+
+export interface UpgradeState {
+  type: UpgradeType;
+  remainingTime: number;
+}

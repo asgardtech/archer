@@ -132,7 +132,7 @@ describe("Feature: Initial arrow count", () => {
 
       // Given I have started a new game
       // Render the HUD in playing state with 100 arrows
-      hud.render(ctx as any, "playing", 0, 100, 800, 600);
+      hud.render(ctx as any, "playing", 0, 100, 800, 600, []);
 
       // Then the HUD should display "Arrows: 100"
       const arrowsCall = fillTextCalls.find(
@@ -198,7 +198,7 @@ describe("HUD low-ammo threshold", () => {
       configurable: true,
     });
 
-    hud.render(ctx as any, "playing", 0, 11, 800, 600);
+    hud.render(ctx as any, "playing", 0, 11, 800, 600, []);
 
     const arrowsFillTextIdx = ctx.fillText.mock.calls.findIndex(
       (c: any[]) => typeof c[0] === "string" && c[0].includes("Arrows:")
@@ -222,7 +222,7 @@ describe("HUD low-ammo threshold", () => {
       configurable: true,
     });
 
-    hud.render(ctx as any, "playing", 0, 10, 800, 600);
+    hud.render(ctx as any, "playing", 0, 10, 800, 600, []);
 
     expect(fillStyleValues).toContain("#e74c3c");
   });

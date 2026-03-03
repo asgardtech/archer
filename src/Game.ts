@@ -2,6 +2,7 @@ import { GameState } from "./types";
 import { InputManager } from "./systems/InputManager";
 import { Spawner } from "./systems/Spawner";
 import { CollisionSystem } from "./systems/CollisionSystem";
+import { UpgradeManager } from "./systems/UpgradeManager";
 import { Balloon } from "./entities/Balloon";
 import { Arrow } from "./entities/Arrow";
 import { Bow } from "./entities/Bow";
@@ -9,6 +10,7 @@ import { HUD } from "./rendering/HUD";
 
 const MAX_ARROWS = 100;
 const DT_CAP = 0.1;
+const UPGRADE_BALLOON_SCORE = 3;
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -28,6 +30,7 @@ export class Game {
   private input: InputManager;
   private spawner: Spawner;
   private collisions: CollisionSystem;
+  private upgradeManager: UpgradeManager;
   private hud: HUD;
 
   constructor(canvasId: string, private width = 800, private height = 600) {
@@ -46,6 +49,7 @@ export class Game {
     this.input = new InputManager(this.canvas);
     this.spawner = new Spawner();
     this.collisions = new CollisionSystem();
+    this.upgradeManager = new UpgradeManager();
     this.hud = new HUD();
     this.bow = new Bow(width, height);
   }
@@ -95,23 +99,34 @@ export class Game {
   }
 
   private updatePlaying(dt: number): void {
-    // Bow aiming
     this.bow.update(this.input.mousePos);
+    this.upgradeManager.update(dt);
 
     // Shooting
     if (this.input.wasClicked && this.arrowsRemaining > 0) {
-      const arrow = new Arrow(
-        { x: this.bow.pos.x, y: this.bow.pos.y },
-        this.bow.angle
-      );
-      this.arrows.push(arrow);
-      this.arrowsRemaining--;
+      const multiShot = this.upgradeManager.hasUpgrade("multi-shot");
+      const isPiercing = this.upgradeManager.hasUpgrade("piercing");
+      const isRapidFire = this.upgradeManager.hasUpgrade("rapid-fire");
+      const angles = this.bow.getFireAngles(multiShot);
+
+      for (const angle of angles) {
+        const arrow = new Arrow(
+          { x: this.bow.pos.x, y: this.bow.pos.y },
+          angle
+        );
+        if (isPiercing) arrow.piercing = true;
+        this.arrows.push(arrow);
+      }
+
+      if (!isRapidFire) {
+        this.arrowsRemaining--;
+      }
     }
 
     // Spawner
-    const newBalloon = this.spawner.update(dt, this.width, this.height);
-    if (newBalloon) {
-      this.balloons.push(newBalloon);
+    const newBalloons = this.spawner.update(dt, this.width, this.height);
+    for (const b of newBalloons) {
+      this.balloons.push(b);
     }
 
     // Update entities
@@ -128,7 +143,19 @@ export class Game {
 
     // Collisions
     const hits = this.collisions.check(this.arrows, this.balloons);
-    this.score += hits.length;
+    for (const hit of hits) {
+      if (hit.balloon.variant === "upgrade") {
+        this.score += UPGRADE_BALLOON_SCORE;
+      } else {
+        this.score += 1;
+      }
+
+      if (hit.grantedUpgrade) {
+        this.upgradeManager.activate(hit.grantedUpgrade, () => {
+          this.arrowsRemaining += 10;
+        });
+      }
+    }
 
     // Cleanup dead entities
     this.balloons = this.balloons.filter((b) => b.alive);
@@ -148,6 +175,7 @@ export class Game {
     this.arrows = [];
     this.bow = new Bow(this.width, this.height);
     this.spawner.reset();
+    this.upgradeManager.reset();
   }
 
   private render(): void {
@@ -160,9 +188,8 @@ export class Game {
       for (const arrow of this.arrows) {
         arrow.render(this.ctx);
       }
-      this.bow.render(this.ctx, this.arrowsRemaining > 0);
+      this.bow.render(this.ctx, this.arrowsRemaining > 0, this.upgradeManager.getActive());
 
-      // Ground strip
       this.ctx.fillStyle = "#3a7d44";
       this.ctx.fillRect(0, this.height - 15, this.width, 15);
     }
@@ -173,7 +200,8 @@ export class Game {
       this.score,
       this.arrowsRemaining,
       this.width,
-      this.height
+      this.height,
+      this.upgradeManager.getActive()
     );
   }
 
@@ -184,7 +212,6 @@ export class Game {
     this.ctx.fillStyle = grad;
     this.ctx.fillRect(0, 0, this.width, this.height);
 
-    // Simple clouds
     this.ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
     this.drawCloud(this.ctx, 120, 80, 50);
     this.drawCloud(this.ctx, 350, 130, 40);
