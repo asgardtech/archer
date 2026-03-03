@@ -1,10 +1,11 @@
-import { GameState } from "./types";
+import { GameState, ObstacleType } from "./types";
 import { InputManager } from "./systems/InputManager";
 import { Spawner } from "./systems/Spawner";
 import { CollisionSystem } from "./systems/CollisionSystem";
 import { UpgradeManager } from "./systems/UpgradeManager";
 import { Balloon } from "./entities/Balloon";
 import { Arrow } from "./entities/Arrow";
+import { Obstacle } from "./entities/Obstacle";
 import { Bow } from "./entities/Bow";
 import { HUD } from "./rendering/HUD";
 import { LEVELS, LevelConfig } from "./levels";
@@ -15,6 +16,12 @@ const BOSS_BALLOON_SCORE = 10;
 const MILESTONE_INTERVAL = 25;
 const MILESTONE_AMMO_BONUS = 5;
 const BOSS_KILL_AMMO_BONUS = 15;
+
+const OBSTACLE_PENALTIES: Record<ObstacleType, { score: number; arrows: number }> = {
+  bird: { score: 3, arrows: 2 },
+  airplane: { score: 5, arrows: 3 },
+  ufo: { score: 8, arrows: 5 },
+};
 
 export class Game {
   private canvas: HTMLCanvasElement;
@@ -33,6 +40,7 @@ export class Game {
 
   private balloons: Balloon[] = [];
   private arrows: Arrow[] = [];
+  private obstacles: Obstacle[] = [];
   private bow: Bow;
 
   private input: InputManager;
@@ -180,6 +188,11 @@ export class Game {
       this.balloons.push(b);
     }
 
+    const newObstacles = this.spawner.updateObstacles(dt, this.width, this.height);
+    for (const o of newObstacles) {
+      this.obstacles.push(o);
+    }
+
     for (const balloon of this.balloons) {
       const wasAlive = balloon.alive;
       balloon.update(dt);
@@ -189,6 +202,17 @@ export class Game {
     }
     for (const arrow of this.arrows) {
       arrow.update(dt, this.width, this.height);
+    }
+    for (const obstacle of this.obstacles) {
+      obstacle.update(dt);
+    }
+
+    const obstacleHits = this.collisions.checkObstacles(this.arrows, this.obstacles);
+    for (const hit of obstacleHits) {
+      const penalty = OBSTACLE_PENALTIES[hit.obstacle.obstacleType];
+      this.score = Math.max(0, this.score - penalty.score);
+      this.arrowsRemaining = Math.max(0, this.arrowsRemaining - penalty.arrows);
+      this.hud.showPenalty(penalty.score);
     }
 
     const hits = this.collisions.check(this.arrows, this.balloons);
@@ -221,11 +245,13 @@ export class Game {
 
     this.balloons = this.balloons.filter((b) => b.alive);
     this.arrows = this.arrows.filter((a) => a.alive);
+    this.obstacles = this.obstacles.filter((o) => o.alive);
 
     if (this.score >= this.currentLevelConfig.targetScore) {
       this.totalScore += this.score;
       this.balloons = [];
       this.arrows = [];
+      this.obstacles = [];
       if (this.currentLevel >= LEVELS.length - 1) {
         this.state = "victory";
       } else {
@@ -256,6 +282,7 @@ export class Game {
     this.nextAmmoMilestone = MILESTONE_INTERVAL;
     this.balloons = [];
     this.arrows = [];
+    this.obstacles = [];
     this.bow = new Bow(this.width, this.height, this.input.isTouchDevice ? 60 : 30);
     this.spawner.configure(config);
     this.upgradeManager.reset();
@@ -266,6 +293,9 @@ export class Game {
     this.renderSky();
 
     if (this.state === "playing" || this.state === "gameover" || this.state === "level_complete") {
+      for (const obstacle of this.obstacles) {
+        obstacle.render(this.ctx);
+      }
       for (const balloon of this.balloons) {
         balloon.render(this.ctx);
       }

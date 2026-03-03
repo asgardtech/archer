@@ -12,11 +12,20 @@ interface AmmoGainText {
   offsetY: number;
 }
 
+interface PenaltyText {
+  amount: number;
+  age: number;
+  offsetY: number;
+}
+
 const AMMO_GAIN_DURATION = 1.5;
 const AMMO_GAIN_DRIFT = 30;
+const PENALTY_DURATION = 1.5;
+const PENALTY_DRIFT = 30;
 
 export class HUD {
   private ammoGainTexts: AmmoGainText[] = [];
+  private penaltyTexts: PenaltyText[] = [];
 
   constructor(private isTouchDevice = false) {}
 
@@ -28,8 +37,17 @@ export class HUD {
     });
   }
 
+  showPenalty(amount: number): void {
+    this.penaltyTexts.push({
+      amount,
+      age: 0,
+      offsetY: this.penaltyTexts.length * 22,
+    });
+  }
+
   reset(): void {
     this.ammoGainTexts = [];
+    this.penaltyTexts = [];
   }
 
   render(
@@ -49,6 +67,11 @@ export class HUD {
       t.age += dt;
     }
     this.ammoGainTexts = this.ammoGainTexts.filter((t) => t.age < AMMO_GAIN_DURATION);
+
+    for (const t of this.penaltyTexts) {
+      t.age += dt;
+    }
+    this.penaltyTexts = this.penaltyTexts.filter((t) => t.age < PENALTY_DURATION);
 
     switch (state) {
       case "menu":
@@ -150,6 +173,16 @@ export class HUD {
       ctx.font = "bold 18px sans-serif";
       ctx.fillStyle = `rgba(46, 204, 113, ${alpha})`;
       ctx.fillText(`+${t.amount}`, w - 16, 50 + t.offsetY - drift);
+    }
+
+    ctx.textAlign = "left";
+    for (const t of this.penaltyTexts) {
+      const progress = t.age / PENALTY_DURATION;
+      const alpha = 1 - progress;
+      const drift = progress * PENALTY_DRIFT;
+      ctx.font = "bold 18px sans-serif";
+      ctx.fillStyle = `rgba(231, 76, 60, ${alpha})`;
+      ctx.fillText(`\u2212${t.amount}`, 16, 50 + t.offsetY + drift);
     }
 
     ctx.restore();

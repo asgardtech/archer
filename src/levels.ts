@@ -1,3 +1,5 @@
+import { ObstacleType } from "./types";
+
 export interface LevelConfig {
   level: number;
   name: string;
@@ -16,6 +18,12 @@ export interface LevelConfig {
   bossIntervalMax: number;
   bossHitPoints: number;
   skyGradient: [string, string];
+  obstacleEnabled: boolean;
+  obstacleTypes: ObstacleType[];
+  obstacleMinInterval: number;
+  obstacleMaxInterval: number;
+  obstacleSpeedMin: number;
+  obstacleSpeedMax: number;
 }
 
 export const LEVELS: LevelConfig[] = [
@@ -37,6 +45,12 @@ export const LEVELS: LevelConfig[] = [
     bossIntervalMax: 90,
     bossHitPoints: 5,
     skyGradient: ["#87CEEB", "#4682B4"],
+    obstacleEnabled: true,
+    obstacleTypes: ["bird"],
+    obstacleMinInterval: 8,
+    obstacleMaxInterval: 15,
+    obstacleSpeedMin: 80,
+    obstacleSpeedMax: 140,
   },
   {
     level: 2,
@@ -56,6 +70,12 @@ export const LEVELS: LevelConfig[] = [
     bossIntervalMax: 90,
     bossHitPoints: 5,
     skyGradient: ["#228B22", "#2E8B57"],
+    obstacleEnabled: true,
+    obstacleTypes: ["bird"],
+    obstacleMinInterval: 8,
+    obstacleMaxInterval: 15,
+    obstacleSpeedMin: 80,
+    obstacleSpeedMax: 140,
   },
   {
     level: 3,
@@ -75,6 +95,12 @@ export const LEVELS: LevelConfig[] = [
     bossIntervalMax: 90,
     bossHitPoints: 5,
     skyGradient: ["#6A5ACD", "#483D8B"],
+    obstacleEnabled: true,
+    obstacleTypes: ["bird", "airplane"],
+    obstacleMinInterval: 5,
+    obstacleMaxInterval: 10,
+    obstacleSpeedMin: 80,
+    obstacleSpeedMax: 250,
   },
   {
     level: 4,
@@ -94,6 +120,12 @@ export const LEVELS: LevelConfig[] = [
     bossIntervalMax: 90,
     bossHitPoints: 7,
     skyGradient: ["#2F4F4F", "#1a1a2e"],
+    obstacleEnabled: true,
+    obstacleTypes: ["bird", "airplane"],
+    obstacleMinInterval: 5,
+    obstacleMaxInterval: 10,
+    obstacleSpeedMin: 80,
+    obstacleSpeedMax: 250,
   },
   {
     level: 5,
@@ -113,5 +145,11 @@ export const LEVELS: LevelConfig[] = [
     bossIntervalMax: 90,
     bossHitPoints: 10,
     skyGradient: ["#FF4500", "#8B0000"],
+    obstacleEnabled: true,
+    obstacleTypes: ["bird", "airplane", "ufo"],
+    obstacleMinInterval: 3,
+    obstacleMaxInterval: 7,
+    obstacleSpeedMin: 60,
+    obstacleSpeedMax: 250,
   },
 ];
