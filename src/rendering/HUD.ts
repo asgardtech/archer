@@ -56,7 +56,7 @@ export class HUD {
     ctx.fillText(`Score: ${score}`, 16, 30);
 
     ctx.textAlign = "right";
-    ctx.fillStyle = arrowsRemaining > 5 ? "#fff" : "#e74c3c";
+    ctx.fillStyle = arrowsRemaining > 10 ? "#fff" : "#e74c3c";
     ctx.fillText(`Arrows: ${arrowsRemaining}`, w - 16, 30);
 
     ctx.restore();
