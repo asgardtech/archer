@@ -75,7 +75,7 @@ export class CollisionSystem {
         }
         hitEnemies.push(enemy);
 
-        if (enemy.variant === "boss") {
+        if (enemy.variant === "boss" && canFlash) {
           this.hitFlashTimers.set(enemy, BOSS_HIT_FLASH_COOLDOWN);
         }
       }
