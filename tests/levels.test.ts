@@ -1,10 +1,10 @@
-import { LEVELS, LevelConfig } from "../src/levels";
-import { Balloon } from "../src/entities/Balloon";
-import { Arrow } from "../src/entities/Arrow";
-import { CollisionSystem } from "../src/systems/CollisionSystem";
-import { Spawner } from "../src/systems/Spawner";
-import { HUD } from "../src/rendering/HUD";
-import { UpgradeManager } from "../src/systems/UpgradeManager";
+import { LEVELS, LevelConfig } from "../src/games/archer/levels";
+import { Balloon } from "../src/games/archer/entities/Balloon";
+import { Arrow } from "../src/games/archer/entities/Arrow";
+import { CollisionSystem } from "../src/games/archer/systems/CollisionSystem";
+import { Spawner } from "../src/games/archer/systems/Spawner";
+import { HUD } from "../src/games/archer/rendering/HUD";
+import { UpgradeManager } from "../src/games/archer/systems/UpgradeManager";
 
 // ============================================================
 // Helpers (reused from existing tests)
@@ -104,7 +104,7 @@ function getGameInternals(game: any) {
   };
 }
 
-let Game: typeof import("../src/Game").Game;
+let Game: typeof import("../src/games/archer/ArcherGame").Game;
 
 beforeAll(async () => {
   const canvas = createMockCanvas();
@@ -112,7 +112,7 @@ beforeAll(async () => {
   (global as any).performance = { now: jest.fn(() => 0) };
   (global as any).requestAnimationFrame = jest.fn();
 
-  const mod = await import("../src/Game");
+  const mod = await import("../src/games/archer/ArcherGame");
   Game = mod.Game;
 });
 

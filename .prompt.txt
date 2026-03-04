@@ -1,0 +1,408 @@
+You are an autonomous coding agent. Complete the following GitHub issue.
+Commit all changes when done with a clear commit message referencing the issue title.
+
+## Issue: make it so this project is actually a collection of games, not just archer; archer should be the first game in the list
+
+# Issue #20: Make this project a collection of games, not just Archer
+
+**Original issue:** Make it so this project is actually a collection of games, not just archer; archer should be the first game in the list.
+
+---
+
+## Technical Specification
+
+### 1. Summary
+
+The project is currently a single-game application called "Archer" (a balloon-shooting Canvas game). This change transforms the repository into a **game collection platform** with a launcher/menu screen where players can browse and select from a list of games. The existing Archer game becomes the first entry in that collection. The architecture must make it trivial to add new games in the future by dropping a module into a `games/` directory and registering it.
+
+### 2. Architecture & Design Decisions
+
+#### 2.1 Game Interface Contract
+
+Every game in the collection must implement a common `IGame` interface so the launcher can manage them uniformly:
+
+```typescript
+export interface GameDescriptor {
+  id: string;
+  name: string;
+  description: string;
+  thumbnailColor: string; // fallback color for card background
+  createGame: (canvas: HTMLCanvasElement) => IGame;
+}
+
+export interface IGame {
+  start(): void;
+  stop(): void;
+  destroy(): void; // tear down event listeners, timers, etc.
+  onExit: (() => void) | null; // callback to return to the launcher
+}
+```
+
+- `createGame` is a factory function (not a constructor reference) so games can encapsulate their own setup.
+- `onExit` is set by the launcher so each game can signal "return to menu" without knowing about the launcher.
+- `destroy()` ensures clean teardown of input listeners and animation frames before the launcher regains control.
+
+#### 2.2 Launcher
+
+A new `Launcher` class replaces the current root-level entry point logic. It:
+- Renders a title screen and a scrollable/grid list of game cards on the shared canvas.
+- Handles mouse/touch input to detect which game card was clicked.
+- On selection, creates the chosen game via its factory, passes it the canvas, sets `onExit`, and calls `start()`.
+- When a game fires `onExit`, the launcher calls `game.destroy()` and re-renders itself.
+
+The launcher draws directly on the same `<canvas>` element — no DOM-based menus — keeping the project consistent with its current Canvas-only rendering approach.
+
+#### 2.3 Directory Restructure
+
+```
+src/
+├── index.ts                    # Entry point — creates Launcher
+├── launcher/
+│   ├── Launcher.ts             # Launcher UI & game lifecycle manager
+│   └── registry.ts             # Ordered array of GameDescriptor entries
+├── shared/
+│   └── types.ts                # IGame, GameDescriptor interfaces
+└── games/
+    └── archer/
+        ├── index.ts            # Exports GameDescriptor for Archer
+        ├── ArcherGame.ts       # Current Game.ts, adapted to implement IGame
+        ├── types.ts            # Archer-specific types (GameState, etc.)
+        ├── levels.ts
+        ├── entities/
+        │   ├── Arrow.ts
+        │   ├── Balloon.ts
+        │   ├── Bow.ts
+        │   └── Obstacle.ts
+        ├── systems/
+        │   ├── CollisionSystem.ts
+        │   ├── InputManager.ts
+        │   ├── Spawner.ts
+        │   └── UpgradeManager.ts
+        └── rendering/
+            └── HUD.ts
+```
+
+#### 2.4 Changes to Archer (`Game.ts` → `ArcherGame.ts`)
+
+The existing `Game` class is renamed to `ArcherGame` and adapted:
+
+1. **Implements `IGame`**: adds `destroy()` and `onExit` members.
+2. **`destroy()`**: cancels the animation frame, removes event listeners registered by `InputManager`, removes the resize/orientation-change listeners.
+3. **Menu → Exit behavior**: When the game is in `"menu"` state (after game-over or victory and the player clicks), instead of restarting, it calls `this.onExit?.()` to return to the launcher. The Archer's internal `"menu"` state is replaced by `"title"` (pre-game splash) which transitions to `"playing"` on first click, while post-game clicks invoke `onExit`.
+4. **`InputManager` cleanup**: Add a `destroy()` method that calls `removeEventListener` for all registered handlers (store references to bound handlers).
+
+All existing game logic (levels, entities, systems, rendering) stays **unchanged** beyond the file move and the adapter layer above.
+
+#### 2.5 Game Registry
+
+```typescript
+// src/launcher/registry.ts
+import { archerDescriptor } from "../games/archer";
+
+export const GAME_REGISTRY: GameDescriptor[] = [
+  archerDescriptor,
+];
+```
+
+Adding a new game in the future is: create `src/games/<name>/`, implement `IGame`, export a `GameDescriptor`, add one line to `registry.ts`.
+
+#### 2.6 Entry Point (`src/index.ts`)
+
+Changes from:
+```typescript
+const game = new Game("game-canvas");
+game.start();
+```
+To:
+```typescript
+const launcher = new Launcher("game-canvas");
+launcher.start();
+```
+
+#### 2.7 Package & Build Changes
+
+| File | Change |
+|---|---|
+| `package.json` | `"name"` changes from `"archer"` to `"game-collection"` (or similar). `"description"` updated. |
+| `public/index.html` | `<title>` changes from `"Archer"` to `"Game Collection"` (or a chosen brand name). |
+| `webpack.config.js` | `HtmlWebpackPlugin` title updated. Entry point path stays `./src/index.ts`. |
+| `README.md` | Updated to describe the collection, how to add a new game, and list Archer as the first included game. |
+| `tsconfig.json` | No changes needed (rootDir remains `./src`). |
+
+#### 2.8 Test Adjustments
+
+All existing test files import from paths like `../src/Game`, `../src/entities/Balloon`, etc. These imports must be updated to the new paths under `../src/games/archer/`. No test logic changes — only import paths:
+
+| Old import | New import |
+|---|---|
+| `../src/Game` | `../src/games/archer/ArcherGame` |
+| `../src/entities/Balloon` | `../src/games/archer/entities/Balloon` |
+| `../src/entities/Arrow` | `../src/games/archer/entities/Arrow` |
+| `../src/entities/Obstacle` | `../src/games/archer/entities/Obstacle` |
+| `../src/entities/Bow` | `../src/games/archer/entities/Bow` |
+| `../src/systems/CollisionSystem` | `../src/games/archer/systems/CollisionSystem` |
+| `../src/systems/InputManager` | `../src/games/archer/systems/InputManager` |
+| `../src/systems/Spawner` | `../src/games/archer/systems/Spawner` |
+| `../src/systems/UpgradeManager` | `../src/games/archer/systems/UpgradeManager` |
+| `../src/rendering/HUD` | `../src/games/archer/rendering/HUD` |
+| `../src/levels` | `../src/games/archer/levels` |
+| `../src/types` | `../src/games/archer/types` |
+
+New tests should be added for the launcher and registry.
+
+### 3. Key Files to Create
+
+| File | Purpose |
+|---|---|
+| `src/shared/types.ts` | `IGame` and `GameDescriptor` interfaces |
+| `src/launcher/Launcher.ts` | Launcher UI: title, game grid, selection, lifecycle |
+| `src/launcher/registry.ts` | Ordered list of registered games |
+| `src/games/archer/index.ts` | Exports `archerDescriptor: GameDescriptor` |
+
+### 4. Key Files to Modify
+
+| File | Change |
+|---|---|
+| `src/index.ts` | Instantiate `Launcher` instead of `Game` |
+| `src/Game.ts` → `src/games/archer/ArcherGame.ts` | Move + rename + implement `IGame` + add `destroy()`/`onExit` |
+| `src/types.ts` → `src/games/archer/types.ts` | Move (no content changes) |
+| `src/levels.ts` → `src/games/archer/levels.ts` | Move (no content changes) |
+| `src/entities/*` → `src/games/archer/entities/*` | Move (no content changes) |
+| `src/systems/InputManager.ts` → `src/games/archer/systems/InputManager.ts` | Move + add `destroy()` for listener cleanup |
+| `src/systems/*` (others) → `src/games/archer/systems/*` | Move (no content changes) |
+| `src/rendering/HUD.ts` → `src/games/archer/rendering/HUD.ts` | Move + update menu text from "Balloon Archer" to "Archer" (shorter for card) or keep as-is; add "Back" prompt on game-over/victory |
+| `public/index.html` | Update `<title>` |
+| `package.json` | Update `name`, `description` |
+| `webpack.config.js` | Update `HtmlWebpackPlugin` title |
+| `README.md` | Rewrite for game collection |
+| `tests/*.test.ts` | Update import paths |
+
+### 5. Data Models / Contracts
+
+#### 5.1 `GameDescriptor` (registration metadata)
+
+```typescript
+interface GameDescriptor {
+  id: string;           // unique slug, e.g. "archer"
+  name: string;         // display name, e.g. "Balloon Archer"
+  description: string;  // short tagline
+  thumbnailColor: string; // CSS color for card background
+  createGame: (canvas: HTMLCanvasElement) => IGame;
+}
+```
+
+#### 5.2 `IGame` (runtime contract)
+
+```typescript
+interface IGame {
+  start(): void;        // begin the game loop
+  stop(): void;         // pause (keep state)
+  destroy(): void;      // full teardown: cancel rAF, remove listeners
+  onExit: (() => void) | null;  // launcher sets this; game calls it to return
+}
+```
+
+No network APIs, databases, or server-side contracts are involved — this is a purely client-side Canvas application.
+
+### 6. Launcher UX Details
+
+- **Title**: Large heading at the top (e.g., "Game Collection" or a brand name).
+- **Game cards**: Rendered as rounded rectangles in a grid/row. Each card shows the game's `name`, `description`, and uses `thumbnailColor` as a background fill. Hover state indicated by border highlight.
+- **Selection**: Clicking a card transitions to that game. The canvas is cleared and handed to the game's factory.
+- **Return flow**: When `onExit` fires, the launcher re-renders. No page reload.
+- **Single game**: When only one game exists, the launcher still shows the grid (with one card). This keeps the pattern consistent and avoids special-case logic.
+- **Touch support**: The launcher reuses the same canvas coordinate mapping pattern as Archer's `InputManager`.
+
+### 7. Edge Cases & Error Handling
+
+| Edge case | Handling |
+|---|---|
+| Game's `onExit` called multiple times | Guard with a `destroyed` flag; only process the first call. |
+| `destroy()` called while game loop is mid-frame | Set `running = false` before calling `cancelAnimationFrame`. The loop's guard clause (`if (!this.running) return`) prevents further updates. |
+| Canvas resize while launcher is active | Launcher registers its own resize handler; tears it down when handing off to a game. |
+| Empty game registry | Launcher renders a "No games available" message instead of crashing. |
+| Browser back button / navigation | Not applicable — single-page Canvas app with no routing. |
+| `createGame` throws | Launcher catches the error, logs it, and stays on the menu. Displays an error toast on the canvas. |
+| Game added without registering | Won't appear — only registered games in `GAME_REGISTRY` are shown. This is by design (explicit > implicit). |
+| Event listener leaks on game switch | `InputManager.destroy()` removes all listeners. Launcher verifies cleanup by owning the lifecycle. |
+| Multiple rapid game selections | Launcher disables input briefly during transition (debounce). |
+| Window loses focus during game | Existing `DT_CAP` in Archer prevents time jumps. Each game is responsible for its own focus handling. |
+
+### 8. Migration Strategy
+
+This is a **non-breaking refactor** for the Archer game itself — all game logic, levels, entities, and systems are unchanged. The steps are:
+
+1. Create `src/shared/types.ts` with `IGame` and `GameDescriptor`.
+2. Create `src/games/archer/` directory tree.
+3. Move all Archer source files into `src/games/archer/`, preserving internal relative imports.
+4. Adapt `ArcherGame` to implement `IGame` (add `destroy()`, `onExit`, modify menu-state behavior).
+5. Add `destroy()` to `InputManager`.
+6. Create `src/games/archer/index.ts` exporting the descriptor.
+7. Create `src/launcher/Launcher.ts` and `src/launcher/registry.ts`.
+8. Rewrite `src/index.ts` to use the launcher.
+9. Update build config, HTML, and README.
+10. Update all test import paths.
+11. Verify all existing tests pass with no logic changes.
+
+---
+
+## Acceptance Criteria (Gherkin)
+
+```gherkin
+Feature: Game Collection Launcher
+  The application presents a collection of games with a launcher screen.
+  Archer is the first (and currently only) game in the collection.
+
+  # ── Launcher ──
+
+  Scenario: Application starts with the launcher screen
+    Given the application is loaded in a browser
+    When the page finishes loading
+    Then a launcher screen is displayed on the canvas
+    And the launcher shows a title heading
+    And the launcher displays at least one game card
+
+  Scenario: Archer appears as the first game in the collection
+    Given the launcher screen is displayed
+    Then the first game card shows the name "Balloon Archer"
+    And the first game card shows a short description
+
+  Scenario: Clicking a game card launches that game
+    Given the launcher screen is displayed
+    When the player clicks the "Balloon Archer" game card
+    Then the canvas transitions to the Archer game
+    And the Archer game begins running its game loop
+
+  Scenario: Launcher handles touch input on mobile
+    Given the launcher screen is displayed on a touch device
+    When the player taps the "Balloon Archer" game card
+    Then the canvas transitions to the Archer game
+
+  # ── Returning to Launcher ──
+
+  Scenario: Returning to the launcher after game over
+    Given the player is playing Archer
+    And the game reaches the "gameover" state
+    When the player clicks on the game over screen
+    Then the application returns to the launcher screen
+    And the launcher displays the list of games again
+
+  Scenario: Returning to the launcher after victory
+    Given the player is playing Archer
+    And the game reaches the "victory" state
+    When the player clicks on the victory screen
+    Then the application returns to the launcher screen
+
+  # ── Game Lifecycle ──
+
+  Scenario: Game resources are cleaned up when returning to launcher
+    Given the player launched Archer from the launcher
+    When the player returns to the launcher
+    Then the Archer game's event listeners are removed
+    And the Archer game's animation frame is cancelled
+    And no Archer game loop continues running
+
+  Scenario: A game can be relaunched after returning to the launcher
+    Given the player completed a round of Archer and returned to the launcher
+    When the player clicks the "Balloon Archer" game card again
+    Then a fresh instance of Archer starts
+    And the game state is fully reset (score 0, level 1)
+
+  # ── Existing Archer Gameplay Unchanged ──
+
+  Scenario: Archer gameplay is unaffected by the restructure
+    Given the player launches Archer from the launcher
+    When the player plays through the game
+    Then all 5 levels are available in order
+    And balloons, arrows, upgrades, obstacles, and bosses work as before
+    And level completion, game over, and victory logic is unchanged
+
+  Scenario: Archer game preserves all level configurations
+    Given Archer is launched from the game collection
+    Then level 1 is named "Meadow" with target score 20 and 100 arrows
+    And level 2 is named "Forest" with target score 35 and 80 arrows
+    And level 3 is named "Mountains" with target score 50 and 70 arrows
+    And level 4 is named "Storm" with target score 70 and 60 arrows
+    And level 5 is named "Sky Fortress" with target score 100 and 50 arrows
+
+  # ── Game Registration ──
+
+  Scenario: Game registry contains Archer
+    Given the game registry is loaded
+    Then the registry contains exactly 1 game
+    And the game has id "archer"
+    And the game has a valid createGame factory function
+
+  Scenario: Empty registry shows a message
+    Given the game registry contains no games
+    When the launcher screen is displayed
+    Then the launcher shows a "No games available" message
+
+  # ── IGame Contract ──
+
+  Scenario: Archer implements the IGame interface
+    Given ArcherGame is instantiated with a canvas
+    Then it exposes a start() method
+    And it exposes a stop() method
+    And it exposes a destroy() method
+    And it exposes an onExit callback property
+
+  Scenario: destroy() prevents further game loop execution
+    Given ArcherGame is running
+    When destroy() is called
+    Then the game loop stops
+    And no further update or render calls occur
+
+  # ── Build & Configuration ──
+
+  Scenario: Project metadata reflects the game collection
+    Given the package.json file is read
+    Then the "name" field is not "archer"
+    And the "description" mentions a game collection
+
+  Scenario: HTML page title reflects the game collection
+    Given the HTML page is loaded
+    Then the page title is not "Archer"
+    And the page title reflects the game collection name
+
+  # ── Error Handling ──
+
+  Scenario: Launcher handles game creation failure gracefully
+    Given a game descriptor has a createGame function that throws an error
+    When the player clicks that game's card
+    Then the launcher catches the error
+    And the launcher remains on the game selection screen
+    And an error message is displayed on the canvas
+
+  # ── File Structure ──
+
+  Scenario: Archer source files live under src/games/archer/
+    Given the source code directory is inspected
+    Then src/games/archer/ArcherGame.ts exists
+    And src/games/archer/types.ts exists
+    And src/games/archer/levels.ts exists
+    And src/games/archer/entities/ contains Arrow.ts, Balloon.ts, Bow.ts, Obstacle.ts
+    And src/games/archer/systems/ contains CollisionSystem.ts, InputManager.ts, Spawner.ts, UpgradeManager.ts
+    And src/games/archer/rendering/ contains HUD.ts
+
+  Scenario: Shared types define the game contract
+    Given the source code directory is inspected
+    Then src/shared/types.ts exists
+    And it exports the IGame interface
+    And it exports the GameDescriptor interface
+
+  Scenario: All existing tests pass after restructure
+    Given the test import paths have been updated
+    When the test suite is executed
+    Then all previously passing tests continue to pass
+```
+
+---
+
+## Summary of Scope
+
+- **New files**: 4 (shared types, launcher, registry, archer index)
+- **Moved files**: 13 (all Archer source files into `src/games/archer/`)
+- **Modified files**: 7 (index.ts, ArcherGame.ts, InputManager.ts, package.json, index.html, webpack.config.js, README.md)
+- **Test updates**: Import path changes only — no logic changes
+- **Risk**: Low — Archer game logic is untouched; this is a structural refactor with an additive launcher layer
