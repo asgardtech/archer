@@ -695,31 +695,101 @@ describe("GnomeAI", () => {
 // ============================================================
 
 describe("Scoring", () => {
-  it("should award 1 point for standard brick", () => {
+  function createPlayingGame(): any {
     const canvas = createMockCanvas();
     setupDom(canvas);
     const game = jardinainsDescriptor.createGame(canvas) as any;
     game.resetGame();
     game.state = "playing";
+    return game;
+  }
 
-    const brick = game.bricks.find((b: any) => b.alive && b.maxHitPoints === 1);
-    if (brick) {
-      const initialScore = game.score;
-      while (brick.hitPoints > 0) brick.hit();
-      game.score += 1;
-      expect(game.score).toBe(initialScore + 1);
-    }
-  });
+  it("should award 1 point for standard brick (1 HP) via updatePlaying", () => {
+    const game = createPlayingGame();
 
-  it("should award 5 points for catching a gnome", () => {
-    const canvas = createMockCanvas();
-    setupDom(canvas);
-    const game = jardinainsDescriptor.createGame(canvas) as any;
-    game.resetGame();
-    game.state = "playing";
+    game.bricks = [new Brick(0, 0, 1)];
+    game.gnomes = [];
+    game.flowerPots = [];
+    game.powerUps = [];
+
+    const brick = game.bricks[0];
+    const ball = new Ball(brick.centerX, brick.bottom + 6);
+    ball.stuck = false;
+    ball.vel = { x: 0, y: -250 };
+    game.balls = [ball];
 
     const initialScore = game.score;
-    game.score += 5;
+    game.updatePlaying(0.016);
+    expect(game.score).toBeGreaterThanOrEqual(initialScore + 1);
+  });
+
+  it("should award 3 points for tough brick (2 HP) via updatePlaying", () => {
+    const game = createPlayingGame();
+
+    const brick = new Brick(0, 0, 2);
+    game.bricks = [brick];
+    game.gnomes = [];
+    game.flowerPots = [];
+    game.powerUps = [];
+
+    brick.hitPoints = 1;
+
+    const ball = new Ball(brick.centerX, brick.bottom + 6);
+    ball.stuck = false;
+    ball.vel = { x: 0, y: -250 };
+    game.balls = [ball];
+
+    const initialScore = game.score;
+    game.updatePlaying(0.016);
+
+    expect(brick.alive).toBe(false);
+    expect(game.score).toBeGreaterThanOrEqual(initialScore + 3);
+  });
+
+  it("should award 3 points for very tough brick (3 HP) via updatePlaying", () => {
+    const game = createPlayingGame();
+
+    const brick = new Brick(0, 0, 3);
+    game.bricks = [brick];
+    game.gnomes = [];
+    game.flowerPots = [];
+    game.powerUps = [];
+
+    brick.hitPoints = 1;
+
+    const ball = new Ball(brick.centerX, brick.bottom + 6);
+    ball.stuck = false;
+    ball.vel = { x: 0, y: -250 };
+    game.balls = [ball];
+
+    const initialScore = game.score;
+    game.updatePlaying(0.016);
+
+    expect(brick.alive).toBe(false);
+    expect(game.score).toBeGreaterThanOrEqual(initialScore + 3);
+  });
+
+  it("should award 5 points for catching a falling gnome via updatePlaying", () => {
+    const game = createPlayingGame();
+
+    game.bricks = [new Brick(5, 5, 1)];
+    game.flowerPots = [];
+    game.powerUps = [];
+
+    const ball = new Ball(100, 300);
+    ball.stuck = false;
+    ball.vel = { x: 100, y: -200 };
+    game.balls = [ball];
+
+    const paddle = game.paddle;
+    const gnome = new Gnome(paddle.x, paddle.top + 2, 0, 0, 999);
+    gnome.startFalling();
+    game.gnomes = [gnome];
+
+    const initialScore = game.score;
+    game.updatePlaying(0.016);
+
+    expect(gnome.state).toBe("caught");
     expect(game.score).toBe(initialScore + 5);
   });
 });
@@ -729,16 +799,27 @@ describe("Scoring", () => {
 // ============================================================
 
 describe("Multi-ball life loss", () => {
-  it("should not lose life when one ball dies but others remain", () => {
+  function createPlayingGame(): any {
     const canvas = createMockCanvas();
     setupDom(canvas);
     const game = jardinainsDescriptor.createGame(canvas) as any;
     game.resetGame();
     game.state = "playing";
+    return game;
+  }
+
+  it("should not lose life when one ball dies but others remain via updatePlaying", () => {
+    const game = createPlayingGame();
+
+    game.bricks = [new Brick(5, 5, 1)];
+    game.gnomes = [];
+    game.flowerPots = [];
+    game.powerUps = [];
 
     const ball1 = new Ball(400, 300);
     ball1.stuck = false;
     ball1.vel = { x: 100, y: -200 };
+
     const ball2 = new Ball(400, 700);
     ball2.stuck = false;
     ball2.vel = { x: 0, y: 200 };
@@ -747,21 +828,31 @@ describe("Multi-ball life loss", () => {
     game.balls = [ball1, ball2];
     const livesBefore = game.lives;
 
-    game.balls = game.balls.filter((b: any) => b.alive);
-    expect(game.balls.length).toBe(1);
+    game.updatePlaying(0.016);
+
     expect(game.lives).toBe(livesBefore);
+    expect(game.balls.length).toBe(1);
+    expect(game.balls[0]).toBe(ball1);
   });
 
-  it("should lose life when last ball dies", () => {
-    const canvas = createMockCanvas();
-    setupDom(canvas);
-    const game = jardinainsDescriptor.createGame(canvas) as any;
-    game.resetGame();
-    game.state = "playing";
+  it("should lose life when last ball dies via updatePlaying", () => {
+    const game = createPlayingGame();
 
-    game.balls = [];
+    game.bricks = [new Brick(5, 5, 1)];
+    game.gnomes = [];
+    game.flowerPots = [];
+    game.powerUps = [];
+
+    const ball = new Ball(400, 700);
+    ball.stuck = false;
+    ball.vel = { x: 0, y: 250 };
+    ball.alive = false;
+
+    game.balls = [ball];
     const livesBefore = game.lives;
-    game.lives--;
+
+    game.updatePlaying(0.016);
+
     expect(game.lives).toBe(livesBefore - 1);
   });
 });

@@ -22,7 +22,7 @@ export class GnomeAI {
         const dx = ball.pos.x - gnome.x;
         const dy = ball.pos.y - gnome.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < DUCK_PROXIMITY && ball.vel.y < 0 && dy < 0) {
+        if (dist < DUCK_PROXIMITY && ball.vel.y < 0 && dy > 0) {
           gnome.duck();
         }
       }

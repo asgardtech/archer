@@ -152,12 +152,8 @@ export class JardinainsGame implements IGame {
 
       case "level_complete":
         if (this.input.wasClicked) {
-          if (this.currentLevel >= LEVELS.length - 1) {
-            this.state = "victory";
-          } else {
-            this.startLevel(this.currentLevel + 1);
-            this.state = "playing";
-          }
+          this.startLevel(this.currentLevel + 1);
+          this.state = "playing";
         }
         break;
 
@@ -213,7 +209,7 @@ export class JardinainsGame implements IGame {
       for (const brick of hitBricks) {
         const destroyed = brick.hit();
         if (destroyed) {
-          if (brick.maxHitPoints >= 3) {
+          if (brick.maxHitPoints >= 2) {
             this.score += SCORE_BRICK_TOUGH;
           } else {
             this.score += SCORE_BRICK_STANDARD;
@@ -299,7 +295,11 @@ export class JardinainsGame implements IGame {
     const allBricksDestroyed = this.bricks.every((b) => !b.alive);
     if (allBricksDestroyed) {
       this.score += SCORE_LEVEL_CLEAR;
-      this.state = "level_complete";
+      if (this.currentLevel >= LEVELS.length - 1) {
+        this.state = "victory";
+      } else {
+        this.state = "level_complete";
+      }
     }
   }
 
