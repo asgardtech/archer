@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorPowerUpType } from "../types";
+import { RaptorGameState, RaptorPowerUpType, WeaponType } from "../types";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
 
@@ -9,11 +9,27 @@ const RETRO_FONT = "'Press Start 2P', monospace";
 const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "spread-shot": "#3498db",
   "rapid-fire": "#f39c12",
+  "weapon-missile": "#e67e22",
+  "weapon-laser": "#9b59b6",
 };
 
 const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
   "spread-shot": "SPR",
   "rapid-fire": "RPD",
+  "weapon-missile": "MSL",
+  "weapon-laser": "LSR",
+};
+
+const WEAPON_LABELS: Record<WeaponType, string> = {
+  "machine-gun": "GUN",
+  "missile": "MSL",
+  "laser": "LSR",
+};
+
+const WEAPON_COLORS: Record<WeaponType, string> = {
+  "machine-gun": "#ffdd00",
+  "missile": "#e67e22",
+  "laser": "#9b59b6",
 };
 
 export class HUD {
@@ -68,7 +84,8 @@ export class HUD {
     levelName: string,
     width: number,
     height: number,
-    activeEffects?: ReadonlyArray<ActiveEffect>
+    activeEffects?: ReadonlyArray<ActiveEffect>,
+    currentWeapon?: WeaponType
   ): void {
     switch (state) {
       case "loading":
@@ -77,10 +94,10 @@ export class HUD {
         this.renderMenu(ctx, width, height);
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, activeEffects);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, activeEffects, currentWeapon);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, activeEffects);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, activeEffects, currentWeapon);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.actionText("for next level"));
         break;
@@ -210,7 +227,8 @@ export class HUD {
     level: number,
     levelName: string,
     width: number,
-    activeEffects?: ReadonlyArray<ActiveEffect>
+    activeEffects?: ReadonlyArray<ActiveEffect>,
+    currentWeapon?: WeaponType
   ): void {
     ctx.save();
 
@@ -282,7 +300,24 @@ export class HUD {
       this.renderActiveEffects(ctx, activeEffects, width);
     }
 
+    if (currentWeapon) {
+      this.renderWeaponIndicator(ctx, currentWeapon, width);
+    }
+
     ctx.restore();
+  }
+
+  private renderWeaponIndicator(ctx: CanvasRenderingContext2D, weapon: WeaponType, width: number): void {
+    const label = WEAPON_LABELS[weapon];
+    const color = WEAPON_COLORS[weapon];
+    const x = width / 2;
+    const y = 42;
+
+    ctx.font = `6px ${RETRO_FONT}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = color;
+    ctx.fillText(`[${label}]`, x, y);
   }
 
   private renderLivesIcons(ctx: CanvasRenderingContext2D, lives: number, startX: number, y: number): void {

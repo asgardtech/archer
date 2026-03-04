@@ -1,4 +1,4 @@
-import { RaptorPowerUpType } from "../types";
+import { RaptorPowerUpType, WeaponType } from "../types";
 
 export interface ActiveEffect {
   type: RaptorPowerUpType;
@@ -12,6 +12,8 @@ export const EFFECT_DURATIONS: Partial<Record<RaptorPowerUpType, number>> = {
 
 export class PowerUpManager {
   private effects: ActiveEffect[] = [];
+  private _currentWeapon: WeaponType = "machine-gun";
+  private _weaponChanged = false;
 
   activate(type: RaptorPowerUpType): void {
     const duration = EFFECT_DURATIONS[type];
@@ -23,6 +25,23 @@ export class PowerUpManager {
     } else {
       this.effects.push({ type, remainingTime: duration });
     }
+  }
+
+  setWeapon(type: WeaponType): boolean {
+    if (this._currentWeapon === type) return false;
+    this._currentWeapon = type;
+    this._weaponChanged = true;
+    return true;
+  }
+
+  get currentWeapon(): WeaponType {
+    return this._currentWeapon;
+  }
+
+  consumeWeaponChanged(): boolean {
+    const changed = this._weaponChanged;
+    this._weaponChanged = false;
+    return changed;
   }
 
   update(dt: number): void {
@@ -42,5 +61,7 @@ export class PowerUpManager {
 
   reset(): void {
     this.effects = [];
+    this._currentWeapon = "machine-gun";
+    this._weaponChanged = false;
   }
 }

@@ -115,6 +115,32 @@ export class VFXManager {
     ctx.restore();
   }
 
+  addMissileTrail(x: number, y: number): void {
+    if (this.trails.length > 300) return;
+    this.trails.push({
+      x: x + (Math.random() - 0.5) * 4,
+      y: y + (Math.random() - 0.5) * 2,
+      alpha: 0.5,
+      size: 1.5 + Math.random() * 1.5,
+      color: `rgba(${180 + Math.random() * 40}, ${180 + Math.random() * 40}, ${180 + Math.random() * 40}, 0.6)`,
+    });
+  }
+
+  addLaserSpark(x: number, y: number): void {
+    if (this.trails.length > 300) return;
+    this.trails.push({
+      x: x + (Math.random() - 0.5) * 8,
+      y,
+      alpha: 0.8,
+      size: 1 + Math.random() * 2,
+      color: `rgba(100, 200, 255, 0.8)`,
+    });
+  }
+
+  triggerExplosionFlash(x: number, y: number, radius = 20): void {
+    this.muzzleFlashes.push({ x, y, radius, alpha: 1, duration: 0.12, elapsed: 0 });
+  }
+
   reset(): void {
     this.shake = null;
     this.shakeOffsetX = 0;

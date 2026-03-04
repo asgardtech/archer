@@ -8,6 +8,8 @@ const COLORS: Record<RaptorPowerUpType, string> = {
   "rapid-fire": "#f39c12",
   "shield-restore": "#2ecc71",
   "bonus-life": "#e74c3c",
+  "weapon-missile": "#e67e22",
+  "weapon-laser": "#9b59b6",
 };
 
 const ICONS: Record<RaptorPowerUpType, string> = {
@@ -15,6 +17,8 @@ const ICONS: Record<RaptorPowerUpType, string> = {
   "rapid-fire": "R",
   "shield-restore": "S",
   "bonus-life": "+",
+  "weapon-missile": "M",
+  "weapon-laser": "L",
 };
 
 const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
@@ -22,6 +26,8 @@ const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
   "rapid-fire": "powerup_rapid",
   "shield-restore": "powerup_shield",
   "bonus-life": "powerup_life",
+  "weapon-missile": "powerup_missile",
+  "weapon-laser": "powerup_laser",
 };
 
 export { SPRITE_KEYS as POWERUP_SPRITE_KEYS };

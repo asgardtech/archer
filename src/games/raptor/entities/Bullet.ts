@@ -1,12 +1,14 @@
-import { Vec2 } from "../types";
+import { Vec2, Projectile } from "../types";
 
 const BULLET_SPEED = 500;
 
-export class Bullet {
+export class Bullet implements Projectile {
   public pos: Vec2;
   public alive = true;
   public width = 4;
   public height = 10;
+  public damage = 1;
+  public piercing = false;
 
   private angle: number;
   private sprite: HTMLImageElement | null = null;
@@ -25,7 +27,7 @@ export class Bullet {
   get top(): number { return this.pos.y - this.height / 2; }
   get bottom(): number { return this.pos.y + this.height / 2; }
 
-  update(dt: number, canvasWidth = 800): void {
+  update(dt: number, canvasWidth = 800, _canvasHeight?: number, _enemies?: unknown[]): void {
     if (!this.alive) return;
     this.pos.x += Math.sin(this.angle) * BULLET_SPEED * dt;
     this.pos.y -= Math.cos(this.angle) * BULLET_SPEED * dt;

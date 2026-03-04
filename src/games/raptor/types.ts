@@ -23,7 +23,13 @@ export interface EnemyConfig {
   height: number;
 }
 
-export type RaptorPowerUpType = "spread-shot" | "rapid-fire" | "shield-restore" | "bonus-life";
+export type RaptorPowerUpType =
+  | "spread-shot"
+  | "rapid-fire"
+  | "shield-restore"
+  | "bonus-life"
+  | "weapon-missile"
+  | "weapon-laser";
 
 export type RaptorSoundEvent =
   | "player_shoot"
@@ -38,7 +44,79 @@ export type RaptorSoundEvent =
   | "level_complete"
   | "game_over"
   | "victory"
-  | "menu_start";
+  | "menu_start"
+  | "missile_fire"
+  | "missile_hit"
+  | "laser_fire"
+  | "laser_hit"
+  | "weapon_switch";
+
+export type WeaponType = "machine-gun" | "missile" | "laser";
+
+export interface WeaponConfig {
+  type: WeaponType;
+  damage: number;
+  fireRateMultiplier: number;
+  projectileSpeed: number;
+  piercing: boolean;
+  homing: boolean;
+  homingStrength: number;
+  splashRadius: number;
+  rapidFireBonus: number;
+  spreadShotBehavior: "multi-projectile" | "wider-beam";
+}
+
+export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
+  "machine-gun": {
+    type: "machine-gun",
+    damage: 1,
+    fireRateMultiplier: 1.0,
+    projectileSpeed: 500,
+    piercing: false,
+    homing: false,
+    homingStrength: 0,
+    splashRadius: 0,
+    rapidFireBonus: 2.0,
+    spreadShotBehavior: "multi-projectile",
+  },
+  "missile": {
+    type: "missile",
+    damage: 3,
+    fireRateMultiplier: 0.35,
+    projectileSpeed: 350,
+    piercing: false,
+    homing: true,
+    homingStrength: 2.5,
+    splashRadius: 40,
+    rapidFireBonus: 1.5,
+    spreadShotBehavior: "multi-projectile",
+  },
+  "laser": {
+    type: "laser",
+    damage: 1,
+    fireRateMultiplier: 0,
+    projectileSpeed: 0,
+    piercing: true,
+    homing: false,
+    homingStrength: 0,
+    splashRadius: 0,
+    rapidFireBonus: 1.5,
+    spreadShotBehavior: "wider-beam",
+  },
+};
+
+export interface Projectile {
+  pos: Vec2;
+  alive: boolean;
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+  damage: number;
+  piercing: boolean;
+  update(dt: number, canvasWidth: number, canvasHeight: number, enemies?: import("./entities/Enemy").Enemy[]): void;
+  render(ctx: CanvasRenderingContext2D): void;
+}
 
 export interface WaveConfig {
   enemyVariant: EnemyVariant;
@@ -76,6 +154,7 @@ export interface RaptorLevelConfig {
   enemyFireRateMultiplier: number;
   backgroundLayers?: BackgroundLayerConfig[];
   planetAssets?: string[];
+  weaponDrops?: WeaponType[];
 }
 
 export type AssetManifest = Record<string, string>;
