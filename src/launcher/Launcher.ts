@@ -34,7 +34,7 @@ export class Launcher {
   private boundTouchStart: (e: TouchEvent) => void;
   private boundResize: () => void;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
-  private isTouchDevice: boolean;
+  private lastTime = 0;
 
   constructor(canvasId: string) {
     const el = document.getElementById(canvasId);
@@ -48,9 +48,6 @@ export class Launcher {
     const ctx = this.canvas.getContext("2d");
     if (!ctx) throw new Error("Failed to get 2D rendering context");
     this.ctx = ctx;
-
-    this.isTouchDevice =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
     this.boundMouseMove = (e) => this.onMouseMove(e);
     this.boundClick = (e) => this.onClick(e);
@@ -179,6 +176,7 @@ export class Launcher {
     try {
       game = descriptor.createGame(this.canvas);
     } catch (err) {
+      console.error(`Failed to launch game "${descriptor.id}":`, err);
       this.errorMessage = `Failed to launch ${descriptor.name}`;
       this.errorTimer = 3;
       this.transitioning = false;
@@ -206,11 +204,13 @@ export class Launcher {
 
   private loop(time: number): void {
     if (!this.running) return;
-    this.render(time);
+    const dt = this.lastTime ? (time - this.lastTime) / 1000 : 0;
+    this.lastTime = time;
+    this.render(dt);
     this.rafId = requestAnimationFrame((t) => this.loop(t));
   }
 
-  private render(_time: number): void {
+  private render(dt: number): void {
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
@@ -251,7 +251,7 @@ export class Launcher {
     }
 
     if (this.errorMessage && this.errorTimer > 0) {
-      this.errorTimer -= 1 / 60;
+      this.errorTimer -= dt;
       const alpha = Math.min(1, this.errorTimer);
       ctx.save();
       ctx.textAlign = "center";

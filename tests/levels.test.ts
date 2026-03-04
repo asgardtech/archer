@@ -916,7 +916,7 @@ describe("Victory HUD renders correct content", () => {
     expect(conqueredText).toBeDefined();
   });
 
-  it("shows 'Click to Play Again' prompt", () => {
+  it("shows 'Return to Menu' prompt", () => {
     const hud = new HUD();
     const canvas = createMockCanvas();
     const ctx = (canvas as any).__ctx;
@@ -924,11 +924,11 @@ describe("Victory HUD renders correct content", () => {
 
     hud.render(ctx as any, "victory", 0, 0, 800, 600, [], 0, 5, "Sky Fortress", 275);
 
-    const playAgainText = fillTextCalls.find(
+    const returnText = fillTextCalls.find(
       (c: { text: string }) =>
-        c.text.includes("Click to Play Again") || c.text.includes("Tap to Play Again")
+        c.text.includes("Return to Menu")
     );
-    expect(playAgainText).toBeDefined();
+    expect(returnText).toBeDefined();
   });
 });
 
