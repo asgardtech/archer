@@ -17,6 +17,15 @@ const ICONS: Record<RaptorPowerUpType, string> = {
   "bonus-life": "+",
 };
 
+const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
+  "spread-shot": "powerup_spread",
+  "rapid-fire": "powerup_rapid",
+  "shield-restore": "powerup_shield",
+  "bonus-life": "powerup_life",
+};
+
+export { SPRITE_KEYS as POWERUP_SPRITE_KEYS };
+
 export class PowerUp {
   public pos: Vec2;
   public alive = true;
@@ -25,10 +34,15 @@ export class PowerUp {
   public height = 20;
 
   private time = 0;
+  private sprite: HTMLImageElement | null = null;
 
   constructor(x: number, y: number, type?: RaptorPowerUpType) {
     this.pos = { x, y };
     this.type = type ?? POWER_UP_TYPES[Math.floor(Math.random() * POWER_UP_TYPES.length)];
+  }
+
+  setSprite(sprite: HTMLImageElement): void {
+    this.sprite = sprite;
   }
 
   get left(): number { return this.pos.x - this.width / 2; }
@@ -60,19 +74,24 @@ export class PowerUp {
     ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
     ctx.fill();
 
-    ctx.beginPath();
-    ctx.arc(0, 0, s, 0, Math.PI * 2);
-    ctx.fillStyle = COLORS[this.type];
-    ctx.fill();
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    if (this.sprite) {
+      const drawSize = s * 2;
+      ctx.drawImage(this.sprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, 0, s, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS[this.type];
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
-    ctx.fillStyle = "#fff";
-    ctx.font = `bold ${s}px sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(ICONS[this.type], 0, 1);
+      ctx.fillStyle = "#fff";
+      ctx.font = `bold ${s}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(ICONS[this.type], 0, 1);
+    }
 
     ctx.restore();
   }

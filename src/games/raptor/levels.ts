@@ -16,6 +16,9 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#0a1628", "#1a2e50"],
     starDensity: 60,
     enemyFireRateMultiplier: 1.0,
+    backgroundLayers: [
+      { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.5 },
+    ],
   },
   {
     level: 2,
@@ -33,6 +36,10 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#1a0f05", "#3d2b1f"],
     starDensity: 40,
     enemyFireRateMultiplier: 1.0,
+    backgroundLayers: [
+      { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.35 },
+    ],
+    planetAssets: ["planet_02"],
   },
   {
     level: 3,
@@ -52,6 +59,10 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#0d1117", "#2a3a4a"],
     starDensity: 70,
     enemyFireRateMultiplier: 1.2,
+    backgroundLayers: [
+      { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.5 },
+    ],
+    planetAssets: ["planet_01"],
   },
   {
     level: 4,
@@ -72,6 +83,10 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#0a1520", "#1a3040"],
     starDensity: 80,
     enemyFireRateMultiplier: 1.4,
+    backgroundLayers: [
+      { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.55 },
+    ],
+    planetAssets: ["planet_01", "planet_02"],
   },
   {
     level: 5,
@@ -93,5 +108,9 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#0a0010", "#1a0030"],
     starDensity: 100,
     enemyFireRateMultiplier: 1.6,
+    backgroundLayers: [
+      { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.6 },
+    ],
+    planetAssets: ["planet_02"],
   },
 ];

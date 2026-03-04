@@ -4,6 +4,7 @@ export interface Vec2 {
 }
 
 export type RaptorGameState =
+  | "loading"
   | "menu"
   | "playing"
   | "level_complete"
@@ -56,6 +57,12 @@ export interface BossConfig {
   appearsAfterWave: number;
 }
 
+export interface BackgroundLayerConfig {
+  asset: string;
+  scrollSpeed: number;
+  opacity: number;
+}
+
 export interface RaptorLevelConfig {
   level: number;
   name: string;
@@ -67,6 +74,8 @@ export interface RaptorLevelConfig {
   skyGradient: [string, string];
   starDensity: number;
   enemyFireRateMultiplier: number;
+  backgroundLayers?: BackgroundLayerConfig[];
+  planetAssets?: string[];
 }
 
 export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {

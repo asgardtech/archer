@@ -8,6 +8,8 @@ export class EnemyBullet {
   public alive = true;
   public radius = 4;
 
+  private sprite: HTMLImageElement | null = null;
+
   constructor(x: number, y: number, targetX: number, targetY: number) {
     this.pos = { x, y };
     const dx = targetX - x;
@@ -21,6 +23,10 @@ export class EnemyBullet {
         y: (dy / dist) * ENEMY_BULLET_SPEED,
       };
     }
+  }
+
+  setSprite(sprite: HTMLImageElement): void {
+    this.sprite = sprite;
   }
 
   get left(): number { return this.pos.x - this.radius; }
@@ -44,6 +50,25 @@ export class EnemyBullet {
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.alive) return;
 
+    if (this.sprite) {
+      this.renderSprite(ctx);
+    } else {
+      this.renderFallback(ctx);
+    }
+  }
+
+  private renderSprite(ctx: CanvasRenderingContext2D): void {
+    const size = this.radius * 2;
+    ctx.drawImage(
+      this.sprite!,
+      this.pos.x - this.radius,
+      this.pos.y - this.radius,
+      size,
+      size
+    );
+  }
+
+  private renderFallback(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.fillStyle = "#ff3333";
     ctx.shadowColor = "#ff3333";
