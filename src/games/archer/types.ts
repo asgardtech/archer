@@ -22,3 +22,18 @@ export interface UpgradeState {
   type: UpgradeType;
   remainingTime: number;
 }
+
+export type SoundEvent =
+  | "arrow_shoot"
+  | "balloon_pop"
+  | "upgrade_pop"
+  | "boss_hit"
+  | "boss_kill"
+  | "obstacle_hit"
+  | "upgrade_activate"
+  | "ammo_gain"
+  | "level_complete"
+  | "game_over"
+  | "victory"
+  | "menu_start"
+  | "low_ammo";

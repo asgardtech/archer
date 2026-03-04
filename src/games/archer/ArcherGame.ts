@@ -3,6 +3,7 @@ import { InputManager } from "./systems/InputManager";
 import { Spawner } from "./systems/Spawner";
 import { CollisionSystem } from "./systems/CollisionSystem";
 import { UpgradeManager } from "./systems/UpgradeManager";
+import { SoundSystem } from "./systems/SoundSystem";
 import { Balloon } from "./entities/Balloon";
 import { Arrow } from "./entities/Arrow";
 import { Obstacle } from "./entities/Obstacle";
@@ -10,6 +11,7 @@ import { Bow } from "./entities/Bow";
 import { HUD } from "./rendering/HUD";
 import { LEVELS, LevelConfig } from "./levels";
 import { IGame } from "../../shared/types";
+import { AudioManager } from "../../shared/AudioManager";
 
 const DT_CAP = 0.1;
 const UPGRADE_BALLOON_SCORE = 3;
@@ -51,6 +53,9 @@ export class ArcherGame implements IGame {
   private collisions: CollisionSystem;
   private upgradeManager: UpgradeManager;
   private hud: HUD;
+  private audio: AudioManager;
+  private sound: SoundSystem;
+  private lowAmmoTriggered = false;
 
   private boundResize: (() => void) | null = null;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -80,6 +85,8 @@ export class ArcherGame implements IGame {
     this.upgradeManager = new UpgradeManager();
     this.hud = new HUD(this.input.isTouchDevice);
     this.bow = new Bow(width, height, this.input.isTouchDevice ? 60 : 30);
+    this.audio = new AudioManager();
+    this.sound = new SoundSystem(this.audio);
 
     this.setupResize();
   }
@@ -131,6 +138,8 @@ export class ArcherGame implements IGame {
     clearTimeout(this.resizeTimer);
 
     this.input.destroy();
+    this.sound.destroy();
+    this.audio.destroy();
 
     if (this.boundResize) {
       window.removeEventListener("resize", this.boundResize);
@@ -151,12 +160,28 @@ export class ArcherGame implements IGame {
     this.rafId = requestAnimationFrame((t) => this.loop(t));
   }
 
+  private handleMuteClick(): boolean {
+    if (!this.input.wasClicked) return false;
+    if (this.hud.isMuteButtonHit(this.input.mousePos.x, this.input.mousePos.y, this.width)) {
+      this.audio.ensureContext();
+      this.audio.toggleMute();
+      this.input.consume();
+      return true;
+    }
+    return false;
+  }
+
   private update(dt: number): void {
+    if (this.handleMuteClick()) return;
+
     switch (this.state) {
       case "menu":
         if (this.input.wasClicked) {
+          this.audio.ensureContext();
+          this.sound.play("menu_start");
           this.resetGame();
           this.state = "playing";
+          this.sound.startMusic("playing", 0);
         }
         break;
 
@@ -168,11 +193,13 @@ export class ArcherGame implements IGame {
         if (this.input.wasClicked) {
           this.startLevel(this.currentLevel + 1);
           this.state = "playing";
+          this.sound.startMusic("playing", this.currentLevel);
         }
         break;
 
       case "gameover":
         if (this.input.wasClicked) {
+          this.sound.stopMusic();
           if (this.onExit) {
             this.onExit();
           } else {
@@ -183,6 +210,7 @@ export class ArcherGame implements IGame {
 
       case "victory":
         if (this.input.wasClicked) {
+          this.sound.stopMusic();
           if (this.onExit) {
             this.onExit();
           } else {
@@ -216,6 +244,8 @@ export class ArcherGame implements IGame {
       if (!isRapidFire) {
         this.arrowsRemaining--;
       }
+
+      this.sound.play("arrow_shoot");
     }
 
     const newBalloons = this.spawner.update(dt, this.width, this.height);
@@ -248,6 +278,7 @@ export class ArcherGame implements IGame {
       this.score = Math.max(0, this.score - penalty.score);
       this.arrowsRemaining = Math.max(0, this.arrowsRemaining - penalty.arrows);
       this.hud.showPenalty(penalty.score);
+      this.sound.play("obstacle_hit");
     }
 
     const hits = this.collisions.check(this.arrows, this.balloons);
@@ -256,25 +287,31 @@ export class ArcherGame implements IGame {
         this.score += BOSS_BALLOON_SCORE;
         this.arrowsRemaining += BOSS_KILL_AMMO_BONUS;
         this.hud.showAmmoGain(BOSS_KILL_AMMO_BONUS);
+        this.sound.play("boss_kill");
       } else if (hit.balloon.variant === "boss") {
-        // Boss hit but not killed
+        this.sound.play("boss_hit");
       } else if (hit.balloon.variant === "upgrade") {
         this.score += UPGRADE_BALLOON_SCORE;
+        this.sound.play("upgrade_pop");
       } else {
         this.score += 1;
+        this.sound.play("balloon_pop");
       }
 
       if (hit.grantedUpgrade) {
         this.upgradeManager.activate(hit.grantedUpgrade, () => {
           this.arrowsRemaining += 10;
           this.hud.showAmmoGain(10);
+          this.sound.play("ammo_gain");
         });
+        this.sound.play("upgrade_activate");
       }
     }
 
     while (this.score >= this.nextAmmoMilestone) {
       this.arrowsRemaining += MILESTONE_AMMO_BONUS;
       this.hud.showAmmoGain(MILESTONE_AMMO_BONUS);
+      this.sound.play("ammo_gain");
       this.nextAmmoMilestone += MILESTONE_INTERVAL;
     }
 
@@ -282,21 +319,42 @@ export class ArcherGame implements IGame {
     this.arrows = this.arrows.filter((a) => a.alive);
     this.obstacles = this.obstacles.filter((o) => o.alive);
 
+    if (this.arrowsRemaining <= 5 && this.arrowsRemaining > 0) {
+      if (!this.lowAmmoTriggered) {
+        this.lowAmmoTriggered = true;
+        this.sound.play("low_ammo");
+      }
+    } else {
+      if (this.lowAmmoTriggered) {
+        this.lowAmmoTriggered = false;
+        this.sound.stopLowAmmoWarning();
+      }
+    }
+
     if (this.score >= this.currentLevelConfig.targetScore) {
       this.totalScore += this.score;
       this.balloons = [];
       this.arrows = [];
       this.obstacles = [];
+      this.sound.stopLowAmmoWarning();
+      this.lowAmmoTriggered = false;
+      this.sound.stopMusic();
       if (this.currentLevel >= LEVELS.length - 1) {
         this.state = "victory";
+        this.sound.play("victory");
       } else {
         this.state = "level_complete";
+        this.sound.play("level_complete");
       }
       return;
     }
 
     if (this.arrowsRemaining <= 0 && this.arrows.length === 0) {
       this.totalScore += this.score;
+      this.sound.stopLowAmmoWarning();
+      this.lowAmmoTriggered = false;
+      this.sound.stopMusic();
+      this.sound.play("game_over");
       this.state = "gameover";
     }
   }
@@ -304,6 +362,8 @@ export class ArcherGame implements IGame {
   private resetGame(): void {
     this.totalScore = 0;
     this.arrowsRemaining = 0;
+    this.lowAmmoTriggered = false;
+    this.sound.stopLowAmmoWarning();
     this.startLevel(0);
   }
 
@@ -357,6 +417,7 @@ export class ArcherGame implements IGame {
       config.name,
       this.totalScore + (this.state === "playing" ? this.score : 0)
     );
+    this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }
 
   private renderSky(): void {
