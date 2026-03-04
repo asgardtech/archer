@@ -313,6 +313,7 @@ export class RaptorGame implements IGame {
       } else {
         this.spawnBullet(this.player.pos.x, this.player.top);
       }
+      this.vfx.triggerMuzzleFlash(this.player.pos.x, this.player.top);
       this.sound.play("player_shoot");
     }
 
@@ -649,6 +650,7 @@ export class RaptorGame implements IGame {
       this.state === "level_complete"
     ) {
       this.vfx.renderTrails(this.ctx);
+      this.vfx.renderMuzzleFlashes(this.ctx);
 
       for (const pu of this.powerUps) {
         pu.render(this.ctx);

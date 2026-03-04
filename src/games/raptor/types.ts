@@ -78,6 +78,9 @@ export interface RaptorLevelConfig {
   planetAssets?: string[];
 }
 
+export type AssetManifest = Record<string, string>;
+export type LoadedAssets = Map<string, HTMLImageElement>;
+
 export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
   scout: {
     variant: "scout",

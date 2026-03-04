@@ -14,15 +14,29 @@ interface Trail {
   color: string;
 }
 
+interface MuzzleFlash {
+  x: number;
+  y: number;
+  radius: number;
+  alpha: number;
+  duration: number;
+  elapsed: number;
+}
+
 export class VFXManager {
   private shake: ShakeState | null = null;
   private shakeOffsetX = 0;
   private shakeOffsetY = 0;
   private trails: Trail[] = [];
+  private muzzleFlashes: MuzzleFlash[] = [];
 
   triggerScreenShake(intensity: number, duration: number): void {
     if (this.shake && this.shake.intensity > intensity) return;
     this.shake = { intensity, duration, elapsed: 0 };
+  }
+
+  triggerMuzzleFlash(x: number, y: number, radius = 8): void {
+    this.muzzleFlashes.push({ x, y, radius, alpha: 1, duration: 0.06, elapsed: 0 });
   }
 
   addTrail(x: number, y: number, color: string, size = 2): void {
@@ -50,6 +64,12 @@ export class VFXManager {
       t.size *= 1 - dt * 2;
     }
     this.trails = this.trails.filter((t) => t.alpha > 0.01);
+
+    for (const flash of this.muzzleFlashes) {
+      flash.elapsed += dt;
+      flash.alpha = Math.max(0, 1 - flash.elapsed / flash.duration);
+    }
+    this.muzzleFlashes = this.muzzleFlashes.filter((f) => f.elapsed < f.duration);
   }
 
   applyPreRender(ctx: CanvasRenderingContext2D): void {
@@ -78,10 +98,28 @@ export class VFXManager {
     ctx.restore();
   }
 
+  renderMuzzleFlashes(ctx: CanvasRenderingContext2D): void {
+    if (this.muzzleFlashes.length === 0) return;
+    ctx.save();
+    for (const flash of this.muzzleFlashes) {
+      ctx.globalAlpha = flash.alpha * 0.7;
+      const gradient = ctx.createRadialGradient(flash.x, flash.y, 0, flash.x, flash.y, flash.radius);
+      gradient.addColorStop(0, "rgba(255, 255, 200, 1)");
+      gradient.addColorStop(0.4, "rgba(255, 200, 50, 0.6)");
+      gradient.addColorStop(1, "rgba(255, 150, 0, 0)");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(flash.x, flash.y, flash.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   reset(): void {
     this.shake = null;
     this.shakeOffsetX = 0;
     this.shakeOffsetY = 0;
     this.trails = [];
+    this.muzzleFlashes = [];
   }
 }

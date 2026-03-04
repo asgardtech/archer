@@ -1,18 +1,10 @@
 import { RaptorGameState, RaptorPowerUpType } from "../types";
+import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
 
 const MUTE_BTN_SIZE = 36;
 const MUTE_BTN_MARGIN = 12;
-
-interface ActiveEffect {
-  type: RaptorPowerUpType;
-  remainingTime: number;
-}
-
-const EFFECT_MAX_DURATIONS: Partial<Record<RaptorPowerUpType, number>> = {
-  "spread-shot": 8,
-  "rapid-fire": 6,
-};
+const RETRO_FONT = "'Press Start 2P', monospace";
 
 const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "spread-shot": "#3498db",
@@ -47,7 +39,7 @@ export class HUD {
     ctx.roundRect(x, y, size, size, 6);
     ctx.fill();
 
-    ctx.font = "20px sans-serif";
+    ctx.font = `16px ${RETRO_FONT}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#fff";
@@ -118,12 +110,12 @@ export class HUD {
     ctx.fillRect(0, 0, width, height);
 
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "bold 42px sans-serif";
+    ctx.font = `24px ${RETRO_FONT}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("RAPTOR SKIES", width / 2, height / 2 - 60);
 
-    ctx.font = "16px sans-serif";
+    ctx.font = `10px ${RETRO_FONT}`;
     ctx.fillStyle = "#8899BB";
     ctx.fillText("Loading assets...", width / 2, height / 2 - 20);
 
@@ -145,7 +137,7 @@ export class HUD {
       ctx.fill();
     }
 
-    ctx.font = "12px sans-serif";
+    ctx.font = `8px ${RETRO_FONT}`;
     ctx.fillStyle = "#667799";
     ctx.fillText(`${Math.floor(progress * 100)}%`, width / 2, barY + barH + 18);
 
@@ -180,16 +172,16 @@ export class HUD {
     ctx.stroke();
 
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "bold 40px sans-serif";
+    ctx.font = `22px ${RETRO_FONT}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Raptor Skies", width / 2, py + 50);
 
-    ctx.font = "18px sans-serif";
+    ctx.font = `8px ${RETRO_FONT}`;
     ctx.fillStyle = "#B0C4DE";
     ctx.fillText("A Vertical Scrolling Shoot-em-up", width / 2, py + 90);
 
-    ctx.font = "18px sans-serif";
+    ctx.font = `10px ${RETRO_FONT}`;
     ctx.fillStyle = "#FFD700";
     ctx.fillText(
       this.isTouchDevice ? "Tap to Start" : "Click to Start",
@@ -197,7 +189,7 @@ export class HUD {
       py + 140
     );
 
-    ctx.font = "13px sans-serif";
+    ctx.font = `7px ${RETRO_FONT}`;
     ctx.fillStyle = "#8899AA";
     ctx.fillText(
       this.isTouchDevice
@@ -235,7 +227,7 @@ export class HUD {
     ctx.lineTo(width, 44);
     ctx.stroke();
 
-    ctx.font = "bold 14px sans-serif";
+    ctx.font = `9px ${RETRO_FONT}`;
     ctx.textBaseline = "middle";
 
     ctx.textAlign = "left";
@@ -244,6 +236,7 @@ export class HUD {
 
     this.renderLivesIcons(ctx, lives, 10, 28);
 
+    ctx.font = `9px ${RETRO_FONT}`;
     ctx.textAlign = "center";
     ctx.fillStyle = "#FFD700";
     ctx.fillText(`Level ${level} \u2013 ${levelName}`, width / 2, 14);
@@ -280,7 +273,7 @@ export class HUD {
     this.roundedRect(ctx, barX, barY, barW, barH, 4);
     ctx.stroke();
 
-    ctx.font = "9px sans-serif";
+    ctx.font = `6px ${RETRO_FONT}`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
     ctx.textAlign = "center";
     ctx.fillText("SHIELD", width / 2, barY + barH + 8);
@@ -303,7 +296,7 @@ export class HUD {
         ctx.drawImage(playerSprite, ix, y - iconSize / 2, iconSize, iconSize);
       } else {
         ctx.fillStyle = "#FF6B6B";
-        ctx.font = "12px sans-serif";
+        ctx.font = `10px ${RETRO_FONT}`;
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
         ctx.fillText("\u2665", ix, y);
@@ -323,7 +316,7 @@ export class HUD {
     for (let i = 0; i < effects.length; i++) {
       const eff = effects[i];
       const y = startY + i * (itemH + 4);
-      const maxDur = EFFECT_MAX_DURATIONS[eff.type] ?? 8;
+      const maxDur = EFFECT_DURATIONS[eff.type] ?? 8;
       const frac = Math.max(0, eff.remainingTime / maxDur);
       const color = EFFECT_COLORS[eff.type] ?? "#888";
       const label = EFFECT_LABELS[eff.type] ?? "?";
@@ -336,7 +329,7 @@ export class HUD {
         ctx.drawImage(sprite, startX - 18, y, 14, 14);
       }
 
-      ctx.font = "bold 9px sans-serif";
+      ctx.font = `7px ${RETRO_FONT}`;
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.fillStyle = color;
@@ -390,10 +383,10 @@ export class HUD {
     ctx.textBaseline = "middle";
 
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = "bold 36px sans-serif";
+    ctx.font = `20px ${RETRO_FONT}`;
     ctx.fillText(title, width / 2, py + 55);
 
-    ctx.font = "18px sans-serif";
+    ctx.font = `9px ${RETRO_FONT}`;
     ctx.fillStyle = "#D0D8E8";
     for (let i = 0; i < lines.length; i++) {
       ctx.fillText(lines[i], width / 2, py + 100 + i * 30);

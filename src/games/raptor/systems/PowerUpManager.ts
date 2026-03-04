@@ -1,11 +1,11 @@
 import { RaptorPowerUpType } from "../types";
 
-interface ActiveEffect {
+export interface ActiveEffect {
   type: RaptorPowerUpType;
   remainingTime: number;
 }
 
-const EFFECT_DURATIONS: Partial<Record<RaptorPowerUpType, number>> = {
+export const EFFECT_DURATIONS: Partial<Record<RaptorPowerUpType, number>> = {
   "spread-shot": 8,
   "rapid-fire": 6,
 };

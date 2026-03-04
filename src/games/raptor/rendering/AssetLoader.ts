@@ -1,5 +1,4 @@
-export type AssetManifest = Record<string, string>;
-export type LoadedAssets = Map<string, HTMLImageElement>;
+import { AssetManifest } from "../types";
 
 export class AssetLoader {
   private cache: Map<string, HTMLImageElement> = new Map();
@@ -52,11 +51,5 @@ export class AssetLoader {
 
   getOptional(name: string): HTMLImageElement | null {
     return this.cache.get(name) ?? null;
-  }
-
-  addGenerated(name: string, canvas: HTMLCanvasElement): void {
-    const img = new Image();
-    img.src = canvas.toDataURL();
-    this.cache.set(name, img);
   }
 }

@@ -16,6 +16,8 @@ export class Enemy {
   private flashTimer = 0;
   private time = 0;
   private sprite: HTMLImageElement | null = null;
+  private static _flashCanvas: HTMLCanvasElement | null = null;
+  private static _flashCtx: CanvasRenderingContext2D | null = null;
 
   constructor(x: number, y: number, variant: EnemyVariant, speed?: number, overrideConfig?: Partial<EnemyConfig>) {
     const config = { ...ENEMY_CONFIGS[variant], ...overrideConfig };
@@ -118,6 +120,16 @@ export class Enemy {
     ctx.restore();
   }
 
+  private static getFlashCanvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
+    if (!Enemy._flashCanvas || !Enemy._flashCtx) {
+      Enemy._flashCanvas = document.createElement("canvas");
+      Enemy._flashCtx = Enemy._flashCanvas.getContext("2d")!;
+    }
+    if (Enemy._flashCanvas.width < w) Enemy._flashCanvas.width = w;
+    if (Enemy._flashCanvas.height < h) Enemy._flashCanvas.height = h;
+    return [Enemy._flashCanvas, Enemy._flashCtx];
+  }
+
   private renderSpriteVariant(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
     if (this.variant === "boss") {
       ctx.fillStyle = "rgba(255, 50, 50, 0.15)";
@@ -127,12 +139,19 @@ export class Enemy {
     }
 
     if (flash) {
+      const w = this.width;
+      const h = this.height;
+      const [offCanvas, offCtx] = Enemy.getFlashCanvas(w, h);
+      offCtx.clearRect(0, 0, w, h);
+      offCtx.globalCompositeOperation = "source-over";
+      offCtx.drawImage(this.sprite!, 0, 0, w, h);
+      offCtx.globalCompositeOperation = "source-atop";
+      offCtx.fillStyle = "#ffffff";
+      offCtx.fillRect(0, 0, w, h);
+      offCtx.globalCompositeOperation = "source-over";
+
       ctx.globalAlpha = 0.6;
-      ctx.drawImage(this.sprite!, x - this.width / 2, y - this.height / 2, this.width, this.height);
-      ctx.globalCompositeOperation = "source-atop";
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(x - this.width / 2, y - this.height / 2, this.width, this.height);
-      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(offCanvas, 0, 0, w, h, x - w / 2, y - h / 2, w, h);
       ctx.globalAlpha = 1;
     } else {
       if (this.variant === "scout") {

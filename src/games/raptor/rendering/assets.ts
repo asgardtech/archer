@@ -1,4 +1,4 @@
-import { AssetManifest } from "./AssetLoader";
+import { AssetManifest } from "../types";
 
 const BASE = "assets/raptor/";
 
