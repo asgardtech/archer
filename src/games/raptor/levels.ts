@@ -1,4 +1,4 @@
-import { RaptorLevelConfig } from "./types";
+import { RaptorLevelConfig, WeaponType } from "./types";
 
 export const LEVELS: RaptorLevelConfig[] = [
   {
@@ -40,6 +40,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.35 },
     ],
     planetAssets: ["planet_02"],
+    weaponDrops: ["missile"] as WeaponType[],
   },
   {
     level: 3,
@@ -63,6 +64,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.5 },
     ],
     planetAssets: ["planet_01"],
+    weaponDrops: ["missile", "laser"] as WeaponType[],
   },
   {
     level: 4,
@@ -87,6 +89,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.55 },
     ],
     planetAssets: ["planet_01", "planet_02"],
+    weaponDrops: ["missile", "laser"] as WeaponType[],
   },
   {
     level: 5,
@@ -112,5 +115,6 @@ export const LEVELS: RaptorLevelConfig[] = [
       { asset: "bg_nebula", scrollSpeed: 0.2, opacity: 0.6 },
     ],
     planetAssets: ["planet_02"],
+    weaponDrops: ["missile", "laser"] as WeaponType[],
   },
 ];

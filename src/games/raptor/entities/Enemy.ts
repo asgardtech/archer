@@ -78,11 +78,12 @@ export class Enemy {
     this.fireCooldown = (1 / this.fireRate) * multiplier;
   }
 
-  hit(): boolean {
+  hit(damage = 1): boolean {
     if (!this.alive) return false;
-    this.hitPoints--;
+    this.hitPoints -= damage;
     this.flashTimer = 0.08;
     if (this.hitPoints <= 0) {
+      this.hitPoints = 0;
       this.alive = false;
       return true;
     }

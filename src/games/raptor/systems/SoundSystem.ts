@@ -34,6 +34,11 @@ export class SoundSystem {
       case "game_over": this.playGameOver(); break;
       case "victory": this.playVictory(); break;
       case "menu_start": this.playMenuStart(); break;
+      case "missile_fire": this.playMissileFire(); break;
+      case "missile_hit": this.playMissileHit(); break;
+      case "laser_fire": this.playLaserFire(); break;
+      case "laser_hit": this.playLaserHit(); break;
+      case "weapon_switch": this.playWeaponSwitch(); break;
     }
   }
 
@@ -134,6 +139,39 @@ export class SoundSystem {
     this.audio.playTone(1200, 0.1, "sine", {
       attack: 0.005, decay: 0.02, sustain: 0.5, release: 0.04,
     });
+  }
+
+  private playMissileFire(): void {
+    this.audio.playToneSwept(200, 80, 0.15, "sawtooth", {
+      attack: 0.01, decay: 0.03, sustain: 0.4, release: 0.06,
+    });
+    this.audio.playNoise(0.1, 1500);
+  }
+
+  private playMissileHit(): void {
+    this.audio.playToneSwept(300, 60, 0.2, "sawtooth", {
+      attack: 0.005, decay: 0.03, sustain: 0.5, release: 0.1,
+    });
+    this.audio.playNoise(0.15, 3000);
+  }
+
+  private playLaserFire(): void {
+    this.audio.playTone(440, 0.05, "sine", {
+      attack: 0.002, decay: 0.01, sustain: 0.2, release: 0.02,
+    });
+  }
+
+  private playLaserHit(): void {
+    this.audio.playTone(600, 0.04, "triangle", {
+      attack: 0.002, decay: 0.01, sustain: 0.2, release: 0.01,
+    });
+  }
+
+  private playWeaponSwitch(): void {
+    this.audio.playSequence([
+      { frequency: 800, duration: 0.08, type: "sine" },
+      { frequency: 1200, duration: 0.12, type: "sine" },
+    ], 350);
   }
 
   startMusic(state: RaptorGameState, level = 0): void {

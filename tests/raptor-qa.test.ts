@@ -396,13 +396,13 @@ describe("Scenario: Player ship is clamped to screen bounds", () => {
 describe("Scenario: Player auto-fires during gameplay", () => {
   test("bullets should be created during updatePlaying", () => {
     const { game } = createPlayingGame();
-    game.bullets = [];
-    game.fireTimer = 100;
+    game.projectiles = [];
+    game.weaponSystem.reset();
     game.spawner.configure(LEVELS[0]);
 
-    (game as any).updatePlaying(0.016);
+    (game as any).updatePlaying(0.5);
 
-    expect(game.bullets.length).toBeGreaterThan(0);
+    expect(game.projectiles.length).toBeGreaterThan(0);
   });
 
   test("bullets should travel upward", () => {
@@ -761,7 +761,7 @@ describe("Scenario: Advancing to the next level", () => {
     expect(game.score).toBe(0);
     expect(game.player.lives).toBe(2);
     expect(game.player.alive).toBe(true);
-    expect(game.bullets.length).toBe(0);
+    expect(game.projectiles.length).toBe(0);
     expect(game.enemies.length).toBe(0);
   });
 });

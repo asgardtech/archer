@@ -1,11 +1,13 @@
-import { RaptorGameState, RaptorLevelConfig } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType } from "./types";
 import { InputManager } from "./systems/InputManager";
 import { CollisionSystem } from "./systems/CollisionSystem";
 import { EnemySpawner } from "./systems/EnemySpawner";
 import { PowerUpManager } from "./systems/PowerUpManager";
 import { SoundSystem } from "./systems/SoundSystem";
+import { WeaponSystem } from "./systems/WeaponSystem";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
+import { Missile } from "./entities/Missile";
 import { Enemy } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
 import { Explosion } from "./entities/Explosion";
@@ -20,7 +22,6 @@ import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
 
 const DT_CAP = 0.1;
-const MAX_PLAYER_BULLETS = 50;
 const MAX_ENEMY_BULLETS = 30;
 const MAX_EXPLOSIONS = 20;
 
@@ -60,17 +61,17 @@ export class RaptorGame implements IGame {
   private totalScore = 0;
 
   private player: Player;
-  private bullets: Bullet[] = [];
+  private projectiles: Projectile[] = [];
   private enemies: Enemy[] = [];
   private enemyBullets: EnemyBullet[] = [];
   private explosions: Explosion[] = [];
   private powerUps: PowerUp[] = [];
-  private fireTimer = 0;
 
   private input: InputManager;
   private collisions: CollisionSystem;
   private spawner: EnemySpawner;
   private powerUpManager: PowerUpManager;
+  private weaponSystem: WeaponSystem;
   private hud: HUD;
   private audio: AudioManager;
   private sound: SoundSystem;
@@ -103,6 +104,7 @@ export class RaptorGame implements IGame {
     this.collisions = new CollisionSystem();
     this.spawner = new EnemySpawner();
     this.powerUpManager = new PowerUpManager();
+    this.weaponSystem = new WeaponSystem();
     this.hud = new HUD(this.input.isTouchDevice);
     this.audio = new AudioManager();
     this.sound = new SoundSystem(this.audio);
@@ -300,21 +302,38 @@ export class RaptorGame implements IGame {
     this.powerUpManager.update(dt);
 
     const config = this.currentLevelConfig;
-    const rapidFire = this.powerUpManager.hasUpgrade("rapid-fire");
-    const fireInterval = 1 / (config.autoFireRate * (rapidFire ? 2 : 1));
-    this.fireTimer += dt;
-    if (this.fireTimer >= fireInterval && this.bullets.length < MAX_PLAYER_BULLETS) {
-      this.fireTimer -= fireInterval;
-      const spreadShot = this.powerUpManager.hasUpgrade("spread-shot");
-      if (spreadShot) {
-        this.spawnBullet(this.player.pos.x, this.player.top, -0.2);
-        this.spawnBullet(this.player.pos.x, this.player.top, 0);
-        this.spawnBullet(this.player.pos.x, this.player.top, 0.2);
-      } else {
-        this.spawnBullet(this.player.pos.x, this.player.top);
-      }
+
+    this.weaponSystem.setWeapon(this.powerUpManager.currentWeapon);
+
+    const { newProjectiles, soundEvent } = this.weaponSystem.update(
+      dt, this.player, config, this.powerUpManager,
+      this.width, this.projectiles
+    );
+
+    for (const proj of newProjectiles) {
+      this.assignProjectileSprite(proj);
+      this.projectiles.push(proj);
+    }
+    if (newProjectiles.length > 0) {
       this.vfx.triggerMuzzleFlash(this.player.pos.x, this.player.top);
-      this.sound.play("player_shoot");
+    }
+    if (soundEvent) {
+      this.sound.play(soundEvent);
+    }
+
+    const laserHits = this.collisions.checkBeamEnemies(
+      this.weaponSystem.laserBeam, this.enemies, dt
+    );
+    const laserSoundEvent = this.weaponSystem.getLaserSoundEvent(dt, laserHits.length > 0);
+    if (laserSoundEvent) {
+      this.sound.play(laserSoundEvent);
+    }
+    for (const enemy of laserHits) {
+      if (!enemy.alive) {
+        this.handleEnemyDestroyed(enemy, config);
+      } else {
+        this.vfx.addLaserSpark(enemy.pos.x, enemy.pos.y);
+      }
     }
 
     const newEnemies = this.spawner.update(dt, this.width);
@@ -344,9 +363,14 @@ export class RaptorGame implements IGame {
       }
     }
 
-    for (const bullet of this.bullets) {
-      bullet.update(dt, this.width);
-      this.vfx.addTrail(bullet.pos.x, bullet.pos.y + 4, "rgba(255, 220, 0, 0.4)", 1.5);
+    for (const proj of this.projectiles) {
+      if (proj instanceof Bullet) {
+        proj.update(dt, this.width);
+        this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(255, 220, 0, 0.4)", 1.5);
+      } else if (proj instanceof Missile) {
+        proj.update(dt, this.width, this.height, this.enemies);
+        this.vfx.addMissileTrail(proj.pos.x, proj.pos.y + 6);
+      }
     }
     for (const eb of this.enemyBullets) {
       eb.update(dt, this.width, this.height);
@@ -358,25 +382,26 @@ export class RaptorGame implements IGame {
       pu.update(dt, this.height);
     }
 
-    const enemyHits = this.collisions.checkBulletsEnemies(this.bullets, this.enemies);
+    const enemyHits = this.collisions.checkBulletsEnemies(this.projectiles, this.enemies);
     for (const hit of enemyHits) {
-      if (hit.destroyed) {
-        this.score += hit.enemy.scoreValue;
-        const explosionSize = hit.enemy.variant === "boss" ? 3 : hit.enemy.variant === "bomber" ? 2 : 1;
-        this.addExplosion(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
+      if (hit.splash) {
+        if (hit.destroyed) {
+          this.handleEnemyDestroyed(hit.enemy, config);
+        }
+        continue;
+      }
 
-        if (hit.enemy.variant === "boss") {
-          this.sound.play("boss_destroy");
-          this.spawner.markBossDefeated();
-          this.vfx.triggerScreenShake(10, 0.5);
-        } else {
-          this.sound.play("enemy_destroy");
-          if (Math.random() < config.powerUpDropChance) {
-            this.spawnPowerUp(hit.enemy.pos.x, hit.enemy.pos.y);
-          }
+      if (hit.destroyed) {
+        this.handleEnemyDestroyed(hit.enemy, config);
+        if (hit.bullet instanceof Missile) {
+          this.sound.play("missile_hit");
+          this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 25);
         }
       } else {
-        if (hit.enemy.variant === "boss") {
+        if (hit.bullet instanceof Missile) {
+          this.sound.play("missile_hit");
+          this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 15);
+        } else if (hit.enemy.variant === "boss") {
           this.sound.play("boss_hit");
         } else {
           this.sound.play("enemy_hit");
@@ -391,6 +416,7 @@ export class RaptorGame implements IGame {
         this.sound.play("player_destroy");
         this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
         this.vfx.triggerScreenShake(8, 0.4);
+        this.weaponSystem.laserBeam.active = false;
       } else {
         this.sound.play("player_hit");
         this.vfx.triggerScreenShake(3, 0.15);
@@ -417,6 +443,7 @@ export class RaptorGame implements IGame {
         this.sound.play("player_destroy");
         this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
         this.vfx.triggerScreenShake(8, 0.4);
+        this.weaponSystem.laserBeam.active = false;
       } else {
         this.sound.play("player_hit");
         this.vfx.triggerScreenShake(4, 0.2);
@@ -437,10 +464,20 @@ export class RaptorGame implements IGame {
         case "bonus-life":
           this.player.lives++;
           break;
+        case "weapon-missile":
+          if (this.powerUpManager.setWeapon("missile")) {
+            this.sound.play("weapon_switch");
+          }
+          break;
+        case "weapon-laser":
+          if (this.powerUpManager.setWeapon("laser")) {
+            this.sound.play("weapon_switch");
+          }
+          break;
       }
     }
 
-    this.bullets = this.bullets.filter((b) => b.alive);
+    this.projectiles = this.projectiles.filter((p) => p.alive);
     this.enemies = this.enemies.filter((e) => e.alive);
     this.enemyBullets = this.enemyBullets.filter((eb) => eb.alive);
     this.explosions = this.explosions.filter((e) => e.alive);
@@ -448,6 +485,7 @@ export class RaptorGame implements IGame {
 
     if (!this.player.alive) {
       this.totalScore += this.score;
+      this.weaponSystem.laserBeam.active = false;
       this.sound.stopMusic();
       this.sound.play("game_over");
       this.state = "gameover";
@@ -456,9 +494,10 @@ export class RaptorGame implements IGame {
 
     if (this.spawner.isLevelComplete && this.enemies.length === 0) {
       this.totalScore += this.score;
-      this.bullets = [];
+      this.projectiles = [];
       this.enemyBullets = [];
       this.powerUps = [];
+      this.weaponSystem.laserBeam.active = false;
       this.sound.stopMusic();
 
       if (this.currentLevel >= LEVELS.length - 1) {
@@ -471,15 +510,44 @@ export class RaptorGame implements IGame {
     }
   }
 
-  private spawnBullet(x: number, y: number, angle = 0): void {
-    const bullet = new Bullet(x, y, angle);
-    const sprite = this.assets.getOptional("bullet_player");
-    if (sprite) bullet.setSprite(sprite);
-    this.bullets.push(bullet);
+  private handleEnemyDestroyed(enemy: Enemy, config: RaptorLevelConfig): void {
+    this.score += enemy.scoreValue;
+    const explosionSize = enemy.variant === "boss" ? 3 : enemy.variant === "bomber" ? 2 : 1;
+    this.addExplosion(new Explosion(enemy.pos.x, enemy.pos.y, explosionSize));
+
+    if (enemy.variant === "boss") {
+      this.sound.play("boss_destroy");
+      this.spawner.markBossDefeated();
+      this.vfx.triggerScreenShake(10, 0.5);
+    } else {
+      this.sound.play("enemy_destroy");
+      if (Math.random() < config.powerUpDropChance) {
+        this.spawnPowerUp(enemy.pos.x, enemy.pos.y);
+      }
+    }
+  }
+
+  private assignProjectileSprite(proj: Projectile): void {
+    if (proj instanceof Bullet) {
+      const sprite = this.assets.getOptional("bullet_player");
+      if (sprite) proj.setSprite(sprite);
+    } else if (proj instanceof Missile) {
+      const sprite = this.assets.getOptional("missile_player");
+      if (sprite) proj.setSprite(sprite);
+    }
   }
 
   private spawnPowerUp(x: number, y: number): void {
-    const pu = new PowerUp(x, y);
+    const config = this.currentLevelConfig;
+    const weaponDrops = config.weaponDrops;
+    let type: RaptorPowerUpType | undefined;
+
+    if (weaponDrops && weaponDrops.length > 0 && Math.random() < 0.25) {
+      const weaponType = weaponDrops[Math.floor(Math.random() * weaponDrops.length)];
+      type = weaponType === "missile" ? "weapon-missile" : "weapon-laser";
+    }
+
+    const pu = new PowerUp(x, y, type);
     const spriteKey = POWERUP_SPRITE_KEYS[pu.type];
     const sprite = this.assets.getOptional(spriteKey);
     if (sprite) pu.setSprite(sprite);
@@ -509,13 +577,13 @@ export class RaptorGame implements IGame {
   private startLevel(levelIndex: number, fullReset = false): void {
     this.currentLevel = levelIndex;
     this.score = 0;
-    this.fireTimer = 0;
-    this.bullets = [];
+    this.projectiles = [];
     this.enemies = [];
     this.enemyBullets = [];
     this.explosions = [];
     this.powerUps = [];
     this.player.reset(this.width, this.height, fullReset);
+    this.weaponSystem.reset();
 
     const playerSprite = this.assets.getOptional("player");
     if (playerSprite) this.player.setSprite(playerSprite);
@@ -652,14 +720,16 @@ export class RaptorGame implements IGame {
       this.vfx.renderTrails(this.ctx);
       this.vfx.renderMuzzleFlashes(this.ctx);
 
+      this.weaponSystem.renderLaser(this.ctx);
+
       for (const pu of this.powerUps) {
         pu.render(this.ctx);
       }
       for (const enemy of this.enemies) {
         enemy.render(this.ctx);
       }
-      for (const bullet of this.bullets) {
-        bullet.render(this.ctx);
+      for (const proj of this.projectiles) {
+        proj.render(this.ctx);
       }
       for (const eb of this.enemyBullets) {
         eb.render(this.ctx);
@@ -685,7 +755,8 @@ export class RaptorGame implements IGame {
       config.name,
       this.width,
       this.height,
-      this.powerUpManager.getActive()
+      this.powerUpManager.getActive(),
+      this.weaponSystem.currentWeapon
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }
