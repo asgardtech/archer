@@ -307,7 +307,7 @@ export class TerrainRenderer {
         ctx.globalAlpha = 0.4;
         const tileH = 128;
         const tileW = 128;
-        const offset = this.scrollOffset % tileH;
+        const offset = (this.scrollOffset * 0.6) % tileH;
         for (let ty = groundStartY - tileH + offset; ty < this.height; ty += tileH) {
           for (let tx = 0; tx < this.width; tx += tileW) {
             ctx.drawImage(img, tx, ty, tileW, tileH);
