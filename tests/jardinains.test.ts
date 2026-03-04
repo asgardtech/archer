@@ -243,16 +243,21 @@ describe("JardinainsGame exit flow", () => {
 // ============================================================
 
 describe("Level Configuration", () => {
-  it("should have exactly 5 levels", () => {
-    expect(LEVELS).toHaveLength(5);
+  it("should have exactly 10 levels", () => {
+    expect(LEVELS).toHaveLength(10);
   });
 
   it("should have correct level names", () => {
     expect(LEVELS[0].name).toBe("Garden Path");
     expect(LEVELS[1].name).toBe("Flower Bed");
-    expect(LEVELS[2].name).toBe("Hedge Maze");
-    expect(LEVELS[3].name).toBe("Greenhouse");
-    expect(LEVELS[4].name).toBe("Gnome Fortress");
+    expect(LEVELS[2].name).toBe("Picket Fence");
+    expect(LEVELS[3].name).toBe("Hedge Maze");
+    expect(LEVELS[4].name).toBe("Greenhouse");
+    expect(LEVELS[5].name).toBe("Toadstool Ring");
+    expect(LEVELS[6].name).toBe("Garden Wall");
+    expect(LEVELS[7].name).toBe("Gnome Village");
+    expect(LEVELS[8].name).toBe("Hedge Labyrinth");
+    expect(LEVELS[9].name).toBe("Gnome Fortress");
   });
 
   it("should have increasing ball speeds", () => {

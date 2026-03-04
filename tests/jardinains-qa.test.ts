@@ -762,9 +762,9 @@ describe("Level Progression", () => {
     expect(internals.balls[0].stuck).toBe(true);
   });
 
-  test("completing all 5 levels triggers victory", () => {
+  test("completing all 10 levels triggers victory", () => {
     const game = createPlayingGame();
-    game.currentLevel = 4; // Level 5 (0-indexed)
+    game.currentLevel = 9; // Level 10 (0-indexed)
     game.gnomes = [];
     game.flowerPots = [];
     game.powerUps = [];
@@ -815,9 +815,9 @@ describe("Level Progression", () => {
 // Scenario: Five Levels Exist
 // ══════════════════════════════════════════════════════════════
 
-describe("Five Levels Configuration", () => {
-  test("game has exactly 5 levels", () => {
-    expect(LEVELS).toHaveLength(5);
+describe("Ten Levels Configuration", () => {
+  test("game has exactly 10 levels", () => {
+    expect(LEVELS).toHaveLength(10);
   });
 
   test('level 1 is named "Garden Path"', () => {
@@ -828,21 +828,41 @@ describe("Five Levels Configuration", () => {
     expect(LEVELS[1].name).toBe("Flower Bed");
   });
 
-  test('level 3 is named "Hedge Maze"', () => {
-    expect(LEVELS[2].name).toBe("Hedge Maze");
+  test('level 3 is named "Picket Fence"', () => {
+    expect(LEVELS[2].name).toBe("Picket Fence");
   });
 
-  test('level 4 is named "Greenhouse"', () => {
-    expect(LEVELS[3].name).toBe("Greenhouse");
+  test('level 4 is named "Hedge Maze"', () => {
+    expect(LEVELS[3].name).toBe("Hedge Maze");
   });
 
-  test('level 5 is named "Gnome Fortress"', () => {
-    expect(LEVELS[4].name).toBe("Gnome Fortress");
+  test('level 5 is named "Greenhouse"', () => {
+    expect(LEVELS[4].name).toBe("Greenhouse");
+  });
+
+  test('level 6 is named "Toadstool Ring"', () => {
+    expect(LEVELS[5].name).toBe("Toadstool Ring");
+  });
+
+  test('level 7 is named "Garden Wall"', () => {
+    expect(LEVELS[6].name).toBe("Garden Wall");
+  });
+
+  test('level 8 is named "Gnome Village"', () => {
+    expect(LEVELS[7].name).toBe("Gnome Village");
+  });
+
+  test('level 9 is named "Hedge Labyrinth"', () => {
+    expect(LEVELS[8].name).toBe("Hedge Labyrinth");
+  });
+
+  test('level 10 is named "Gnome Fortress"', () => {
+    expect(LEVELS[9].name).toBe("Gnome Fortress");
   });
 
   test("each level has unique names", () => {
     const names = LEVELS.map((l) => l.name);
-    expect(new Set(names).size).toBe(5);
+    expect(new Set(names).size).toBe(10);
   });
 
   test("each level has a brick layout", () => {

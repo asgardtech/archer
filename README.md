@@ -7,7 +7,7 @@ A collection of browser-based games built with TypeScript and HTML5 Canvas. The 
 | Game | Description |
 |---|---|
 | **Balloon Archer** | Shoot balloons with your bow before you run out of arrows! Features 5 levels, upgrades, boss balloons, and obstacles. |
-| **Jardinains** | Break bricks, dodge flower pots, and catch falling gnomes in this garden-themed brick breaker! Features 5 levels, power-ups, and gnome AI. |
+| **Jardinains** | Break bricks, dodge flower pots, and catch falling gnomes in this garden-themed brick breaker! Features 10 levels, power-ups, and gnome AI. |
 
 ## Prerequisites
 
