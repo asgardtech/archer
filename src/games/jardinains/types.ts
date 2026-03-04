@@ -70,6 +70,22 @@ export interface PowerUpEntity {
   alive: boolean;
 }
 
+export type JardinainsSoundEvent =
+  | "ball_launch"
+  | "ball_paddle"
+  | "brick_hit"
+  | "brick_destroy"
+  | "gnome_fall"
+  | "gnome_catch"
+  | "pot_throw"
+  | "pot_hit"
+  | "power_up_collect"
+  | "ball_lost"
+  | "level_complete"
+  | "game_over"
+  | "victory"
+  | "menu_start";
+
 export interface JardinainsLevelConfig {
   level: number;
   name: string;

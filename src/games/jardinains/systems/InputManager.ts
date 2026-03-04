@@ -1,5 +1,6 @@
 export class InputManager {
   public mouseX = 400;
+  public mouseY = 0;
   public wasClicked = false;
   public readonly isTouchDevice: boolean;
 
@@ -50,13 +51,21 @@ export class InputManager {
     return (clientX - rect.left) * scaleX;
   }
 
+  private toCanvasY(clientY: number): number {
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleY = this.canvas.height / rect.height;
+    return (clientY - rect.top) * scaleY;
+  }
+
   private onMouseMove(e: MouseEvent): void {
     this.mouseX = this.toCanvasX(e.clientX);
+    this.mouseY = this.toCanvasY(e.clientY);
   }
 
   private onMouseDown(e: MouseEvent): void {
     this.wasClicked = true;
     this.mouseX = this.toCanvasX(e.clientX);
+    this.mouseY = this.toCanvasY(e.clientY);
   }
 
   private onTouchStart(e: TouchEvent): void {
@@ -65,6 +74,7 @@ export class InputManager {
     const touch = e.changedTouches[0];
     this.activeTouchId = touch.identifier;
     this.mouseX = this.toCanvasX(touch.clientX);
+    this.mouseY = this.toCanvasY(touch.clientY);
     this.wasClicked = true;
   }
 
@@ -73,6 +83,7 @@ export class InputManager {
     const touch = this.getActiveTouch(e.touches);
     if (!touch) return;
     this.mouseX = this.toCanvasX(touch.clientX);
+    this.mouseY = this.toCanvasY(touch.clientY);
   }
 
   private onTouchEnd(e: TouchEvent): void {
