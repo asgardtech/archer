@@ -141,6 +141,30 @@ export interface BackgroundLayerConfig {
   opacity: number;
 }
 
+export type LevelTheme = "coastal" | "desert" | "mountain" | "arctic" | "fortress";
+
+export interface AmbientParticleConfig {
+  color: string;
+  count: number;
+  speedRange: [number, number];
+  sizeRange: [number, number];
+  drift: number;
+}
+
+export interface TerrainLayerConfig {
+  theme: LevelTheme;
+  horizonAssets: string[];
+  groundColor: string;
+  groundTexture?: string;
+  structurePool: string[];
+  structureDensity: number;
+  propPool: string[];
+  propDensity: number;
+  hasWater: boolean;
+  hasRoads: boolean;
+  ambientParticles?: AmbientParticleConfig;
+}
+
 export interface RaptorLevelConfig {
   level: number;
   name: string;
@@ -155,6 +179,7 @@ export interface RaptorLevelConfig {
   backgroundLayers?: BackgroundLayerConfig[];
   planetAssets?: string[];
   weaponDrops?: WeaponType[];
+  terrain?: TerrainLayerConfig;
 }
 
 export type AssetManifest = Record<string, string>;

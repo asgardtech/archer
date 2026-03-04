@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <!-- Dark sky -->
+  <defs>
+    <linearGradient id="fortress-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.4"/>
+      <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:0"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="200" fill="url(#fortress-sky)"/>
+  <!-- Orange glow from below -->
+  <rect width="800" height="80" y="120" fill="url(#glow)"/>
+  <!-- Industrial skyline - buildings -->
+  <rect x="0" y="140" width="60" height="60" fill="#1a1a2e"/>
+  <rect x="70" y="110" width="50" height="90" fill="#2d2d44"/>
+  <rect x="130" y="130" width="45" height="70" fill="#1a1a2e"/>
+  <rect x="185" y="95" width="55" height="105" fill="#2d2d44"/>
+  <!-- Smoke stack -->
+  <rect x="250" y="60" width="25" height="140" fill="#2d2d44"/>
+  <rect x="245" y="50" width="35" height="15" fill="#1a1a2e"/>
+  <!-- More buildings -->
+  <rect x="285" y="120" width="50" height="80" fill="#1a1a2e"/>
+  <rect x="345" y="100" width="40" height="100" fill="#2d2d44"/>
+  <rect x="395" y="130" width="55" height="70" fill="#1a1a2e"/>
+  <!-- Second smoke stack -->
+  <rect x="460" y="70" width="22" height="130" fill="#2d2d44"/>
+  <rect x="455" y="60" width="32" height="15" fill="#1a1a2e"/>
+  <!-- Buildings continued -->
+  <rect x="492" y="115" width="45" height="85" fill="#1a1a2e"/>
+  <rect x="547" y="90" width="50" height="110" fill="#2d2d44"/>
+  <rect x="607" y="125" width="40" height="75" fill="#1a1a2e"/>
+  <rect x="657" y="105" width="55" height="95" fill="#2d2d44"/>
+  <rect x="722" y="135" width="45" height="65" fill="#1a1a2e"/>
+  <rect x="777" y="150" width="23" height="50" fill="#2d2d44"/>
+</svg>

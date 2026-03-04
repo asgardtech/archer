@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <!-- Sky -->
+  <defs>
+    <linearGradient id="mountain-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5a6a7a"/>
+      <stop offset="100%" style="stop-color:#3d4a5a"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="200" fill="url(#mountain-sky)"/>
+  <!-- Distant mountain range - back -->
+  <path d="M0,200 L50,120 L120,160 L200,90 L280,140 L360,70 L440,130 L520,85 L600,150 L680,95 L750,130 L800,100 L800,200 Z" fill="#2d3748"/>
+  <!-- Closer peaks with snow caps -->
+  <path d="M0,200 L80,140 L150,180 L220,110 L300,160 L380,100 L460,150 L540,95 L620,155 L700,105 L780,145 L800,130 L800,200 Z" fill="#4a5568"/>
+  <!-- Snow caps -->
+  <polygon points="200,90 240,130 280,140 260,100" fill="#e8edf2"/>
+  <polygon points="360,70 400,110 440,130 420,90" fill="#e8edf2"/>
+  <polygon points="520,85 560,120 600,150 580,100" fill="#e8edf2"/>
+  <polygon points="680,95 720,130 750,130 730,105" fill="#e8edf2"/>
+</svg>

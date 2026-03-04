@@ -16,6 +16,7 @@ import { HUD } from "./rendering/HUD";
 import { AssetLoader } from "./rendering/AssetLoader";
 import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rendering/SpriteSheet";
 import { VFXManager } from "./rendering/VFXManager";
+import { TerrainRenderer } from "./rendering/TerrainRenderer";
 import { ASSET_MANIFEST } from "./rendering/assets";
 import { LEVELS } from "./levels";
 import { IGame } from "../../shared/types";
@@ -85,6 +86,8 @@ export class RaptorGame implements IGame {
   private starsNear: Star[] = [];
   private bgLayers: BackgroundLayer[] = [];
   private planetAccents: PlanetAccent[] = [];
+  private terrainRenderer: TerrainRenderer;
+  private terrainActive = false;
 
   private boundResize: (() => void) | null = null;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -111,6 +114,7 @@ export class RaptorGame implements IGame {
     this.player = new Player(width, height);
     this.assets = new AssetLoader();
     this.vfx = new VFXManager();
+    this.terrainRenderer = new TerrainRenderer(width, height, this.assets);
 
     this.initStars(60);
     this.setupResize();
@@ -239,8 +243,7 @@ export class RaptorGame implements IGame {
 
     switch (this.state) {
       case "menu":
-        this.updateStars(dt);
-        this.updateBackgroundLayers(dt);
+        this.updateBackground(dt);
         if (this.input.wasClicked) {
           this.audio.ensureContext();
           this.sound.play("menu_start");
@@ -255,8 +258,7 @@ export class RaptorGame implements IGame {
         break;
 
       case "level_complete":
-        this.updateStars(dt);
-        this.updateBackgroundLayers(dt);
+        this.updateBackground(dt);
         if (this.input.wasClicked) {
           this.startLevel(this.currentLevel + 1);
           this.state = "playing";
@@ -265,8 +267,7 @@ export class RaptorGame implements IGame {
         break;
 
       case "gameover":
-        this.updateStars(dt);
-        this.updateBackgroundLayers(dt);
+        this.updateBackground(dt);
         if (this.input.wasClicked) {
           this.sound.stopMusic();
           if (this.onExit) {
@@ -278,8 +279,7 @@ export class RaptorGame implements IGame {
         break;
 
       case "victory":
-        this.updateStars(dt);
-        this.updateBackgroundLayers(dt);
+        this.updateBackground(dt);
         if (this.input.wasClicked) {
           this.sound.stopMusic();
           if (this.onExit) {
@@ -293,12 +293,20 @@ export class RaptorGame implements IGame {
     this.input.consume();
   }
 
+  private updateBackground(dt: number): void {
+    if (this.terrainActive) {
+      this.terrainRenderer.update(dt);
+    } else {
+      this.updateStars(dt);
+      this.updateBackgroundLayers(dt);
+      this.updatePlanetAccents(dt);
+    }
+  }
+
   private updatePlaying(dt: number): void {
     this.input.updateFromKeyboard(dt, this.width, this.height);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.height);
-    this.updateStars(dt);
-    this.updateBackgroundLayers(dt);
-    this.updatePlanetAccents(dt);
+    this.updateBackground(dt);
     this.powerUpManager.update(dt);
 
     const config = this.currentLevelConfig;
@@ -592,9 +600,22 @@ export class RaptorGame implements IGame {
     this.spawner.configure(this.currentLevelConfig);
     this.powerUpManager.reset();
     this.vfx.reset();
-    this.initStars(this.currentLevelConfig.starDensity);
-    this.initBackgroundLayers();
-    this.initPlanetAccents();
+
+    const levelCfg = this.currentLevelConfig;
+    if (levelCfg.terrain) {
+      this.terrainActive = true;
+      this.terrainRenderer.configure(levelCfg.terrain);
+      this.stars = [];
+      this.starsNear = [];
+      this.bgLayers = [];
+      this.planetAccents = [];
+    } else {
+      this.terrainActive = false;
+      this.terrainRenderer.reset();
+      this.initStars(levelCfg.starDensity);
+      this.initBackgroundLayers();
+      this.initPlanetAccents();
+    }
   }
 
   private addExplosion(explosion: Explosion): void {
@@ -763,11 +784,17 @@ export class RaptorGame implements IGame {
 
   private renderBackground(): void {
     const config = this.currentLevelConfig;
+
     const grad = this.ctx.createLinearGradient(0, 0, 0, this.height);
     grad.addColorStop(0, config.skyGradient[0]);
     grad.addColorStop(1, config.skyGradient[1]);
     this.ctx.fillStyle = grad;
     this.ctx.fillRect(0, 0, this.width, this.height);
+
+    if (this.terrainActive) {
+      this.terrainRenderer.render(this.ctx);
+      return;
+    }
 
     for (const layer of this.bgLayers) {
       this.ctx.save();

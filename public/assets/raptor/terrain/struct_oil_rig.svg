@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Square platform - dark grey -->
+  <rect x="8" y="24" width="48" height="32" fill="#555555" rx="2"/>
+  <!-- Inner platform detail -->
+  <rect x="14" y="30" width="36" height="20" fill="#444444" rx="1"/>
+  <!-- Crane arm base -->
+  <rect x="28" y="18" width="8" height="8" fill="#555555"/>
+  <!-- Crane arm lines -->
+  <line x1="32" y1="26" x2="20" y2="38" stroke="#333333" stroke-width="2"/>
+  <line x1="32" y1="26" x2="44" y2="38" stroke="#333333" stroke-width="2"/>
+  <!-- Derrick tower -->
+  <rect x="26" y="8" width="12" height="18" fill="#444444"/>
+  <rect x="28" y="10" width="8" height="14" fill="#333333"/>
+</svg>
