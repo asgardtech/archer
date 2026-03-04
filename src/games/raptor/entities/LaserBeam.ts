@@ -1,5 +1,4 @@
 import { Vec2 } from "../types";
-import { Enemy } from "./Enemy";
 
 const BASE_TICK_RATE = 10;
 const MAX_TICK_RATE = 20;
@@ -14,10 +13,7 @@ export class LaserBeam {
 
   private tickTimer = 0;
   private tickInterval: number;
-  private rapidFire = false;
-  private spreadShot = false;
   private time = 0;
-  private hitFlashTimers: Map<Enemy, number> = new Map();
 
   constructor() {
     this.pos = { x: 0, y: 0 };
@@ -25,9 +21,6 @@ export class LaserBeam {
   }
 
   setModifiers(rapidFire: boolean, spreadShot: boolean): void {
-    this.rapidFire = rapidFire;
-    this.spreadShot = spreadShot;
-
     const tickRate = Math.min(
       MAX_TICK_RATE,
       BASE_TICK_RATE * (rapidFire ? 1.5 : 1)
@@ -41,58 +34,21 @@ export class LaserBeam {
     this.pos.y = playerTopY;
   }
 
-  update(dt: number, enemies: Enemy[]): Enemy[] {
+  update(dt: number): boolean {
     if (!this.active) {
       this.tickTimer = 0;
-      return [];
+      return false;
     }
 
     this.time += dt;
     this.tickTimer += dt;
 
-    for (const [enemy, timer] of this.hitFlashTimers.entries()) {
-      if (!enemy.alive) {
-        this.hitFlashTimers.delete(enemy);
-      } else {
-        this.hitFlashTimers.set(enemy, timer - dt);
-      }
-    }
-
-    const hitEnemies: Enemy[] = [];
     if (this.tickTimer >= this.tickInterval) {
       this.tickTimer -= this.tickInterval;
-
-      const halfWidth = this.beamWidth / 2;
-      const beamLeft = this.pos.x - halfWidth;
-      const beamRight = this.pos.x + halfWidth;
-
-      for (const enemy of enemies) {
-        if (!enemy.alive) continue;
-        if (enemy.pos.y > this.pos.y) continue;
-
-        if (enemy.right > beamLeft && enemy.left < beamRight) {
-          const canFlash = !this.hitFlashTimers.has(enemy) ||
-            this.hitFlashTimers.get(enemy)! <= 0;
-
-          if (enemy.variant === "boss" && !canFlash) {
-            enemy.hitPoints -= this.damage;
-            if (enemy.hitPoints <= 0) {
-              enemy.hitPoints = 0;
-              enemy.alive = false;
-            }
-          } else {
-            enemy.hit(this.damage);
-          }
-          hitEnemies.push(enemy);
-
-          if (enemy.variant === "boss") {
-            this.hitFlashTimers.set(enemy, 0.15);
-          }
-        }
-      }
+      return true;
     }
 
-    return hitEnemies;
+    return false;
   }
 
   render(ctx: CanvasRenderingContext2D): void {
@@ -130,6 +86,5 @@ export class LaserBeam {
     this.tickTimer = 0;
     this.time = 0;
     this.beamWidth = BASE_WIDTH;
-    this.hitFlashTimers.clear();
   }
 }

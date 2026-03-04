@@ -305,9 +305,9 @@ export class RaptorGame implements IGame {
 
     this.weaponSystem.setWeapon(this.powerUpManager.currentWeapon);
 
-    const { newProjectiles, laserHits, soundEvent } = this.weaponSystem.update(
+    const { newProjectiles, soundEvent } = this.weaponSystem.update(
       dt, this.player, config, this.powerUpManager,
-      this.width, this.projectiles, this.enemies
+      this.width, this.projectiles
     );
 
     for (const proj of newProjectiles) {
@@ -318,9 +318,16 @@ export class RaptorGame implements IGame {
       this.vfx.triggerMuzzleFlash(this.player.pos.x, this.player.top);
     }
     if (soundEvent) {
-      this.sound.play(soundEvent as any);
+      this.sound.play(soundEvent);
     }
 
+    const laserHits = this.collisions.checkBeamEnemies(
+      this.weaponSystem.laserBeam, this.enemies, dt
+    );
+    const laserSoundEvent = this.weaponSystem.getLaserSoundEvent(dt, laserHits.length > 0);
+    if (laserSoundEvent) {
+      this.sound.play(laserSoundEvent);
+    }
     for (const enemy of laserHits) {
       if (!enemy.alive) {
         this.handleEnemyDestroyed(enemy, config);

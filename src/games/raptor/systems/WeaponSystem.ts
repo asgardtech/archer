@@ -1,17 +1,18 @@
-import { WeaponType, WEAPON_CONFIGS, Projectile, RaptorLevelConfig } from "../types";
+import { WeaponType, WEAPON_CONFIGS, Projectile, RaptorLevelConfig, RaptorSoundEvent } from "../types";
 import { Player } from "../entities/Player";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
 import { LaserBeam } from "../entities/LaserBeam";
-import { Enemy } from "../entities/Enemy";
 import { PowerUpManager } from "./PowerUpManager";
 
 const MAX_PROJECTILES = 60;
+const LASER_SOUND_COOLDOWN = 0.1;
 
 export class WeaponSystem {
   public currentWeapon: WeaponType = "machine-gun";
   public laserBeam: LaserBeam = new LaserBeam();
   private fireTimer = 0;
+  private laserSoundTimer = 0;
 
   setWeapon(type: WeaponType): void {
     if (this.currentWeapon === type) return;
@@ -30,31 +31,29 @@ export class WeaponSystem {
     config: RaptorLevelConfig,
     powerUpManager: PowerUpManager,
     canvasWidth: number,
-    existingProjectiles: Projectile[],
-    enemies: Enemy[]
-  ): { newProjectiles: Projectile[]; laserHits: Enemy[]; soundEvent: string | null } {
+    existingProjectiles: Projectile[]
+  ): { newProjectiles: Projectile[]; soundEvent: RaptorSoundEvent | null } {
     const weaponConfig = WEAPON_CONFIGS[this.currentWeapon];
     const rapidFire = powerUpManager.hasUpgrade("rapid-fire");
     const spreadShot = powerUpManager.hasUpgrade("spread-shot");
     const newProjectiles: Projectile[] = [];
-    let soundEvent: string | null = null;
+    let soundEvent: RaptorSoundEvent | null = null;
 
     if (this.currentWeapon === "laser") {
       this.laserBeam.active = player.alive;
       this.laserBeam.setModifiers(rapidFire, spreadShot);
       this.laserBeam.updatePosition(player.pos.x, player.top);
-      const laserHits = this.laserBeam.update(dt, enemies);
-      return { newProjectiles: [], laserHits, soundEvent: laserHits.length > 0 ? "laser_hit" : (this.laserBeam.active ? "laser_fire" : null) };
+      return { newProjectiles: [], soundEvent: null };
     }
 
     this.laserBeam.active = false;
-    const laserHits: Enemy[] = [];
+    this.laserSoundTimer = 0;
 
     const rapidMultiplier = rapidFire ? weaponConfig.rapidFireBonus : 1;
     const baseFireRate = config.autoFireRate * weaponConfig.fireRateMultiplier;
     const fireRate = baseFireRate * rapidMultiplier;
 
-    if (fireRate <= 0) return { newProjectiles, laserHits, soundEvent };
+    if (fireRate <= 0) return { newProjectiles, soundEvent };
 
     const fireInterval = 1 / fireRate;
     this.fireTimer += dt;
@@ -83,7 +82,7 @@ export class WeaponSystem {
       }
     }
 
-    return { newProjectiles, laserHits, soundEvent };
+    return { newProjectiles, soundEvent };
   }
 
   private createBullet(x: number, y: number, angle = 0): Bullet {
@@ -95,6 +94,21 @@ export class WeaponSystem {
     return new Missile(x, y, angle, config.homingStrength);
   }
 
+  getLaserSoundEvent(dt: number, hasHits: boolean): RaptorSoundEvent | null {
+    if (hasHits) {
+      this.laserSoundTimer = 0;
+      return "laser_hit";
+    }
+    if (this.laserBeam.active) {
+      this.laserSoundTimer += dt;
+      if (this.laserSoundTimer >= LASER_SOUND_COOLDOWN) {
+        this.laserSoundTimer -= LASER_SOUND_COOLDOWN;
+        return "laser_fire";
+      }
+    }
+    return null;
+  }
+
   renderLaser(ctx: CanvasRenderingContext2D): void {
     this.laserBeam.render(ctx);
   }
@@ -102,6 +116,7 @@ export class WeaponSystem {
   reset(): void {
     this.currentWeapon = "machine-gun";
     this.fireTimer = 0;
+    this.laserSoundTimer = 0;
     this.laserBeam.reset();
   }
 }

@@ -1,6 +1,7 @@
-import { Projectile } from "../types";
+import { Projectile, WEAPON_CONFIGS } from "../types";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
+import { LaserBeam } from "../entities/LaserBeam";
 import { Enemy } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { Player } from "../entities/Player";
@@ -31,7 +32,58 @@ export interface SplashHit {
   destroyed: boolean;
 }
 
+const BOSS_HIT_FLASH_COOLDOWN = 0.15;
+
 export class CollisionSystem {
+  private hitFlashTimers: Map<Enemy, number> = new Map();
+
+  checkBeamEnemies(beam: LaserBeam, enemies: Enemy[], dt: number): Enemy[] {
+    for (const [enemy, timer] of this.hitFlashTimers.entries()) {
+      if (!enemy.alive) {
+        this.hitFlashTimers.delete(enemy);
+      } else {
+        this.hitFlashTimers.set(enemy, timer - dt);
+      }
+    }
+
+    if (!beam.active) return [];
+
+    const shouldTick = beam.update(dt);
+    if (!shouldTick) return [];
+
+    const halfWidth = beam.beamWidth / 2;
+    const beamLeft = beam.pos.x - halfWidth;
+    const beamRight = beam.pos.x + halfWidth;
+    const hitEnemies: Enemy[] = [];
+
+    for (const enemy of enemies) {
+      if (!enemy.alive) continue;
+      if (enemy.pos.y > beam.pos.y) continue;
+
+      if (enemy.right > beamLeft && enemy.left < beamRight) {
+        const canFlash = !this.hitFlashTimers.has(enemy) ||
+          this.hitFlashTimers.get(enemy)! <= 0;
+
+        if (enemy.variant === "boss" && !canFlash) {
+          enemy.hitPoints -= beam.damage;
+          if (enemy.hitPoints <= 0) {
+            enemy.hitPoints = 0;
+            enemy.alive = false;
+          }
+        } else {
+          enemy.hit(beam.damage);
+        }
+        hitEnemies.push(enemy);
+
+        if (enemy.variant === "boss") {
+          this.hitFlashTimers.set(enemy, BOSS_HIT_FLASH_COOLDOWN);
+        }
+      }
+    }
+
+    return hitEnemies;
+  }
+
   checkBulletsEnemies(bullets: Projectile[], enemies: Enemy[]): BulletEnemyHit[] {
     const hits: BulletEnemyHit[] = [];
 
@@ -47,8 +99,8 @@ export class CollisionSystem {
           }
           hits.push({ bullet, enemy, destroyed, damage: bullet.damage });
 
-          if (bullet instanceof Missile && (bullet as Missile).alive === false) {
-            const splashHits = this.applySplashDamage(enemy, enemies, 40);
+          if (bullet instanceof Missile) {
+            const splashHits = this.applySplashDamage(enemy, enemies, WEAPON_CONFIGS["missile"].splashRadius);
             for (const sh of splashHits) {
               hits.push({
                 bullet,
