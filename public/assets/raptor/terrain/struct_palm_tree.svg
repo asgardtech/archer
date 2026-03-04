@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Brown trunk center -->
+  <circle cx="32" cy="32" r="6" fill="#8b6b3d"/>
+  <!-- Green leaf fronds - elongated ellipses radiating outward -->
+  <ellipse cx="32" cy="12" rx="8" ry="14" fill="#3d8b3d" transform="rotate(0 32 32)"/>
+  <ellipse cx="48" cy="24" rx="8" ry="14" fill="#2d7a2d" transform="rotate(45 32 32)"/>
+  <ellipse cx="52" cy="32" rx="8" ry="14" fill="#3d8b3d" transform="rotate(90 32 32)"/>
+  <ellipse cx="48" cy="40" rx="8" ry="14" fill="#2d7a2d" transform="rotate(135 32 32)"/>
+  <ellipse cx="32" cy="52" rx="8" ry="14" fill="#3d8b3d" transform="rotate(180 32 32)"/>
+  <ellipse cx="16" cy="40" rx="8" ry="14" fill="#2d7a2d" transform="rotate(225 32 32)"/>
+  <ellipse cx="12" cy="32" rx="8" ry="14" fill="#3d8b3d" transform="rotate(270 32 32)"/>
+  <ellipse cx="16" cy="24" rx="8" ry="14" fill="#2d7a2d" transform="rotate(315 32 32)"/>
+</svg>

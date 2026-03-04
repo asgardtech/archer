@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <!-- Warm sky -->
+  <defs>
+    <linearGradient id="desert-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8c89c"/>
+      <stop offset="100%" style="stop-color:#d4a574"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="200" fill="url(#desert-sky)"/>
+  <!-- Distant mesa/butte shapes -->
+  <polygon points="0,200 80,120 160,200" fill="#a67c52"/>
+  <polygon points="120,200 220,90 320,200" fill="#8b6b47"/>
+  <polygon points="280,200 380,100 480,200" fill="#a67c52"/>
+  <polygon points="440,200 540,80 640,200" fill="#8b6b47"/>
+  <polygon points="600,200 700,110 800,200" fill="#a67c52"/>
+  <!-- Sand dunes silhouette -->
+  <path d="M0,200 L0,165 Q80,140 160,170 Q240,150 320,175 Q400,155 480,180 Q560,160 640,172 Q720,150 800,165 L800,200 Z" fill="#c2956a"/>
+</svg>

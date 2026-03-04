@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Building body (long rectangle) -->
+  <rect x="8" y="20" width="48" height="36" fill="#5a6b50"/>
+  <!-- Roof -->
+  <rect x="6" y="14" width="52" height="10" fill="#4a5a40"/>
+  <!-- Door on short side -->
+  <rect x="26" y="40" width="12" height="16" fill="#3a4a30"/>
+</svg>

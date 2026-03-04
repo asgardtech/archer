@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Main square base -->
+  <rect x="8" y="24" width="48" height="40" fill="#4a4a4a"/>
+  <!-- Raised center section -->
+  <rect x="18" y="14" width="28" height="22" fill="#555555"/>
+  <!-- Antenna arrays (lines from corners) -->
+  <line x1="8" y1="24" x2="2" y2="8" stroke="#666666" stroke-width="1"/>
+  <line x1="56" y1="24" x2="62" y2="8" stroke="#666666" stroke-width="1"/>
+  <line x1="8" y1="64" x2="2" y2="56" stroke="#666666" stroke-width="1"/>
+  <line x1="56" y1="64" x2="62" y2="56" stroke="#666666" stroke-width="1"/>
+  <!-- Satellite dish -->
+  <circle cx="32" cy="22" r="5" fill="#444444"/>
+</svg>

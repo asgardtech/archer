@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Brown trunk center dot -->
+  <circle cx="32" cy="32" r="4" fill="#8b6b3d"/>
+  <!-- Dark green outer circle -->
+  <circle cx="32" cy="32" r="24" fill="#2d5a2d"/>
+  <!-- Lighter concentric circle - middle layer -->
+  <circle cx="32" cy="32" r="18" fill="#3d6b3d"/>
+  <!-- Inner lighter circle -->
+  <circle cx="32" cy="32" r="10" fill="#3d6b3d"/>
+  <!-- Brown trunk center (on top) -->
+  <circle cx="32" cy="32" r="4" fill="#8b6b3d"/>
+</svg>
