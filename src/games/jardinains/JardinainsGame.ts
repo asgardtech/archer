@@ -11,6 +11,8 @@ import { InputManager } from "./systems/InputManager";
 import { CollisionSystem } from "./systems/CollisionSystem";
 import { GnomeAI } from "./systems/GnomeAI";
 import { PowerUpManager } from "./systems/PowerUpManager";
+import { SoundSystem } from "./systems/SoundSystem";
+import { AudioManager } from "../../shared/AudioManager";
 import { HUD } from "./rendering/HUD";
 
 const DT_CAP = 0.1;
@@ -44,6 +46,8 @@ export class JardinainsGame implements IGame {
   private collisions: CollisionSystem;
   private gnomeAI: GnomeAI;
   private powerUpManager: PowerUpManager;
+  private audio: AudioManager;
+  private sound: SoundSystem;
   private hud: HUD;
 
   private boundResize: (() => void) | null = null;
@@ -64,6 +68,8 @@ export class JardinainsGame implements IGame {
     this.collisions = new CollisionSystem();
     this.gnomeAI = new GnomeAI();
     this.powerUpManager = new PowerUpManager();
+    this.audio = new AudioManager();
+    this.sound = new SoundSystem(this.audio);
     this.hud = new HUD(this.input.isTouchDevice);
     this.paddle = new Paddle(width, height);
 
@@ -117,6 +123,8 @@ export class JardinainsGame implements IGame {
     clearTimeout(this.resizeTimer);
 
     this.input.destroy();
+    this.sound.destroy();
+    this.audio.destroy();
 
     if (this.boundResize) {
       window.removeEventListener("resize", this.boundResize);
@@ -137,12 +145,28 @@ export class JardinainsGame implements IGame {
     this.rafId = requestAnimationFrame((t) => this.loop(t));
   }
 
+  private handleMuteClick(): boolean {
+    if (!this.input.wasClicked) return false;
+    if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width)) {
+      this.audio.ensureContext();
+      this.audio.toggleMute();
+      this.input.consume();
+      return true;
+    }
+    return false;
+  }
+
   private update(dt: number): void {
+    if (this.handleMuteClick()) return;
+
     switch (this.state) {
       case "menu":
         if (this.input.wasClicked) {
+          this.audio.ensureContext();
+          this.sound.play("menu_start");
           this.resetGame();
           this.state = "playing";
+          this.sound.startMusic("playing", this.currentLevel);
         }
         break;
 
@@ -154,6 +178,7 @@ export class JardinainsGame implements IGame {
         if (this.input.wasClicked) {
           this.startLevel(this.currentLevel + 1);
           this.state = "playing";
+          this.sound.startMusic("playing", this.currentLevel);
         }
         break;
 
@@ -163,6 +188,7 @@ export class JardinainsGame implements IGame {
             this.onExit();
           } else {
             this.state = "menu";
+            this.sound.startMusic("menu");
           }
         }
         break;
@@ -173,6 +199,7 @@ export class JardinainsGame implements IGame {
             this.onExit();
           } else {
             this.state = "menu";
+            this.sound.startMusic("menu");
           }
         }
         break;
@@ -197,18 +224,22 @@ export class JardinainsGame implements IGame {
         if (this.input.wasClicked) {
           ball.launch(config.ballSpeed);
           this.powerUpManager.consumeSticky();
+          this.sound.play("ball_launch");
         }
         continue;
       }
 
       ball.update(dt, this.width, this.height);
 
-      this.collisions.checkBallPaddle(ball, this.paddle, this.powerUpManager.stickyActive);
+      if (this.collisions.checkBallPaddle(ball, this.paddle, this.powerUpManager.stickyActive)) {
+        this.sound.play("ball_paddle");
+      }
 
       const hitBricks = this.collisions.checkBallBricks(ball, this.bricks);
       for (const brick of hitBricks) {
         const destroyed = brick.hit();
         if (destroyed) {
+          this.sound.play("brick_destroy");
           if (brick.maxHitPoints >= 2) {
             this.score += SCORE_BRICK_TOUGH;
           } else {
@@ -219,6 +250,7 @@ export class JardinainsGame implements IGame {
             for (const gnome of this.gnomes) {
               if (gnome.brickCol === brick.col && gnome.brickRow === brick.row) {
                 gnome.startFalling();
+                this.sound.play("gnome_fall");
               }
             }
           }
@@ -226,6 +258,8 @@ export class JardinainsGame implements IGame {
           if (brick.hasPowerUp && brick.powerUpType) {
             this.powerUps.push(new PowerUp(brick.centerX, brick.centerY, brick.powerUpType));
           }
+        } else {
+          this.sound.play("brick_hit");
         }
       }
     }
@@ -235,9 +269,12 @@ export class JardinainsGame implements IGame {
     if (deadBalls.length > 0 && this.balls.length === 0) {
       this.lives--;
       if (this.lives <= 0) {
+        this.sound.stopMusic();
+        this.sound.play("game_over");
         this.state = "gameover";
         return;
       }
+      this.sound.play("ball_lost");
       this.spawnBallOnPaddle();
       this.paddle.reset(this.width);
       this.powerUpManager.reset();
@@ -249,6 +286,7 @@ export class JardinainsGame implements IGame {
     );
     for (const pot of newPots) {
       this.flowerPots.push(pot);
+      this.sound.play("pot_throw");
     }
 
     for (const gnome of this.gnomes) {
@@ -258,6 +296,7 @@ export class JardinainsGame implements IGame {
         if (this.collisions.checkGnomePaddle(gnome, this.paddle)) {
           gnome.catch();
           this.score += SCORE_GNOME_CATCH;
+          this.sound.play("gnome_catch");
         }
       }
 
@@ -270,6 +309,7 @@ export class JardinainsGame implements IGame {
       if (pot.alive && this.collisions.checkPotPaddle(pot, this.paddle)) {
         pot.alive = false;
         this.paddle.applyShrink();
+        this.sound.play("pot_hit");
       }
     }
     this.flowerPots = this.flowerPots.filter((p) => p.alive);
@@ -278,6 +318,7 @@ export class JardinainsGame implements IGame {
       pu.update(dt, this.height);
       if (pu.alive && this.collisions.checkPowerUpPaddle(pu, this.paddle)) {
         pu.alive = false;
+        this.sound.play("power_up_collect");
         const result = this.powerUpManager.activate(pu.type);
         if (result.spawnMultiBall) {
           this.spawnMultiBalls();
@@ -295,9 +336,12 @@ export class JardinainsGame implements IGame {
     const allBricksDestroyed = this.bricks.every((b) => !b.alive);
     if (allBricksDestroyed) {
       this.score += SCORE_LEVEL_CLEAR;
+      this.sound.stopMusic();
       if (this.currentLevel >= LEVELS.length - 1) {
+        this.sound.play("victory");
         this.state = "victory";
       } else {
+        this.sound.play("level_complete");
         this.state = "level_complete";
       }
     }
@@ -409,6 +453,7 @@ export class JardinainsGame implements IGame {
       config.level, config.name,
       this.width, this.height
     );
+    this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }
 
   private renderBackground(): void {
