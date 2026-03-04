@@ -1,5 +1,5 @@
 import { AudioManager } from "../../../shared/AudioManager";
-import { RaptorSoundEvent } from "../types";
+import { RaptorGameState, RaptorSoundEvent } from "../types";
 
 const DEBOUNCE_MS = 50;
 
@@ -136,7 +136,7 @@ export class SoundSystem {
     });
   }
 
-  startMusic(state: string, level = 0): void {
+  startMusic(state: RaptorGameState, level = 0): void {
     this.stopMusic();
     if (this.audio.disabled) return;
     this.audio.ensureContext();

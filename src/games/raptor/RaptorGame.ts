@@ -18,6 +18,7 @@ import { AudioManager } from "../../shared/AudioManager";
 const DT_CAP = 0.1;
 const MAX_PLAYER_BULLETS = 50;
 const MAX_ENEMY_BULLETS = 30;
+const MAX_EXPLOSIONS = 20;
 
 interface Star {
   x: number;
@@ -64,16 +65,8 @@ export class RaptorGame implements IGame {
 
   public onExit: (() => void) | null = null;
 
-  constructor(canvasOrId: string | HTMLCanvasElement, private width = 800, private height = 600) {
-    if (typeof canvasOrId === "string") {
-      const el = document.getElementById(canvasOrId);
-      if (!el || !(el instanceof HTMLCanvasElement)) {
-        throw new Error(`Canvas element "${canvasOrId}" not found`);
-      }
-      this.canvas = el;
-    } else {
-      this.canvas = canvasOrId;
-    }
+  constructor(canvas: HTMLCanvasElement, private width = 800, private height = 600) {
+    this.canvas = canvas;
     this.canvas.width = width;
     this.canvas.height = height;
 
@@ -279,7 +272,7 @@ export class RaptorGame implements IGame {
     }
 
     for (const bullet of this.bullets) {
-      bullet.update(dt);
+      bullet.update(dt, this.width);
     }
     for (const eb of this.enemyBullets) {
       eb.update(dt, this.width, this.height);
@@ -297,7 +290,7 @@ export class RaptorGame implements IGame {
       if (hit.destroyed) {
         this.score += hit.enemy.scoreValue;
         const explosionSize = hit.enemy.variant === "boss" ? 3 : hit.enemy.variant === "bomber" ? 2 : 1;
-        this.explosions.push(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
+        this.addExplosion(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
 
         if (hit.enemy.variant === "boss") {
           this.sound.play("boss_destroy");
@@ -323,7 +316,7 @@ export class RaptorGame implements IGame {
       const dead = this.player.takeDamage(25);
       if (dead) {
         this.sound.play("player_destroy");
-        this.explosions.push(new Explosion(this.player.pos.x, this.player.pos.y, 3));
+        this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
       } else {
         this.sound.play("player_hit");
       }
@@ -332,11 +325,22 @@ export class RaptorGame implements IGame {
     // Collisions: enemies vs player
     const enemyPlayerHits = this.collisions.checkPlayerEnemies(this.player, this.enemies);
     for (const hit of enemyPlayerHits) {
-      this.explosions.push(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, 2));
+      const explosionSize = hit.enemy.variant === "boss" ? 3 : 2;
+      this.addExplosion(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
+      this.score += hit.enemy.scoreValue;
+      if (hit.enemy.variant === "boss") {
+        this.sound.play("boss_destroy");
+        this.spawner.markBossDefeated();
+      } else {
+        this.sound.play("enemy_destroy");
+        if (Math.random() < config.powerUpDropChance) {
+          this.powerUps.push(new PowerUp(hit.enemy.pos.x, hit.enemy.pos.y));
+        }
+      }
       const dead = this.player.takeDamage(50);
       if (dead) {
         this.sound.play("player_destroy");
-        this.explosions.push(new Explosion(this.player.pos.x, this.player.pos.y, 3));
+        this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
       } else {
         this.sound.play("player_hit");
       }
@@ -396,10 +400,10 @@ export class RaptorGame implements IGame {
 
   private resetGame(): void {
     this.totalScore = 0;
-    this.startLevel(0);
+    this.startLevel(0, true);
   }
 
-  private startLevel(levelIndex: number): void {
+  private startLevel(levelIndex: number, fullReset = false): void {
     this.currentLevel = levelIndex;
     this.score = 0;
     this.fireTimer = 0;
@@ -408,10 +412,17 @@ export class RaptorGame implements IGame {
     this.enemyBullets = [];
     this.explosions = [];
     this.powerUps = [];
-    this.player.reset(this.width, this.height);
+    this.player.reset(this.width, this.height, fullReset);
     this.spawner.configure(this.currentLevelConfig);
     this.powerUpManager.reset();
     this.initStars(this.currentLevelConfig.starDensity);
+  }
+
+  private addExplosion(explosion: Explosion): void {
+    if (this.explosions.length >= MAX_EXPLOSIONS) {
+      this.explosions.shift();
+    }
+    this.explosions.push(explosion);
   }
 
   private initStars(density: number): void {

@@ -20,12 +20,12 @@ export class Bullet {
   get top(): number { return this.pos.y - this.height / 2; }
   get bottom(): number { return this.pos.y + this.height / 2; }
 
-  update(dt: number): void {
+  update(dt: number, canvasWidth = 800): void {
     if (!this.alive) return;
     this.pos.x += Math.sin(this.angle) * BULLET_SPEED * dt;
     this.pos.y -= Math.cos(this.angle) * BULLET_SPEED * dt;
 
-    if (this.pos.y < -20 || this.pos.x < -20 || this.pos.x > 820) {
+    if (this.pos.y < -20 || this.pos.x < -20 || this.pos.x > canvasWidth + 20) {
       this.alive = false;
     }
   }

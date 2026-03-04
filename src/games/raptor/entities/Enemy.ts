@@ -45,15 +45,20 @@ export class Enemy {
 
     if (this.variant === "boss") {
       this.pos.x += Math.sin(this.time * 1.5) * 60 * dt;
+      const bossTargetY = canvasHeight * 0.15;
+      if (this.pos.y < bossTargetY) {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y > bossTargetY) this.pos.y = bossTargetY;
+      }
+    } else {
+      this.pos.y += this.vel.y * dt;
     }
-
-    this.pos.y += this.vel.y * dt;
 
     if (this.fireRate > 0) {
       this.fireCooldown -= dt;
     }
 
-    if (this.pos.y > canvasHeight + 50) {
+    if (this.variant !== "boss" && this.pos.y > canvasHeight + 50) {
       this.alive = false;
     }
   }

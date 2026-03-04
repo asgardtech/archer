@@ -115,11 +115,11 @@ export class EnemySpawner {
       case "v": {
         const center = canvasWidth / 2;
         const spread = usableWidth * 0.4;
-        const half = Math.floor(count / 2);
-        const offset = index <= half
-          ? (index - half) * (spread / half || 1)
-          : (index - half) * (spread / half || 1);
-        return center + offset;
+        const halfCount = Math.floor(count / 2) || 1;
+        if (index === 0) return center;
+        const arm = Math.ceil(index / 2);
+        const side = index % 2 === 0 ? 1 : -1;
+        return center + side * (arm / halfCount) * spread;
       }
       case "sweep":
         return margin + (usableWidth / (count + 1)) * (index + 1);

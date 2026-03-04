@@ -70,13 +70,15 @@ export class Player {
     return false;
   }
 
-  reset(canvasWidth: number, canvasHeight: number): void {
+  reset(canvasWidth: number, canvasHeight: number, fullReset = true): void {
     this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
     this.shield = 100;
-    this.lives = 3;
     this.alive = true;
     this.invincibilityTimer = 0;
     this.flashTimer = 0;
+    if (fullReset) {
+      this.lives = 3;
+    }
   }
 
   render(ctx: CanvasRenderingContext2D): void {
