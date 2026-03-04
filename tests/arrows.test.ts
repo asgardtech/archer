@@ -1,4 +1,4 @@
-import { HUD } from "../src/rendering/HUD";
+import { HUD } from "../src/games/archer/rendering/HUD";
 
 function createMockCanvas(): HTMLCanvasElement {
   const fillTextCalls: Array<{ text: string; x: number; y: number }> = [];
@@ -76,7 +76,7 @@ function getGameInternals(game: any) {
   };
 }
 
-let Game: typeof import("../src/Game").Game;
+let Game: typeof import("../src/games/archer/ArcherGame").Game;
 
 beforeAll(async () => {
   const canvas = createMockCanvas();
@@ -84,7 +84,7 @@ beforeAll(async () => {
   (global as any).performance = { now: jest.fn(() => 0) };
   (global as any).requestAnimationFrame = jest.fn();
 
-  const mod = await import("../src/Game");
+  const mod = await import("../src/games/archer/ArcherGame");
   Game = mod.Game;
 });
 

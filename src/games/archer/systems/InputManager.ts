@@ -9,22 +9,45 @@ export class InputManager {
   private canvas: HTMLCanvasElement;
   private activeTouchId: number | null = null;
 
+  private boundMouseMove: (e: MouseEvent) => void;
+  private boundMouseDown: (e: MouseEvent) => void;
+  private boundMouseUp: () => void;
+  private boundTouchStart: (e: TouchEvent) => void;
+  private boundTouchMove: (e: TouchEvent) => void;
+  private boundTouchEnd: (e: TouchEvent) => void;
+
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     this.isTouchDevice =
       "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
-    canvas.addEventListener("mousemove", (e) => this.onMouseMove(e));
-    canvas.addEventListener("mousedown", (e) => this.onMouseDown(e));
-    canvas.addEventListener("mouseup", () => this.onMouseUp());
+    this.boundMouseMove = (e) => this.onMouseMove(e);
+    this.boundMouseDown = (e) => this.onMouseDown(e);
+    this.boundMouseUp = () => this.onMouseUp();
+    this.boundTouchStart = (e) => this.onTouchStart(e);
+    this.boundTouchMove = (e) => this.onTouchMove(e);
+    this.boundTouchEnd = (e) => this.onTouchEnd(e);
 
-    canvas.addEventListener("touchstart", (e) => this.onTouchStart(e), { passive: false });
-    canvas.addEventListener("touchmove", (e) => this.onTouchMove(e), { passive: false });
-    canvas.addEventListener("touchend", (e) => this.onTouchEnd(e), { passive: false });
+    canvas.addEventListener("mousemove", this.boundMouseMove);
+    canvas.addEventListener("mousedown", this.boundMouseDown);
+    canvas.addEventListener("mouseup", this.boundMouseUp);
+
+    canvas.addEventListener("touchstart", this.boundTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", this.boundTouchMove, { passive: false });
+    canvas.addEventListener("touchend", this.boundTouchEnd, { passive: false });
   }
 
   consume(): void {
     this.wasClicked = false;
+  }
+
+  destroy(): void {
+    this.canvas.removeEventListener("mousemove", this.boundMouseMove);
+    this.canvas.removeEventListener("mousedown", this.boundMouseDown);
+    this.canvas.removeEventListener("mouseup", this.boundMouseUp);
+    this.canvas.removeEventListener("touchstart", this.boundTouchStart);
+    this.canvas.removeEventListener("touchmove", this.boundTouchMove);
+    this.canvas.removeEventListener("touchend", this.boundTouchEnd);
   }
 
   private toCanvasCoords(clientX: number, clientY: number): Vec2 {

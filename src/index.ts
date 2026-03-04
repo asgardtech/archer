@@ -1,4 +1,4 @@
-import { Game } from "./Game";
+import { Launcher } from "./launcher/Launcher";
 
-const game = new Game("game-canvas");
-game.start();
+const launcher = new Launcher("game-canvas");
+launcher.start();

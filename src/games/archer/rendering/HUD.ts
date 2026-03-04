@@ -256,7 +256,7 @@ export class HUD {
 
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "20px sans-serif";
-    ctx.fillText(this.isTouchDevice ? "Tap to Restart" : "Click to Restart", w / 2, h / 2 + 80);
+    ctx.fillText(this.isTouchDevice ? "Tap to Return to Menu" : "Click to Return to Menu", w / 2, h / 2 + 80);
 
     ctx.restore();
   }
@@ -290,7 +290,7 @@ export class HUD {
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "20px sans-serif";
     ctx.fillText(
-      this.isTouchDevice ? "Tap to Play Again" : "Click to Play Again",
+      this.isTouchDevice ? "Tap to Return to Menu" : "Click to Return to Menu",
       w / 2, h / 2 + 85
     );
 

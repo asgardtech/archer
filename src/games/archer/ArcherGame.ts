@@ -9,6 +9,7 @@ import { Obstacle } from "./entities/Obstacle";
 import { Bow } from "./entities/Bow";
 import { HUD } from "./rendering/HUD";
 import { LEVELS, LevelConfig } from "./levels";
+import { IGame } from "../../shared/types";
 
 const DT_CAP = 0.1;
 const UPGRADE_BALLOON_SCORE = 3;
@@ -23,12 +24,14 @@ const OBSTACLE_PENALTIES: Record<ObstacleType, { score: number; arrows: number }
   ufo: { score: 8, arrows: 5 },
 };
 
-export class Game {
+export class ArcherGame implements IGame {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private lastTime = 0;
   private running = false;
+  private destroyed = false;
   private dt = 0;
+  private rafId = 0;
 
   private state: GameState = "menu";
   private currentLevel = 0;
@@ -49,12 +52,21 @@ export class Game {
   private upgradeManager: UpgradeManager;
   private hud: HUD;
 
-  constructor(canvasId: string, private width = 800, private height = 600) {
-    const el = document.getElementById(canvasId);
-    if (!el || !(el instanceof HTMLCanvasElement)) {
-      throw new Error(`Canvas element "${canvasId}" not found`);
+  private boundResize: (() => void) | null = null;
+  private resizeTimer: ReturnType<typeof setTimeout> | undefined;
+
+  public onExit: (() => void) | null = null;
+
+  constructor(canvasOrId: string | HTMLCanvasElement, private width = 800, private height = 600) {
+    if (typeof canvasOrId === "string") {
+      const el = document.getElementById(canvasOrId);
+      if (!el || !(el instanceof HTMLCanvasElement)) {
+        throw new Error(`Canvas element "${canvasOrId}" not found`);
+      }
+      this.canvas = el;
+    } else {
+      this.canvas = canvasOrId;
     }
-    this.canvas = el;
     this.canvas.width = width;
     this.canvas.height = height;
 
@@ -77,7 +89,6 @@ export class Game {
   }
 
   private setupResize(): void {
-    let resizeTimer: ReturnType<typeof setTimeout>;
     const resize = () => {
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -93,23 +104,39 @@ export class Game {
       this.canvas.style.width = `${cssW}px`;
       this.canvas.style.height = `${cssH}px`;
     };
-    const debouncedResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(resize, 100);
+    this.boundResize = () => {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(resize, 100);
     };
-    window.addEventListener("resize", debouncedResize);
-    window.addEventListener("orientationchange", debouncedResize);
+    window.addEventListener("resize", this.boundResize);
+    window.addEventListener("orientationchange", this.boundResize);
     resize();
   }
 
   start(): void {
     this.running = true;
     this.lastTime = performance.now();
-    requestAnimationFrame((t) => this.loop(t));
+    this.rafId = requestAnimationFrame((t) => this.loop(t));
   }
 
   stop(): void {
     this.running = false;
+  }
+
+  destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.running = false;
+    cancelAnimationFrame(this.rafId);
+    clearTimeout(this.resizeTimer);
+
+    this.input.destroy();
+
+    if (this.boundResize) {
+      window.removeEventListener("resize", this.boundResize);
+      window.removeEventListener("orientationchange", this.boundResize);
+      this.boundResize = null;
+    }
   }
 
   private loop(time: number): void {
@@ -121,7 +148,7 @@ export class Game {
     this.update(this.dt);
     this.render();
 
-    requestAnimationFrame((t) => this.loop(t));
+    this.rafId = requestAnimationFrame((t) => this.loop(t));
   }
 
   private update(dt: number): void {
@@ -146,13 +173,21 @@ export class Game {
 
       case "gameover":
         if (this.input.wasClicked) {
-          this.state = "menu";
+          if (this.onExit) {
+            this.onExit();
+          } else {
+            this.state = "menu";
+          }
         }
         break;
 
       case "victory":
         if (this.input.wasClicked) {
-          this.state = "menu";
+          if (this.onExit) {
+            this.onExit();
+          } else {
+            this.state = "menu";
+          }
         }
         break;
     }
@@ -348,3 +383,5 @@ export class Game {
     ctx.fill();
   }
 }
+
+export { ArcherGame as Game };
