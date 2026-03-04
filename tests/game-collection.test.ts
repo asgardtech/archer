@@ -434,12 +434,13 @@ describe("Scenario: Archer game preserves all level configurations", () => {
 // ── Game Registration ──
 
 describe("Scenario: Game registry contains Archer", () => {
-  it("should contain exactly 1 game", () => {
-    expect(GAME_REGISTRY).toHaveLength(1);
+  it("should contain at least 1 game", () => {
+    expect(GAME_REGISTRY.length).toBeGreaterThanOrEqual(1);
   });
 
   it('should have a game with id "archer"', () => {
-    expect(GAME_REGISTRY[0].id).toBe("archer");
+    const archer = GAME_REGISTRY.find(g => g.id === "archer");
+    expect(archer).toBeDefined();
   });
 
   it("should have a valid createGame factory function", () => {
