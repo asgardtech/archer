@@ -23,6 +23,9 @@ const AMMO_GAIN_DRIFT = 30;
 const PENALTY_DURATION = 1.5;
 const PENALTY_DRIFT = 30;
 
+const MUTE_BTN_SIZE = 36;
+const MUTE_BTN_MARGIN = 12;
+
 export class HUD {
   private ammoGainTexts: AmmoGainText[] = [];
   private penaltyTexts: PenaltyText[] = [];
@@ -90,6 +93,36 @@ export class HUD {
         this.renderVictory(ctx, totalScore, canvasW, canvasH);
         break;
     }
+  }
+
+  renderMuteButton(ctx: CanvasRenderingContext2D, muted: boolean, canvasW: number): void {
+    const x = canvasW - MUTE_BTN_SIZE - MUTE_BTN_MARGIN;
+    const y = MUTE_BTN_MARGIN;
+    const size = MUTE_BTN_SIZE;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.beginPath();
+    ctx.roundRect(x, y, size, size, 6);
+    ctx.fill();
+
+    ctx.font = "20px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(muted ? "\u{1F507}" : "\u{1F50A}", x + size / 2, y + size / 2);
+    ctx.restore();
+  }
+
+  isMuteButtonHit(clickX: number, clickY: number, canvasW: number): boolean {
+    const x = canvasW - MUTE_BTN_SIZE - MUTE_BTN_MARGIN;
+    const y = MUTE_BTN_MARGIN;
+    return (
+      clickX >= x &&
+      clickX <= x + MUTE_BTN_SIZE &&
+      clickY >= y &&
+      clickY <= y + MUTE_BTN_SIZE
+    );
   }
 
   private renderMenu(ctx: CanvasRenderingContext2D, w: number, h: number): void {
