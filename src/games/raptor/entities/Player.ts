@@ -1,0 +1,162 @@
+import { Vec2 } from "../types";
+
+const MOVE_SPEED = 500;
+const INVINCIBILITY_DURATION = 2.0;
+
+export class Player {
+  public pos: Vec2;
+  public width = 32;
+  public height = 36;
+  public shield = 100;
+  public lives = 3;
+  public alive = true;
+  public invincibilityTimer = 0;
+
+  private flashTimer = 0;
+
+  constructor(canvasWidth: number, canvasHeight: number) {
+    this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
+  }
+
+  get left(): number { return this.pos.x - this.width / 2; }
+  get right(): number { return this.pos.x + this.width / 2; }
+  get top(): number { return this.pos.y - this.height / 2; }
+  get bottom(): number { return this.pos.y + this.height / 2; }
+  get isInvincible(): boolean { return this.invincibilityTimer > 0; }
+
+  update(dt: number, targetX: number, targetY: number, canvasWidth: number, canvasHeight: number): void {
+    if (!this.alive) return;
+
+    if (this.invincibilityTimer > 0) {
+      this.invincibilityTimer -= dt;
+      this.flashTimer += dt;
+    }
+
+    const dx = targetX - this.pos.x;
+    const dy = targetY - this.pos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > 2) {
+      const moveAmount = Math.min(MOVE_SPEED * dt, dist);
+      this.pos.x += (dx / dist) * moveAmount;
+      this.pos.y += (dy / dist) * moveAmount;
+    }
+
+    const padding = this.width / 2;
+    this.pos.x = Math.max(padding, Math.min(canvasWidth - padding, this.pos.x));
+
+    const minY = canvasHeight * 0.6;
+    const maxY = canvasHeight - this.height / 2 - 5;
+    this.pos.y = Math.max(minY, Math.min(maxY, this.pos.y));
+  }
+
+  takeDamage(amount: number): boolean {
+    if (this.isInvincible || !this.alive) return false;
+
+    if (this.shield > 0) {
+      this.shield = Math.max(0, this.shield - amount);
+      return false;
+    }
+
+    this.lives--;
+    this.shield = 100;
+    this.invincibilityTimer = INVINCIBILITY_DURATION;
+    this.flashTimer = 0;
+
+    if (this.lives <= 0) {
+      this.alive = false;
+      return true;
+    }
+    return false;
+  }
+
+  reset(canvasWidth: number, canvasHeight: number, fullReset = true): void {
+    this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
+    this.shield = 100;
+    this.alive = true;
+    this.invincibilityTimer = 0;
+    this.flashTimer = 0;
+    if (fullReset) {
+      this.lives = 3;
+    }
+  }
+
+  render(ctx: CanvasRenderingContext2D): void {
+    if (!this.alive) return;
+
+    if (this.isInvincible && Math.floor(this.flashTimer * 10) % 2 === 0) {
+      return;
+    }
+
+    const x = this.pos.x;
+    const y = this.pos.y;
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.save();
+
+    // Engine glow
+    ctx.fillStyle = "rgba(255, 150, 0, 0.6)";
+    ctx.beginPath();
+    ctx.moveTo(x - 6, y + hh);
+    ctx.lineTo(x, y + hh + 12 + Math.random() * 6);
+    ctx.lineTo(x + 6, y + hh);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255, 200, 50, 0.4)";
+    ctx.beginPath();
+    ctx.moveTo(x - 3, y + hh);
+    ctx.lineTo(x, y + hh + 8 + Math.random() * 4);
+    ctx.lineTo(x + 3, y + hh);
+    ctx.fill();
+
+    // Main body
+    ctx.fillStyle = "#3a7dff";
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw * 0.4, y);
+    ctx.lineTo(x + hw * 0.35, y + hh * 0.7);
+    ctx.lineTo(x - hw * 0.35, y + hh * 0.7);
+    ctx.lineTo(x - hw * 0.4, y);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wings
+    ctx.fillStyle = "#2a5dc8";
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.3, y + hh * 0.1);
+    ctx.lineTo(x - hw, y + hh * 0.6);
+    ctx.lineTo(x - hw * 0.8, y + hh * 0.8);
+    ctx.lineTo(x - hw * 0.3, y + hh * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(x + hw * 0.3, y + hh * 0.1);
+    ctx.lineTo(x + hw, y + hh * 0.6);
+    ctx.lineTo(x + hw * 0.8, y + hh * 0.8);
+    ctx.lineTo(x + hw * 0.3, y + hh * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Cockpit
+    ctx.fillStyle = "#80d4ff";
+    ctx.beginPath();
+    ctx.ellipse(x, y - hh * 0.2, hw * 0.15, hh * 0.25, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Accent stripes
+    ctx.strokeStyle = "#ff4444";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.6, y + hh * 0.4);
+    ctx.lineTo(x - hw * 0.9, y + hh * 0.7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + hw * 0.6, y + hh * 0.4);
+    ctx.lineTo(x + hw * 0.9, y + hh * 0.7);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
