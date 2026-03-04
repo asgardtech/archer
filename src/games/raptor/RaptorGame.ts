@@ -1,33 +1,30 @@
-import { IGame } from "../../shared/types";
-import { RaptorGameState, RaptorLevelConfig, RaptorPowerUpType } from "./types";
-import { LEVELS } from "./levels";
+import { RaptorGameState, RaptorLevelConfig } from "./types";
+import { InputManager } from "./systems/InputManager";
+import { CollisionSystem } from "./systems/CollisionSystem";
+import { EnemySpawner } from "./systems/EnemySpawner";
+import { PowerUpManager } from "./systems/PowerUpManager";
+import { SoundSystem } from "./systems/SoundSystem";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Enemy } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
 import { Explosion } from "./entities/Explosion";
 import { PowerUp } from "./entities/PowerUp";
-import { InputManager } from "./systems/InputManager";
-import { CollisionSystem } from "./systems/CollisionSystem";
-import { EnemySpawner } from "./systems/EnemySpawner";
-import { PowerUpManager } from "./systems/PowerUpManager";
-import { SoundSystem } from "./systems/SoundSystem";
-import { AudioManager } from "../../shared/AudioManager";
 import { HUD } from "./rendering/HUD";
+import { LEVELS } from "./levels";
+import { IGame } from "../../shared/types";
+import { AudioManager } from "../../shared/AudioManager";
 
 const DT_CAP = 0.1;
 const MAX_PLAYER_BULLETS = 50;
 const MAX_ENEMY_BULLETS = 30;
-const MAX_EXPLOSIONS = 20;
-
-const POWERUP_TYPES: RaptorPowerUpType[] = ["spread-shot", "rapid-fire", "shield-restore", "bonus-life"];
 
 interface Star {
   x: number;
   y: number;
   speed: number;
-  brightness: number;
   size: number;
+  brightness: number;
 }
 
 export class RaptorGame implements IGame {
@@ -41,6 +38,7 @@ export class RaptorGame implements IGame {
   private state: RaptorGameState = "menu";
   private currentLevel = 0;
   private score = 0;
+  private totalScore = 0;
 
   private player: Player;
   private bullets: Bullet[] = [];
@@ -48,25 +46,34 @@ export class RaptorGame implements IGame {
   private enemyBullets: EnemyBullet[] = [];
   private explosions: Explosion[] = [];
   private powerUps: PowerUp[] = [];
-
   private fireTimer = 0;
-  private stars: Star[] = [];
 
   private input: InputManager;
   private collisions: CollisionSystem;
   private spawner: EnemySpawner;
   private powerUpManager: PowerUpManager;
+  private hud: HUD;
   private audio: AudioManager;
   private sound: SoundSystem;
-  private hud: HUD;
+
+  private stars: Star[] = [];
+  private starsNear: Star[] = [];
 
   private boundResize: (() => void) | null = null;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
 
   public onExit: (() => void) | null = null;
 
-  constructor(canvas: HTMLCanvasElement, private width = 800, private height = 600) {
-    this.canvas = canvas;
+  constructor(canvasOrId: string | HTMLCanvasElement, private width = 800, private height = 600) {
+    if (typeof canvasOrId === "string") {
+      const el = document.getElementById(canvasOrId);
+      if (!el || !(el instanceof HTMLCanvasElement)) {
+        throw new Error(`Canvas element "${canvasOrId}" not found`);
+      }
+      this.canvas = el;
+    } else {
+      this.canvas = canvasOrId;
+    }
     this.canvas.width = width;
     this.canvas.height = height;
 
@@ -78,9 +85,9 @@ export class RaptorGame implements IGame {
     this.collisions = new CollisionSystem();
     this.spawner = new EnemySpawner();
     this.powerUpManager = new PowerUpManager();
+    this.hud = new HUD(this.input.isTouchDevice);
     this.audio = new AudioManager();
     this.sound = new SoundSystem(this.audio);
-    this.hud = new HUD(this.input.isTouchDevice);
     this.player = new Player(width, height);
 
     this.initStars(60);
@@ -172,12 +179,13 @@ export class RaptorGame implements IGame {
 
     switch (this.state) {
       case "menu":
+        this.updateStars(dt);
         if (this.input.wasClicked) {
           this.audio.ensureContext();
           this.sound.play("menu_start");
           this.resetGame();
           this.state = "playing";
-          this.sound.startMusic("playing", this.currentLevel);
+          this.sound.startMusic("playing", 0);
         }
         break;
 
@@ -186,6 +194,7 @@ export class RaptorGame implements IGame {
         break;
 
       case "level_complete":
+        this.updateStars(dt);
         if (this.input.wasClicked) {
           this.startLevel(this.currentLevel + 1);
           this.state = "playing";
@@ -194,6 +203,7 @@ export class RaptorGame implements IGame {
         break;
 
       case "gameover":
+        this.updateStars(dt);
         if (this.input.wasClicked) {
           this.sound.stopMusic();
           if (this.onExit) {
@@ -205,6 +215,7 @@ export class RaptorGame implements IGame {
         break;
 
       case "victory":
+        this.updateStars(dt);
         if (this.input.wasClicked) {
           this.sound.stopMusic();
           if (this.onExit) {
@@ -219,78 +230,83 @@ export class RaptorGame implements IGame {
   }
 
   private updatePlaying(dt: number): void {
-    const config = this.currentLevelConfig;
-
     this.input.updateFromKeyboard(dt, this.width, this.height);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.height);
+    this.updateStars(dt);
     this.powerUpManager.update(dt);
 
     // Auto-fire
-    const fireRate = this.powerUpManager.hasUpgrade("rapid-fire")
-      ? config.autoFireRate * 2
-      : config.autoFireRate;
+    const config = this.currentLevelConfig;
+    const rapidFire = this.powerUpManager.hasUpgrade("rapid-fire");
+    const fireInterval = 1 / (config.autoFireRate * (rapidFire ? 2 : 1));
     this.fireTimer += dt;
-    const fireInterval = 1 / fireRate;
     if (this.fireTimer >= fireInterval && this.bullets.length < MAX_PLAYER_BULLETS) {
       this.fireTimer -= fireInterval;
-      this.firePlayerBullets();
+      const spreadShot = this.powerUpManager.hasUpgrade("spread-shot");
+      if (spreadShot) {
+        this.bullets.push(new Bullet(this.player.pos.x, this.player.top, -0.2));
+        this.bullets.push(new Bullet(this.player.pos.x, this.player.top, 0));
+        this.bullets.push(new Bullet(this.player.pos.x, this.player.top, 0.2));
+      } else {
+        this.bullets.push(new Bullet(this.player.pos.x, this.player.top));
+      }
+      this.sound.play("player_shoot");
     }
 
-    // Spawn enemies
+    // Spawn enemies from waves
     const newEnemies = this.spawner.update(dt, this.width);
     for (const e of newEnemies) {
       this.enemies.push(e);
     }
 
-    // Boss spawning
+    // Check if boss should spawn
     if (this.spawner.shouldSpawnBoss()) {
       const boss = this.spawner.spawnBoss(this.width);
       if (boss) this.enemies.push(boss);
     }
 
     // Update entities
-    for (const bullet of this.bullets) {
-      bullet.update(dt);
-    }
     for (const enemy of this.enemies) {
       enemy.update(dt, this.height);
 
       if (enemy.canFire() && this.enemyBullets.length < MAX_ENEMY_BULLETS) {
-        enemy.resetFireCooldown(1 / config.enemyFireRateMultiplier);
         this.enemyBullets.push(
           new EnemyBullet(enemy.pos.x, enemy.bottom, this.player.pos.x, this.player.pos.y)
         );
+        enemy.resetFireCooldown(1 / config.enemyFireRateMultiplier);
         this.sound.play("enemy_shoot");
       }
+    }
+
+    for (const bullet of this.bullets) {
+      bullet.update(dt);
     }
     for (const eb of this.enemyBullets) {
       eb.update(dt, this.width, this.height);
     }
-    for (const explosion of this.explosions) {
-      explosion.update(dt);
+    for (const exp of this.explosions) {
+      exp.update(dt);
     }
     for (const pu of this.powerUps) {
       pu.update(dt, this.height);
     }
 
     // Collisions: player bullets vs enemies
-    const bulletHits = this.collisions.checkBulletsEnemies(this.bullets, this.enemies);
-    for (const hit of bulletHits) {
+    const enemyHits = this.collisions.checkBulletsEnemies(this.bullets, this.enemies);
+    for (const hit of enemyHits) {
       if (hit.destroyed) {
         this.score += hit.enemy.scoreValue;
-        this.addExplosion(hit.enemy.pos.x, hit.enemy.pos.y,
-          hit.enemy.variant === "boss" ? 2.5 : 1);
+        const explosionSize = hit.enemy.variant === "boss" ? 3 : hit.enemy.variant === "bomber" ? 2 : 1;
+        this.explosions.push(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
 
         if (hit.enemy.variant === "boss") {
           this.sound.play("boss_destroy");
           this.spawner.markBossDefeated();
         } else {
           this.sound.play("enemy_destroy");
-        }
-
-        if (hit.enemy.variant !== "boss" && Math.random() < config.powerUpDropChance) {
-          const puType = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
-          this.powerUps.push(new PowerUp(hit.enemy.pos.x, hit.enemy.pos.y, puType));
+          if (Math.random() < config.powerUpDropChance) {
+            this.powerUps.push(new PowerUp(hit.enemy.pos.x, hit.enemy.pos.y));
+          }
         }
       } else {
         if (hit.enemy.variant === "boss") {
@@ -302,132 +318,121 @@ export class RaptorGame implements IGame {
     }
 
     // Collisions: enemy bullets vs player
-    const ebHits = this.collisions.checkEnemyBulletsPlayer(this.enemyBullets, this.player);
-    for (const _hit of ebHits) {
+    const bulletPlayerHits = this.collisions.checkEnemyBulletsPlayer(this.enemyBullets, this.player);
+    for (const _hit of bulletPlayerHits) {
       const dead = this.player.takeDamage(25);
       if (dead) {
-        this.sound.stopMusic();
         this.sound.play("player_destroy");
-        this.addExplosion(this.player.pos.x, this.player.pos.y, 2);
-        this.state = "gameover";
-        this.sound.play("game_over");
-        return;
+        this.explosions.push(new Explosion(this.player.pos.x, this.player.pos.y, 3));
+      } else {
+        this.sound.play("player_hit");
       }
-      this.sound.play("player_hit");
     }
 
     // Collisions: enemies vs player
-    const enemyHits = this.collisions.checkPlayerEnemies(this.player, this.enemies);
-    for (const hit of enemyHits) {
-      this.addExplosion(hit.enemy.pos.x, hit.enemy.pos.y, 1);
-      this.score += hit.enemy.scoreValue;
-      this.sound.play("enemy_destroy");
-
+    const enemyPlayerHits = this.collisions.checkPlayerEnemies(this.player, this.enemies);
+    for (const hit of enemyPlayerHits) {
+      this.explosions.push(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, 2));
       const dead = this.player.takeDamage(50);
       if (dead) {
-        this.sound.stopMusic();
         this.sound.play("player_destroy");
-        this.addExplosion(this.player.pos.x, this.player.pos.y, 2);
-        this.state = "gameover";
-        this.sound.play("game_over");
-        return;
+        this.explosions.push(new Explosion(this.player.pos.x, this.player.pos.y, 3));
+      } else {
+        this.sound.play("player_hit");
       }
-      this.sound.play("player_hit");
     }
 
-    // Collisions: power-ups vs player
+    // Collisions: player vs power-ups
     const puHits = this.collisions.checkPlayerPowerUps(this.player, this.powerUps);
     for (const hit of puHits) {
       this.sound.play("power_up_collect");
-      this.applyPowerUp(hit.powerUp.type);
+      switch (hit.powerUp.type) {
+        case "spread-shot":
+        case "rapid-fire":
+          this.powerUpManager.activate(hit.powerUp.type);
+          break;
+        case "shield-restore":
+          this.player.shield = 100;
+          break;
+        case "bonus-life":
+          this.player.lives++;
+          break;
+      }
     }
 
     // Clean up dead entities
     this.bullets = this.bullets.filter((b) => b.alive);
     this.enemies = this.enemies.filter((e) => e.alive);
     this.enemyBullets = this.enemyBullets.filter((eb) => eb.alive);
-    this.explosions = this.explosions.filter((ex) => ex.alive);
-    this.powerUps = this.powerUps.filter((pu) => pu.alive);
+    this.explosions = this.explosions.filter((e) => e.alive);
+    this.powerUps = this.powerUps.filter((p) => p.alive);
 
-    // Check level completion
-    if (this.spawner.isLevelComplete && this.enemies.length === 0) {
+    // Check game over
+    if (!this.player.alive) {
+      this.totalScore += this.score;
       this.sound.stopMusic();
+      this.sound.play("game_over");
+      this.state = "gameover";
+      return;
+    }
+
+    // Check level complete
+    if (this.spawner.isLevelComplete && this.enemies.length === 0) {
+      this.totalScore += this.score;
+      this.bullets = [];
+      this.enemyBullets = [];
+      this.powerUps = [];
+      this.sound.stopMusic();
+
       if (this.currentLevel >= LEVELS.length - 1) {
-        this.sound.play("victory");
         this.state = "victory";
+        this.sound.play("victory");
       } else {
-        this.sound.play("level_complete");
         this.state = "level_complete";
+        this.sound.play("level_complete");
       }
     }
   }
 
-  private firePlayerBullets(): void {
-    const x = this.player.pos.x;
-    const y = this.player.top;
-
-    if (this.powerUpManager.hasUpgrade("spread-shot")) {
-      this.bullets.push(new Bullet(x, y, 0));
-      this.bullets.push(new Bullet(x, y, -0.15));
-      this.bullets.push(new Bullet(x, y, 0.15));
-    } else {
-      this.bullets.push(new Bullet(x, y));
-    }
-    this.sound.play("player_shoot");
-  }
-
-  private applyPowerUp(type: RaptorPowerUpType): void {
-    switch (type) {
-      case "spread-shot":
-      case "rapid-fire":
-        this.powerUpManager.activate(type);
-        break;
-      case "shield-restore":
-        this.player.shield = 100;
-        break;
-      case "bonus-life":
-        this.player.lives++;
-        break;
-    }
-  }
-
-  private addExplosion(x: number, y: number, size: number): void {
-    if (this.explosions.length >= MAX_EXPLOSIONS) {
-      this.explosions.shift();
-    }
-    this.explosions.push(new Explosion(x, y, size));
-  }
-
   private resetGame(): void {
-    this.score = 0;
-    this.player.reset(this.width, this.height);
+    this.totalScore = 0;
     this.startLevel(0);
   }
 
   private startLevel(levelIndex: number): void {
     this.currentLevel = levelIndex;
-    const config = this.currentLevelConfig;
-
+    this.score = 0;
+    this.fireTimer = 0;
     this.bullets = [];
     this.enemies = [];
     this.enemyBullets = [];
     this.explosions = [];
     this.powerUps = [];
-    this.fireTimer = 0;
+    this.player.reset(this.width, this.height);
+    this.spawner.configure(this.currentLevelConfig);
     this.powerUpManager.reset();
-    this.spawner.configure(config);
-    this.initStars(config.starDensity);
+    this.initStars(this.currentLevelConfig.starDensity);
   }
 
-  private initStars(count: number): void {
+  private initStars(density: number): void {
     this.stars = [];
-    for (let i = 0; i < count; i++) {
+    this.starsNear = [];
+    for (let i = 0; i < density; i++) {
       this.stars.push({
         x: Math.random() * this.width,
         y: Math.random() * this.height,
-        speed: 20 + Math.random() * 80,
-        brightness: 0.3 + Math.random() * 0.7,
-        size: 0.5 + Math.random() * 2,
+        speed: 20 + Math.random() * 30,
+        size: 0.5 + Math.random() * 1,
+        brightness: 0.3 + Math.random() * 0.4,
+      });
+    }
+    for (let i = 0; i < Math.floor(density / 3); i++) {
+      this.starsNear.push({
+        x: Math.random() * this.width,
+        y: Math.random() * this.height,
+        speed: 60 + Math.random() * 60,
+        size: 1 + Math.random() * 1.5,
+        brightness: 0.5 + Math.random() * 0.5,
       });
     }
   }
@@ -440,36 +445,54 @@ export class RaptorGame implements IGame {
         star.x = Math.random() * this.width;
       }
     }
+    for (const star of this.starsNear) {
+      star.y += star.speed * dt;
+      if (star.y > this.height) {
+        star.y = -2;
+        star.x = Math.random() * this.width;
+      }
+    }
   }
 
   private render(): void {
     this.renderBackground();
 
-    if (this.state === "playing" || this.state === "level_complete") {
+    if (
+      this.state === "playing" ||
+      this.state === "gameover" ||
+      this.state === "level_complete"
+    ) {
       for (const pu of this.powerUps) {
         pu.render(this.ctx);
       }
       for (const enemy of this.enemies) {
         enemy.render(this.ctx);
       }
-      for (const eb of this.enemyBullets) {
-        eb.render(this.ctx);
-      }
       for (const bullet of this.bullets) {
         bullet.render(this.ctx);
       }
-      this.player.render(this.ctx);
-      for (const explosion of this.explosions) {
-        explosion.render(this.ctx);
+      for (const eb of this.enemyBullets) {
+        eb.render(this.ctx);
       }
+      for (const exp of this.explosions) {
+        exp.render(this.ctx);
+      }
+
+      this.player.render(this.ctx);
     }
 
     const config = this.currentLevelConfig;
+    const displayScore = this.state === "playing" ? this.score : this.totalScore;
     this.hud.render(
-      this.ctx, this.state, this.score,
-      this.player.lives, this.player.shield,
-      config.level, config.name,
-      this.width, this.height
+      this.ctx,
+      this.state,
+      displayScore,
+      this.player.lives,
+      this.player.shield,
+      config.level,
+      config.name,
+      this.width,
+      this.height
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }
@@ -482,15 +505,16 @@ export class RaptorGame implements IGame {
     this.ctx.fillStyle = grad;
     this.ctx.fillRect(0, 0, this.width, this.height);
 
-    if (this.state === "playing") {
-      this.updateStars(1 / 60);
-    }
-
     for (const star of this.stars) {
       this.ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
-      this.ctx.beginPath();
-      this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-      this.ctx.fill();
+      this.ctx.fillRect(star.x, star.y, star.size, star.size);
+    }
+
+    for (const star of this.starsNear) {
+      this.ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+      this.ctx.fillRect(star.x, star.y, star.size, star.size);
     }
   }
 }
+
+export { RaptorGame as Game };
