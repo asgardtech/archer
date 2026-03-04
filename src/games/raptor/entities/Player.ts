@@ -1,4 +1,5 @@
 import { Vec2 } from "../types";
+import { SpriteSheet } from "../rendering/SpriteSheet";
 
 const MOVE_SPEED = 500;
 const INVINCIBILITY_DURATION = 2.0;
@@ -13,9 +14,21 @@ export class Player {
   public invincibilityTimer = 0;
 
   private flashTimer = 0;
+  private sprite: HTMLImageElement | null = null;
+  private thrustSheet: SpriteSheet | null = null;
+  private thrustFrame = 0;
+  private thrustTimer = 0;
 
   constructor(canvasWidth: number, canvasHeight: number) {
     this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
+  }
+
+  setSprite(sprite: HTMLImageElement): void {
+    this.sprite = sprite;
+  }
+
+  setThrustSheet(sheet: SpriteSheet): void {
+    this.thrustSheet = sheet;
   }
 
   get left(): number { return this.pos.x - this.width / 2; }
@@ -30,6 +43,12 @@ export class Player {
     if (this.invincibilityTimer > 0) {
       this.invincibilityTimer -= dt;
       this.flashTimer += dt;
+    }
+
+    this.thrustTimer += dt;
+    if (this.thrustTimer >= 0.08) {
+      this.thrustTimer -= 0.08;
+      this.thrustFrame = (this.thrustFrame + 1) % 4;
     }
 
     const dx = targetX - this.pos.x;
@@ -88,6 +107,38 @@ export class Player {
       return;
     }
 
+    if (this.sprite) {
+      this.renderSprite(ctx);
+    } else {
+      this.renderFallback(ctx);
+    }
+  }
+
+  private renderSprite(ctx: CanvasRenderingContext2D): void {
+    const x = this.pos.x;
+    const y = this.pos.y;
+
+    if (this.thrustSheet) {
+      this.thrustSheet.drawFrame(
+        ctx,
+        this.thrustFrame,
+        x,
+        y + this.height / 2 + 8,
+        16,
+        20
+      );
+    }
+
+    ctx.drawImage(
+      this.sprite!,
+      x - this.width / 2,
+      y - this.height / 2,
+      this.width,
+      this.height
+    );
+  }
+
+  private renderFallback(ctx: CanvasRenderingContext2D): void {
     const x = this.pos.x;
     const y = this.pos.y;
     const hw = this.width / 2;
@@ -95,7 +146,6 @@ export class Player {
 
     ctx.save();
 
-    // Engine glow
     ctx.fillStyle = "rgba(255, 150, 0, 0.6)";
     ctx.beginPath();
     ctx.moveTo(x - 6, y + hh);
@@ -110,7 +160,6 @@ export class Player {
     ctx.lineTo(x + 3, y + hh);
     ctx.fill();
 
-    // Main body
     ctx.fillStyle = "#3a7dff";
     ctx.beginPath();
     ctx.moveTo(x, y - hh);
@@ -121,7 +170,6 @@ export class Player {
     ctx.closePath();
     ctx.fill();
 
-    // Wings
     ctx.fillStyle = "#2a5dc8";
     ctx.beginPath();
     ctx.moveTo(x - hw * 0.3, y + hh * 0.1);
@@ -139,13 +187,11 @@ export class Player {
     ctx.closePath();
     ctx.fill();
 
-    // Cockpit
     ctx.fillStyle = "#80d4ff";
     ctx.beginPath();
     ctx.ellipse(x, y - hh * 0.2, hw * 0.15, hh * 0.25, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Accent stripes
     ctx.strokeStyle = "#ff4444";
     ctx.lineWidth = 1.5;
     ctx.beginPath();

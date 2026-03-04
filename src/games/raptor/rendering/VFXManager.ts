@@ -1,0 +1,125 @@
+const MAX_SHAKE_OFFSET = 8;
+
+interface ShakeState {
+  intensity: number;
+  duration: number;
+  elapsed: number;
+}
+
+interface Trail {
+  x: number;
+  y: number;
+  alpha: number;
+  size: number;
+  color: string;
+}
+
+interface MuzzleFlash {
+  x: number;
+  y: number;
+  radius: number;
+  alpha: number;
+  duration: number;
+  elapsed: number;
+}
+
+export class VFXManager {
+  private shake: ShakeState | null = null;
+  private shakeOffsetX = 0;
+  private shakeOffsetY = 0;
+  private trails: Trail[] = [];
+  private muzzleFlashes: MuzzleFlash[] = [];
+
+  triggerScreenShake(intensity: number, duration: number): void {
+    if (this.shake && this.shake.intensity > intensity) return;
+    this.shake = { intensity, duration, elapsed: 0 };
+  }
+
+  triggerMuzzleFlash(x: number, y: number, radius = 8): void {
+    this.muzzleFlashes.push({ x, y, radius, alpha: 1, duration: 0.06, elapsed: 0 });
+  }
+
+  addTrail(x: number, y: number, color: string, size = 2): void {
+    if (this.trails.length > 200) return;
+    this.trails.push({ x, y, alpha: 0.6, size, color });
+  }
+
+  update(dt: number): void {
+    if (this.shake) {
+      this.shake.elapsed += dt;
+      if (this.shake.elapsed >= this.shake.duration) {
+        this.shake = null;
+        this.shakeOffsetX = 0;
+        this.shakeOffsetY = 0;
+      } else {
+        const remaining = 1 - this.shake.elapsed / this.shake.duration;
+        const mag = this.shake.intensity * remaining;
+        this.shakeOffsetX = (Math.random() * 2 - 1) * Math.min(mag, MAX_SHAKE_OFFSET);
+        this.shakeOffsetY = (Math.random() * 2 - 1) * Math.min(mag, MAX_SHAKE_OFFSET);
+      }
+    }
+
+    for (const t of this.trails) {
+      t.alpha -= dt * 3;
+      t.size *= 1 - dt * 2;
+    }
+    this.trails = this.trails.filter((t) => t.alpha > 0.01);
+
+    for (const flash of this.muzzleFlashes) {
+      flash.elapsed += dt;
+      flash.alpha = Math.max(0, 1 - flash.elapsed / flash.duration);
+    }
+    this.muzzleFlashes = this.muzzleFlashes.filter((f) => f.elapsed < f.duration);
+  }
+
+  applyPreRender(ctx: CanvasRenderingContext2D): void {
+    if (this.shakeOffsetX !== 0 || this.shakeOffsetY !== 0) {
+      ctx.save();
+      ctx.translate(this.shakeOffsetX, this.shakeOffsetY);
+    }
+  }
+
+  applyPostRender(ctx: CanvasRenderingContext2D): void {
+    if (this.shakeOffsetX !== 0 || this.shakeOffsetY !== 0) {
+      ctx.restore();
+    }
+  }
+
+  renderTrails(ctx: CanvasRenderingContext2D): void {
+    if (this.trails.length === 0) return;
+    ctx.save();
+    for (const t of this.trails) {
+      ctx.globalAlpha = t.alpha;
+      ctx.fillStyle = t.color;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, Math.max(0.5, t.size), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  renderMuzzleFlashes(ctx: CanvasRenderingContext2D): void {
+    if (this.muzzleFlashes.length === 0) return;
+    ctx.save();
+    for (const flash of this.muzzleFlashes) {
+      ctx.globalAlpha = flash.alpha * 0.7;
+      const gradient = ctx.createRadialGradient(flash.x, flash.y, 0, flash.x, flash.y, flash.radius);
+      gradient.addColorStop(0, "rgba(255, 255, 200, 1)");
+      gradient.addColorStop(0.4, "rgba(255, 200, 50, 0.6)");
+      gradient.addColorStop(1, "rgba(255, 150, 0, 0)");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(flash.x, flash.y, flash.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  reset(): void {
+    this.shake = null;
+    this.shakeOffsetX = 0;
+    this.shakeOffsetY = 0;
+    this.trails = [];
+    this.muzzleFlashes = [];
+  }
+}

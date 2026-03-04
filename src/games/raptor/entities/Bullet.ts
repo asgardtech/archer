@@ -9,10 +9,15 @@ export class Bullet {
   public height = 10;
 
   private angle: number;
+  private sprite: HTMLImageElement | null = null;
 
   constructor(x: number, y: number, angle = 0) {
     this.pos = { x, y };
     this.angle = angle;
+  }
+
+  setSprite(sprite: HTMLImageElement): void {
+    this.sprite = sprite;
   }
 
   get left(): number { return this.pos.x - this.width / 2; }
@@ -33,6 +38,32 @@ export class Bullet {
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.alive) return;
 
+    if (this.sprite) {
+      this.renderSprite(ctx);
+    } else {
+      this.renderFallback(ctx);
+    }
+  }
+
+  private renderSprite(ctx: CanvasRenderingContext2D): void {
+    ctx.save();
+    if (this.angle !== 0) {
+      ctx.translate(this.pos.x, this.pos.y);
+      ctx.rotate(-this.angle);
+      ctx.drawImage(this.sprite!, -this.width / 2, -this.height / 2, this.width, this.height);
+    } else {
+      ctx.drawImage(
+        this.sprite!,
+        this.pos.x - this.width / 2,
+        this.pos.y - this.height / 2,
+        this.width,
+        this.height
+      );
+    }
+    ctx.restore();
+  }
+
+  private renderFallback(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.fillStyle = "#ffdd00";
     ctx.shadowColor = "#ffdd00";
