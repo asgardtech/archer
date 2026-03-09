@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Rock 1 - large -->
-  <ellipse cx="28" cy="36" rx="14" ry="12" fill="#7a7a7a"/>
-  <!-- Rock 2 - medium -->
-  <ellipse cx="44" cy="28" rx="10" ry="8" fill="#888888"/>
-  <!-- Rock 3 - small -->
-  <ellipse cx="18" cy="24" rx="8" ry="6" fill="#666666"/>
-  <!-- Rock 4 - medium -->
-  <ellipse cx="38" cy="48" rx="9" ry="7" fill="#777777"/>
+  <ellipse cx="30" cy="34" rx="14" ry="11" fill="#3a3a4a"/>
+  <ellipse cx="44" cy="24" rx="10" ry="8" fill="#4a4a5a"/>
+  <ellipse cx="18" cy="24" rx="9" ry="7" fill="#454558"/>
+  <ellipse cx="40" cy="48" rx="9" ry="6" fill="#3e3e50"/>
+  <line x1="20" y1="30" x2="38" y2="38" stroke="#7a6abb" stroke-width="2.5"/>
+  <line x1="24" y1="38" x2="36" y2="28" stroke="#8a7acc" stroke-width="2"/>
+  <line x1="38" y1="20" x2="50" y2="28" stroke="#7a6abb" stroke-width="2.5"/>
+  <line x1="12" y1="22" x2="22" y2="28" stroke="#6a5aaa" stroke-width="2"/>
+  <line x1="34" y1="44" x2="44" y2="52" stroke="#7a6abb" stroke-width="2"/>
 </svg>
