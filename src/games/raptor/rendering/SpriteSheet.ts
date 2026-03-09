@@ -4,18 +4,21 @@ export class SpriteSheet {
   private fh: number;
   private cols: number;
   private _frameCount: number;
+  private dpr: number;
 
   constructor(
     image: HTMLImageElement | HTMLCanvasElement,
     frameWidth: number,
     frameHeight: number,
-    totalFrames?: number
+    totalFrames?: number,
+    dpr = 1
   ) {
     this.image = image;
     this.fw = frameWidth;
     this.fh = frameHeight;
-    this.cols = Math.floor(image.width / frameWidth);
-    const rows = Math.floor(image.height / frameHeight);
+    this.dpr = dpr;
+    this.cols = Math.floor(image.width / (frameWidth * dpr));
+    const rows = Math.floor(image.height / (frameHeight * dpr));
     this._frameCount = totalFrames ?? this.cols * rows;
   }
 
@@ -34,20 +37,23 @@ export class SpriteSheet {
     const f = Math.max(0, Math.min(frame, this._frameCount - 1));
     const col = f % this.cols;
     const row = Math.floor(f / this.cols);
-    const sx = col * this.fw;
-    const sy = row * this.fh;
+    const srcW = this.fw * this.dpr;
+    const srcH = this.fh * this.dpr;
+    const sx = col * srcW;
+    const sy = row * srcH;
     const dw = w ?? this.fw;
     const dh = h ?? this.fh;
 
-    ctx.drawImage(this.image, sx, sy, this.fw, this.fh, x - dw / 2, y - dh / 2, dw, dh);
+    ctx.drawImage(this.image, sx, sy, srcW, srcH, x - dw / 2, y - dh / 2, dw, dh);
   }
 }
 
-export function generateExplosionSheet(frames = 8, frameSize = 64): HTMLCanvasElement {
+export function generateExplosionSheet(frames = 8, frameSize = 64, dpr = 1): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
-  canvas.width = frameSize * frames;
-  canvas.height = frameSize;
+  canvas.width = frameSize * frames * dpr;
+  canvas.height = frameSize * dpr;
   const ctx = canvas.getContext("2d")!;
+  ctx.scale(dpr, dpr);
 
   for (let f = 0; f < frames; f++) {
     const cx = f * frameSize + frameSize / 2;
@@ -102,11 +108,12 @@ export function generateExplosionSheet(frames = 8, frameSize = 64): HTMLCanvasEl
   return canvas;
 }
 
-export function generateThrustSheet(frames = 4, frameWidth = 16, frameHeight = 24): HTMLCanvasElement {
+export function generateThrustSheet(frames = 4, frameWidth = 16, frameHeight = 24, dpr = 1): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
-  canvas.width = frameWidth * frames;
-  canvas.height = frameHeight;
+  canvas.width = frameWidth * frames * dpr;
+  canvas.height = frameHeight * dpr;
   const ctx = canvas.getContext("2d")!;
+  ctx.scale(dpr, dpr);
 
   for (let f = 0; f < frames; f++) {
     const cx = f * frameWidth + frameWidth / 2;

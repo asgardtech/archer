@@ -92,19 +92,18 @@ export class RaptorGame implements IGame {
 
   private boundResize: (() => void) | null = null;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
+  private dpr = 1;
 
   public onExit: (() => void) | null = null;
 
   constructor(canvas: HTMLCanvasElement, private width = 800, private height = 600) {
     this.canvas = canvas;
-    this.canvas.width = width;
-    this.canvas.height = height;
 
     const ctx = this.canvas.getContext("2d");
     if (!ctx) throw new Error("Failed to get 2D rendering context");
     this.ctx = ctx;
 
-    this.input = new InputManager(this.canvas);
+    this.input = new InputManager(this.canvas, width, height);
     this.collisions = new CollisionSystem();
     this.spawner = new EnemySpawner();
     this.powerUpManager = new PowerUpManager();
@@ -127,6 +126,9 @@ export class RaptorGame implements IGame {
 
   private setupResize(): void {
     const resize = () => {
+      const oldDpr = this.dpr;
+      this.dpr = window.devicePixelRatio || 1;
+
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       const targetRatio = this.width / this.height;
@@ -140,6 +142,14 @@ export class RaptorGame implements IGame {
       }
       this.canvas.style.width = `${cssW}px`;
       this.canvas.style.height = `${cssH}px`;
+
+      this.canvas.width = Math.round(this.width * this.dpr);
+      this.canvas.height = Math.round(this.height * this.dpr);
+
+      if (oldDpr !== this.dpr) {
+        this.generateProceduralAssets();
+        if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
+      }
     };
     this.boundResize = () => {
       clearTimeout(this.resizeTimer);
@@ -185,11 +195,11 @@ export class RaptorGame implements IGame {
 
   private generateProceduralAssets(): void {
     try {
-      const explosionCanvas = generateExplosionSheet(8, 64);
-      this.explosionSheet = new SpriteSheet(explosionCanvas, 64, 64, 8);
+      const explosionCanvas = generateExplosionSheet(8, 64, this.dpr);
+      this.explosionSheet = new SpriteSheet(explosionCanvas, 64, 64, 8, this.dpr);
 
-      const thrustCanvas = generateThrustSheet(4, 16, 24);
-      this.thrustSheet = new SpriteSheet(thrustCanvas, 16, 24, 4);
+      const thrustCanvas = generateThrustSheet(4, 16, 24, this.dpr);
+      this.thrustSheet = new SpriteSheet(thrustCanvas, 16, 24, 4, this.dpr);
     } catch (e) {
       console.warn("[RaptorGame] Failed to generate procedural assets:", e);
     }
@@ -733,6 +743,8 @@ export class RaptorGame implements IGame {
   }
 
   private render(): void {
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+
     if (this.state === "loading") {
       this.hud.renderLoadingScreen(this.ctx, this.assets.progress, this.width, this.height);
       return;

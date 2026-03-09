@@ -35,6 +35,7 @@ export class Launcher {
   private boundResize: () => void;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
   private lastTime = 0;
+  private dpr = 1;
 
   constructor(canvasId: string) {
     const el = document.getElementById(canvasId);
@@ -42,8 +43,6 @@ export class Launcher {
       throw new Error(`Canvas element "${canvasId}" not found`);
     }
     this.canvas = el;
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
 
     const ctx = this.canvas.getContext("2d");
     if (!ctx) throw new Error("Failed to get 2D rendering context");
@@ -84,6 +83,7 @@ export class Launcher {
   }
 
   private resize(): void {
+    this.dpr = window.devicePixelRatio || 1;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const targetRatio = this.width / this.height;
@@ -97,15 +97,15 @@ export class Launcher {
     }
     this.canvas.style.width = `${cssW}px`;
     this.canvas.style.height = `${cssH}px`;
+    this.canvas.width = Math.round(this.width * this.dpr);
+    this.canvas.height = Math.round(this.height * this.dpr);
   }
 
   private toCanvasCoords(clientX: number, clientY: number): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = this.canvas.width / rect.width;
-    const scaleY = this.canvas.height / rect.height;
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY,
+      x: (clientX - rect.left) * (this.width / rect.width),
+      y: (clientY - rect.top) * (this.height / rect.height),
     };
   }
 
@@ -211,6 +211,7 @@ export class Launcher {
   }
 
   private render(dt: number): void {
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     const ctx = this.ctx;
     const w = this.width;
     const h = this.height;
