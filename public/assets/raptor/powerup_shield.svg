@@ -1,10 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
   <defs>
-    <radialGradient id="pshg" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#58D68D"/>
+    <radialGradient id="shield_core" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#82E0AA"/>
+      <stop offset="40%" stop-color="#2ecc71"/>
       <stop offset="100%" stop-color="#1E8449"/>
     </radialGradient>
+    <radialGradient id="shield_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#58D68D" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#2ecc71" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="shield_emitter" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#F9E79F"/>
+      <stop offset="60%" stop-color="#D4AC0D"/>
+      <stop offset="100%" stop-color="#B7950B"/>
+    </radialGradient>
+    <linearGradient id="shield_ring_fill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D4AC0D"/>
+      <stop offset="100%" stop-color="#7D6608"/>
+    </linearGradient>
   </defs>
-  <polygon points="12,1 18,5 22,12 18,19 12,23 6,19 2,12 6,5" fill="url(#pshg)" stroke="#82E0AA" stroke-width="1"/>
-  <text x="12" y="13" text-anchor="middle" dominant-baseline="central" fill="#FFF" font-family="sans-serif" font-weight="bold" font-size="10">S</text>
+  <!-- Outer energy glow -->
+  <circle cx="12" cy="12" r="11" fill="url(#shield_glow)"/>
+  <!-- Outermost energy ring -->
+  <circle cx="12" cy="12" r="10.5" fill="none" stroke="#2ecc71" stroke-width="0.7" stroke-opacity="0.3"/>
+  <!-- Third concentric ring -->
+  <circle cx="12" cy="12" r="8.5" fill="none" stroke="#58D68D" stroke-width="0.8" stroke-opacity="0.4"/>
+  <!-- Second concentric ring -->
+  <circle cx="12" cy="12" r="6.5" fill="none" stroke="#82E0AA" stroke-width="1" stroke-opacity="0.6"/>
+  <!-- Device housing - outer gold ring -->
+  <circle cx="12" cy="12" r="5" fill="none" stroke="url(#shield_ring_fill)" stroke-width="1.5"/>
+  <!-- Device housing - inner gold ring -->
+  <circle cx="12" cy="12" r="3.5" fill="url(#shield_emitter)" stroke="#B7950B" stroke-width="0.5"/>
+  <!-- Central emitter core -->
+  <circle cx="12" cy="12" r="2" fill="url(#shield_core)"/>
+  <!-- Core bright highlight -->
+  <circle cx="11.5" cy="11.5" r="0.8" fill="#ABEBC6" opacity="0.7"/>
+  <!-- Energy field shimmer arcs -->
+  <path d="M5,6 Q2,12 5,18" fill="none" stroke="#58D68D" stroke-width="0.5" stroke-opacity="0.5" stroke-linecap="round"/>
+  <path d="M19,6 Q22,12 19,18" fill="none" stroke="#58D68D" stroke-width="0.5" stroke-opacity="0.5" stroke-linecap="round"/>
+  <path d="M6,5 Q12,2 18,5" fill="none" stroke="#58D68D" stroke-width="0.5" stroke-opacity="0.4" stroke-linecap="round"/>
+  <path d="M6,19 Q12,22 18,19" fill="none" stroke="#58D68D" stroke-width="0.5" stroke-opacity="0.4" stroke-linecap="round"/>
+  <!-- Gold device node markers -->
+  <circle cx="12" cy="7" r="0.6" fill="#F9E79F" opacity="0.7"/>
+  <circle cx="12" cy="17" r="0.6" fill="#F9E79F" opacity="0.7"/>
+  <circle cx="7" cy="12" r="0.6" fill="#F9E79F" opacity="0.7"/>
+  <circle cx="17" cy="12" r="0.6" fill="#F9E79F" opacity="0.7"/>
 </svg>
