@@ -6,8 +6,8 @@ const INVINCIBILITY_DURATION = 2.0;
 
 export class Player {
   public pos: Vec2;
-  public width = 32;
-  public height = 36;
+  public width = 48;
+  public height = 54;
   public shield = 100;
   public lives = 3;
   public alive = true;
@@ -123,9 +123,9 @@ export class Player {
         ctx,
         this.thrustFrame,
         x,
-        y + this.height / 2 + 8,
-        16,
-        20
+        y + this.height / 2 + 12,
+        24,
+        30
       );
     }
 

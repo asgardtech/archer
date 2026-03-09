@@ -4,7 +4,7 @@ const BASE = "assets/raptor/";
 const TERRAIN = `${BASE}terrain/`;
 
 export const ASSET_MANIFEST: AssetManifest = {
-  player:           `${BASE}player.svg`,
+  player:           `${BASE}player.png`,
   enemy_scout:      `${BASE}enemy_scout.png`,
   enemy_fighter:    `${BASE}enemy_fighter.png`,
   enemy_bomber:     `${BASE}enemy_bomber.png`,
