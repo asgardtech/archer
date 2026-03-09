@@ -6,6 +6,11 @@ const MUTE_BTN_SIZE = 36;
 const MUTE_BTN_MARGIN = 12;
 const RETRO_FONT = "'Press Start 2P', monospace";
 
+const SHIELD_BAR_X = 8;
+const SHIELD_BAR_W = 10;
+const SHIELD_BAR_H = 200;
+const SHIELD_BAR_TOP = 54;
+
 const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "spread-shot": "#3498db",
   "rapid-fire": "#f39c12",
@@ -94,10 +99,10 @@ export class HUD {
         this.renderMenu(ctx, width, height);
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, activeEffects, currentWeapon);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, activeEffects, currentWeapon);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.actionText("for next level"));
         break;
@@ -227,6 +232,7 @@ export class HUD {
     level: number,
     levelName: string,
     width: number,
+    height: number,
     activeEffects?: ReadonlyArray<ActiveEffect>,
     currentWeapon?: WeaponType
   ): void {
@@ -259,18 +265,45 @@ export class HUD {
     ctx.fillStyle = "#FFD700";
     ctx.fillText(`Level ${level} \u2013 ${levelName}`, width / 2, 14);
 
-    const barW = 120;
-    const barH = 8;
-    const barX = width / 2 - barW / 2;
-    const barY = 26;
+    if (activeEffects && activeEffects.length > 0) {
+      this.renderActiveEffects(ctx, activeEffects, width);
+    }
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    this.roundedRect(ctx, barX, barY, barW, barH, 4);
+    if (currentWeapon) {
+      this.renderWeaponIndicator(ctx, currentWeapon, width);
+    }
+
+    ctx.restore();
+
+    this.renderShieldBar(ctx, shield, height);
+  }
+
+  private renderShieldBar(ctx: CanvasRenderingContext2D, shield: number, canvasHeight: number): void {
+    ctx.save();
+
+    const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
+    if (barH <= 0) {
+      ctx.restore();
+      return;
+    }
+
+    const barX = SHIELD_BAR_X;
+    const barY = SHIELD_BAR_TOP;
+
+    ctx.fillStyle = "rgba(0, 10, 30, 0.6)";
+    this.roundedRect(ctx, barX - 3, barY - 3, SHIELD_BAR_W + 6, barH + 6, 6);
     ctx.fill();
 
-    const shieldFrac = Math.max(0, shield / 100);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
+    ctx.fill();
+
+    const shieldFrac = Math.min(1, Math.max(0, shield / 100));
     if (shieldFrac > 0) {
-      const shieldGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+      const fillH = barH * shieldFrac;
+      const fillY = barY + barH - fillH;
+
+      const shieldGrad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
       if (shieldFrac > 0.5) {
         shieldGrad.addColorStop(0, "#2980b9");
         shieldGrad.addColorStop(1, "#3498db");
@@ -282,27 +315,24 @@ export class HUD {
         shieldGrad.addColorStop(1, "#e74c3c");
       }
       ctx.fillStyle = shieldGrad;
-      this.roundedRect(ctx, barX, barY, barW * shieldFrac, barH, 4);
+      this.roundedRect(ctx, barX, fillY, SHIELD_BAR_W, fillH, 4);
       ctx.fill();
     }
 
     ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
     ctx.lineWidth = 0.5;
-    this.roundedRect(ctx, barX, barY, barW, barH, 4);
+    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
     ctx.stroke();
 
+    ctx.save();
     ctx.font = `6px ${RETRO_FONT}`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
     ctx.textAlign = "center";
-    ctx.fillText("SHIELD", width / 2, barY + barH + 8);
-
-    if (activeEffects && activeEffects.length > 0) {
-      this.renderActiveEffects(ctx, activeEffects, width);
-    }
-
-    if (currentWeapon) {
-      this.renderWeaponIndicator(ctx, currentWeapon, width);
-    }
+    ctx.textBaseline = "middle";
+    ctx.translate(barX + SHIELD_BAR_W + 10, barY + barH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("SHIELD", 0, 0);
+    ctx.restore();
 
     ctx.restore();
   }
