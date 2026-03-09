@@ -1,8 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Dark olive base rectangle -->
-  <rect x="10" y="20" width="44" height="32" fill="#4a5540" rx="2"/>
-  <!-- Lighter roof slit -->
-  <rect x="14" y="16" width="36" height="8" fill="#5a6550" rx="1"/>
-  <!-- Small dark entrance on one side -->
-  <rect x="10" y="32" width="8" height="12" fill="#3a4535" rx="1"/>
+  <!-- Partially buried earth mound -->
+  <ellipse cx="32" cy="34" rx="24" ry="20" fill="#a09a80" opacity="0.4"/>
+  <!-- Outer crystal formation (irregular but near-symmetrical) -->
+  <polygon points="32,6 42,12 48,22 50,34 46,46 38,52 26,52 18,46 14,34 16,22 22,12" fill="#7a8a9a" stroke="#5a6a7a" stroke-width="1"/>
+  <!-- Inner crystal layer -->
+  <polygon points="32,12 40,17 44,26 44,38 40,46 32,48 24,46 20,38 20,26 24,17" fill="#6a7a8a" stroke="#5a6a7a" stroke-width="0.75"/>
+  <!-- Crystal shard accents (radiating, near-symmetrical) -->
+  <polygon points="32,4 34,10 30,10" fill="#8ab0c0" opacity="0.7"/>
+  <polygon points="32,54 34,48 30,48" fill="#8ab0c0" opacity="0.7"/>
+  <polygon points="10,32 16,30 16,34" fill="#8ab0c0" opacity="0.6"/>
+  <polygon points="54,32 48,30 48,34" fill="#8ab0c0" opacity="0.6"/>
+  <!-- Diagonal crystal shards -->
+  <polygon points="18,14 22,18 18,18" fill="#8ab0c0" opacity="0.5"/>
+  <polygon points="46,14 42,18 46,18" fill="#8ab0c0" opacity="0.5"/>
+  <polygon points="18,50 22,46 18,46" fill="#8ab0c0" opacity="0.5"/>
+  <polygon points="46,50 42,46 46,46" fill="#8ab0c0" opacity="0.5"/>
+  <!-- Entrance ring (outer) -->
+  <circle cx="32" cy="32" r="12" fill="#5a6a7a" stroke="#4a5a6a" stroke-width="1.5"/>
+  <!-- Entrance ring (inner bevel) -->
+  <circle cx="32" cy="32" r="9" fill="#4a5a6a" stroke="#8ab0c0" stroke-width="1"/>
+  <!-- Deep tunnel opening -->
+  <circle cx="32" cy="32" r="6" fill="#2a3a4a"/>
+  <!-- Tunnel depth glow -->
+  <circle cx="32" cy="32" r="4" fill="#3a4a5a" opacity="0.8"/>
+  <!-- Ring markings (alien tech, symmetrical) -->
+  <circle cx="32" cy="19" r="1.5" fill="#8ab0c0" opacity="0.8"/>
+  <circle cx="32" cy="45" r="1.5" fill="#8ab0c0" opacity="0.8"/>
+  <circle cx="19" cy="32" r="1.5" fill="#8ab0c0" opacity="0.8"/>
+  <circle cx="45" cy="32" r="1.5" fill="#8ab0c0" opacity="0.8"/>
+  <!-- Earth/sand camouflage patches -->
+  <ellipse cx="14" cy="24" rx="4" ry="3" fill="#a09a80" opacity="0.5"/>
+  <ellipse cx="50" cy="24" rx="4" ry="3" fill="#a09a80" opacity="0.5"/>
+  <ellipse cx="14" cy="42" rx="3" ry="3" fill="#a09a80" opacity="0.4"/>
+  <ellipse cx="50" cy="42" rx="3" ry="3" fill="#a09a80" opacity="0.4"/>
 </svg>
