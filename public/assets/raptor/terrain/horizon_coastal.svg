@@ -1,20 +1,77 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
-  <!-- Sky gradient -->
   <defs>
-    <linearGradient id="coastal-sky" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#87ceeb"/>
-      <stop offset="100%" style="stop-color:#b8d4e8"/>
+    <linearGradient id="naboo-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB"/>
+      <stop offset="60%" style="stop-color:#B8DCF0"/>
+      <stop offset="100%" style="stop-color:#E0F0FF"/>
+    </linearGradient>
+    <linearGradient id="naboo-water" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#6BAED6"/>
+      <stop offset="100%" style="stop-color:#4A90B8"/>
+    </linearGradient>
+    <linearGradient id="naboo-haze" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#E0F0FF;stop-opacity:0"/>
+      <stop offset="100%" style="stop-color:#E0F0FF;stop-opacity:0.6"/>
+    </linearGradient>
+    <linearGradient id="naboo-hill-back" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5a8a6a"/>
+      <stop offset="100%" style="stop-color:#3d6b4f"/>
+    </linearGradient>
+    <linearGradient id="naboo-hill-front" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5d9068"/>
+      <stop offset="100%" style="stop-color:#4a7c59"/>
     </linearGradient>
   </defs>
-  <rect width="800" height="200" fill="url(#coastal-sky)"/>
-  <!-- Distant clouds -->
-  <ellipse cx="120" cy="45" rx="60" ry="25" fill="#f5f5f5" opacity="0.9"/>
-  <ellipse cx="350" cy="35" rx="80" ry="30" fill="#f0f0f0" opacity="0.85"/>
-  <ellipse cx="600" cy="50" rx="55" ry="22" fill="#f5f5f5" opacity="0.9"/>
-  <!-- Ocean line -->
-  <rect x="0" y="140" width="800" height="60" fill="#4a90b8"/>
-  <!-- Rolling hills - back layer -->
-  <path d="M0,200 L0,160 Q100,120 200,150 Q300,100 400,140 Q500,110 600,150 Q700,130 800,145 L800,200 Z" fill="#3d6b4f"/>
-  <!-- Rolling hills - front layer -->
-  <path d="M0,200 L0,170 Q150,140 250,175 Q350,150 450,180 Q550,155 650,175 Q750,160 800,170 L800,200 Z" fill="#4a7c59"/>
+
+  <!-- Sky background -->
+  <rect width="800" height="200" fill="url(#naboo-sky)"/>
+
+  <!-- Soft distant clouds -->
+  <ellipse cx="90" cy="30" rx="70" ry="18" fill="#f0f6fc" opacity="0.5"/>
+  <ellipse cx="280" cy="22" rx="90" ry="20" fill="#e8f2fa" opacity="0.4"/>
+  <ellipse cx="520" cy="35" rx="65" ry="16" fill="#f0f6fc" opacity="0.45"/>
+  <ellipse cx="700" cy="25" rx="75" ry="18" fill="#e8f2fa" opacity="0.4"/>
+
+  <!-- Lake water -->
+  <rect x="0" y="120" width="800" height="80" fill="url(#naboo-water)"/>
+
+  <!-- Water shimmer highlights -->
+  <line x1="50" y1="135" x2="120" y2="135" stroke="#8ec7e8" stroke-width="1" opacity="0.5"/>
+  <line x1="200" y1="145" x2="290" y2="145" stroke="#8ec7e8" stroke-width="1" opacity="0.4"/>
+  <line x1="400" y1="138" x2="480" y2="138" stroke="#8ec7e8" stroke-width="1" opacity="0.45"/>
+  <line x1="550" y1="150" x2="640" y2="150" stroke="#8ec7e8" stroke-width="1" opacity="0.35"/>
+  <line x1="680" y1="140" x2="760" y2="140" stroke="#8ec7e8" stroke-width="1" opacity="0.4"/>
+
+  <!-- Distant far hills (very faded) -->
+  <path d="M0,130 Q60,100 120,118 Q180,95 240,115 Q320,90 400,110 Q480,88 560,108 Q640,92 720,112 Q760,98 800,108 L800,140 L0,140 Z" fill="#6a9a78" opacity="0.4"/>
+
+  <!-- Naboo dome structures on far shore -->
+  <!-- Large central palace dome -->
+  <ellipse cx="380" cy="105" rx="18" ry="10" fill="#c8d8c8" opacity="0.5"/>
+  <rect x="372" y="105" width="16" height="12" fill="#c0d0c0" opacity="0.5"/>
+  <ellipse cx="380" cy="100" rx="12" ry="8" fill="#d0ddd0" opacity="0.55"/>
+  <line x1="380" y1="92" x2="380" y2="88" stroke="#b8c8b8" stroke-width="1" opacity="0.5"/>
+
+  <!-- Smaller flanking domes -->
+  <ellipse cx="350" cy="110" rx="8" ry="5" fill="#c0d0c0" opacity="0.45"/>
+  <rect x="346" y="110" width="8" height="8" fill="#b8c8b8" opacity="0.45"/>
+  <ellipse cx="415" cy="108" rx="10" ry="6" fill="#c0d0c0" opacity="0.45"/>
+  <rect x="410" y="108" width="10" height="9" fill="#b8c8b8" opacity="0.45"/>
+
+  <!-- Distant small domes at right -->
+  <ellipse cx="620" cy="112" rx="6" ry="4" fill="#c0d0c0" opacity="0.35"/>
+  <rect x="617" y="112" width="6" height="6" fill="#b8c8b8" opacity="0.35"/>
+  <ellipse cx="640" cy="114" rx="5" ry="3" fill="#c8d0c8" opacity="0.3"/>
+
+  <!-- Rolling green hills - back layer -->
+  <path d="M0,200 L0,148 Q50,125 100,142 Q160,115 230,138 Q300,108 370,132 Q430,118 500,135 Q560,112 640,130 Q710,115 760,128 Q790,120 800,125 L800,200 Z" fill="url(#naboo-hill-back)"/>
+
+  <!-- Rolling green hills - front layer -->
+  <path d="M0,200 L0,160 Q80,142 140,165 Q220,145 300,168 Q370,150 440,170 Q520,152 590,168 Q660,148 730,162 Q780,155 800,158 L800,200 Z" fill="url(#naboo-hill-front)"/>
+
+  <!-- Shoreline detail where hills meet water -->
+  <path d="M0,170 Q60,168 120,172 Q200,165 280,170 Q360,163 440,168 Q520,162 600,170 Q680,165 760,168 L800,170" stroke="#3a6048" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Atmospheric haze overlay -->
+  <rect x="0" y="80" width="800" height="120" fill="url(#naboo-haze)"/>
 </svg>

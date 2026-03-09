@@ -1,18 +1,66 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
-  <!-- Warm sky -->
   <defs>
-    <linearGradient id="desert-sky" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#e8c89c"/>
-      <stop offset="100%" style="stop-color:#d4a574"/>
+    <linearGradient id="abydos-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB"/>
+      <stop offset="40%" style="stop-color:#C4AA78"/>
+      <stop offset="100%" style="stop-color:#F4A460"/>
+    </linearGradient>
+    <linearGradient id="abydos-sand" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#c2956a"/>
+      <stop offset="100%" style="stop-color:#a67c52"/>
+    </linearGradient>
+    <linearGradient id="abydos-haze" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#F4D8A0;stop-opacity:0"/>
+      <stop offset="100%" style="stop-color:#F4D8A0;stop-opacity:0.4"/>
+    </linearGradient>
+    <linearGradient id="abydos-pyramid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#b8956a"/>
+      <stop offset="100%" style="stop-color:#8b6b47"/>
     </linearGradient>
   </defs>
-  <rect width="800" height="200" fill="url(#desert-sky)"/>
-  <!-- Distant mesa/butte shapes -->
-  <polygon points="0,200 80,120 160,200" fill="#a67c52"/>
-  <polygon points="120,200 220,90 320,200" fill="#8b6b47"/>
-  <polygon points="280,200 380,100 480,200" fill="#a67c52"/>
-  <polygon points="440,200 540,80 640,200" fill="#8b6b47"/>
-  <polygon points="600,200 700,110 800,200" fill="#a67c52"/>
-  <!-- Sand dunes silhouette -->
-  <path d="M0,200 L0,165 Q80,140 160,170 Q240,150 320,175 Q400,155 480,180 Q560,160 640,172 Q720,150 800,165 L800,200 Z" fill="#c2956a"/>
+
+  <!-- Sky background -->
+  <rect width="800" height="200" fill="url(#abydos-sky)"/>
+
+  <!-- Sun disc (bleached, high in sky) -->
+  <circle cx="600" cy="35" r="22" fill="#FFF8DC" opacity="0.6"/>
+  <circle cx="600" cy="35" r="16" fill="#FFFCE8" opacity="0.7"/>
+
+  <!-- Sun glow -->
+  <circle cx="600" cy="35" r="40" fill="#FFF0C0" opacity="0.15"/>
+
+  <!-- Distant pyramid silhouette (Goa'uld temple / Ha'tak) -->
+  <polygon points="280,140 320,80 360,140" fill="url(#abydos-pyramid)" opacity="0.45"/>
+  <!-- Pyramid stepped detail -->
+  <line x1="300" y1="110" x2="340" y2="110" stroke="#a08050" stroke-width="0.5" opacity="0.3"/>
+  <line x1="306" y1="100" x2="334" y2="100" stroke="#a08050" stroke-width="0.5" opacity="0.3"/>
+  <line x1="312" y1="90" x2="328" y2="90" stroke="#a08050" stroke-width="0.5" opacity="0.3"/>
+
+  <!-- Small distant secondary pyramid -->
+  <polygon points="220,145 240,115 260,145" fill="#9a7a58" opacity="0.3"/>
+
+  <!-- Tiny far-off structure (obelisk) -->
+  <rect x="180" y="130" width="3" height="15" fill="#8b7a60" opacity="0.25"/>
+
+  <!-- Far distant dune ridge -->
+  <path d="M0,150 Q80,130 160,145 Q240,125 340,140 Q420,128 500,142 Q580,130 660,138 Q740,125 800,135 L800,160 L0,160 Z" fill="#a67c52" opacity="0.5"/>
+
+  <!-- Mid-ground sand dunes -->
+  <path d="M0,200 L0,155 Q60,135 130,158 Q200,130 290,152 Q370,128 460,148 Q540,132 620,155 Q700,138 770,150 L800,145 L800,200 Z" fill="#b8875c"/>
+
+  <!-- Front dune layer -->
+  <path d="M0,200 L0,168 Q90,150 170,172 Q260,155 350,175 Q430,158 520,178 Q600,162 680,174 Q750,160 800,165 L800,200 Z" fill="url(#abydos-sand)"/>
+
+  <!-- Heat shimmer wavy lines near ground -->
+  <path d="M0,158 Q40,155 80,158 Q120,161 160,158 Q200,155 240,158 Q280,161 320,158 Q360,155 400,158 Q440,161 480,158 Q520,155 560,158 Q600,161 640,158 Q680,155 720,158 Q760,161 800,158" stroke="#e8c890" stroke-width="0.8" fill="none" opacity="0.3"/>
+  <path d="M0,163 Q50,160 100,163 Q150,166 200,163 Q250,160 300,163 Q350,166 400,163 Q450,160 500,163 Q550,166 600,163 Q650,160 700,163 Q750,166 800,163" stroke="#e8c890" stroke-width="0.6" fill="none" opacity="0.25"/>
+  <path d="M0,168 Q45,165 90,168 Q135,171 180,168 Q225,165 270,168 Q315,171 360,168 Q405,165 450,168 Q495,171 540,168 Q585,165 630,168 Q675,171 720,168 Q765,165 800,168" stroke="#d8b878" stroke-width="0.5" fill="none" opacity="0.2"/>
+
+  <!-- Windblown sand wisps -->
+  <path d="M100,170 Q130,168 160,172" stroke="#c8a060" stroke-width="0.5" fill="none" opacity="0.2"/>
+  <path d="M400,165 Q440,162 480,166" stroke="#c8a060" stroke-width="0.5" fill="none" opacity="0.2"/>
+  <path d="M620,172 Q660,169 700,173" stroke="#c8a060" stroke-width="0.5" fill="none" opacity="0.2"/>
+
+  <!-- Heat haze overlay -->
+  <rect x="0" y="100" width="800" height="100" fill="url(#abydos-haze)"/>
 </svg>
