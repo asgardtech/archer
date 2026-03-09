@@ -1,14 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
-    <radialGradient id="p1" cx="0.35" cy="0.35" r="0.6">
-      <stop offset="0%" stop-color="#5DADE2"/>
-      <stop offset="50%" stop-color="#2E86C1"/>
-      <stop offset="100%" stop-color="#1A5276"/>
+    <radialGradient id="surface" cx="0.4" cy="0.38" r="0.55">
+      <stop offset="0%" stop-color="#E8C872"/>
+      <stop offset="40%" stop-color="#D4A04A"/>
+      <stop offset="75%" stop-color="#B8860B"/>
+      <stop offset="100%" stop-color="#6B4F10"/>
+    </radialGradient>
+    <radialGradient id="highlight" cx="0.3" cy="0.25" r="0.35">
+      <stop offset="0%" stop-color="#F0D080" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#F0D080" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="atmo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="85%" stop-color="#FDEBD0" stop-opacity="0"/>
+      <stop offset="95%" stop-color="#FDEBD0" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#FDEBD0" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <circle cx="60" cy="60" r="50" fill="url(#p1)"/>
-  <ellipse cx="55" cy="45" rx="20" ry="12" fill="#82E0AA" opacity="0.3"/>
-  <ellipse cx="70" cy="65" rx="15" ry="8" fill="#82E0AA" opacity="0.25"/>
-  <ellipse cx="45" cy="70" rx="10" ry="6" fill="#AED6F1" opacity="0.2"/>
-  <circle cx="60" cy="60" r="50" fill="none" stroke="#AED6F1" stroke-width="0.5" opacity="0.3"/>
+  <circle cx="60" cy="60" r="50" fill="url(#surface)"/>
+  <circle cx="60" cy="60" r="50" fill="url(#highlight)"/>
+  <ellipse cx="75" cy="42" rx="18" ry="14" fill="#F5E0A0" opacity="0.15"/>
+  <ellipse cx="48" cy="50" rx="8" ry="6" fill="#8B6914" opacity="0.3" transform="rotate(-10 48 50)"/>
+  <ellipse cx="72" cy="68" rx="6" ry="4" fill="#7D6112" opacity="0.25"/>
+  <circle cx="55" cy="75" r="4" fill="#8B7322" opacity="0.2"/>
+  <ellipse cx="65" cy="45" rx="5" ry="3" fill="#9B7D2A" opacity="0.2" transform="rotate(15 65 45)"/>
+  <ellipse cx="42" cy="62" rx="3" ry="2" fill="#7D6112" opacity="0.15"/>
+  <circle cx="60" cy="60" r="50" fill="url(#atmo)"/>
+  <circle cx="60" cy="60" r="50" fill="none" stroke="#FDEBD0" stroke-width="0.8" opacity="0.2"/>
 </svg>
