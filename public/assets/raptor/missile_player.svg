@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 28">
+  <defs>
+    <linearGradient id="mpBody" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8899AA"/>
+      <stop offset="40%" stop-color="#C0CCD8"/>
+      <stop offset="60%" stop-color="#B0BBCC"/>
+      <stop offset="100%" stop-color="#778899"/>
+    </linearGradient>
+    <radialGradient id="mpWarhead" cx="0.5" cy="0.3" r="0.6">
+      <stop offset="0%" stop-color="#AADDFF"/>
+      <stop offset="50%" stop-color="#4488FF"/>
+      <stop offset="100%" stop-color="#2244AA"/>
+    </radialGradient>
+    <linearGradient id="mpExhaust" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4488FF"/>
+      <stop offset="40%" stop-color="#FF8833"/>
+      <stop offset="100%" stop-color="#FF4400" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="mpGlow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Exhaust plume -->
+  <polygon points="5,22 8,28 11,22" fill="url(#mpExhaust)" opacity="0.8"/>
+  <polygon points="6.5,22 8,26 9.5,22" fill="#FFCC44" opacity="0.6"/>
+  <!-- Metallic body -->
+  <rect x="5" y="8" width="6" height="14" rx="1" fill="url(#mpBody)"/>
+  <!-- Panel line -->
+  <line x1="5" y1="15" x2="11" y2="15" stroke="#667788" stroke-width="0.5" opacity="0.6"/>
+  <!-- Stabilizer fins -->
+  <polygon points="4,20 5,17 5,22" fill="#667788"/>
+  <polygon points="12,20 11,17 11,22" fill="#667788"/>
+  <!-- Warhead cone -->
+  <polygon points="5,9 8,2 11,9" fill="url(#mpWarhead)" filter="url(#mpGlow)"/>
+  <!-- Warhead glow highlight -->
+  <ellipse cx="8" cy="6" rx="2" ry="3" fill="#88BBFF" opacity="0.4" filter="url(#mpGlow)"/>
+  <!-- Tip highlight -->
+  <ellipse cx="8" cy="3.5" rx="1" ry="1.5" fill="#CCDDFF" opacity="0.7"/>
+</svg>
