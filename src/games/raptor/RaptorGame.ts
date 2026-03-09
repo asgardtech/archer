@@ -18,6 +18,7 @@ import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rend
 import { VFXManager } from "./rendering/VFXManager";
 import { TerrainRenderer } from "./rendering/TerrainRenderer";
 import { ASSET_MANIFEST } from "./rendering/assets";
+import { AUDIO_MANIFEST } from "./rendering/audioAssets";
 import { LEVELS } from "./levels";
 import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
@@ -163,6 +164,14 @@ export class RaptorGame implements IGame {
     } catch (e) {
       console.warn("[RaptorGame] Asset loading error:", e);
     }
+
+    const audioEntries = [
+      ...Object.entries(AUDIO_MANIFEST.sfx),
+      ...Object.entries(AUDIO_MANIFEST.music),
+    ];
+    await Promise.allSettled(
+      audioEntries.map(([key, url]) => this.audio.loadAudioBuffer(key, url))
+    );
 
     this.generateProceduralAssets();
     this.hud.setAssets(this.assets);

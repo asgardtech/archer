@@ -23,6 +23,7 @@ import {
   EnemyConfig,
   Vec2,
 } from "../src/games/raptor/types";
+import { AUDIO_MANIFEST } from "../src/games/raptor/rendering/audioAssets";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -1034,6 +1035,10 @@ describe("Scenario: Sound effects play for game events", () => {
       playToneSwept: jest.fn(),
       playNoise: jest.fn(),
       playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(null),
+      hasBuffer: jest.fn().mockReturnValue(false),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
       destroy: jest.fn(),
     };
 
@@ -1057,6 +1062,10 @@ describe("Scenario: Sound effects play for game events", () => {
       playToneSwept: jest.fn(),
       playNoise: jest.fn(),
       playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(null),
+      hasBuffer: jest.fn().mockReturnValue(false),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
       destroy: jest.fn(),
     };
 
@@ -1067,6 +1076,308 @@ describe("Scenario: Sound effects play for game events", () => {
 
     sound.play("player_shoot");
     expect(mockAudio.playToneSwept).toHaveBeenCalled();
+
+    sound.destroy();
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// AUDIO BUFFER LOADING & PLAYBACK
+// ════════════════════════════════════════════════════════════════
+
+describe("Scenario: Audio manifest covers all RaptorSoundEvent values", () => {
+  const expectedSfxKeys: RaptorSoundEvent[] = [
+    "player_shoot", "enemy_shoot", "enemy_hit", "enemy_destroy",
+    "player_hit", "player_destroy", "boss_hit", "boss_destroy",
+    "power_up_collect", "level_complete", "game_over", "victory",
+    "menu_start", "missile_fire", "missile_hit", "laser_fire",
+    "laser_hit", "weapon_switch",
+  ];
+
+  test("AUDIO_MANIFEST.sfx has an entry for each of the 18 RaptorSoundEvent values", () => {
+    for (const key of expectedSfxKeys) {
+      expect(AUDIO_MANIFEST.sfx[key]).toBeDefined();
+      expect(AUDIO_MANIFEST.sfx[key]).toMatch(/\.mp3$/);
+    }
+    expect(Object.keys(AUDIO_MANIFEST.sfx).length).toBe(18);
+  });
+
+  test("AUDIO_MANIFEST.music has entries for menu and level_1 through level_5", () => {
+    expect(AUDIO_MANIFEST.music.menu).toBeDefined();
+    for (let i = 1; i <= 5; i++) {
+      expect(AUDIO_MANIFEST.music[`level_${i}`]).toBeDefined();
+    }
+    expect(Object.keys(AUDIO_MANIFEST.music).length).toBe(6);
+  });
+});
+
+describe("Scenario: Audio manifest paths point to existing files", () => {
+  for (const [key, filePath] of Object.entries(AUDIO_MANIFEST.sfx)) {
+    test(`SFX "${key}" file exists at public/${filePath}`, () => {
+      const fullPath = path.join(__dirname, "..", "public", filePath);
+      expect(fs.existsSync(fullPath)).toBe(true);
+    });
+  }
+
+  for (const [key, filePath] of Object.entries(AUDIO_MANIFEST.music)) {
+    test(`Music "${key}" file exists at public/${filePath}`, () => {
+      const fullPath = path.join(__dirname, "..", "public", filePath);
+      expect(fs.existsSync(fullPath)).toBe(true);
+    });
+  }
+});
+
+describe("Scenario: Sound effect assets exist for all game events", () => {
+  const sfxDir = path.join(__dirname, "..", "public", "assets", "raptor", "audio", "sfx");
+  const expectedFiles = [
+    "player_shoot.mp3", "enemy_shoot.mp3", "enemy_hit.mp3", "enemy_destroy.mp3",
+    "player_hit.mp3", "player_destroy.mp3", "boss_hit.mp3", "boss_destroy.mp3",
+    "power_up_collect.mp3", "level_complete.mp3", "game_over.mp3", "victory.mp3",
+    "menu_start.mp3", "missile_fire.mp3", "missile_hit.mp3", "laser_fire.mp3",
+    "laser_hit.mp3", "weapon_switch.mp3",
+  ];
+
+  for (const file of expectedFiles) {
+    test(`${file} should exist in sfx directory`, () => {
+      expect(fs.existsSync(path.join(sfxDir, file))).toBe(true);
+    });
+  }
+
+  test("each SFX file should be a valid MP3 (starts with ID3 or FF FB header)", () => {
+    for (const file of expectedFiles) {
+      const buf = fs.readFileSync(path.join(sfxDir, file));
+      const isID3 = buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33;
+      const isMP3Sync = buf[0] === 0xFF && (buf[1] & 0xE0) === 0xE0;
+      expect(isID3 || isMP3Sync).toBe(true);
+    }
+  });
+});
+
+describe("Scenario: Music track assets exist for menu and all levels", () => {
+  const musicDir = path.join(__dirname, "..", "public", "assets", "raptor", "audio", "music");
+  const expectedFiles = [
+    "menu.mp3", "level_1_coastal.mp3", "level_2_desert.mp3",
+    "level_3_mountain.mp3", "level_4_arctic.mp3", "level_5_fortress.mp3",
+  ];
+
+  for (const file of expectedFiles) {
+    test(`${file} should exist in music directory`, () => {
+      expect(fs.existsSync(path.join(musicDir, file))).toBe(true);
+    });
+  }
+
+  test("each music file should be a valid MP3 (starts with ID3 or FF FB header)", () => {
+    for (const file of expectedFiles) {
+      const buf = fs.readFileSync(path.join(musicDir, file));
+      const isID3 = buf[0] === 0x49 && buf[1] === 0x44 && buf[2] === 0x33;
+      const isMP3Sync = buf[0] === 0xFF && (buf[1] & 0xE0) === 0xE0;
+      expect(isID3 || isMP3Sync).toBe(true);
+    }
+  });
+});
+
+describe("Scenario: AudioManager buffer methods", () => {
+  test("hasBuffer returns false for unknown key", () => {
+    const { AudioManager } = require("../src/shared/AudioManager");
+    const audio = new AudioManager();
+    expect(audio.hasBuffer("nonexistent")).toBe(false);
+    audio.destroy();
+  });
+
+  test("playBuffer returns null for missing buffer", () => {
+    const { AudioManager } = require("../src/shared/AudioManager");
+    const audio = new AudioManager();
+    expect(audio.playBuffer("nonexistent")).toBeNull();
+    audio.destroy();
+  });
+
+  test("stopBuffer does not throw for missing key", () => {
+    const { AudioManager } = require("../src/shared/AudioManager");
+    const audio = new AudioManager();
+    expect(() => audio.stopBuffer("nonexistent")).not.toThrow();
+    audio.destroy();
+  });
+
+  test("destroy is idempotent with audio buffers", () => {
+    const { AudioManager } = require("../src/shared/AudioManager");
+    const audio = new AudioManager();
+    audio.destroy();
+    expect(() => audio.destroy()).not.toThrow();
+  });
+});
+
+describe("Scenario: Procedural audio plays when buffer is unavailable", () => {
+  test("SoundSystem falls back to procedural audio when no buffer is loaded", () => {
+    const mockAudio = {
+      disabled: false,
+      muted: false,
+      ensureContext: jest.fn(),
+      toggleMute: jest.fn(),
+      playTone: jest.fn(),
+      playToneSwept: jest.fn(),
+      playNoise: jest.fn(),
+      playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(null),
+      hasBuffer: jest.fn().mockReturnValue(false),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
+      destroy: jest.fn(),
+    };
+
+    (global as any).performance = { now: jest.fn(() => Date.now()) };
+
+    const { SoundSystem } = require("../src/games/raptor/systems/SoundSystem");
+    const sound = new SoundSystem(mockAudio);
+
+    sound.play("player_shoot");
+    expect(mockAudio.playBuffer).toHaveBeenCalledWith("player_shoot");
+    expect(mockAudio.playToneSwept).toHaveBeenCalled();
+
+    sound.destroy();
+  });
+
+  test("SoundSystem uses buffer when available and skips procedural", () => {
+    const mockSource = { stop: jest.fn(), onended: null };
+    const mockAudio = {
+      disabled: false,
+      muted: false,
+      ensureContext: jest.fn(),
+      toggleMute: jest.fn(),
+      playTone: jest.fn(),
+      playToneSwept: jest.fn(),
+      playNoise: jest.fn(),
+      playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(mockSource),
+      hasBuffer: jest.fn().mockReturnValue(true),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
+      destroy: jest.fn(),
+    };
+
+    (global as any).performance = { now: jest.fn(() => Date.now()) };
+
+    const { SoundSystem } = require("../src/games/raptor/systems/SoundSystem");
+    const sound = new SoundSystem(mockAudio);
+
+    sound.play("player_shoot");
+    expect(mockAudio.playBuffer).toHaveBeenCalledWith("player_shoot");
+    expect(mockAudio.playToneSwept).not.toHaveBeenCalled();
+
+    sound.destroy();
+  });
+});
+
+describe("Scenario: Music buffer playback with fallback", () => {
+  test("startMusic uses buffer when available for menu", () => {
+    const mockSource = { stop: jest.fn(), onended: null };
+    const mockAudio = {
+      disabled: false,
+      muted: false,
+      ensureContext: jest.fn(),
+      toggleMute: jest.fn(),
+      playTone: jest.fn(),
+      playToneSwept: jest.fn(),
+      playNoise: jest.fn(),
+      playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(mockSource),
+      hasBuffer: jest.fn().mockReturnValue(true),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
+      destroy: jest.fn(),
+    };
+
+    const { SoundSystem } = require("../src/games/raptor/systems/SoundSystem");
+    const sound = new SoundSystem(mockAudio);
+
+    sound.startMusic("menu");
+    expect(mockAudio.hasBuffer).toHaveBeenCalledWith("menu");
+    expect(mockAudio.playBuffer).toHaveBeenCalledWith("menu", { loop: true });
+
+    sound.destroy();
+  });
+
+  test("startMusic uses buffer when available for playing state", () => {
+    const mockSource = { stop: jest.fn(), onended: null };
+    const mockAudio = {
+      disabled: false,
+      muted: false,
+      ensureContext: jest.fn(),
+      toggleMute: jest.fn(),
+      playTone: jest.fn(),
+      playToneSwept: jest.fn(),
+      playNoise: jest.fn(),
+      playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(mockSource),
+      hasBuffer: jest.fn().mockReturnValue(true),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
+      destroy: jest.fn(),
+    };
+
+    const { SoundSystem } = require("../src/games/raptor/systems/SoundSystem");
+    const sound = new SoundSystem(mockAudio);
+
+    sound.startMusic("playing", 0);
+    expect(mockAudio.hasBuffer).toHaveBeenCalledWith("level_1");
+    expect(mockAudio.playBuffer).toHaveBeenCalledWith("level_1", { loop: true });
+
+    sound.destroy();
+  });
+
+  test("startMusic falls back to procedural when buffer unavailable", () => {
+    const mockAudio = {
+      disabled: false,
+      muted: false,
+      ensureContext: jest.fn(),
+      toggleMute: jest.fn(),
+      playTone: jest.fn(),
+      playToneSwept: jest.fn(),
+      playNoise: jest.fn(),
+      playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(null),
+      hasBuffer: jest.fn().mockReturnValue(false),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
+      destroy: jest.fn(),
+    };
+
+    const { SoundSystem } = require("../src/games/raptor/systems/SoundSystem");
+    const sound = new SoundSystem(mockAudio);
+
+    sound.startMusic("menu");
+    expect(mockAudio.hasBuffer).toHaveBeenCalledWith("menu");
+    expect(mockAudio.playTone).toHaveBeenCalled();
+
+    sound.destroy();
+  });
+
+  test("stopMusic calls stopBuffer for menu and all levels", () => {
+    const mockAudio = {
+      disabled: false,
+      muted: false,
+      ensureContext: jest.fn(),
+      toggleMute: jest.fn(),
+      playTone: jest.fn(),
+      playToneSwept: jest.fn(),
+      playNoise: jest.fn(),
+      playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(null),
+      hasBuffer: jest.fn().mockReturnValue(false),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
+      destroy: jest.fn(),
+    };
+
+    const { SoundSystem } = require("../src/games/raptor/systems/SoundSystem");
+    const sound = new SoundSystem(mockAudio);
+
+    sound.stopMusic();
+    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("menu");
+    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_1");
+    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_2");
+    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_3");
+    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_4");
+    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_5");
 
     sound.destroy();
   });
@@ -1699,6 +2010,10 @@ describe("Scenario: SoundSystem music start/stop", () => {
       playToneSwept: jest.fn(),
       playNoise: jest.fn(),
       playSequence: jest.fn(),
+      playBuffer: jest.fn().mockReturnValue(null),
+      hasBuffer: jest.fn().mockReturnValue(false),
+      stopBuffer: jest.fn(),
+      loadAudioBuffer: jest.fn(),
       destroy: jest.fn(),
     };
 

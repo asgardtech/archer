@@ -34,6 +34,11 @@ function trySetStorage(key: string, value: string): void {
   }
 }
 
+interface BufferEntry {
+  buffer: AudioBuffer;
+  activeSource: AudioBufferSourceNode | null;
+}
+
 export class AudioManager {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -41,6 +46,7 @@ export class AudioManager {
   private _volume: number;
   private _disabled = false;
   private scheduledNodes: AudioScheduledSourceNode[] = [];
+  private buffers: Map<string, BufferEntry> = new Map();
 
   constructor() {
     this._muted = tryGetStorage("audio_muted", "false") === "true";
@@ -272,7 +278,85 @@ export class AudioManager {
     this.scheduledNodes.push(osc);
   }
 
+  async loadAudioBuffer(key: string, url: string): Promise<void> {
+    try {
+      this.ensureContext();
+      if (this._disabled || !this.ctx) return;
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.warn(`[AudioManager] Failed to fetch audio "${key}": ${response.status}`);
+        return;
+      }
+      const arrayBuf = await response.arrayBuffer();
+      const audioBuffer = await this.ctx.decodeAudioData(arrayBuf);
+      this.buffers.set(key, { buffer: audioBuffer, activeSource: null });
+    } catch (e) {
+      console.warn(`[AudioManager] Failed to load audio buffer "${key}":`, e);
+    }
+  }
+
+  hasBuffer(key: string): boolean {
+    return this.buffers.has(key);
+  }
+
+  playBuffer(
+    key: string,
+    options?: { loop?: boolean; volume?: number }
+  ): AudioBufferSourceNode | null {
+    if (this._disabled || !this.ctx || !this.masterGain) return null;
+    const entry = this.buffers.get(key);
+    if (!entry) return null;
+
+    const source = this.ctx.createBufferSource();
+    source.buffer = entry.buffer;
+    source.loop = options?.loop ?? false;
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = options?.volume ?? 1;
+    source.connect(gain);
+    gain.connect(this.masterGain);
+
+    source.start(0);
+
+    if (options?.loop) {
+      entry.activeSource = source;
+    }
+
+    source.onended = () => {
+      source.disconnect();
+      gain.disconnect();
+      if (entry.activeSource === source) {
+        entry.activeSource = null;
+      }
+    };
+
+    return source;
+  }
+
+  stopBuffer(key: string): void {
+    const entry = this.buffers.get(key);
+    if (!entry?.activeSource) return;
+    try {
+      entry.activeSource.stop();
+    } catch {
+      // already stopped
+    }
+    entry.activeSource = null;
+  }
+
   destroy(): void {
+    for (const [, entry] of this.buffers) {
+      if (entry.activeSource) {
+        try {
+          entry.activeSource.stop();
+          entry.activeSource.disconnect();
+        } catch {
+          // already stopped
+        }
+      }
+    }
+    this.buffers.clear();
+
     for (const node of this.scheduledNodes) {
       try {
         node.stop();

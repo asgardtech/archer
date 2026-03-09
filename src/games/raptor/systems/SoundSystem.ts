@@ -20,6 +20,8 @@ export class SoundSystem {
 
     this.audio.ensureContext();
 
+    if (this.audio.playBuffer(event)) return;
+
     switch (event) {
       case "player_shoot": this.playPlayerShoot(); break;
       case "enemy_shoot": this.playEnemyShoot(); break;
@@ -180,8 +182,17 @@ export class SoundSystem {
     this.audio.ensureContext();
 
     if (state === "playing") {
+      const musicKey = `level_${level + 1}`;
+      if (this.audio.hasBuffer(musicKey)) {
+        this.audio.playBuffer(musicKey, { loop: true });
+        return;
+      }
       this.startPlayingMusic(level);
     } else if (state === "menu") {
+      if (this.audio.hasBuffer("menu")) {
+        this.audio.playBuffer("menu", { loop: true });
+        return;
+      }
       this.startMenuMusic();
     }
   }
@@ -228,6 +239,10 @@ export class SoundSystem {
     if (this.musicInterval) {
       clearInterval(this.musicInterval);
       this.musicInterval = null;
+    }
+    this.audio.stopBuffer("menu");
+    for (let i = 1; i <= 5; i++) {
+      this.audio.stopBuffer(`level_${i}`);
     }
   }
 
