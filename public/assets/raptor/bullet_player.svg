@@ -1,18 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 20">
   <defs>
-    <linearGradient id="bl" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="bpBolt" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="40%" stop-color="#FFEE44"/>
-      <stop offset="100%" stop-color="#FFAA00"/>
+      <stop offset="30%" stop-color="#88FF88"/>
+      <stop offset="70%" stop-color="#00DD44"/>
+      <stop offset="100%" stop-color="#00AA66" stop-opacity="0.3"/>
     </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="1" result="blur"/>
+    <linearGradient id="bpCore" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#CCFFCC"/>
+      <stop offset="100%" stop-color="#88FFAA" stop-opacity="0.5"/>
+    </linearGradient>
+    <filter id="bpGlow">
+      <feGaussianBlur stdDeviation="1.2" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
   </defs>
-  <rect x="1" y="2" width="6" height="16" rx="3" fill="url(#bl)" filter="url(#glow)"/>
-  <rect x="2.5" y="2" width="3" height="10" rx="1.5" fill="#FFFFFF" opacity="0.8"/>
+  <rect x="0.5" y="1" width="7" height="17" rx="3.5" fill="url(#bpBolt)" filter="url(#bpGlow)" opacity="0.85"/>
+  <rect x="2" y="1" width="4" height="12" rx="2" fill="url(#bpCore)" opacity="0.9"/>
+  <ellipse cx="4" cy="2.5" rx="1.5" ry="2" fill="#FFFFFF" opacity="0.95"/>
 </svg>
