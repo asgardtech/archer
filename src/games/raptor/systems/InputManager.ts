@@ -8,6 +8,8 @@ export class InputManager {
   public readonly isTouchDevice: boolean;
 
   private canvas: HTMLCanvasElement;
+  private logicalWidth: number;
+  private logicalHeight: number;
   private activeTouchId: number | null = null;
   private keys = new Set<string>();
 
@@ -19,11 +21,13 @@ export class InputManager {
   private boundKeyDown: (e: KeyboardEvent) => void;
   private boundKeyUp: (e: KeyboardEvent) => void;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, logicalWidth?: number, logicalHeight?: number) {
     this.canvas = canvas;
+    this.logicalWidth = logicalWidth ?? canvas.width;
+    this.logicalHeight = logicalHeight ?? canvas.height;
     this.isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    this.targetX = canvas.width / 2;
-    this.targetY = canvas.height * 0.8;
+    this.targetX = this.logicalWidth / 2;
+    this.targetY = this.logicalHeight * 0.8;
 
     this.boundMouseMove = (e) => this.onMouseMove(e);
     this.boundMouseDown = (e) => this.onMouseDown(e);
@@ -71,12 +75,12 @@ export class InputManager {
 
   private toCanvasX(clientX: number): number {
     const rect = this.canvas.getBoundingClientRect();
-    return (clientX - rect.left) * (this.canvas.width / rect.width);
+    return (clientX - rect.left) * (this.logicalWidth / rect.width);
   }
 
   private toCanvasY(clientY: number): number {
     const rect = this.canvas.getBoundingClientRect();
-    return (clientY - rect.top) * (this.canvas.height / rect.height);
+    return (clientY - rect.top) * (this.logicalHeight / rect.height);
   }
 
   private onMouseMove(e: MouseEvent): void {

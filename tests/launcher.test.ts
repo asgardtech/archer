@@ -31,6 +31,7 @@ function createMockCanvas(): HTMLCanvasElement {
     rotate: jest.fn(),
     createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
     measureText: jest.fn(() => ({ width: 50 })),
+    setTransform: jest.fn(),
   };
 
   const canvas = {
@@ -61,6 +62,7 @@ function setupDom(canvas: HTMLCanvasElement): void {
     removeEventListener: jest.fn(),
     innerWidth: 800,
     innerHeight: 600,
+    devicePixelRatio: 1,
   };
   (global as any).navigator = { maxTouchPoints: 0 };
   (global as any).performance = { now: jest.fn(() => 0) };
