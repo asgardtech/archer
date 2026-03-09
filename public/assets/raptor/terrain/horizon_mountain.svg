@@ -1,19 +1,90 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
-  <!-- Sky -->
   <defs>
-    <linearGradient id="mountain-sky" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#5a6a7a"/>
-      <stop offset="100%" style="stop-color:#3d4a5a"/>
+    <linearGradient id="chulak-sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A6670"/>
+      <stop offset="100%" style="stop-color:#8BA8B7"/>
+    </linearGradient>
+    <linearGradient id="chulak-mist-lower" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8BA8B7;stop-opacity:0"/>
+      <stop offset="50%" style="stop-color:#8BA8B7;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#8BA8B7;stop-opacity:0.5"/>
+    </linearGradient>
+    <linearGradient id="chulak-mist-upper" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#6a8a98;stop-opacity:0"/>
+      <stop offset="100%" style="stop-color:#6a8a98;stop-opacity:0.35"/>
+    </linearGradient>
+    <linearGradient id="chulak-forest" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3a5040"/>
+      <stop offset="100%" style="stop-color:#2d3d35"/>
     </linearGradient>
   </defs>
-  <rect width="800" height="200" fill="url(#mountain-sky)"/>
-  <!-- Distant mountain range - back -->
-  <path d="M0,200 L50,120 L120,160 L200,90 L280,140 L360,70 L440,130 L520,85 L600,150 L680,95 L750,130 L800,100 L800,200 Z" fill="#2d3748"/>
-  <!-- Closer peaks with snow caps -->
-  <path d="M0,200 L80,140 L150,180 L220,110 L300,160 L380,100 L460,150 L540,95 L620,155 L700,105 L780,145 L800,130 L800,200 Z" fill="#4a5568"/>
-  <!-- Snow caps -->
-  <polygon points="200,90 240,130 280,140 260,100" fill="#e8edf2"/>
-  <polygon points="360,70 400,110 440,130 420,90" fill="#e8edf2"/>
-  <polygon points="520,85 560,120 600,150 580,100" fill="#e8edf2"/>
-  <polygon points="680,95 720,130 750,130 730,105" fill="#e8edf2"/>
+
+  <!-- Sky background -->
+  <rect width="800" height="200" fill="url(#chulak-sky)"/>
+
+  <!-- Distant mountain range - far back (faded) -->
+  <path d="M0,130 L40,95 L80,115 L130,75 L180,105 L230,65 L280,100 L330,60 L390,90 L440,55 L500,85 L550,62 L610,88 L660,58 L720,82 L770,68 L800,78 L800,140 L0,140 Z" fill="#2d3748" opacity="0.6"/>
+
+  <!-- Snow caps on far peaks -->
+  <polygon points="130,75 155,95 175,105 160,85" fill="#e8edf2" opacity="0.4"/>
+  <polygon points="230,65 258,88 275,100 260,78" fill="#e8edf2" opacity="0.45"/>
+  <polygon points="330,60 360,82 385,90 365,72" fill="#e8edf2" opacity="0.4"/>
+  <polygon points="440,55 470,78 495,85 475,68" fill="#e8edf2" opacity="0.45"/>
+  <polygon points="550,62 578,80 605,88 585,72" fill="#e8edf2" opacity="0.4"/>
+  <polygon points="660,58 688,78 715,82 695,68" fill="#e8edf2" opacity="0.45"/>
+
+  <!-- Upper mist layer between far and mid mountains -->
+  <rect x="0" y="80" width="800" height="50" fill="url(#chulak-mist-upper)"/>
+
+  <!-- Middle mountain range -->
+  <path d="M0,155 L60,120 L110,145 L170,100 L230,130 L290,95 L350,125 L410,90 L470,118 L530,92 L590,120 L650,95 L710,115 L760,100 L800,110 L800,160 L0,160 Z" fill="#3d4f5c"/>
+
+  <!-- Snow caps on mid peaks -->
+  <polygon points="170,100 195,118 225,130 205,110" fill="#e8edf2" opacity="0.5"/>
+  <polygon points="290,95 318,115 345,125 325,105" fill="#e8edf2" opacity="0.5"/>
+  <polygon points="410,90 438,110 465,118 445,100" fill="#e8edf2" opacity="0.5"/>
+  <polygon points="530,92 558,110 585,120 565,102" fill="#e8edf2" opacity="0.5"/>
+  <polygon points="650,95 675,112 705,115 685,102" fill="#e8edf2" opacity="0.45"/>
+
+  <!-- Jaffa temple structures partially hidden in the valley mist -->
+  <!-- Temple 1: stepped pyramid shape -->
+  <polygon points="240,138 255,118 270,138" fill="#4a5a68" opacity="0.4"/>
+  <rect x="248" y="128" width="14" height="10" fill="#4a5a68" opacity="0.35"/>
+  <rect x="251" y="124" width="8" height="4" fill="#4f6070" opacity="0.35"/>
+
+  <!-- Temple 2: tall obelisk-like pillar -->
+  <rect x="485" y="115" width="4" height="25" fill="#4a5a68" opacity="0.35"/>
+  <polygon points="483,115 487,108 491,115" fill="#4f6070" opacity="0.35"/>
+
+  <!-- Temple 3: distant archway -->
+  <rect x="615" y="125" width="3" height="15" fill="#4a5a68" opacity="0.3"/>
+  <rect x="625" y="125" width="3" height="15" fill="#4a5a68" opacity="0.3"/>
+  <path d="M615,125 Q621,120 628,125" stroke="#4a5a68" stroke-width="2" fill="none" opacity="0.3"/>
+
+  <!-- Dense alien forest in valleys -->
+  <path d="M0,200 L0,155 Q30,145 60,158 Q90,140 130,155 Q160,138 200,152 Q230,135 270,150 Q310,140 350,155 Q380,142 420,155 Q450,138 490,152 Q530,142 570,155 Q600,140 640,152 Q680,138 720,150 Q760,142 800,148 L800,200 Z" fill="url(#chulak-forest)"/>
+
+  <!-- Forest canopy texture (individual tree-top shapes) -->
+  <path d="M20,158 Q25,150 30,158" fill="#3a5545" opacity="0.5"/>
+  <path d="M60,155 Q68,146 76,155" fill="#345040" opacity="0.5"/>
+  <path d="M110,156 Q118,148 126,156" fill="#3a5545" opacity="0.5"/>
+  <path d="M170,152 Q178,143 186,152" fill="#345040" opacity="0.5"/>
+  <path d="M240,150 Q248,142 256,150" fill="#3a5545" opacity="0.5"/>
+  <path d="M320,154 Q328,146 336,154" fill="#345040" opacity="0.5"/>
+  <path d="M390,153 Q398,144 406,153" fill="#3a5545" opacity="0.5"/>
+  <path d="M460,152 Q468,143 476,152" fill="#345040" opacity="0.5"/>
+  <path d="M540,154 Q548,146 556,154" fill="#3a5545" opacity="0.5"/>
+  <path d="M610,152 Q618,144 626,152" fill="#345040" opacity="0.5"/>
+  <path d="M690,150 Q698,142 706,150" fill="#3a5545" opacity="0.5"/>
+  <path d="M750,148 Q758,140 766,148" fill="#345040" opacity="0.5"/>
+
+  <!-- Lower mist overlay across valleys -->
+  <rect x="0" y="130" width="800" height="70" fill="url(#chulak-mist-lower)"/>
+
+  <!-- Wisps of fog -->
+  <ellipse cx="150" cy="145" rx="60" ry="8" fill="#8BA8B7" opacity="0.2"/>
+  <ellipse cx="400" cy="140" rx="80" ry="10" fill="#8BA8B7" opacity="0.18"/>
+  <ellipse cx="650" cy="148" rx="55" ry="7" fill="#8BA8B7" opacity="0.2"/>
+  <ellipse cx="50" cy="155" rx="45" ry="6" fill="#7a98a8" opacity="0.15"/>
+  <ellipse cx="550" cy="152" rx="50" ry="7" fill="#7a98a8" opacity="0.15"/>
 </svg>
