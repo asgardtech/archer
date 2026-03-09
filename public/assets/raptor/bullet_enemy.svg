@@ -1,18 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 16">
   <defs>
-    <radialGradient id="eb" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#FF8888"/>
-      <stop offset="50%" stop-color="#FF3333"/>
-      <stop offset="100%" stop-color="#AA0000"/>
+    <linearGradient id="bolt-core" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="30%" stop-color="#FFEE88"/>
+      <stop offset="70%" stop-color="#FF4422"/>
+      <stop offset="100%" stop-color="#AA1100"/>
+    </linearGradient>
+    <radialGradient id="bolt-glow" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0%" stop-color="#FF6644" stop-opacity="0.9"/>
+      <stop offset="60%" stop-color="#CC2200" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#880000" stop-opacity="0"/>
     </radialGradient>
-    <filter id="eglow">
-      <feGaussianBlur stdDeviation="1.2" result="blur"/>
+    <filter id="eglow" x="-50%" y="-30%" width="200%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
   </defs>
-  <circle cx="6" cy="6" r="5" fill="url(#eb)" filter="url(#eglow)"/>
-  <circle cx="5" cy="5" r="2" fill="#FFAAAA" opacity="0.6"/>
+  <!-- Outer glow -->
+  <ellipse cx="6" cy="7" rx="5" ry="7" fill="url(#bolt-glow)"/>
+  <!-- Main plasma bolt body -->
+  <ellipse cx="6" cy="7" rx="2.8" ry="6" fill="url(#bolt-core)" filter="url(#eglow)"/>
+  <!-- Hot bright core -->
+  <ellipse cx="6" cy="5.5" rx="1.2" ry="2.5" fill="#FFFFCC" opacity="0.85"/>
 </svg>

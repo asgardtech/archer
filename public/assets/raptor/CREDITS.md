@@ -10,12 +10,12 @@ style of [Kenney.nl](https://kenney.nl/) game asset packs:
 | File                 | Description            | License |
 |----------------------|------------------------|---------|
 | `player.svg`         | Player ship sprite     | CC0 1.0 |
-| `enemy_scout.svg`    | Scout enemy sprite     | CC0 1.0 |
-| `enemy_fighter.svg`  | Fighter enemy sprite   | CC0 1.0 |
+| `enemy_scout.png`    | Scout enemy sprite (TIE Interceptor style)  | CC0 1.0 |
+| `enemy_fighter.png`  | Fighter enemy sprite (Death Glider style)   | CC0 1.0 |
 | `enemy_bomber.svg`   | Bomber enemy sprite    | CC0 1.0 |
 | `enemy_boss.svg`     | Boss enemy sprite      | CC0 1.0 |
 | `bullet_player.svg`  | Player bullet sprite   | CC0 1.0 |
-| `bullet_enemy.svg`   | Enemy bullet sprite    | CC0 1.0 |
+| `bullet_enemy.svg`   | Enemy plasma bolt (red/orange energy projectile) | CC0 1.0 |
 | `powerup_spread.svg` | Spread-shot power-up   | CC0 1.0 |
 | `powerup_rapid.svg`  | Rapid-fire power-up    | CC0 1.0 |
 | `powerup_shield.svg` | Shield restore power-up| CC0 1.0 |
