@@ -101,8 +101,8 @@ describe("Feature: Initial arrow count", () => {
 
   describe("Scenario: New game starts with 100 arrows", () => {
     it("should have 100 arrows remaining when a new game starts", () => {
-      // Given the game is on the menu screen (default state)
-      expect(internals.state).toBe("menu");
+      // Given the game is in initial state (loading before assets are ready)
+      expect(internals.state).toBe("loading");
 
       // When I click to start a new game
       internals.resetGame();
