@@ -5,10 +5,10 @@ const TERRAIN = `${BASE}terrain/`;
 
 export const ASSET_MANIFEST: AssetManifest = {
   player:           `${BASE}player.svg`,
-  enemy_scout:      `${BASE}enemy_scout.svg`,
-  enemy_fighter:    `${BASE}enemy_fighter.svg`,
-  enemy_bomber:     `${BASE}enemy_bomber.svg`,
-  enemy_boss:       `${BASE}enemy_boss.svg`,
+  enemy_scout:      `${BASE}enemy_scout.png`,
+  enemy_fighter:    `${BASE}enemy_fighter.png`,
+  enemy_bomber:     `${BASE}enemy_bomber.png`,
+  enemy_boss:       `${BASE}enemy_boss.png`,
   bullet_player:    `${BASE}bullet_player.svg`,
   bullet_enemy:     `${BASE}bullet_enemy.svg`,
   missile_player:   `${BASE}missile_player.svg`,
