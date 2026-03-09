@@ -57,7 +57,8 @@ export class Bow {
     ctx.rotate(this.angle);
 
     if (sprite) {
-      // Upgrade glow rings still render on top of the sprite
+      ctx.drawImage(sprite, -SPRITE_SIZE / 2, -SPRITE_SIZE / 2, SPRITE_SIZE, SPRITE_SIZE);
+
       if (activeUpgrades) {
         for (const u of activeUpgrades) {
           const glowColor = UPGRADE_GLOW_COLORS[u.type];
@@ -70,8 +71,6 @@ export class Bow {
           }
         }
       }
-
-      ctx.drawImage(sprite, -SPRITE_SIZE / 2, -SPRITE_SIZE / 2, SPRITE_SIZE, SPRITE_SIZE);
 
       if (hasAmmo) {
         ctx.beginPath();
