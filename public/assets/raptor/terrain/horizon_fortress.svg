@@ -1,38 +1,148 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
-  <!-- Dark sky -->
   <defs>
-    <linearGradient id="fortress-sky" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a1a2e"/>
-      <stop offset="100%" style="stop-color:#0f0f1a"/>
+    <linearGradient id="ds-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0a14"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
     </linearGradient>
-    <linearGradient id="glow" x1="0%" y1="100%" x2="0%" y2="0%">
-      <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.4"/>
-      <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:0"/>
+    <linearGradient id="ds-glow" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#ff6b35" stop-opacity="0.35"/>
+      <stop offset="40%" stop-color="#ff4500" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ff4500" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="ds-glow-spot1" cx="200" cy="180" r="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff6b35" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ff4500" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ds-glow-spot2" cx="620" cy="175" r="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff4500" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ff4500" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ds-trench" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#080810"/>
     </linearGradient>
   </defs>
-  <rect width="800" height="200" fill="url(#fortress-sky)"/>
-  <!-- Orange glow from below -->
-  <rect width="800" height="80" y="120" fill="url(#glow)"/>
-  <!-- Industrial skyline - buildings -->
-  <rect x="0" y="140" width="60" height="60" fill="#1a1a2e"/>
-  <rect x="70" y="110" width="50" height="90" fill="#2d2d44"/>
-  <rect x="130" y="130" width="45" height="70" fill="#1a1a2e"/>
-  <rect x="185" y="95" width="55" height="105" fill="#2d2d44"/>
-  <!-- Smoke stack -->
-  <rect x="250" y="60" width="25" height="140" fill="#2d2d44"/>
-  <rect x="245" y="50" width="35" height="15" fill="#1a1a2e"/>
-  <!-- More buildings -->
-  <rect x="285" y="120" width="50" height="80" fill="#1a1a2e"/>
-  <rect x="345" y="100" width="40" height="100" fill="#2d2d44"/>
-  <rect x="395" y="130" width="55" height="70" fill="#1a1a2e"/>
-  <!-- Second smoke stack -->
-  <rect x="460" y="70" width="22" height="130" fill="#2d2d44"/>
-  <rect x="455" y="60" width="32" height="15" fill="#1a1a2e"/>
-  <!-- Buildings continued -->
-  <rect x="492" y="115" width="45" height="85" fill="#1a1a2e"/>
-  <rect x="547" y="90" width="50" height="110" fill="#2d2d44"/>
-  <rect x="607" y="125" width="40" height="75" fill="#1a1a2e"/>
-  <rect x="657" y="105" width="55" height="95" fill="#2d2d44"/>
-  <rect x="722" y="135" width="45" height="65" fill="#1a1a2e"/>
-  <rect x="777" y="150" width="23" height="50" fill="#2d2d44"/>
+
+  <!-- Deep space sky -->
+  <rect width="800" height="200" fill="url(#ds-sky)"/>
+
+  <!-- Ambient glow from surface fires -->
+  <rect width="800" height="120" y="80" fill="url(#ds-glow)"/>
+  <rect x="120" y="130" width="200" height="70" fill="url(#ds-glow-spot1)"/>
+  <rect x="520" y="120" width="200" height="80" fill="url(#ds-glow-spot2)"/>
+
+  <!-- Death Star surface base -->
+  <rect x="0" y="80" width="800" height="120" fill="#1a1a2e"/>
+
+  <!-- Surface macro grid (horizontal) -->
+  <line x1="0" y1="90" x2="800" y2="90" stroke="#252540" stroke-width="0.5"/>
+  <line x1="0" y1="105" x2="800" y2="105" stroke="#202038" stroke-width="0.5"/>
+  <line x1="0" y1="120" x2="800" y2="120" stroke="#252540" stroke-width="0.7"/>
+  <line x1="0" y1="140" x2="800" y2="140" stroke="#202038" stroke-width="0.5"/>
+  <line x1="0" y1="155" x2="800" y2="155" stroke="#252540" stroke-width="0.5"/>
+  <line x1="0" y1="170" x2="800" y2="170" stroke="#202038" stroke-width="0.7"/>
+  <line x1="0" y1="185" x2="800" y2="185" stroke="#252540" stroke-width="0.5"/>
+
+  <!-- Surface macro grid (vertical) -->
+  <line x1="50" y1="80" x2="50" y2="200" stroke="#202038" stroke-width="0.5"/>
+  <line x1="120" y1="80" x2="120" y2="200" stroke="#252540" stroke-width="0.5"/>
+  <line x1="200" y1="80" x2="200" y2="200" stroke="#202038" stroke-width="0.5"/>
+  <line x1="280" y1="80" x2="280" y2="200" stroke="#252540" stroke-width="0.7"/>
+  <line x1="350" y1="80" x2="350" y2="200" stroke="#202038" stroke-width="0.5"/>
+  <line x1="440" y1="80" x2="440" y2="200" stroke="#252540" stroke-width="0.5"/>
+  <line x1="520" y1="80" x2="520" y2="200" stroke="#202038" stroke-width="0.7"/>
+  <line x1="600" y1="80" x2="600" y2="200" stroke="#252540" stroke-width="0.5"/>
+  <line x1="680" y1="80" x2="680" y2="200" stroke="#202038" stroke-width="0.5"/>
+  <line x1="760" y1="80" x2="760" y2="200" stroke="#252540" stroke-width="0.5"/>
+
+  <!-- Major horizontal trench -->
+  <rect x="0" y="118" width="800" height="6" fill="url(#ds-trench)"/>
+  <line x1="0" y1="118" x2="800" y2="118" stroke="#2d2d44" stroke-width="0.8"/>
+  <line x1="0" y1="124" x2="800" y2="124" stroke="#2d2d44" stroke-width="0.8"/>
+
+  <!-- Major vertical trenches -->
+  <rect x="276" y="80" width="8" height="120" fill="url(#ds-trench)"/>
+  <line x1="276" y1="80" x2="276" y2="200" stroke="#2d2d44" stroke-width="0.8"/>
+  <line x1="284" y1="80" x2="284" y2="200" stroke="#2d2d44" stroke-width="0.8"/>
+
+  <rect x="517" y="80" width="6" height="120" fill="url(#ds-trench)"/>
+  <line x1="517" y1="80" x2="517" y2="200" stroke="#2d2d44" stroke-width="0.8"/>
+  <line x1="523" y1="80" x2="523" y2="200" stroke="#2d2d44" stroke-width="0.8"/>
+
+  <!-- Raised surface panel sections -->
+  <rect x="55" y="85" width="60" height="30" fill="#2d2d44" opacity="0.6"/>
+  <rect x="130" y="90" width="65" height="25" fill="#252540" opacity="0.5"/>
+  <rect x="290" y="85" width="55" height="28" fill="#2d2d44" opacity="0.5"/>
+  <rect x="360" y="90" width="75" height="25" fill="#252540" opacity="0.6"/>
+  <rect x="530" y="88" width="65" height="28" fill="#2d2d44" opacity="0.5"/>
+  <rect x="610" y="85" width="60" height="30" fill="#252540" opacity="0.6"/>
+  <rect x="690" y="90" width="65" height="25" fill="#2d2d44" opacity="0.5"/>
+
+  <!-- Turbolaser tower 1 -->
+  <rect x="158" y="52" width="10" height="38" fill="#2d2d44"/>
+  <rect x="155" y="46" width="16" height="8" fill="#252540"/>
+  <rect x="160" y="38" width="6" height="10" fill="#2d2d44"/>
+  <circle cx="163" cy="36" r="4" fill="#252540" stroke="#2d2d44" stroke-width="0.5"/>
+  <line x1="163" y1="32" x2="163" y2="24" stroke="#2d2d44" stroke-width="1.5"/>
+  <line x1="158" y1="28" x2="168" y2="28" stroke="#252540" stroke-width="0.5"/>
+
+  <!-- Turbolaser tower 2 -->
+  <rect x="490" y="46" width="12" height="44" fill="#2d2d44"/>
+  <rect x="487" y="39" width="18" height="9" fill="#252540"/>
+  <rect x="492" y="30" width="8" height="11" fill="#2d2d44"/>
+  <circle cx="496" cy="28" r="5" fill="#252540" stroke="#2d2d44" stroke-width="0.5"/>
+  <line x1="496" y1="23" x2="496" y2="14" stroke="#2d2d44" stroke-width="1.8"/>
+  <line x1="490" y1="18" x2="502" y2="18" stroke="#252540" stroke-width="0.6"/>
+
+  <!-- Turbolaser tower 3 (smaller, more distant) -->
+  <rect x="715" y="60" width="8" height="30" fill="#2d2d44"/>
+  <rect x="713" y="55" width="12" height="7" fill="#252540"/>
+  <rect x="716" y="48" width="5" height="9" fill="#2d2d44"/>
+  <circle cx="718.5" cy="46" r="3.5" fill="#252540" stroke="#2d2d44" stroke-width="0.5"/>
+  <line x1="718.5" y1="42.5" x2="718.5" y2="36" stroke="#2d2d44" stroke-width="1.2"/>
+
+  <!-- Hangar bay 1 -->
+  <rect x="78" y="128" width="32" height="20" fill="#080810"/>
+  <rect x="80" y="130" width="28" height="16" fill="#0a0a14" stroke="#2d2d44" stroke-width="0.5"/>
+  <line x1="94" y1="130" x2="94" y2="146" stroke="#252540" stroke-width="0.3"/>
+  <rect x="82" y="138" width="24" height="6" fill="#ff6b35" opacity="0.12"/>
+
+  <!-- Hangar bay 2 -->
+  <rect x="398" y="143" width="36" height="22" fill="#080810"/>
+  <rect x="400" y="145" width="32" height="18" fill="#0a0a14" stroke="#2d2d44" stroke-width="0.5"/>
+  <line x1="416" y1="145" x2="416" y2="163" stroke="#252540" stroke-width="0.3"/>
+  <rect x="402" y="155" width="28" height="6" fill="#ff6b35" opacity="0.1"/>
+
+  <!-- Hangar bay 3 -->
+  <rect x="648" y="133" width="28" height="18" fill="#080810"/>
+  <rect x="650" y="135" width="24" height="14" fill="#0a0a14" stroke="#2d2d44" stroke-width="0.5"/>
+  <rect x="652" y="143" width="20" height="4" fill="#ff6b35" opacity="0.1"/>
+
+  <!-- Lower surface detail panels -->
+  <rect x="10" y="158" width="35" height="22" fill="#252540" opacity="0.4"/>
+  <rect x="130" y="155" width="42" height="26" fill="#2d2d44" opacity="0.3"/>
+  <rect x="300" y="162" width="45" height="22" fill="#252540" opacity="0.4"/>
+  <rect x="450" y="168" width="38" height="20" fill="#2d2d44" opacity="0.3"/>
+  <rect x="558" y="158" width="34" height="24" fill="#252540" opacity="0.4"/>
+  <rect x="700" y="172" width="42" height="18" fill="#2d2d44" opacity="0.3"/>
+
+  <!-- Fine detail grid lines -->
+  <line x1="0" y1="95" x2="270" y2="95" stroke="#1f1f35" stroke-width="0.3"/>
+  <line x1="288" y1="95" x2="514" y2="95" stroke="#1f1f35" stroke-width="0.3"/>
+  <line x1="526" y1="95" x2="800" y2="95" stroke="#1f1f35" stroke-width="0.3"/>
+  <line x1="0" y1="110" x2="270" y2="110" stroke="#1f1f35" stroke-width="0.3"/>
+  <line x1="288" y1="110" x2="514" y2="110" stroke="#1f1f35" stroke-width="0.3"/>
+  <line x1="526" y1="110" x2="800" y2="110" stroke="#1f1f35" stroke-width="0.3"/>
+  <line x1="0" y1="150" x2="800" y2="150" stroke="#1f1f35" stroke-width="0.3"/>
+  <line x1="0" y1="175" x2="800" y2="175" stroke="#1f1f35" stroke-width="0.3"/>
+  <line x1="0" y1="192" x2="800" y2="192" stroke="#1f1f35" stroke-width="0.3"/>
+
+  <!-- Surface fire/glow spots -->
+  <circle cx="195" cy="175" r="8" fill="#ff6b35" opacity="0.15"/>
+  <circle cx="195" cy="175" r="4" fill="#ff4500" opacity="0.2"/>
+  <circle cx="580" cy="185" r="6" fill="#ff6b35" opacity="0.12"/>
+  <circle cx="580" cy="185" r="3" fill="#ff4500" opacity="0.18"/>
+  <circle cx="350" cy="190" r="5" fill="#ff6b35" opacity="0.1"/>
+  <circle cx="350" cy="190" r="2.5" fill="#ff4500" opacity="0.15"/>
+  <circle cx="720" cy="192" r="4" fill="#ff6b35" opacity="0.08"/>
 </svg>
