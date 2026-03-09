@@ -1,10 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
   <defs>
-    <radialGradient id="plg" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#EC7063"/>
-      <stop offset="100%" stop-color="#B03A2E"/>
+    <linearGradient id="life_body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E74C3C"/>
+      <stop offset="100%" stop-color="#922B21"/>
+    </linearGradient>
+    <linearGradient id="life_fluid" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#76D7C4"/>
+      <stop offset="40%" stop-color="#1ABC9C"/>
+      <stop offset="100%" stop-color="#0E6655"/>
+    </linearGradient>
+    <radialGradient id="life_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#F1948A" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#E74C3C" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="life_cap" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#ABB2B9"/>
+      <stop offset="100%" stop-color="#616A6B"/>
+    </linearGradient>
+    <linearGradient id="life_highlight" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
   </defs>
-  <polygon points="12,1 18,5 22,12 18,19 12,23 6,19 2,12 6,5" fill="url(#plg)" stroke="#F1948A" stroke-width="1"/>
-  <text x="12" y="13" text-anchor="middle" dominant-baseline="central" fill="#FFF" font-family="sans-serif" font-weight="bold" font-size="12">+</text>
+  <!-- Ambient glow -->
+  <circle cx="12" cy="12" r="11" fill="url(#life_glow)"/>
+  <!-- Canister body -->
+  <rect x="7" y="5" width="10" height="16" rx="2" ry="2" fill="url(#life_body)" stroke="#C0392B" stroke-width="0.5"/>
+  <!-- Fluid viewing window -->
+  <rect x="8.5" y="8" width="7" height="9" rx="1" ry="1" fill="url(#life_fluid)" stroke="#48C9B0" stroke-width="0.4"/>
+  <!-- Fluid bubbles -->
+  <circle cx="10.5" cy="14" r="0.5" fill="#A3E4D7" opacity="0.7"/>
+  <circle cx="13" cy="11" r="0.4" fill="#A3E4D7" opacity="0.6"/>
+  <circle cx="11.5" cy="12.5" r="0.3" fill="#D1F2EB" opacity="0.5"/>
+  <!-- Top cap -->
+  <rect x="8" y="3.5" width="8" height="2.5" rx="1" ry="1" fill="url(#life_cap)" stroke="#808B96" stroke-width="0.4"/>
+  <!-- Valve nozzle -->
+  <rect x="10.5" y="2" width="3" height="2" rx="0.5" ry="0.5" fill="#808B96" stroke="#616A6B" stroke-width="0.3"/>
+  <!-- Bottom base -->
+  <rect x="8" y="20" width="8" height="2" rx="1" ry="1" fill="url(#life_cap)" stroke="#808B96" stroke-width="0.4"/>
+  <!-- Rebel Alliance insignia on body (simplified starbird) -->
+  <path d="M12,9.5 L10.5,12.5 L12,11.5 L13.5,12.5 Z" fill="#F1948A" opacity="0.8"/>
+  <path d="M12,9.5 L12,14.5" stroke="#F1948A" stroke-width="0.5" opacity="0.6" stroke-linecap="round"/>
+  <path d="M10.2,13.5 Q12,15 13.8,13.5" fill="none" stroke="#F1948A" stroke-width="0.5" opacity="0.5" stroke-linecap="round"/>
+  <!-- Glass highlight reflection -->
+  <rect x="9" y="8.5" width="1.5" height="5" rx="0.5" ry="0.5" fill="url(#life_highlight)"/>
+  <!-- Red accent bands -->
+  <line x1="7.5" y1="7" x2="16.5" y2="7" stroke="#E74C3C" stroke-width="0.6" stroke-opacity="0.8"/>
+  <line x1="7.5" y1="18.5" x2="16.5" y2="18.5" stroke="#E74C3C" stroke-width="0.6" stroke-opacity="0.8"/>
 </svg>
