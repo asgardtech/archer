@@ -1,16 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <rect width="128" height="128" fill="#c8a060"/>
-  <path d="M0 24 Q32 20 64 24 Q96 28 128 24" stroke="#b8884f" stroke-width="1" fill="none"/>
-  <path d="M0 48 Q32 44 64 48 Q96 52 128 48" stroke="#c2956a" stroke-width="1" fill="none"/>
-  <path d="M0 72 Q32 68 64 72 Q96 76 128 72" stroke="#d4a76a" stroke-width="1" fill="none"/>
-  <path d="M0 96 Q32 92 64 96 Q96 100 128 96" stroke="#b8884f" stroke-width="1" fill="none"/>
-  <path d="M0 12 Q64 8 128 12" stroke="#c2956a" stroke-width="0.5" fill="none"/>
-  <path d="M0 36 Q64 32 128 36" stroke="#d4a76a" stroke-width="0.5" fill="none"/>
-  <path d="M0 60 Q64 56 128 60" stroke="#b8884f" stroke-width="0.5" fill="none"/>
-  <path d="M0 84 Q64 80 128 84" stroke="#c2956a" stroke-width="0.5" fill="none"/>
-  <circle cx="20" cy="16" r="1" fill="#d4a76a"/>
-  <circle cx="56" cy="40" r="1" fill="#c2956a"/>
-  <circle cx="92" cy="64" r="1" fill="#b8884f"/>
-  <circle cx="36" cy="88" r="1" fill="#d4a76a"/>
-  <circle cx="108" cy="112" r="1" fill="#c2956a"/>
+  <!-- Abydos/Tatooine Desert Sand texture -->
+  <rect width="128" height="128" fill="#cca465" opacity="0.35"/>
+
+  <!-- Heat shimmer / sun-baked patches -->
+  <ellipse cx="40" cy="40" rx="28" ry="20" fill="#d4b070" opacity="0.25"/>
+  <ellipse cx="100" cy="96" rx="22" ry="16" fill="#b08848" opacity="0.2"/>
+  <ellipse cx="20" cy="88" rx="18" ry="12" fill="#d4b070" opacity="0.18"/>
+
+  <!-- Primary wind ripple lines (16px spacing for seamless vertical tiling) -->
+  <path d="M0 0 Q32 3 64 0 Q96 3 128 0" stroke="#906830" stroke-width="1.4" fill="none" opacity="0.65"/>
+  <path d="M0 32 Q32 28 64 32 Q96 36 128 32" stroke="#906830" stroke-width="1.4" fill="none" opacity="0.6"/>
+  <path d="M0 64 Q32 60 64 64 Q96 68 128 64" stroke="#906830" stroke-width="1.4" fill="none" opacity="0.65"/>
+  <path d="M0 96 Q32 92 64 96 Q96 100 128 96" stroke="#906830" stroke-width="1.4" fill="none" opacity="0.6"/>
+
+  <!-- Secondary wind ripples (thinner, between primaries) -->
+  <path d="M0 16 Q64 12 128 16" stroke="#a88050" stroke-width="0.8" fill="none" opacity="0.45"/>
+  <path d="M0 48 Q64 44 128 48" stroke="#a88050" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <path d="M0 80 Q64 76 128 80" stroke="#a88050" stroke-width="0.8" fill="none" opacity="0.45"/>
+  <path d="M0 112 Q64 108 128 112" stroke="#a88050" stroke-width="0.8" fill="none" opacity="0.4"/>
+
+  <!-- Sun-baked cracked earth -->
+  <path d="M20 28 L26 32 L32 30" stroke="#705020" stroke-width="0.8" fill="none" opacity="0.5"/>
+  <path d="M76 58 L82 62 L88 60 L92 64" stroke="#705020" stroke-width="0.8" fill="none" opacity="0.45"/>
+  <path d="M44 90 L50 94 L56 92" stroke="#705020" stroke-width="0.8" fill="none" opacity="0.5"/>
+  <path d="M102 20 L106 24 L112 22" stroke="#705020" stroke-width="0.8" fill="none" opacity="0.45"/>
+
+  <!-- Scattered pebbles -->
+  <circle cx="16" cy="44" r="2.2" fill="#785828" opacity="0.65"/>
+  <circle cx="60" cy="24" r="1.8" fill="#604820" opacity="0.6"/>
+  <circle cx="96" cy="74" r="2" fill="#785828" opacity="0.55"/>
+  <circle cx="36" cy="106" r="2.2" fill="#604820" opacity="0.65"/>
+  <circle cx="108" cy="48" r="1.5" fill="#785828" opacity="0.6"/>
+  <circle cx="52" cy="78" r="1.3" fill="#604820" opacity="0.5"/>
+  <circle cx="80" cy="108" r="1.8" fill="#785828" opacity="0.6"/>
+  <circle cx="118" cy="14" r="1.2" fill="#604820" opacity="0.55"/>
 </svg>
