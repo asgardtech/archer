@@ -4,25 +4,22 @@ All visual assets in this directory are created for the Raptor Skies game.
 
 ## Sprite Assets
 
-The following SVG sprites are procedurally designed, inspired by the visual
-style of [Kenney.nl](https://kenney.nl/) game asset packs:
+All PNG sprite assets were generated using the **nanobanana MCP server**
+(powered by Google Gemini image generation) and programmatic SVG-to-PNG
+rendering via [sharp](https://sharp.pixelplumbing.com/).
 
-| File                 | Description            | License |
-|----------------------|------------------------|---------|
-| `player.svg`         | Player ship sprite     | CC0 1.0 |
-| `enemy_scout.svg`    | Scout enemy sprite     | CC0 1.0 |
-| `enemy_fighter.svg`  | Fighter enemy sprite   | CC0 1.0 |
-| `enemy_bomber.svg`   | Bomber enemy sprite    | CC0 1.0 |
-| `enemy_boss.svg`     | Boss enemy sprite      | CC0 1.0 |
-| `bullet_player.svg`  | Player bullet sprite   | CC0 1.0 |
-| `bullet_enemy.svg`   | Enemy bullet sprite    | CC0 1.0 |
-| `powerup_spread.svg` | Spread-shot power-up   | CC0 1.0 |
-| `powerup_rapid.svg`  | Rapid-fire power-up    | CC0 1.0 |
-| `powerup_shield.svg` | Shield restore power-up| CC0 1.0 |
-| `powerup_life.svg`   | Bonus life power-up    | CC0 1.0 |
-| `bg_nebula.svg`      | Nebula background      | CC0 1.0 |
-| `planet_01.svg`      | Blue/green planet       | CC0 1.0 |
-| `planet_02.svg`      | Orange/red planet       | CC0 1.0 |
+| Category         | Files                                    | Format |
+|------------------|------------------------------------------|--------|
+| Player ship      | `player.png`                             | PNG    |
+| Enemy ships      | `enemy_scout.png`, `enemy_fighter.png`, `enemy_bomber.png`, `enemy_boss.png` | PNG |
+| Bullets          | `bullet_player.png`, `bullet_enemy.png`  | PNG    |
+| Missile          | `missile_player.png`                     | PNG    |
+| Power-ups        | `powerup_spread.png`, `powerup_rapid.png`, `powerup_shield.png`, `powerup_life.png`, `powerup_missile.png`, `powerup_laser.png` | PNG |
+| Backgrounds      | `bg_nebula.png`, `planet_01.png`, `planet_02.png` | PNG |
+| Horizons         | `terrain/horizon_*.png` (5 variants)     | PNG    |
+| Ground textures  | `terrain/ground_*.png` (4 variants)      | PNG    |
+| Structures       | `terrain/struct_*.png` (14 variants)     | PNG    |
+| Props            | `terrain/prop_*.png` (4 variants)        | PNG    |
 
 ## Procedurally Generated Assets
 
@@ -31,11 +28,11 @@ The following assets are generated at runtime using Canvas 2D:
 - **Explosion sprite sheet** — 8-frame radial gradient animation
 - **Engine thrust sprite sheet** — 4-frame flame animation
 
-## Style Inspiration
+## Generation Tools
 
-- [Kenney Space Shooter Redux](https://kenney.nl/assets/space-shooter-redux) — CC0 Public Domain
-- [Kenney Particle Pack](https://kenney.nl/assets/particle-pack) — CC0 Public Domain
-- [OpenGameArt.org](https://opengameart.org/) — Various CC0/CC-BY authors
+- **nanobanana MCP server** — Gemini-powered image generation
+- **sharp** — High-performance SVG-to-PNG rasterization
+- Generation script: `scripts/generate-raptor-assets.mjs`
 
 ## License
 

@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Octagon base -->
-  <polygon points="52,28 46,42 32,48 18,42 12,28 18,14 32,8 46,14" fill="#444444"/>
-  <!-- Turret center -->
-  <circle cx="32" cy="28" r="6" fill="#333333"/>
-  <!-- Gun barrels -->
-  <line x1="24" y1="20" x2="20" y2="4" stroke="#333333" stroke-width="3" stroke-linecap="round"/>
-  <line x1="40" y1="20" x2="44" y2="4" stroke="#333333" stroke-width="3" stroke-linecap="round"/>
-</svg>
