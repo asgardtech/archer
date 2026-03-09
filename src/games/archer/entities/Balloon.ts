@@ -25,6 +25,7 @@ export class Balloon {
   private baseX: number;
   private time = 0;
   private flashTimer = 0;
+  private upgradeIcon: HTMLImageElement | null = null;
 
   constructor(x: number, y: number, speed: number, upgrade?: UpgradeType | "boss", bossHitPoints = 5) {
     this.radius = 20 + Math.random() * 15;
@@ -48,6 +49,10 @@ export class Balloon {
     } else {
       this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
     }
+  }
+
+  setUpgradeIcon(img: HTMLImageElement): void {
+    this.upgradeIcon = img;
   }
 
   hit(): boolean {
@@ -115,7 +120,6 @@ export class Balloon {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Specular highlight
     ctx.beginPath();
     ctx.ellipse(
       -this.radius * 0.25,
@@ -137,14 +141,12 @@ export class Balloon {
     const r = displayRadius * pulse;
     const isFlashing = this.flashTimer > 0;
 
-    // Dark pulsing glow
     const glowAlpha = 0.2 + Math.sin(this.time * 2.5) * 0.1;
     ctx.beginPath();
     ctx.ellipse(0, 0, r * 1.3, r * 1.5, 0, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(139, 0, 0, ${glowAlpha})`;
     ctx.fill();
 
-    // Body
     ctx.beginPath();
     ctx.ellipse(0, 0, r * 0.8, r, 0, 0, Math.PI * 2);
     ctx.fillStyle = isFlashing ? "#FFFFFF" : this.color;
@@ -153,20 +155,17 @@ export class Balloon {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Specular highlight
     ctx.beginPath();
     ctx.ellipse(-r * 0.25, -r * 0.35, r * 0.2, r * 0.3, -0.4, 0, Math.PI * 2);
     ctx.fillStyle = "rgba(255,255,255,0.3)";
     ctx.fill();
 
-    // Skull icon
     ctx.fillStyle = isFlashing ? "#333" : "rgba(255,255,255,0.8)";
     ctx.font = `bold ${r * 0.55}px sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("☠", 0, 0);
 
-    // HP bar above balloon
     const barW = r * 1.6;
     const barH = 6;
     const barX = -barW / 2;
@@ -183,14 +182,12 @@ export class Balloon {
     const pulse = 1 + Math.sin(this.time * 4) * 0.05;
     const r = this.radius * pulse;
 
-    // Glow behind
     const glowAlpha = 0.25 + Math.sin(this.time * 3) * 0.1;
     ctx.beginPath();
     ctx.ellipse(0, 0, r * 1.15, r * 1.3, 0, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255, 215, 0, ${glowAlpha})`;
     ctx.fill();
 
-    // Body
     ctx.beginPath();
     ctx.ellipse(0, 0, r * 0.8, r, 0, 0, Math.PI * 2);
     ctx.fillStyle = "#FFD700";
@@ -199,7 +196,6 @@ export class Balloon {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Specular highlight
     ctx.beginPath();
     ctx.ellipse(
       -r * 0.25,
@@ -213,13 +209,17 @@ export class Balloon {
     ctx.fillStyle = "rgba(255,255,255,0.5)";
     ctx.fill();
 
-    // Icon
     if (this.upgradeType) {
-      ctx.fillStyle = "#333";
-      ctx.font = `bold ${r * 0.55}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(UPGRADE_ICONS[this.upgradeType], 0, 0);
+      if (this.upgradeIcon) {
+        const iconSize = r * 0.8;
+        ctx.drawImage(this.upgradeIcon, -iconSize / 2, -iconSize / 2, iconSize, iconSize);
+      } else {
+        ctx.fillStyle = "#333";
+        ctx.font = `bold ${r * 0.55}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(UPGRADE_ICONS[this.upgradeType], 0, 0);
+      }
     }
   }
 }

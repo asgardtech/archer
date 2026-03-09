@@ -1,4 +1,4 @@
-import { GameState, ObstacleType } from "./types";
+import { GameState, ObstacleType, UpgradeType } from "./types";
 import { InputManager } from "./systems/InputManager";
 import { Spawner } from "./systems/Spawner";
 import { CollisionSystem } from "./systems/CollisionSystem";
@@ -12,6 +12,8 @@ import { HUD } from "./rendering/HUD";
 import { LEVELS, LevelConfig } from "./levels";
 import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
+import { AssetLoader } from "../../shared/AssetLoader";
+import { ARCHER_ASSET_MANIFEST } from "./rendering/assets";
 
 const DT_CAP = 0.1;
 const UPGRADE_BALLOON_SCORE = 3;
@@ -19,6 +21,13 @@ const BOSS_BALLOON_SCORE = 10;
 const MILESTONE_INTERVAL = 25;
 const MILESTONE_AMMO_BONUS = 5;
 const BOSS_KILL_AMMO_BONUS = 15;
+
+const UPGRADE_ICON_KEYS: Record<UpgradeType, string> = {
+  "multi-shot": "powerup_multishot",
+  "piercing": "powerup_piercing",
+  "rapid-fire": "powerup_rapidfire",
+  "bonus-arrows": "powerup_bonusarrows",
+};
 
 const OBSTACLE_PENALTIES: Record<ObstacleType, { score: number; arrows: number }> = {
   bird: { score: 3, arrows: 2 },
@@ -35,7 +44,7 @@ export class ArcherGame implements IGame {
   private dt = 0;
   private rafId = 0;
 
-  private state: GameState = "menu";
+  private state: GameState = "loading";
   private currentLevel = 0;
   private score = 0;
   private totalScore = 0;
@@ -55,6 +64,7 @@ export class ArcherGame implements IGame {
   private hud: HUD;
   private audio: AudioManager;
   private sound: SoundSystem;
+  private assetLoader: AssetLoader;
   private lowAmmoTriggered = false;
 
   private boundResize: (() => void) | null = null;
@@ -87,6 +97,7 @@ export class ArcherGame implements IGame {
     this.bow = new Bow(width, height, this.input.isTouchDevice ? 60 : 30);
     this.audio = new AudioManager();
     this.sound = new SoundSystem(this.audio);
+    this.assetLoader = new AssetLoader();
 
     this.setupResize();
   }
@@ -122,8 +133,33 @@ export class ArcherGame implements IGame {
 
   start(): void {
     this.running = true;
+    this.state = "loading";
     this.lastTime = performance.now();
     this.rafId = requestAnimationFrame((t) => this.loop(t));
+
+    this.assetLoader.loadAll(ARCHER_ASSET_MANIFEST).then(() => {
+      if (this.destroyed) return;
+      this.distributeSprites();
+      this.state = "menu";
+    });
+  }
+
+  private distributeSprites(): void {
+    const bowSprites = new Map<string, HTMLImageElement>();
+    for (const key of ["bow_default", "bow_multishot", "bow_piercing", "bow_rapidfire"]) {
+      const img = this.assetLoader.getOptional(key);
+      if (img) bowSprites.set(key, img);
+    }
+    this.bow.setSprites(bowSprites);
+  }
+
+  private getArrowSprite(piercing: boolean): HTMLImageElement | null {
+    return this.assetLoader.getOptional(piercing ? "arrow_piercing" : "arrow_default");
+  }
+
+  private getUpgradeIcon(upgradeType: UpgradeType): HTMLImageElement | null {
+    const key = UPGRADE_ICON_KEYS[upgradeType];
+    return key ? this.assetLoader.getOptional(key) : null;
   }
 
   stop(): void {
@@ -172,6 +208,12 @@ export class ArcherGame implements IGame {
   }
 
   private update(dt: number): void {
+    if (this.state === "loading") {
+      this.hud.loadingProgress = this.assetLoader.progress;
+      this.input.consume();
+      return;
+    }
+
     if (this.handleMuteClick()) return;
 
     switch (this.state) {
@@ -238,6 +280,8 @@ export class ArcherGame implements IGame {
           angle
         );
         if (isPiercing) arrow.piercing = true;
+        const arrowSprite = this.getArrowSprite(isPiercing);
+        if (arrowSprite) arrow.setSprite(arrowSprite);
         this.arrows.push(arrow);
       }
 
@@ -250,6 +294,10 @@ export class ArcherGame implements IGame {
 
     const newBalloons = this.spawner.update(dt, this.width, this.height);
     for (const b of newBalloons) {
+      if (b.upgradeType) {
+        const icon = this.getUpgradeIcon(b.upgradeType);
+        if (icon) b.setUpgradeIcon(icon);
+      }
       this.balloons.push(b);
     }
 
@@ -380,6 +428,7 @@ export class ArcherGame implements IGame {
     this.arrows = [];
     this.obstacles = [];
     this.bow = new Bow(this.width, this.height, this.input.isTouchDevice ? 60 : 30);
+    this.distributeSprites();
     this.spawner.configure(config);
     this.upgradeManager.resetForNewLevel();
     this.hud.reset();

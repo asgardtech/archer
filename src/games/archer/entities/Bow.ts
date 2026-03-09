@@ -1,6 +1,7 @@
 import { Vec2, UpgradeState } from "../types";
 
 const BOW_RADIUS = 40;
+const SPRITE_SIZE = 80;
 
 const UPGRADE_GLOW_COLORS: Record<string, string> = {
   "multi-shot": "rgba(52, 152, 219, 0.6)",
@@ -11,9 +12,14 @@ const UPGRADE_GLOW_COLORS: Record<string, string> = {
 export class Bow {
   public pos: Vec2;
   public angle = -Math.PI / 2;
+  private sprites: Map<string, HTMLImageElement> = new Map();
 
   constructor(canvasW: number, canvasH: number, bottomOffset = 30) {
     this.pos = { x: canvasW / 2, y: canvasH - bottomOffset };
+  }
+
+  setSprites(sprites: Map<string, HTMLImageElement>): void {
+    this.sprites = sprites;
   }
 
   update(mousePos: Vec2): void {
@@ -33,12 +39,64 @@ export class Bow {
     return [this.angle];
   }
 
+  private getSpriteKey(activeUpgrades?: ReadonlyArray<UpgradeState>): string {
+    if (activeUpgrades) {
+      if (activeUpgrades.some(u => u.type === "multi-shot")) return "bow_multishot";
+      if (activeUpgrades.some(u => u.type === "piercing")) return "bow_piercing";
+      if (activeUpgrades.some(u => u.type === "rapid-fire")) return "bow_rapidfire";
+    }
+    return "bow_default";
+  }
+
   render(ctx: CanvasRenderingContext2D, hasAmmo: boolean, activeUpgrades?: ReadonlyArray<UpgradeState>): void {
+    const spriteKey = this.getSpriteKey(activeUpgrades);
+    const sprite = this.sprites.get(spriteKey);
+
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
     ctx.rotate(this.angle);
 
-    // Upgrade glow rings
+    if (sprite) {
+      // Upgrade glow rings still render on top of the sprite
+      if (activeUpgrades) {
+        for (const u of activeUpgrades) {
+          const glowColor = UPGRADE_GLOW_COLORS[u.type];
+          if (glowColor) {
+            ctx.beginPath();
+            ctx.arc(0, 0, BOW_RADIUS + 8, -0.9, 0.9, false);
+            ctx.strokeStyle = glowColor;
+            ctx.lineWidth = 5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      ctx.drawImage(sprite, -SPRITE_SIZE / 2, -SPRITE_SIZE / 2, SPRITE_SIZE, SPRITE_SIZE);
+
+      if (hasAmmo) {
+        ctx.beginPath();
+        ctx.moveTo(-20, 0);
+        ctx.lineTo(30, 0);
+        ctx.strokeStyle = "#8B5E3C";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(30, 0);
+        ctx.lineTo(24, -3);
+        ctx.lineTo(24, 3);
+        ctx.closePath();
+        ctx.fillStyle = "#333";
+        ctx.fill();
+      }
+    } else {
+      this.renderFallback(ctx, hasAmmo, activeUpgrades);
+    }
+
+    ctx.restore();
+  }
+
+  private renderFallback(ctx: CanvasRenderingContext2D, hasAmmo: boolean, activeUpgrades?: ReadonlyArray<UpgradeState>): void {
     if (activeUpgrades) {
       for (const u of activeUpgrades) {
         const glowColor = UPGRADE_GLOW_COLORS[u.type];
@@ -52,14 +110,12 @@ export class Bow {
       }
     }
 
-    // Bow limb (arc)
     ctx.beginPath();
     ctx.arc(0, 0, BOW_RADIUS, -0.9, 0.9, false);
     ctx.strokeStyle = "#8B4513";
     ctx.lineWidth = 4;
     ctx.stroke();
 
-    // Bowstring
     const endTopX = Math.cos(-0.9) * BOW_RADIUS;
     const endTopY = Math.sin(-0.9) * BOW_RADIUS;
     const endBotX = Math.cos(0.9) * BOW_RADIUS;
@@ -73,7 +129,6 @@ export class Bow {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Nocked arrow preview
     if (hasAmmo) {
       ctx.beginPath();
       ctx.moveTo(-20, 0);
@@ -90,7 +145,5 @@ export class Bow {
       ctx.fillStyle = "#333";
       ctx.fill();
     }
-
-    ctx.restore();
   }
 }

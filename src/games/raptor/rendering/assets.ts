@@ -1,4 +1,4 @@
-import { AssetManifest } from "../types";
+import { AssetManifest } from "../../../shared/AssetLoader";
 
 const BASE = "assets/raptor/";
 const TERRAIN = `${BASE}terrain/`;

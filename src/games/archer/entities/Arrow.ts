@@ -9,6 +9,7 @@ export class Arrow {
   public angle: number;
   public alive = true;
   public piercing = false;
+  public sprite: HTMLImageElement | null = null;
 
   constructor(origin: Vec2, angle: number) {
     this.pos = { x: origin.x, y: origin.y };
@@ -17,6 +18,10 @@ export class Arrow {
       x: Math.cos(angle) * ARROW_SPEED,
       y: Math.sin(angle) * ARROW_SPEED,
     };
+  }
+
+  setSprite(img: HTMLImageElement): void {
+    this.sprite = img;
   }
 
   update(dt: number, canvasW: number, canvasH: number): void {
@@ -42,7 +47,16 @@ export class Arrow {
     ctx.translate(this.pos.x, this.pos.y);
     ctx.rotate(this.angle);
 
-    // Shaft
+    if (this.sprite) {
+      ctx.drawImage(this.sprite, -ARROW_LENGTH / 2, -8, ARROW_LENGTH, 16);
+    } else {
+      this.renderFallback(ctx);
+    }
+
+    ctx.restore();
+  }
+
+  private renderFallback(ctx: CanvasRenderingContext2D): void {
     ctx.beginPath();
     ctx.moveTo(-ARROW_LENGTH, 0);
     ctx.lineTo(0, 0);
@@ -50,7 +64,6 @@ export class Arrow {
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
-    // Arrowhead
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(-8, -4);
@@ -59,7 +72,6 @@ export class Arrow {
     ctx.fillStyle = "#333";
     ctx.fill();
 
-    // Fletching
     ctx.beginPath();
     ctx.moveTo(-ARROW_LENGTH, 0);
     ctx.lineTo(-ARROW_LENGTH + 8, -4);
@@ -68,7 +80,5 @@ export class Arrow {
     ctx.closePath();
     ctx.fillStyle = "#c0392b";
     ctx.fill();
-
-    ctx.restore();
   }
 }

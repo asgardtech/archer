@@ -30,6 +30,7 @@ const MUTE_BTN_MARGIN = 12;
 export class HUD {
   private ammoGainTexts: AmmoGainText[] = [];
   private penaltyTexts: PenaltyText[] = [];
+  public loadingProgress = 0;
 
   constructor(private isTouchDevice = false) {}
 
@@ -80,6 +81,9 @@ export class HUD {
     this.penaltyTexts = this.penaltyTexts.filter((t) => t.age < PENALTY_DURATION);
 
     switch (state) {
+      case "loading":
+        this.renderLoading(ctx, canvasW, canvasH);
+        break;
       case "menu":
         this.renderMenu(ctx, canvasW, canvasH);
         break;
@@ -126,6 +130,33 @@ export class HUD {
       clickY >= y &&
       clickY <= y + MUTE_BTN_SIZE
     );
+  }
+
+  private renderLoading(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 32px sans-serif";
+    ctx.fillText("Loading...", w / 2, h / 2 - 30);
+
+    const barW = 240;
+    const barH = 12;
+    const barX = (w - barW) / 2;
+    const barY = h / 2 + 10;
+
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillRect(barX, barY, barW, barH);
+
+    ctx.fillStyle = "#3498db";
+    ctx.fillRect(barX, barY, barW * this.loadingProgress, barH);
+
+    ctx.strokeStyle = "rgba(255,255,255,0.4)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX, barY, barW, barH);
+
+    ctx.restore();
   }
 
   private renderMenu(ctx: CanvasRenderingContext2D, w: number, h: number): void {

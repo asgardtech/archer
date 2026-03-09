@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <defs>
+    <filter id="rf-glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="24" cy="24" r="20" fill="#f1c40f" opacity="0.2" filter="url(#rf-glow)"/>
+  <circle cx="24" cy="24" r="16" fill="#f1c40f" opacity="0.15"/>
+  <!-- Lightning bolt -->
+  <polygon points="28,8 20,22 26,22 18,40 22,26 16,26 24,12" fill="#f1c40f" stroke="#B7950B" stroke-width="0.5"/>
+  <!-- Speed lines -->
+  <line x1="10" y1="18" x2="14" y2="18" stroke="#f1c40f" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="8" y1="24" x2="13" y2="24" stroke="#f1c40f" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <line x1="10" y1="30" x2="14" y2="30" stroke="#f1c40f" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+  <!-- Outer ring -->
+  <circle cx="24" cy="24" r="19" fill="none" stroke="#f1c40f" stroke-width="1.5" opacity="0.6"/>
+</svg>
