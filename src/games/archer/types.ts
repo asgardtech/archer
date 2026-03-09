@@ -23,6 +23,15 @@ export interface UpgradeState {
   remainingTime: number;
 }
 
+export interface PersistentUpgradeState {
+  type: UpgradeType;
+  remainingTime: number;
+  cooldownRemaining: number;
+  isPermanent: boolean;
+}
+
+export type UpgradeCollectionMap = Record<UpgradeType, number>;
+
 export type SoundEvent =
   | "arrow_shoot"
   | "balloon_pop"

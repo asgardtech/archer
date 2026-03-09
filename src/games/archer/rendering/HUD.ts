@@ -1,4 +1,5 @@
-import { GameState, UpgradeState } from "../types";
+import { GameState, UpgradeState, UpgradeType } from "../types";
+import { PERMANENT_THRESHOLD } from "../systems/UpgradeManager";
 
 const UPGRADE_DISPLAY: Record<string, { icon: string; color: string; label: string }> = {
   "multi-shot": { icon: "⫸", color: "#3498db", label: "Multi-Shot" },
@@ -64,7 +65,9 @@ export class HUD {
     dt = 0,
     level = 1,
     levelName = "",
-    totalScore = 0
+    totalScore = 0,
+    permanentUpgrades: ReadonlySet<UpgradeType> = new Set(),
+    collectionCounts: ReadonlyMap<UpgradeType, number> = new Map()
   ): void {
     for (const t of this.ammoGainTexts) {
       t.age += dt;
@@ -81,10 +84,10 @@ export class HUD {
         this.renderMenu(ctx, canvasW, canvasH);
         break;
       case "playing":
-        this.renderPlaying(ctx, score, arrowsRemaining, canvasW, activeUpgrades, level, levelName);
+        this.renderPlaying(ctx, score, arrowsRemaining, canvasW, activeUpgrades, level, levelName, permanentUpgrades);
         break;
       case "level_complete":
-        this.renderLevelComplete(ctx, score, level, levelName, canvasW, canvasH);
+        this.renderLevelComplete(ctx, score, level, levelName, canvasW, canvasH, collectionCounts);
         break;
       case "gameover":
         this.renderGameOver(ctx, totalScore, canvasW, canvasH, level, levelName);
@@ -155,7 +158,8 @@ export class HUD {
     w: number,
     activeUpgrades: ReadonlyArray<UpgradeState>,
     level: number,
-    levelName: string
+    levelName: string,
+    permanentUpgrades: ReadonlySet<UpgradeType> = new Set()
   ): void {
     ctx.save();
     ctx.font = "bold 20px sans-serif";
@@ -179,14 +183,24 @@ export class HUD {
       const info = UPGRADE_DISPLAY[upgrade.type];
       if (!info) continue;
 
+      const isPerm = permanentUpgrades.has(upgrade.type);
+      const prefix = isPerm ? "★ " : "";
+
       ctx.font = "bold 15px sans-serif";
       ctx.fillStyle = info.color;
-      ctx.fillText(`${info.icon} ${info.label} ${upgrade.remainingTime.toFixed(1)}s`, 16, yOffset);
+      ctx.fillText(`${prefix}${info.icon} ${info.label} ${upgrade.remainingTime.toFixed(1)}s`, 16, yOffset);
 
       const barX = 16;
       const barW = 120;
       const barH = 4;
       const barY = yOffset + 5;
+
+      if (isPerm) {
+        ctx.strokeStyle = "#FFD700";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
+      }
+
       ctx.fillStyle = "rgba(255,255,255,0.2)";
       ctx.fillRect(barX, barY, barW, barH);
 
@@ -227,7 +241,8 @@ export class HUD {
     level: number,
     levelName: string,
     w: number,
-    h: number
+    h: number,
+    collectionCounts: ReadonlyMap<UpgradeType, number> = new Map()
   ): void {
     ctx.save();
 
@@ -249,11 +264,35 @@ export class HUD {
     ctx.fillStyle = "#f1c40f";
     ctx.fillText(`Score: ${levelScore}`, w / 2, h / 2 + 30);
 
+    const upgradeTypes: { type: UpgradeType; label: string }[] = [
+      { type: "multi-shot", label: "Multi-Shot" },
+      { type: "piercing", label: "Piercing" },
+      { type: "rapid-fire", label: "Rapid Fire" },
+      { type: "bonus-arrows", label: "Bonus Arrows" },
+    ];
+
+    let progressY = h / 2 + 60;
+    let hasProgress = false;
+    for (const { type, label } of upgradeTypes) {
+      const count = collectionCounts.get(type) ?? 0;
+      if (count === 0) continue;
+      hasProgress = true;
+
+      const dots = Array.from({ length: PERMANENT_THRESHOLD }, (_, i) =>
+        i < count ? "●" : "○"
+      ).join("");
+
+      ctx.font = "16px sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.8)";
+      ctx.fillText(`${label} ${dots}`, w / 2, progressY);
+      progressY += 22;
+    }
+
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "20px sans-serif";
     ctx.fillText(
       this.isTouchDevice ? "Tap to Continue" : "Click to Continue",
-      w / 2, h / 2 + 80
+      w / 2, hasProgress ? progressY + 15 : h / 2 + 80
     );
 
     ctx.restore();

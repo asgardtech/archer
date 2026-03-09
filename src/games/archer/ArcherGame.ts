@@ -299,9 +299,9 @@ export class ArcherGame implements IGame {
       }
 
       if (hit.grantedUpgrade) {
-        this.upgradeManager.activate(hit.grantedUpgrade, () => {
-          this.arrowsRemaining += 10;
-          this.hud.showAmmoGain(10);
+        this.upgradeManager.activate(hit.grantedUpgrade, (amount: number) => {
+          this.arrowsRemaining += amount;
+          this.hud.showAmmoGain(amount);
           this.sound.play("ammo_gain");
         });
         this.sound.play("upgrade_activate");
@@ -364,6 +364,7 @@ export class ArcherGame implements IGame {
     this.arrowsRemaining = 0;
     this.lowAmmoTriggered = false;
     this.sound.stopLowAmmoWarning();
+    this.upgradeManager.resetAll();
     this.startLevel(0);
   }
 
@@ -380,7 +381,7 @@ export class ArcherGame implements IGame {
     this.obstacles = [];
     this.bow = new Bow(this.width, this.height, this.input.isTouchDevice ? 60 : 30);
     this.spawner.configure(config);
-    this.upgradeManager.reset();
+    this.upgradeManager.resetForNewLevel();
     this.hud.reset();
   }
 
@@ -415,7 +416,9 @@ export class ArcherGame implements IGame {
       this.dt,
       config.level,
       config.name,
-      this.totalScore + (this.state === "playing" ? this.score : 0)
+      this.totalScore + (this.state === "playing" ? this.score : 0),
+      this.upgradeManager.getPermanentUpgrades(),
+      this.upgradeManager.getCollectionCounts()
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }

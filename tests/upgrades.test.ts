@@ -40,10 +40,11 @@ describe("UpgradeManager", () => {
     expect(mgr.getActive()[0].remainingTime).toBe(5);
   });
 
-  it("bonus-arrows calls onInstant and does not add to active list", () => {
+  it("bonus-arrows calls onInstant with 10 and does not add to active list", () => {
     const fn = jest.fn();
     mgr.activate("bonus-arrows", fn);
     expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith(10);
     expect(mgr.getActive()).toHaveLength(0);
     expect(mgr.hasUpgrade("bonus-arrows")).toBe(false);
   });
@@ -84,6 +85,249 @@ describe("UpgradeManager", () => {
     mgr.reset();
     expect(mgr.getActive()).toHaveLength(0);
     expect(mgr.hasUpgrade("multi-shot")).toBe(false);
+  });
+});
+
+// --- Persistent Upgrade System ---
+
+describe("UpgradeManager: collection counting", () => {
+  let mgr: UpgradeManager;
+
+  beforeEach(() => {
+    mgr = new UpgradeManager();
+  });
+
+  it("increments collection count on each activation", () => {
+    mgr.activate("multi-shot");
+    expect(mgr.getCollectionCount("multi-shot")).toBe(1);
+    mgr.activate("multi-shot");
+    expect(mgr.getCollectionCount("multi-shot")).toBe(2);
+  });
+
+  it("tracks collection counts independently per upgrade type", () => {
+    mgr.activate("multi-shot");
+    mgr.activate("multi-shot");
+    mgr.activate("rapid-fire");
+    expect(mgr.getCollectionCount("multi-shot")).toBe(2);
+    expect(mgr.getCollectionCount("rapid-fire")).toBe(1);
+    expect(mgr.getCollectionCount("piercing")).toBe(0);
+  });
+
+  it("returns all collection counts via getCollectionCounts()", () => {
+    mgr.activate("piercing");
+    mgr.activate("piercing");
+    const counts = mgr.getCollectionCounts();
+    expect(counts.get("piercing")).toBe(2);
+  });
+
+  it("tracks bonus-arrows collection counts", () => {
+    const fn = jest.fn();
+    mgr.activate("bonus-arrows", fn);
+    mgr.activate("bonus-arrows", fn);
+    expect(mgr.getCollectionCount("bonus-arrows")).toBe(2);
+  });
+});
+
+describe("UpgradeManager: permanent threshold", () => {
+  let mgr: UpgradeManager;
+
+  beforeEach(() => {
+    mgr = new UpgradeManager();
+  });
+
+  it("upgrade becomes permanent at exactly 3 collections", () => {
+    mgr.activate("multi-shot");
+    mgr.activate("multi-shot");
+    expect(mgr.isPermanent("multi-shot")).toBe(false);
+    mgr.activate("multi-shot");
+    expect(mgr.isPermanent("multi-shot")).toBe(true);
+  });
+
+  it("upgrade is not permanent at 2 collections", () => {
+    mgr.activate("piercing");
+    mgr.activate("piercing");
+    expect(mgr.isPermanent("piercing")).toBe(false);
+  });
+
+  it("4th+ collection keeps upgrade permanent", () => {
+    for (let i = 0; i < 4; i++) mgr.activate("multi-shot");
+    expect(mgr.isPermanent("multi-shot")).toBe(true);
+    expect(mgr.getCollectionCount("multi-shot")).toBe(4);
+  });
+
+  it("bonus-arrows cannot become permanent", () => {
+    const fn = jest.fn();
+    for (let i = 0; i < 3; i++) mgr.activate("bonus-arrows", fn);
+    expect(mgr.isPermanent("bonus-arrows")).toBe(false);
+    expect(mgr.hasUpgrade("bonus-arrows")).toBe(false);
+  });
+
+  it("bonus-arrows 3rd collection grants 25 instead of 10", () => {
+    const fn = jest.fn();
+    mgr.activate("bonus-arrows", fn);
+    mgr.activate("bonus-arrows", fn);
+    mgr.activate("bonus-arrows", fn);
+    expect(fn).toHaveBeenNthCalledWith(1, 10);
+    expect(fn).toHaveBeenNthCalledWith(2, 10);
+    expect(fn).toHaveBeenNthCalledWith(3, 25);
+  });
+
+  it("bonus-arrows 4th collection grants standard 10", () => {
+    const fn = jest.fn();
+    for (let i = 0; i < 4; i++) mgr.activate("bonus-arrows", fn);
+    expect(fn).toHaveBeenNthCalledWith(4, 10);
+  });
+
+  it("getPermanentUpgrades returns all permanent types", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    for (let i = 0; i < 3; i++) mgr.activate("piercing");
+    const perms = mgr.getPermanentUpgrades();
+    expect(perms.has("multi-shot")).toBe(true);
+    expect(perms.has("piercing")).toBe(true);
+    expect(perms.has("rapid-fire")).toBe(false);
+  });
+});
+
+describe("UpgradeManager: resetForNewLevel", () => {
+  let mgr: UpgradeManager;
+
+  beforeEach(() => {
+    mgr = new UpgradeManager();
+  });
+
+  it("preserves permanent upgrades with fresh timers", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    mgr.update(8.1); // expire the timer
+    expect(mgr.hasUpgrade("multi-shot")).toBe(false);
+
+    mgr.resetForNewLevel();
+    expect(mgr.hasUpgrade("multi-shot")).toBe(true);
+    expect(mgr.getActive()[0].remainingTime).toBe(8);
+    expect(mgr.isPermanent("multi-shot")).toBe(true);
+  });
+
+  it("clears non-permanent upgrades", () => {
+    mgr.activate("piercing"); // only 1 collection
+    expect(mgr.hasUpgrade("piercing")).toBe(true);
+
+    mgr.resetForNewLevel();
+    expect(mgr.hasUpgrade("piercing")).toBe(false);
+  });
+
+  it("preserves collection counts across level transitions", () => {
+    mgr.activate("rapid-fire");
+    mgr.activate("rapid-fire");
+    expect(mgr.getCollectionCount("rapid-fire")).toBe(2);
+
+    mgr.resetForNewLevel();
+    expect(mgr.getCollectionCount("rapid-fire")).toBe(2);
+  });
+
+  it("reactivates permanent upgrade that was in cooldown", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("rapid-fire");
+    mgr.update(5.1); // expire timer, enter cooldown
+    mgr.update(3); // partial cooldown elapsed
+    expect(mgr.hasUpgrade("rapid-fire")).toBe(false);
+    expect(mgr.getCooldown("rapid-fire")).toBeGreaterThan(0);
+
+    mgr.resetForNewLevel();
+    expect(mgr.hasUpgrade("rapid-fire")).toBe(true);
+    expect(mgr.getActive().find((u: any) => u.type === "rapid-fire")!.remainingTime).toBe(5);
+    expect(mgr.getCooldown("rapid-fire")).toBe(0);
+  });
+
+  it("player with 0 active upgrades but has permanents gets them reactivated", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    mgr.update(8.1); // expire
+    mgr.update(10.1); // cooldown done, reactivated
+    mgr.update(8.1); // expire again
+    // Now in cooldown again
+
+    mgr.resetForNewLevel();
+    expect(mgr.hasUpgrade("multi-shot")).toBe(true);
+  });
+});
+
+describe("UpgradeManager: resetAll", () => {
+  let mgr: UpgradeManager;
+
+  beforeEach(() => {
+    mgr = new UpgradeManager();
+  });
+
+  it("clears everything including permanent state and collection counts", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    mgr.activate("piercing");
+    mgr.activate("piercing");
+
+    mgr.resetAll();
+
+    expect(mgr.hasUpgrade("multi-shot")).toBe(false);
+    expect(mgr.isPermanent("multi-shot")).toBe(false);
+    expect(mgr.getCollectionCount("multi-shot")).toBe(0);
+    expect(mgr.getCollectionCount("piercing")).toBe(0);
+    expect(mgr.getActive()).toHaveLength(0);
+    expect(mgr.getPermanentUpgrades().size).toBe(0);
+  });
+});
+
+describe("UpgradeManager: permanent upgrade cooldown", () => {
+  let mgr: UpgradeManager;
+
+  beforeEach(() => {
+    mgr = new UpgradeManager();
+  });
+
+  it("permanent upgrade reactivates after 10s cooldown", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("rapid-fire");
+    expect(mgr.hasUpgrade("rapid-fire")).toBe(true);
+
+    mgr.update(5.1); // timer expires
+    expect(mgr.hasUpgrade("rapid-fire")).toBe(false);
+
+    mgr.update(5); // 5s into cooldown
+    expect(mgr.hasUpgrade("rapid-fire")).toBe(false);
+
+    mgr.update(5.1); // cooldown done
+    expect(mgr.hasUpgrade("rapid-fire")).toBe(true);
+    expect(mgr.getActive().find((u: any) => u.type === "rapid-fire")!.remainingTime).toBe(5);
+  });
+
+  it("permanent upgrade in cooldown is still permanent", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    mgr.update(8.1); // expire
+    mgr.update(5); // partial cooldown
+
+    expect(mgr.hasUpgrade("multi-shot")).toBe(false);
+    expect(mgr.isPermanent("multi-shot")).toBe(true);
+  });
+
+  it("re-collecting permanent upgrade during cooldown resets timer and clears cooldown", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    mgr.update(8.1); // expire
+    mgr.update(3); // partial cooldown
+
+    mgr.activate("multi-shot"); // 4th collection
+    expect(mgr.hasUpgrade("multi-shot")).toBe(true);
+    expect(mgr.getActive().find((u: any) => u.type === "multi-shot")!.remainingTime).toBe(8);
+    expect(mgr.getCooldown("multi-shot")).toBe(0);
+  });
+
+  it("multiple permanent upgrades can cycle cooldowns independently", () => {
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    for (let i = 0; i < 3; i++) mgr.activate("piercing");
+
+    mgr.update(5.5); // piercing (6s) still active, rapid would expire if present
+    expect(mgr.hasUpgrade("multi-shot")).toBe(true);
+    expect(mgr.hasUpgrade("piercing")).toBe(true);
+
+    mgr.update(1); // 6.5s total: piercing expired
+    expect(mgr.hasUpgrade("piercing")).toBe(false);
+
+    mgr.update(1.5); // 8s: multi-shot about to expire
+    mgr.update(0.1); // 8.1s: multi-shot expired
+    expect(mgr.hasUpgrade("multi-shot")).toBe(false);
+    expect(mgr.hasUpgrade("piercing")).toBe(false);
   });
 });
 
@@ -312,6 +556,8 @@ function createMockCanvas(): HTMLCanvasElement {
     translate: jest.fn(),
     rotate: jest.fn(),
     createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
+    strokeRect: jest.fn(),
+    roundRect: jest.fn(),
   };
 
   const canvas = {
@@ -557,6 +803,148 @@ describe("Game integration: upgrades", () => {
   });
 });
 
+// --- Game integration: persistent upgrades ---
+
+describe("Game integration: persistent upgrades across levels", () => {
+  let game: any;
+  let internals: ReturnType<typeof getGameInternals>;
+  let randomSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    randomSpy = jest.spyOn(Math, "random").mockReturnValue(0.5);
+    const canvas = createMockCanvas();
+    setupDom(canvas);
+    game = new Game("test-canvas");
+    internals = getGameInternals(game);
+    internals.resetGame();
+    internals.state = "playing";
+  });
+
+  afterEach(() => {
+    randomSpy.mockRestore();
+  });
+
+  it("collection counts persist across levels", () => {
+    const mgr = internals.upgradeManager;
+    mgr.activate("rapid-fire");
+    mgr.activate("rapid-fire");
+    expect(mgr.getCollectionCount("rapid-fire")).toBe(2);
+
+    mgr.resetForNewLevel();
+    expect(mgr.getCollectionCount("rapid-fire")).toBe(2);
+  });
+
+  it("permanent upgrade carries over to next level with fresh timer", () => {
+    const mgr = internals.upgradeManager;
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    expect(mgr.isPermanent("multi-shot")).toBe(true);
+
+    mgr.resetForNewLevel();
+    expect(mgr.hasUpgrade("multi-shot")).toBe(true);
+    expect(mgr.getActive().find((u: any) => u.type === "multi-shot")!.remainingTime).toBe(8);
+  });
+
+  it("non-permanent upgrade is cleared on level transition", () => {
+    const mgr = internals.upgradeManager;
+    mgr.activate("piercing");
+    expect(mgr.hasUpgrade("piercing")).toBe(true);
+
+    mgr.resetForNewLevel();
+    expect(mgr.hasUpgrade("piercing")).toBe(false);
+  });
+
+  it("collecting one more after level transition reaches permanent threshold", () => {
+    const mgr = internals.upgradeManager;
+    mgr.activate("piercing");
+    mgr.activate("piercing");
+    expect(mgr.isPermanent("piercing")).toBe(false);
+
+    mgr.resetForNewLevel();
+    mgr.activate("piercing");
+    expect(mgr.isPermanent("piercing")).toBe(true);
+  });
+
+  it("game reset clears all permanent state and collection counts", () => {
+    const mgr = internals.upgradeManager;
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    mgr.activate("piercing");
+    mgr.activate("piercing");
+
+    internals.resetGame();
+    const mgr2 = internals.upgradeManager;
+    expect(mgr2.hasUpgrade("multi-shot")).toBe(false);
+    expect(mgr2.isPermanent("multi-shot")).toBe(false);
+    expect(mgr2.getCollectionCount("multi-shot")).toBe(0);
+    expect(mgr2.getCollectionCount("piercing")).toBe(0);
+  });
+
+  it("bonus-arrows 3rd collection grants +25 arrows via game callback", () => {
+    internals.arrowsRemaining = 50;
+    const mgr = internals.upgradeManager;
+
+    // First two bonus-arrows collections (each +10)
+    const fn1 = jest.fn();
+    mgr.activate("bonus-arrows", fn1);
+    mgr.activate("bonus-arrows", fn1);
+
+    // Third collection via game integration
+    const upgBalloon = new Balloon(400, 300, 60, "bonus-arrows");
+    internals.balloons = [upgBalloon];
+    const arrow = new Arrow({ x: 400, y: 300 }, -Math.PI / 2);
+    internals.arrows = [arrow];
+
+    (internals.input as any).wasClicked = false;
+    internals.updatePlaying(0.016);
+
+    // 50 + 25 = 75
+    expect(internals.arrowsRemaining).toBe(75);
+  });
+
+  it("bonus-arrows 4th collection grants standard +10 arrows", () => {
+    internals.arrowsRemaining = 50;
+    const mgr = internals.upgradeManager;
+
+    const fn = jest.fn();
+    for (let i = 0; i < 3; i++) mgr.activate("bonus-arrows", fn);
+
+    const upgBalloon = new Balloon(400, 300, 60, "bonus-arrows");
+    internals.balloons = [upgBalloon];
+    const arrow = new Arrow({ x: 400, y: 300 }, -Math.PI / 2);
+    internals.arrows = [arrow];
+
+    (internals.input as any).wasClicked = false;
+    internals.updatePlaying(0.016);
+
+    // 50 + 10 = 60
+    expect(internals.arrowsRemaining).toBe(60);
+  });
+
+  it("multiple permanent upgrades active simultaneously on new level", () => {
+    const mgr = internals.upgradeManager;
+    for (let i = 0; i < 3; i++) mgr.activate("multi-shot");
+    for (let i = 0; i < 3; i++) mgr.activate("piercing");
+
+    mgr.resetForNewLevel();
+
+    expect(mgr.hasUpgrade("multi-shot")).toBe(true);
+    expect(mgr.hasUpgrade("piercing")).toBe(true);
+    expect(mgr.getActive()).toHaveLength(2);
+  });
+
+  it("permanent upgrade in cooldown survives level transition", () => {
+    const mgr = internals.upgradeManager;
+    for (let i = 0; i < 3; i++) mgr.activate("rapid-fire");
+    mgr.update(5.1); // expire, enter cooldown
+    mgr.update(3); // partial cooldown
+    expect(mgr.hasUpgrade("rapid-fire")).toBe(false);
+
+    mgr.resetForNewLevel();
+    expect(mgr.hasUpgrade("rapid-fire")).toBe(true);
+    expect(mgr.getActive().find((u: any) => u.type === "rapid-fire")!.remainingTime).toBe(5);
+    expect(mgr.getCooldown("rapid-fire")).toBe(0);
+  });
+});
+
 // --- HUD with active upgrades ---
 
 describe("HUD displays active upgrades", () => {
@@ -589,6 +977,122 @@ describe("HUD displays active upgrades", () => {
       (c: { text: string }) => c.text.includes("Rapid Fire") || c.text.includes("Multi-Shot") || c.text.includes("Piercing")
     );
     expect(upgradeCall).toBeUndefined();
+  });
+
+  it("shows star prefix for permanent upgrades on the HUD", () => {
+    const hud = new HUD();
+    const canvas = createMockCanvas();
+    const ctx = (canvas as any).__ctx;
+    const fillTextCalls = (canvas as any).__fillTextCalls;
+
+    const permanentSet = new Set<UpgradeType>(["multi-shot" as UpgradeType]);
+
+    hud.render(
+      ctx as any, "playing", 10, 50, 800, 600,
+      [{ type: "multi-shot", remainingTime: 8 }],
+      0.016, 1, "Meadow", 10,
+      permanentSet, new Map()
+    );
+
+    const upgradeCall = fillTextCalls.find(
+      (c: { text: string }) => c.text.includes("★") && c.text.includes("Multi-Shot")
+    );
+    expect(upgradeCall).toBeDefined();
+  });
+
+  it("does not show star prefix for non-permanent upgrades", () => {
+    const hud = new HUD();
+    const canvas = createMockCanvas();
+    const ctx = (canvas as any).__ctx;
+    const fillTextCalls = (canvas as any).__fillTextCalls;
+
+    hud.render(
+      ctx as any, "playing", 10, 50, 800, 600,
+      [{ type: "multi-shot", remainingTime: 8 }],
+      0.016, 1, "Meadow", 10,
+      new Set(), new Map()
+    );
+
+    const starCall = fillTextCalls.find(
+      (c: { text: string }) => c.text.includes("★")
+    );
+    expect(starCall).toBeUndefined();
+  });
+});
+
+describe("HUD level-complete screen collection progress", () => {
+  it("shows collection progress for upgrades with at least 1 collection", () => {
+    const hud = new HUD();
+    const canvas = createMockCanvas();
+    const ctx = (canvas as any).__ctx;
+    const fillTextCalls = (canvas as any).__fillTextCalls;
+
+    const counts = new Map<UpgradeType, number>();
+    counts.set("multi-shot", 2);
+    counts.set("piercing", 1);
+
+    hud.render(
+      ctx as any, "level_complete", 20, 50, 800, 600,
+      [], 0, 1, "Meadow", 20,
+      new Set(), counts
+    );
+
+    const multiShotProgress = fillTextCalls.find(
+      (c: { text: string }) => c.text.includes("Multi-Shot") && c.text.includes("●●○")
+    );
+    expect(multiShotProgress).toBeDefined();
+
+    const piercingProgress = fillTextCalls.find(
+      (c: { text: string }) => c.text.includes("Piercing") && c.text.includes("●○○")
+    );
+    expect(piercingProgress).toBeDefined();
+  });
+
+  it("does not show progress for upgrade types with 0 collections", () => {
+    const hud = new HUD();
+    const canvas = createMockCanvas();
+    const ctx = (canvas as any).__ctx;
+    const fillTextCalls = (canvas as any).__fillTextCalls;
+
+    const counts = new Map<UpgradeType, number>();
+    counts.set("multi-shot", 1);
+
+    hud.render(
+      ctx as any, "level_complete", 20, 50, 800, 600,
+      [], 0, 1, "Meadow", 20,
+      new Set(), counts
+    );
+
+    const rapidFireProgress = fillTextCalls.find(
+      (c: { text: string }) => c.text.includes("Rapid Fire")
+    );
+    expect(rapidFireProgress).toBeUndefined();
+
+    const multiShotProgress = fillTextCalls.find(
+      (c: { text: string }) => c.text.includes("Multi-Shot")
+    );
+    expect(multiShotProgress).toBeDefined();
+  });
+
+  it("shows full dots for upgrade that reached permanent threshold", () => {
+    const hud = new HUD();
+    const canvas = createMockCanvas();
+    const ctx = (canvas as any).__ctx;
+    const fillTextCalls = (canvas as any).__fillTextCalls;
+
+    const counts = new Map<UpgradeType, number>();
+    counts.set("piercing", 3);
+
+    hud.render(
+      ctx as any, "level_complete", 20, 50, 800, 600,
+      [], 0, 1, "Meadow", 20,
+      new Set(), counts
+    );
+
+    const piercingProgress = fillTextCalls.find(
+      (c: { text: string }) => c.text.includes("Piercing") && c.text.includes("●●●")
+    );
+    expect(piercingProgress).toBeDefined();
   });
 });
 
