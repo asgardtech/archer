@@ -20,7 +20,7 @@ export class SoundSystem {
 
     this.audio.ensureContext();
 
-    if (this.audio.playBuffer(event)) return;
+    if (this.audio.playBuffer(event, { category: "sfx" })) return;
 
     switch (event) {
       case "player_shoot": this.playPlayerShoot(); break;
@@ -44,57 +44,61 @@ export class SoundSystem {
     }
   }
 
+  private get sfxNode(): AudioNode | undefined {
+    return this.audio.sfxGain ?? undefined;
+  }
+
   private playPlayerShoot(): void {
     this.audio.playToneSwept(900, 400, 0.06, "sine", {
       attack: 0.003, decay: 0.01, sustain: 0.3, release: 0.02,
-    });
+    }, this.sfxNode);
   }
 
   private playEnemyShoot(): void {
     this.audio.playToneSwept(300, 600, 0.08, "square", {
       attack: 0.003, decay: 0.01, sustain: 0.2, release: 0.02,
-    });
+    }, this.sfxNode);
   }
 
   private playEnemyHit(): void {
     this.audio.playTone(200, 0.06, "triangle", {
       attack: 0.003, decay: 0.01, sustain: 0.3, release: 0.02,
-    });
+    }, this.sfxNode);
   }
 
   private playEnemyDestroy(): void {
     this.audio.playTone(350, 0.05, "square", {
       attack: 0.003, decay: 0.01, sustain: 0.3, release: 0.02,
-    });
-    this.audio.playNoise(0.08, 4000);
+    }, this.sfxNode);
+    this.audio.playNoise(0.08, 4000, this.sfxNode);
   }
 
   private playPlayerHit(): void {
     this.audio.playToneSwept(600, 200, 0.15, "sawtooth", {
       attack: 0.005, decay: 0.02, sustain: 0.4, release: 0.05,
-    });
-    this.audio.playNoise(0.1, 2000);
+    }, this.sfxNode);
+    this.audio.playNoise(0.1, 2000, this.sfxNode);
   }
 
   private playPlayerDestroy(): void {
     this.audio.playToneSwept(400, 80, 0.4, "sawtooth", {
       attack: 0.01, decay: 0.05, sustain: 0.5, release: 0.15,
-    });
-    this.audio.playNoise(0.35, 2500);
+    }, this.sfxNode);
+    this.audio.playNoise(0.35, 2500, this.sfxNode);
   }
 
   private playBossHit(): void {
     this.audio.playTone(100, 0.1, "sine", {
       attack: 0.005, decay: 0.02, sustain: 0.5, release: 0.04,
-    });
-    this.audio.playNoise(0.08, 1500);
+    }, this.sfxNode);
+    this.audio.playNoise(0.08, 1500, this.sfxNode);
   }
 
   private playBossDestroy(): void {
     this.audio.playToneSwept(200, 50, 0.5, "sawtooth", {
       attack: 0.01, decay: 0.05, sustain: 0.6, release: 0.2,
-    });
-    this.audio.playNoise(0.4, 3000);
+    }, this.sfxNode);
+    this.audio.playNoise(0.4, 3000, this.sfxNode);
   }
 
   private playPowerUpCollect(): void {
@@ -103,7 +107,7 @@ export class SoundSystem {
       { frequency: 659, duration: 0.2, type: "sine" },
       { frequency: 784, duration: 0.2, type: "sine" },
       { frequency: 1047, duration: 0.3, type: "sine" },
-    ], 280);
+    ], 280, this.sfxNode);
   }
 
   private playLevelComplete(): void {
@@ -112,7 +116,7 @@ export class SoundSystem {
       { frequency: 659, duration: 0.3, type: "sine" },
       { frequency: 784, duration: 0.3, type: "sine" },
       { frequency: 1047, duration: 0.6, type: "sine" },
-    ], 220);
+    ], 220, this.sfxNode);
   }
 
   private playGameOver(): void {
@@ -121,7 +125,7 @@ export class SoundSystem {
       { frequency: 349, duration: 0.6, type: "sine" },
       { frequency: 330, duration: 0.6, type: "sine" },
       { frequency: 294, duration: 1.0, type: "sine" },
-    ], 100);
+    ], 100, this.sfxNode);
   }
 
   private playVictory(): void {
@@ -134,46 +138,50 @@ export class SoundSystem {
       { frequency: 880, duration: 0.25, type: "sine" },
       { frequency: 988, duration: 0.25, type: "sine" },
       { frequency: 1047, duration: 0.8, type: "sine" },
-    ], 240);
+    ], 240, this.sfxNode);
   }
 
   private playMenuStart(): void {
     this.audio.playTone(1200, 0.1, "sine", {
       attack: 0.005, decay: 0.02, sustain: 0.5, release: 0.04,
-    });
+    }, this.sfxNode);
   }
 
   private playMissileFire(): void {
     this.audio.playToneSwept(200, 80, 0.15, "sawtooth", {
       attack: 0.01, decay: 0.03, sustain: 0.4, release: 0.06,
-    });
-    this.audio.playNoise(0.1, 1500);
+    }, this.sfxNode);
+    this.audio.playNoise(0.1, 1500, this.sfxNode);
   }
 
   private playMissileHit(): void {
     this.audio.playToneSwept(300, 60, 0.2, "sawtooth", {
       attack: 0.005, decay: 0.03, sustain: 0.5, release: 0.1,
-    });
-    this.audio.playNoise(0.15, 3000);
+    }, this.sfxNode);
+    this.audio.playNoise(0.15, 3000, this.sfxNode);
   }
 
   private playLaserFire(): void {
     this.audio.playTone(440, 0.05, "sine", {
       attack: 0.002, decay: 0.01, sustain: 0.2, release: 0.02,
-    });
+    }, this.sfxNode);
   }
 
   private playLaserHit(): void {
     this.audio.playTone(600, 0.04, "triangle", {
       attack: 0.002, decay: 0.01, sustain: 0.2, release: 0.01,
-    });
+    }, this.sfxNode);
   }
 
   private playWeaponSwitch(): void {
     this.audio.playSequence([
       { frequency: 800, duration: 0.08, type: "sine" },
       { frequency: 1200, duration: 0.12, type: "sine" },
-    ], 350);
+    ], 350, this.sfxNode);
+  }
+
+  private get musicNode(): AudioNode | undefined {
+    return this.audio.musicGain ?? undefined;
   }
 
   startMusic(state: RaptorGameState, level = 0): void {
@@ -184,13 +192,13 @@ export class SoundSystem {
     if (state === "playing") {
       const musicKey = `level_${level + 1}`;
       if (this.audio.hasBuffer(musicKey)) {
-        this.audio.playBuffer(musicKey, { loop: true });
+        this.audio.playBuffer(musicKey, { loop: true, category: "music" });
         return;
       }
       this.startPlayingMusic(level);
     } else if (state === "menu") {
       if (this.audio.hasBuffer("menu")) {
-        this.audio.playBuffer("menu", { loop: true });
+        this.audio.playBuffer("menu", { loop: true, category: "music" });
         return;
       }
       this.startMenuMusic();
@@ -203,8 +211,8 @@ export class SoundSystem {
       if (!this.musicActive) return;
       this.audio.playTone(82.41, 2.5, "sine", {
         attack: 0.4, decay: 0.3, sustain: 0.2, release: 0.6,
-      });
-      this.audio.playNoise(2.5, 300);
+      }, this.musicNode);
+      this.audio.playNoise(2.5, 300, this.musicNode);
     };
     playDrone();
     this.musicInterval = setInterval(playDrone, 3000);
@@ -223,9 +231,9 @@ export class SoundSystem {
       const freq = bassNotes[noteIdx % bassNotes.length];
       this.audio.playTone(freq, (beatMs / 1000) * 0.8, "triangle", {
         attack: 0.01, decay: 0.03, sustain: 0.2, release: 0.05,
-      });
+      }, this.musicNode);
       if (noteIdx % 2 === 0) {
-        this.audio.playNoise(0.03, 8000);
+        this.audio.playNoise(0.03, 8000, this.musicNode);
       }
       noteIdx++;
     };

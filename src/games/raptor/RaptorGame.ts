@@ -58,6 +58,8 @@ export class RaptorGame implements IGame {
   private rafId = 0;
 
   private state: RaptorGameState = "menu";
+  private settingsOpen = false;
+  private draggingSlider: "music" | "sfx" | null = null;
   private currentLevel = 0;
   private score = 0;
   private totalScore = 0;
@@ -239,15 +241,86 @@ export class RaptorGame implements IGame {
     this.rafId = requestAnimationFrame((t) => this.loop(t));
   }
 
-  private handleMuteClick(): boolean {
+  private handleUIClicks(): boolean {
+    if (this.settingsOpen) {
+      return this.handleSettingsInput();
+    }
+
     if (!this.input.wasClicked) return false;
+
+    if (this.hud.isSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width)) {
+      this.settingsOpen = true;
+      this.input.consume();
+      return true;
+    }
+
     if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width)) {
       this.audio.ensureContext();
       this.audio.toggleMute();
       this.input.consume();
       return true;
     }
+
     return false;
+  }
+
+  private handleSettingsInput(): boolean {
+    if (this.draggingSlider) {
+      const val = this.hud.getSliderValueFromPosition(
+        this.input.mouseX, this.draggingSlider, this.width, this.height
+      );
+      if (this.draggingSlider === "music") {
+        this.audio.musicVolume = val;
+      } else {
+        this.audio.sfxVolume = val;
+      }
+      if (!this.input.isMouseDown) {
+        this.draggingSlider = null;
+      }
+      this.input.consume();
+      return true;
+    }
+
+    if (!this.input.wasClicked) return true;
+
+    const mx = this.input.mouseX;
+    const my = this.input.mouseY;
+
+    if (this.hud.isCloseButtonHit(mx, my, this.width, this.height)) {
+      this.settingsOpen = false;
+      this.input.consume();
+      return true;
+    }
+
+    if (this.hud.isSliderHit(mx, my, "music", this.width, this.height)) {
+      this.draggingSlider = "music";
+      this.audio.musicVolume = this.hud.getSliderValueFromPosition(mx, "music", this.width, this.height);
+      this.input.consume();
+      return true;
+    }
+
+    if (this.hud.isSliderHit(mx, my, "sfx", this.width, this.height)) {
+      this.draggingSlider = "sfx";
+      this.audio.sfxVolume = this.hud.getSliderValueFromPosition(mx, "sfx", this.width, this.height);
+      this.input.consume();
+      return true;
+    }
+
+    if (this.hud.isMuteButtonHit(mx, my, this.width)) {
+      this.audio.ensureContext();
+      this.audio.toggleMute();
+      this.input.consume();
+      return true;
+    }
+
+    if (!this.hud.isSettingsPanelHit(mx, my, this.width, this.height)) {
+      this.settingsOpen = false;
+      this.input.consume();
+      return true;
+    }
+
+    this.input.consume();
+    return true;
   }
 
   private update(dt: number): void {
@@ -256,7 +329,7 @@ export class RaptorGame implements IGame {
       return;
     }
 
-    if (this.handleMuteClick()) return;
+    if (this.handleUIClicks()) return;
 
     this.vfx.update(dt);
 
@@ -801,6 +874,14 @@ export class RaptorGame implements IGame {
       this.weaponSystem.currentWeapon
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
+    this.hud.renderSettingsButton(this.ctx, this.width);
+
+    if (this.settingsOpen) {
+      this.hud.renderSettingsPanel(
+        this.ctx, this.width, this.height,
+        this.audio.musicVolume, this.audio.sfxVolume
+      );
+    }
   }
 
   private renderBackground(): void {

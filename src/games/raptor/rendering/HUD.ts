@@ -4,7 +4,13 @@ import { AssetLoader } from "./AssetLoader";
 
 const MUTE_BTN_SIZE = 36;
 const MUTE_BTN_MARGIN = 12;
+const SETTINGS_BTN_SIZE = 36;
 const RETRO_FONT = "'Press Start 2P', monospace";
+
+const SLIDER_TRACK_W = 220;
+const SLIDER_TRACK_H = 10;
+const SLIDER_HANDLE_W = 16;
+const SLIDER_HANDLE_H = 22;
 
 const SHIELD_BAR_X = 8;
 const SHIELD_BAR_W = 10;
@@ -36,6 +42,15 @@ const WEAPON_COLORS: Record<WeaponType, string> = {
   "missile": "#e67e22",
   "laser": "#9b59b6",
 };
+
+interface SliderLayout {
+  trackX: number;
+  trackY: number;
+  trackW: number;
+  trackH: number;
+  handleW: number;
+  handleH: number;
+}
 
 export class HUD {
   private isTouchDevice: boolean;
@@ -77,6 +92,212 @@ export class HUD {
       clickY >= y &&
       clickY <= y + MUTE_BTN_SIZE
     );
+  }
+
+  renderSettingsButton(ctx: CanvasRenderingContext2D, canvasW: number): void {
+    const x = canvasW - MUTE_BTN_SIZE - MUTE_BTN_MARGIN - SETTINGS_BTN_SIZE - 6;
+    const y = MUTE_BTN_MARGIN;
+    const size = SETTINGS_BTN_SIZE;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.beginPath();
+    ctx.roundRect(x, y, size, size, 6);
+    ctx.fill();
+
+    ctx.font = `16px ${RETRO_FONT}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fff";
+    ctx.fillText("\u2699", x + size / 2, y + size / 2);
+    ctx.restore();
+  }
+
+  isSettingsButtonHit(clickX: number, clickY: number, canvasW: number): boolean {
+    const x = canvasW - MUTE_BTN_SIZE - MUTE_BTN_MARGIN - SETTINGS_BTN_SIZE - 6;
+    const y = MUTE_BTN_MARGIN;
+    return (
+      clickX >= x &&
+      clickX <= x + SETTINGS_BTN_SIZE &&
+      clickY >= y &&
+      clickY <= y + SETTINGS_BTN_SIZE
+    );
+  }
+
+  private getSettingsPanelRect(width: number, height: number) {
+    const panelW = 340;
+    const panelH = 240;
+    const px = (width - panelW) / 2;
+    const py = (height - panelH) / 2;
+    return { px, py, panelW, panelH };
+  }
+
+  private getMusicSliderLayout(width: number, height: number): SliderLayout {
+    const { px, py } = this.getSettingsPanelRect(width, height);
+    return {
+      trackX: px + 60,
+      trackY: py + 100,
+      trackW: SLIDER_TRACK_W,
+      trackH: SLIDER_TRACK_H,
+      handleW: SLIDER_HANDLE_W,
+      handleH: SLIDER_HANDLE_H,
+    };
+  }
+
+  private getSfxSliderLayout(width: number, height: number): SliderLayout {
+    const { px, py } = this.getSettingsPanelRect(width, height);
+    return {
+      trackX: px + 60,
+      trackY: py + 160,
+      trackW: SLIDER_TRACK_W,
+      trackH: SLIDER_TRACK_H,
+      handleW: SLIDER_HANDLE_W,
+      handleH: SLIDER_HANDLE_H,
+    };
+  }
+
+  private getCloseButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getSettingsPanelRect(width, height);
+    const btnW = 28;
+    const btnH = 28;
+    return { x: px + panelW - btnW - 10, y: py + 10, w: btnW, h: btnH };
+  }
+
+  renderSettingsPanel(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    musicVolume: number,
+    sfxVolume: number
+  ): void {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, width, height);
+
+    const { px, py, panelW, panelH } = this.getSettingsPanelRect(width, height);
+
+    const panelGrad = ctx.createLinearGradient(px, py, px, py + panelH);
+    panelGrad.addColorStop(0, "rgba(15, 25, 50, 0.92)");
+    panelGrad.addColorStop(1, "rgba(5, 10, 25, 0.96)");
+    ctx.fillStyle = panelGrad;
+    this.roundedRect(ctx, px, py, panelW, panelH, 12);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(100, 140, 220, 0.3)";
+    ctx.lineWidth = 1;
+    this.roundedRect(ctx, px, py, panelW, panelH, 12);
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = `16px ${RETRO_FONT}`;
+    ctx.fillText("Settings", width / 2, py + 40);
+
+    const closeBtn = this.getCloseButtonRect(width, height);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+    this.roundedRect(ctx, closeBtn.x, closeBtn.y, closeBtn.w, closeBtn.h, 4);
+    ctx.fill();
+    ctx.font = `12px ${RETRO_FONT}`;
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("\u2715", closeBtn.x + closeBtn.w / 2, closeBtn.y + closeBtn.h / 2);
+
+    const musicSlider = this.getMusicSliderLayout(width, height);
+    this.renderSlider(ctx, musicSlider, musicVolume, "MUSIC");
+
+    const sfxSlider = this.getSfxSliderLayout(width, height);
+    this.renderSlider(ctx, sfxSlider, sfxVolume, "SFX");
+
+    ctx.restore();
+  }
+
+  private renderSlider(
+    ctx: CanvasRenderingContext2D,
+    layout: SliderLayout,
+    value: number,
+    label: string
+  ): void {
+    const { trackX, trackY, trackW, trackH, handleW, handleH } = layout;
+
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#B0C4DE";
+    ctx.fillText(label, trackX - 12, trackY + trackH / 2);
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+    this.roundedRect(ctx, trackX, trackY, trackW, trackH, 5);
+    ctx.fill();
+
+    const fillW = trackW * Math.max(0, Math.min(1, value));
+    if (fillW > 0) {
+      const fillGrad = ctx.createLinearGradient(trackX, 0, trackX + trackW, 0);
+      fillGrad.addColorStop(0, "#3498db");
+      fillGrad.addColorStop(1, "#2ecc71");
+      ctx.fillStyle = fillGrad;
+      this.roundedRect(ctx, trackX, trackY, fillW, trackH, 5);
+      ctx.fill();
+    }
+
+    const handleX = trackX + fillW - handleW / 2;
+    const handleY = trackY + trackH / 2 - handleH / 2;
+    ctx.fillStyle = "#ffffff";
+    this.roundedRect(ctx, handleX, handleY, handleW, handleH, 4);
+    ctx.fill();
+
+    ctx.shadowColor = "transparent";
+
+    const pct = Math.round(value * 100);
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#8899AA";
+    ctx.fillText(`${pct}%`, trackX + trackW + 10, trackY + trackH / 2);
+  }
+
+  getSliderValueFromPosition(
+    mouseX: number,
+    slider: "music" | "sfx",
+    width: number,
+    height: number
+  ): number {
+    const layout = slider === "music"
+      ? this.getMusicSliderLayout(width, height)
+      : this.getSfxSliderLayout(width, height);
+    const raw = (mouseX - layout.trackX) / layout.trackW;
+    return Math.max(0, Math.min(1, raw));
+  }
+
+  isSliderHit(
+    clickX: number,
+    clickY: number,
+    slider: "music" | "sfx",
+    width: number,
+    height: number
+  ): boolean {
+    const layout = slider === "music"
+      ? this.getMusicSliderLayout(width, height)
+      : this.getSfxSliderLayout(width, height);
+    const pad = 10;
+    return (
+      clickX >= layout.trackX - pad &&
+      clickX <= layout.trackX + layout.trackW + pad &&
+      clickY >= layout.trackY - layout.handleH / 2 - pad &&
+      clickY <= layout.trackY + layout.trackH + layout.handleH / 2 + pad
+    );
+  }
+
+  isCloseButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getCloseButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  isSettingsPanelHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const { px, py, panelW, panelH } = this.getSettingsPanelRect(width, height);
+    return clickX >= px && clickX <= px + panelW && clickY >= py && clickY <= py + panelH;
   }
 
   render(
