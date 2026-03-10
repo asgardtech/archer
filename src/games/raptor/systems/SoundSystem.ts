@@ -42,6 +42,11 @@ export class SoundSystem {
       case "laser_fire": this.playLaserFire(); break;
       case "laser_hit": this.playLaserHit(); break;
       case "weapon_switch": this.playWeaponSwitch(); break;
+      case "enemy_spread_fire": this.playEnemySpreadFire(); break;
+      case "enemy_missile_fire": this.playEnemyMissileFire(); break;
+      case "enemy_laser_fire": this.playEnemyLaserFire(); break;
+      case "enemy_missile_hit": this.playEnemyMissileHit(); break;
+      case "enemy_laser_hit": this.playEnemyLaserHit(); break;
     }
   }
 
@@ -179,6 +184,38 @@ export class SoundSystem {
       { frequency: 800, duration: 0.08, type: "sine" },
       { frequency: 1200, duration: 0.12, type: "sine" },
     ], 350, this.sfxNode);
+  }
+
+  private playEnemySpreadFire(): void {
+    this.audio.playToneSwept(250, 500, 0.06, "square", {
+      attack: 0.003, decay: 0.01, sustain: 0.2, release: 0.02,
+    }, this.sfxNode);
+  }
+
+  private playEnemyMissileFire(): void {
+    this.audio.playToneSwept(150, 60, 0.15, "sawtooth", {
+      attack: 0.01, decay: 0.03, sustain: 0.4, release: 0.06,
+    }, this.sfxNode);
+    this.audio.playNoise(0.1, 1500, this.sfxNode);
+  }
+
+  private playEnemyLaserFire(): void {
+    this.audio.playTone(880, 0.05, "sine", {
+      attack: 0.002, decay: 0.01, sustain: 0.2, release: 0.02,
+    }, this.sfxNode);
+  }
+
+  private playEnemyMissileHit(): void {
+    this.audio.playToneSwept(250, 50, 0.2, "sawtooth", {
+      attack: 0.005, decay: 0.03, sustain: 0.5, release: 0.1,
+    }, this.sfxNode);
+    this.audio.playNoise(0.15, 3000, this.sfxNode);
+  }
+
+  private playEnemyLaserHit(): void {
+    this.audio.playTone(1200, 0.04, "triangle", {
+      attack: 0.002, decay: 0.01, sustain: 0.2, release: 0.01,
+    }, this.sfxNode);
   }
 
   private get musicNode(): AudioNode | undefined {
