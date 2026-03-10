@@ -7,7 +7,7 @@ import { PowerUpManager } from "./systems/PowerUpManager";
 import { SoundSystem } from "./systems/SoundSystem";
 import { WeaponSystem } from "./systems/WeaponSystem";
 import { SaveSystem } from "./systems/SaveSystem";
-import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponCommands, registerPowerUpCommands } from "./systems/CommandRegistry";
+import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponCommands, registerPowerUpCommands, registerPlayerCommands } from "./systems/CommandRegistry";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
@@ -116,6 +116,7 @@ export class RaptorGame implements IGame {
     registerLevelCommands(this.commandRegistry);
     registerWeaponCommands(this.commandRegistry);
     registerPowerUpCommands(this.commandRegistry);
+    registerPlayerCommands(this.commandRegistry);
     this.devConsole.onSubmit = (cmd) => {
       this.devConsole.log(`> ${cmd}`);
       const output = this.commandRegistry.dispatch(cmd, this.buildCommandContext());
@@ -790,6 +791,8 @@ export class RaptorGame implements IGame {
       },
       gameState: this.state,
       player: this.player,
+      canvasWidth: this.width,
+      canvasHeight: this.height,
       powerUpManager: this.powerUpManager,
       weaponSystem: this.weaponSystem,
     };
