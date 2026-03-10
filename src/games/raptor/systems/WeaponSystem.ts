@@ -113,6 +113,17 @@ export class WeaponSystem {
     this.laserBeam.render(ctx);
   }
 
+  resetForNewLevel(): void {
+    this.fireTimer = 0;
+    this.laserSoundTimer = 0;
+    if (this.currentWeapon === "laser") {
+      this.laserBeam.active = true;
+      this.laserBeam.resetTimers();
+    } else {
+      this.laserBeam.active = false;
+    }
+  }
+
   reset(): void {
     this.currentWeapon = "machine-gun";
     this.fireTimer = 0;

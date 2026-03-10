@@ -81,6 +81,11 @@ export class LaserBeam {
     ctx.restore();
   }
 
+  resetTimers(): void {
+    this.tickTimer = 0;
+    this.time = 0;
+  }
+
   reset(): void {
     this.active = false;
     this.tickTimer = 0;

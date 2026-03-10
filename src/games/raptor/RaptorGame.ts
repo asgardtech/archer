@@ -683,14 +683,19 @@ export class RaptorGame implements IGame {
     this.explosions = [];
     this.powerUps = [];
     this.player.reset(this.width, this.height, fullReset);
-    this.weaponSystem.reset();
+
+    if (fullReset) {
+      this.weaponSystem.reset();
+      this.powerUpManager.reset();
+    } else {
+      this.weaponSystem.resetForNewLevel();
+    }
 
     const playerSprite = this.assets.getOptional("player");
     if (playerSprite) this.player.setSprite(playerSprite);
     if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
 
     this.spawner.configure(this.currentLevelConfig);
-    this.powerUpManager.reset();
     this.vfx.reset();
 
     const levelCfg = this.currentLevelConfig;

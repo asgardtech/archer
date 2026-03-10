@@ -739,7 +739,7 @@ describe("Enemy.hit() with damage parameter", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("Weapon Switching & Persistence", () => {
-  test("Weapon resets to machine-gun on new level (WeaponSystem.reset)", () => {
+  test("Weapon resets to machine-gun on full game reset (WeaponSystem.reset)", () => {
     const ws = new WeaponSystem();
     ws.setWeapon("missile");
     expect(ws.currentWeapon).toBe("missile");
@@ -747,7 +747,7 @@ describe("Weapon Switching & Persistence", () => {
     expect(ws.currentWeapon).toBe("machine-gun");
   });
 
-  test("Weapon resets to machine-gun on new level (PowerUpManager.reset)", () => {
+  test("Weapon resets to machine-gun on full game reset (PowerUpManager.reset)", () => {
     const pm = new PowerUpManager();
     pm.setWeapon("laser");
     expect(pm.currentWeapon).toBe("laser");
@@ -785,6 +785,110 @@ describe("Weapon Switching & Persistence", () => {
     ws.setWeapon("missile");
     ws.setWeapon("missile"); // should be no-op
     expect(ws.currentWeapon).toBe("missile");
+  });
+
+  test("Missile weapon persists across level transition via resetForNewLevel", () => {
+    const ws = new WeaponSystem();
+    ws.setWeapon("missile");
+    expect(ws.currentWeapon).toBe("missile");
+    ws.resetForNewLevel();
+    expect(ws.currentWeapon).toBe("missile");
+  });
+
+  test("Laser weapon persists across level transition via resetForNewLevel", () => {
+    const ws = new WeaponSystem();
+    ws.setWeapon("laser");
+    expect(ws.currentWeapon).toBe("laser");
+    ws.resetForNewLevel();
+    expect(ws.currentWeapon).toBe("laser");
+  });
+
+  test("Laser beam re-activates on new level when laser weapon is equipped", () => {
+    const ws = new WeaponSystem();
+    ws.setWeapon("laser");
+    expect(ws.laserBeam.active).toBe(true);
+    ws.laserBeam.active = false; // simulates level-complete deactivation
+    ws.resetForNewLevel();
+    expect(ws.laserBeam.active).toBe(true);
+  });
+
+  test("Laser beam stays inactive on new level when non-laser weapon is equipped", () => {
+    const ws = new WeaponSystem();
+    ws.setWeapon("missile");
+    ws.resetForNewLevel();
+    expect(ws.laserBeam.active).toBe(false);
+  });
+
+  test("Fire timer resets to zero on level transition", () => {
+    const ws = new WeaponSystem();
+    const pm = new PowerUpManager();
+    const player = makePlayer();
+    const config = makeLevelConfig({ autoFireRate: 5 });
+    ws.update(0.15, player, config, pm, 800, []);
+    ws.resetForNewLevel();
+    // After resetForNewLevel the fire timer is 0, so a full interval is needed to fire
+    const { newProjectiles } = ws.update(0.19, player, config, pm, 800, []);
+    expect(newProjectiles.length).toBe(0);
+  });
+
+  test("Spread-shot upgrade persists across level transition (PowerUpManager not reset)", () => {
+    const pm = new PowerUpManager();
+    pm.activate("spread-shot");
+    expect(pm.hasUpgrade("spread-shot")).toBe(true);
+    // On non-full reset, PowerUpManager.reset() is NOT called
+    expect(pm.hasUpgrade("spread-shot")).toBe(true);
+  });
+
+  test("Rapid-fire upgrade persists across level transition (PowerUpManager not reset)", () => {
+    const pm = new PowerUpManager();
+    pm.activate("rapid-fire");
+    expect(pm.hasUpgrade("rapid-fire")).toBe(true);
+    // On non-full reset, PowerUpManager.reset() is NOT called
+    expect(pm.hasUpgrade("rapid-fire")).toBe(true);
+  });
+
+  test("Weapon and upgrades combined persist across level transition", () => {
+    const ws = new WeaponSystem();
+    const pm = new PowerUpManager();
+    ws.setWeapon("laser");
+    pm.setWeapon("laser");
+    pm.activate("rapid-fire");
+    pm.activate("spread-shot");
+
+    ws.laserBeam.active = false; // simulates level-complete deactivation
+    ws.resetForNewLevel();
+
+    expect(ws.currentWeapon).toBe("laser");
+    expect(ws.laserBeam.active).toBe(true);
+    expect(pm.currentWeapon).toBe("laser");
+    expect(pm.hasUpgrade("rapid-fire")).toBe(true);
+    expect(pm.hasUpgrade("spread-shot")).toBe(true);
+  });
+
+  test("LaserBeam.resetTimers resets tickTimer and time to zero", () => {
+    const beam = new LaserBeam();
+    beam.active = true;
+    beam.update(0.5);
+    beam.resetTimers();
+    // After resetTimers, the beam should need a full tick interval to fire again
+    const tick = beam.update(0.05);
+    expect(tick).toBe(false);
+  });
+
+  test("Full reset still clears weapon to machine-gun", () => {
+    const ws = new WeaponSystem();
+    const pm = new PowerUpManager();
+    ws.setWeapon("laser");
+    pm.setWeapon("laser");
+    pm.activate("spread-shot");
+
+    ws.reset();
+    pm.reset();
+
+    expect(ws.currentWeapon).toBe("machine-gun");
+    expect(ws.laserBeam.active).toBe(false);
+    expect(pm.currentWeapon).toBe("machine-gun");
+    expect(pm.hasUpgrade("spread-shot")).toBe(false);
   });
 });
 
