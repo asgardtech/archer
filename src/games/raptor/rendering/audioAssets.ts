@@ -26,6 +26,8 @@ export const AUDIO_MANIFEST: AudioAssetManifest = {
     enemy_missile_fire: "assets/raptor/audio/sfx/enemy_missile_fire.mp3",
     enemy_missile_hit:  "assets/raptor/audio/sfx/enemy_missile_hit.mp3",
     enemy_spread_fire:  "assets/raptor/audio/sfx/enemy_spread_fire.mp3",
+    enemy_laser_fire:   "assets/raptor/audio/sfx/enemy_laser_fire.mp3",
+    enemy_laser_hit:    "assets/raptor/audio/sfx/enemy_laser_hit.mp3",
   },
   music: {
     menu:    "assets/raptor/audio/music/menu.mp3",
