@@ -66,17 +66,17 @@ export class DevConsole {
     ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
     ctx.fillRect(0, panelTop, width, panelHeight);
 
-    // Top border
-    ctx.strokeStyle = "rgba(0, 255, 65, 0.4)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, panelTop);
-    ctx.lineTo(width, panelTop);
-    ctx.stroke();
-
     // Title bar
     ctx.fillStyle = "rgba(30, 30, 30, 0.95)";
     ctx.fillRect(0, panelTop, width, titleBarHeight);
+
+    // Top border (drawn after title bar so it's not obscured)
+    ctx.strokeStyle = "rgba(0, 255, 65, 0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, panelTop + 0.5);
+    ctx.lineTo(width, panelTop + 0.5);
+    ctx.stroke();
     ctx.font = `${fontSize}px monospace`;
     ctx.fillStyle = "#ffffff";
     ctx.textBaseline = "middle";
@@ -159,9 +159,6 @@ export class DevConsole {
         break;
       case "Backspace":
         this.inputBuffer = this.inputBuffer.slice(0, -1);
-        break;
-      case "Escape":
-        this.close();
         break;
       case "ArrowUp":
         this.historyUp();

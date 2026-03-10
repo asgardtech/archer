@@ -349,6 +349,15 @@ export class RaptorGame implements IGame {
       return;
     }
 
+    if (this.devConsole.isOpen) {
+      if (this.input.wasEscPressed) {
+        this.devConsole.close();
+      }
+      this.devConsole.update(dt);
+      this.input.consume();
+      return;
+    }
+
     if (this.settingsOpen && this.input.wasEscPressed) {
       this.settingsOpen = false;
       this.input.consume();
@@ -398,10 +407,7 @@ export class RaptorGame implements IGame {
         break;
 
       case "playing":
-        if (!this.devConsole.isOpen) {
-          this.updatePlaying(dt);
-        }
-        this.devConsole.update(dt);
+        this.updatePlaying(dt);
         break;
 
       case "level_complete":
