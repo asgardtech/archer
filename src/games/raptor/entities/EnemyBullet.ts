@@ -2,25 +2,47 @@ import { Vec2 } from "../types";
 
 const ENEMY_BULLET_SPEED = 300;
 
+export interface EnemyBulletOptions {
+  damage?: number;
+  speed?: number;
+  homing?: boolean;
+  homingStrength?: number;
+  spriteKey?: string;
+}
+
 export class EnemyBullet {
   public pos: Vec2;
   public vel: Vec2;
   public alive = true;
   public radius = 4;
+  public damage: number;
+  public homing: boolean;
+  public homingStrength: number;
+  public speed: number;
+  public spriteKey: string;
 
+  private angle: number;
   private sprite: HTMLImageElement | null = null;
 
-  constructor(x: number, y: number, targetX: number, targetY: number) {
+  constructor(x: number, y: number, targetX: number, targetY: number, options?: EnemyBulletOptions) {
     this.pos = { x, y };
+    this.damage = options?.damage ?? 25;
+    this.speed = options?.speed ?? ENEMY_BULLET_SPEED;
+    this.homing = options?.homing ?? false;
+    this.homingStrength = options?.homingStrength ?? 0;
+    this.spriteKey = options?.spriteKey ?? "bullet_enemy";
+
     const dx = targetX - x;
     const dy = targetY - y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist === 0) {
-      this.vel = { x: 0, y: ENEMY_BULLET_SPEED };
+      this.angle = 0;
+      this.vel = { x: 0, y: this.speed };
     } else {
+      this.angle = Math.atan2(dx, dy);
       this.vel = {
-        x: (dx / dist) * ENEMY_BULLET_SPEED,
-        y: (dy / dist) * ENEMY_BULLET_SPEED,
+        x: (dx / dist) * this.speed,
+        y: (dy / dist) * this.speed,
       };
     }
   }
@@ -34,8 +56,24 @@ export class EnemyBullet {
   get top(): number { return this.pos.y - this.radius; }
   get bottom(): number { return this.pos.y + this.radius; }
 
-  update(dt: number, canvasWidth: number, canvasHeight: number): void {
+  update(dt: number, canvasWidth: number, canvasHeight: number, playerPos?: Vec2): void {
     if (!this.alive) return;
+
+    if (this.homing && playerPos) {
+      const dx = playerPos.x - this.pos.x;
+      const dy = playerPos.y - this.pos.y;
+      const desiredAngle = Math.atan2(dx, dy);
+      let angleDiff = desiredAngle - this.angle;
+      while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+      while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+      const maxTurn = this.homingStrength * dt;
+      this.angle += Math.max(-maxTurn, Math.min(maxTurn, angleDiff));
+
+      this.vel.x = Math.sin(this.angle) * this.speed;
+      this.vel.y = Math.cos(this.angle) * this.speed;
+    }
+
     this.pos.x += this.vel.x * dt;
     this.pos.y += this.vel.y * dt;
 
