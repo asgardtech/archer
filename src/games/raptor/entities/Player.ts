@@ -12,6 +12,7 @@ export class Player {
   public lives = 3;
   public alive = true;
   public invincibilityTimer = 0;
+  public godMode = false;
 
   private flashTimer = 0;
   private sprite: HTMLImageElement | null = null;
@@ -70,6 +71,7 @@ export class Player {
   }
 
   takeDamage(amount: number): boolean {
+    if (this.godMode) return false;
     if (this.isInvincible || !this.alive) return false;
 
     if (this.shield > 0) {
@@ -97,6 +99,7 @@ export class Player {
     this.flashTimer = 0;
     if (fullReset) {
       this.lives = 3;
+      this.godMode = false;
     }
   }
 
@@ -105,6 +108,16 @@ export class Player {
 
     if (this.isInvincible && Math.floor(this.flashTimer * 10) % 2 === 0) {
       return;
+    }
+
+    if (this.godMode) {
+      ctx.save();
+      ctx.globalAlpha = 0.18 + 0.07 * Math.sin(Date.now() / 300);
+      ctx.fillStyle = "#ffd700";
+      ctx.beginPath();
+      ctx.ellipse(this.pos.x, this.pos.y, this.width * 0.7, this.height * 0.7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     if (this.sprite) {

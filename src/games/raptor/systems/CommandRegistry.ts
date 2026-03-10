@@ -1,4 +1,5 @@
 import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_CONFIGS } from "../types";
+import { Player } from "../entities/Player";
 import { PowerUpManager } from "./PowerUpManager";
 import { WeaponSystem } from "./WeaponSystem";
 
@@ -11,7 +12,9 @@ export interface CommandContext {
   startMusic(levelIndex: number): void;
   stopMusic(): void;
   gameState: RaptorGameState;
-  player: { shield: number; lives: number };
+  player: Player;
+  canvasWidth: number;
+  canvasHeight: number;
   powerUpManager: PowerUpManager;
   weaponSystem: WeaponSystem;
 }
@@ -183,5 +186,68 @@ export function registerPowerUpCommands(registry: CommandRegistry): void {
     }
 
     return `Activated power-up: ${resolved}`;
+  });
+}
+
+export function registerPlayerCommands(registry: CommandRegistry): void {
+  registry.register("god", (_args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+    ctx.player.godMode = !ctx.player.godMode;
+    return `God mode: ${ctx.player.godMode ? "ON" : "OFF"}`;
+  });
+
+  registry.register("lives", (args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+    if (args.length === 0) {
+      return `Lives: ${ctx.player.lives}`;
+    }
+    const n = parseInt(args[0], 10);
+    if (isNaN(n) || n < 1 || n > 99) {
+      return "Lives must be between 1 and 99";
+    }
+    if (!ctx.player.alive) {
+      ctx.player.alive = true;
+      ctx.player.pos = { x: ctx.canvasWidth / 2, y: ctx.canvasHeight * 0.8 };
+      ctx.player.invincibilityTimer = 2.0;
+    }
+    ctx.player.lives = n;
+    return `Lives set to ${n}`;
+  });
+
+  registry.register("shield", (args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+    if (args.length === 0) {
+      return `Shield: ${ctx.player.shield}`;
+    }
+    const n = parseInt(args[0], 10);
+    if (isNaN(n) || n < 0 || n > 100) {
+      return "Shield must be between 0 and 100";
+    }
+    ctx.player.shield = n;
+    return `Shield set to ${n}`;
+  });
+
+  registry.register("heal", (_args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+    ctx.player.shield = 100;
+    ctx.player.lives++;
+    return "Player fully healed (shield: 100, +1 life)";
+  });
+
+  registry.register("kill", (_args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+    ctx.player.alive = false;
+    ctx.player.lives = 0;
+    return "Player killed";
   });
 }
