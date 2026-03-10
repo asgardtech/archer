@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="stb-base" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="50%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="stb-barrel" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="50%" stop-color="#3a3a3a"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="stb-armor" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+  </defs>
+  <!-- Reinforced base platform -->
+  <rect x="4" y="48" width="56" height="16" fill="url(#stb-base)"/>
+  <rect x="8" y="44" width="48" height="8" fill="#2a2a2a"/>
+  <rect x="10" y="42" width="44" height="4" fill="#1a1a1a"/>
+  <!-- Turret housing - armored -->
+  <rect x="18" y="24" width="28" height="24" fill="url(#stb-armor)"/>
+  <rect x="20" y="26" width="24" height="20" fill="#1a1a1a"/>
+  <!-- Barrel pointing up -->
+  <rect x="28" y="4" width="8" height="24" fill="url(#stb-barrel)"/>
+  <rect x="30" y="2" width="4" height="6" fill="#2a2a2a"/>
+  <circle cx="32" cy="6" r="2" fill="#1a1a1a"/>
+  <!-- Barrel housing ring -->
+  <rect x="24" y="22" width="16" height="4" fill="#2a2a2a"/>
+  <!-- Side armor plates -->
+  <rect x="14" y="28" width="6" height="16" fill="#2a2a2a"/>
+  <rect x="44" y="28" width="6" height="16" fill="#2a2a2a"/>
+  <!-- Base reinforcement -->
+  <rect x="12" y="50" width="8" height="12" fill="#1a1a1a"/>
+  <rect x="44" y="50" width="8" height="12" fill="#1a1a1a"/>
+</svg>

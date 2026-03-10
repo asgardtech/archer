@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="ssd-hull" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3a3a4a"/>
+      <stop offset="50%" stop-color="#5a5a6a"/>
+      <stop offset="100%" stop-color="#3a3a4a"/>
+    </linearGradient>
+    <linearGradient id="ssd-dish" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a3a4a"/>
+      <stop offset="100%" stop-color="#1a1a30"/>
+    </linearGradient>
+    <linearGradient id="ssd-accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2a4a6a"/>
+      <stop offset="100%" stop-color="#3a6a8a"/>
+    </linearGradient>
+  </defs>
+  <!-- Articulated mount base -->
+  <rect x="26" y="48" width="12" height="16" fill="url(#ssd-hull)"/>
+  <rect x="28" y="44" width="8" height="8" fill="#0c0c14"/>
+  <!-- Mount arm -->
+  <rect x="30" y="28" width="4" height="20" fill="url(#ssd-hull)"/>
+  <!-- Parabolic reflector dish -->
+  <ellipse cx="32" cy="20" rx="14" ry="8" fill="url(#ssd-dish)"/>
+  <ellipse cx="32" cy="18" rx="10" ry="5" fill="#0c0c14"/>
+  <!-- Dish rim -->
+  <ellipse cx="32" cy="20" rx="14" ry="8" fill="none" stroke="#3a6a8a" stroke-width="1.5"/>
+  <!-- Feed horn / LNB -->
+  <rect x="30" y="12" width="4" height="8" fill="url(#ssd-hull)"/>
+  <rect x="31" y="8" width="2" height="4" fill="#3a6a8a"/>
+  <!-- Support struts -->
+  <line x1="22" y1="24" x2="30" y2="28" stroke="#5a5a6a" stroke-width="1.5"/>
+  <line x1="42" y1="24" x2="34" y2="28" stroke="#5a5a6a" stroke-width="1.5"/>
+  <!-- Base platform -->
+  <rect x="22" y="60" width="20" height="4" fill="#0c0c14"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="prl-glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cc0000"/>
+      <stop offset="100%" stop-color="#8a0000"/>
+    </linearGradient>
+    <linearGradient id="prl-halo" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8a0000"/>
+      <stop offset="100%" stop-color="#4a0000"/>
+    </linearGradient>
+    <linearGradient id="prl-housing" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+  </defs>
+  <!-- Glow halo -->
+  <circle cx="32" cy="32" r="24" fill="url(#prl-halo)"/>
+  <circle cx="32" cy="32" r="18" fill="#5a2020"/>
+  <!-- Housing -->
+  <circle cx="32" cy="32" r="14" fill="url(#prl-housing)"/>
+  <!-- Red indicator light -->
+  <circle cx="32" cy="32" r="10" fill="url(#prl-glow)"/>
+  <circle cx="32" cy="30" r="5" fill="#cc0000"/>
+  <!-- Mount bracket -->
+  <rect x="26" y="44" width="12" height="6" fill="#1a1a1a"/>
+</svg>

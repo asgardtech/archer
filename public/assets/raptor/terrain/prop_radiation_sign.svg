@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="prs-post" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2e2a1e"/>
+      <stop offset="100%" stop-color="#4a4a40"/>
+    </linearGradient>
+    <linearGradient id="prs-sign" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5a5530"/>
+      <stop offset="100%" stop-color="#4a4a40"/>
+    </linearGradient>
+  </defs>
+  <!-- Tilted post -->
+  <rect x="28" y="8" width="6" height="52" transform="rotate(-8 31 34)" fill="url(#prs-post)"/>
+  <!-- Sign plate - damaged, tilted -->
+  <rect x="8" y="12" width="36" height="28" rx="2" transform="rotate(-12 26 26)" fill="url(#prs-sign)"/>
+  <!-- Trefoil symbol - 3 blades (radiation warning) -->
+  <path d="M26 14 L30 26 L26 28 L22 26 Z" fill="#2e2a1e"/>
+  <path d="M26 42 L30 30 L26 28 L22 30 Z" fill="#2e2a1e"/>
+  <path d="M14 28 L26 24 L26 32 L14 32 Z" fill="#2e2a1e"/>
+  <path d="M38 28 L26 24 L26 32 L38 32 Z" fill="#2e2a1e"/>
+  <!-- Center circle -->
+  <circle cx="26" cy="28" r="5" fill="#2e2a1e"/>
+  <!-- Damage/dent -->
+  <polygon points="32,16 36,20 34,24 30,22" fill="#4a4a40"/>
+</svg>

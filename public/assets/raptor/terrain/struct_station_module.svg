@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="ssm2-hull" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a1a30"/>
+      <stop offset="50%" stop-color="#5a5a6a"/>
+      <stop offset="100%" stop-color="#1a1a30"/>
+    </linearGradient>
+    <linearGradient id="ssm2-cyl" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2a2a40"/>
+      <stop offset="50%" stop-color="#5a5a6a"/>
+      <stop offset="100%" stop-color="#2a2a40"/>
+    </linearGradient>
+    <linearGradient id="ssm2-port" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0c0c14"/>
+      <stop offset="100%" stop-color="#3a6a8a"/>
+    </linearGradient>
+  </defs>
+  <!-- Main cylindrical module -->
+  <ellipse cx="32" cy="36" rx="18" ry="24" fill="url(#ssm2-cyl)"/>
+  <!-- Cylinder end caps -->
+  <ellipse cx="32" cy="12" rx="14" ry="6" fill="url(#ssm2-hull)"/>
+  <ellipse cx="32" cy="60" rx="14" ry="6" fill="url(#ssm2-hull)"/>
+  <!-- Docking ports -->
+  <circle cx="14" cy="32" r="6" fill="url(#ssm2-port)"/>
+  <circle cx="14" cy="32" r="4" fill="#0c0c14"/>
+  <circle cx="50" cy="32" r="6" fill="url(#ssm2-port)"/>
+  <circle cx="50" cy="32" r="4" fill="#0c0c14"/>
+  <!-- Top docking port -->
+  <circle cx="32" cy="8" r="4" fill="url(#ssm2-port)"/>
+  <circle cx="32" cy="8" r="2" fill="#0c0c14"/>
+  <!-- Accent bands -->
+  <ellipse cx="32" cy="24" rx="16" ry="2" fill="#3a6a8a" opacity="0.6"/>
+  <ellipse cx="32" cy="48" rx="16" ry="2" fill="#3a6a8a" opacity="0.6"/>
+  <!-- Window / viewport -->
+  <ellipse cx="32" cy="36" rx="4" ry="3" fill="#1a2a4a"/>
+</svg>

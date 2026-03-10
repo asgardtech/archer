@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="src-frame" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="50%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="src-core" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#cc0000"/>
+      <stop offset="50%" stop-color="#8a0000"/>
+      <stop offset="100%" stop-color="#5a0000"/>
+    </linearGradient>
+    <linearGradient id="src-glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8a0000"/>
+      <stop offset="100%" stop-color="#cc0000"/>
+    </linearGradient>
+  </defs>
+  <!-- Angular outer frame -->
+  <polygon points="32,4 56,20 56,44 32,60 8,44 8,20" fill="url(#src-frame)"/>
+  <!-- Inner containment -->
+  <polygon points="32,12 48,24 48,40 32,52 16,40 16,24" fill="#1a1a1a"/>
+  <!-- Containment rings -->
+  <ellipse cx="32" cy="32" rx="18" ry="16" fill="none" stroke="#2a2a2a" stroke-width="2"/>
+  <ellipse cx="32" cy="32" rx="14" ry="12" fill="none" stroke="#2a2a2a" stroke-width="1.5"/>
+  <ellipse cx="32" cy="32" rx="10" ry="8" fill="none" stroke="#2a2a2a" stroke-width="1"/>
+  <!-- Glowing core -->
+  <ellipse cx="32" cy="32" rx="8" ry="6" fill="url(#src-core)"/>
+  <ellipse cx="32" cy="31" rx="4" ry="3" fill="url(#src-glow)"/>
+  <!-- Angular support struts -->
+  <polygon points="32,16 36,28 32,32 28,28" fill="#2a2a2a"/>
+  <polygon points="44,24 40,32 44,40 48,32" fill="#2a2a2a"/>
+  <polygon points="32,48 28,40 32,32 36,40" fill="#2a2a2a"/>
+  <polygon points="20,24 24,32 20,40 16,32" fill="#2a2a2a"/>
+  <!-- Base platform -->
+  <rect x="20" y="56" width="24" height="6" fill="#0a0a0a"/>
+</svg>

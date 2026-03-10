@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="pbm-center" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="40%" stop-color="#1a1a1a"/>
+      <stop offset="70%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#3a3a3a"/>
+    </radialGradient>
+    <radialGradient id="pbm-ring" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#2a2a2a"/>
+    </radialGradient>
+  </defs>
+  <!-- Scorch mark - radial pattern -->
+  <circle cx="32" cy="32" r="28" fill="url(#pbm-center)"/>
+  <circle cx="32" cy="32" r="22" fill="#0a0a0a"/>
+  <!-- Radial scorch rays -->
+  <polygon points="32,8 36,28 32,32 28,28" fill="#1a1a1a"/>
+  <polygon points="32,56 36,36 32,32 28,36" fill="#1a1a1a"/>
+  <polygon points="8,32 28,28 32,32 28,36" fill="#1a1a1a"/>
+  <polygon points="56,32 36,28 32,32 36,36" fill="#1a1a1a"/>
+  <polygon points="16,16 26,26 32,32 26,38" fill="#2a2a2a"/>
+  <polygon points="48,16 38,26 32,32 38,38" fill="#2a2a2a"/>
+  <polygon points="48,48 38,38 32,32 38,26" fill="#2a2a2a"/>
+  <polygon points="16,48 26,38 32,32 26,26" fill="#2a2a2a"/>
+  <!-- Center burn -->
+  <circle cx="32" cy="32" r="8" fill="#0a0a0a"/>
+</svg>

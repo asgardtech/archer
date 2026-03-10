@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="gh-base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c0c14"/>
+      <stop offset="50%" stop-color="#1a1a28"/>
+      <stop offset="100%" stop-color="#2a2a3a"/>
+    </linearGradient>
+    <linearGradient id="gh-panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a5a6a"/>
+      <stop offset="100%" stop-color="#3a3a4a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Hull base -->
+  <rect width="128" height="128" fill="url(#gh-base)"/>
+
+  <!-- Panel lines (32px grid) -->
+  <line x1="0" y1="0" x2="128" y2="0" stroke="#2a2a3a" stroke-width="0.8"/>
+  <line x1="0" y1="32" x2="128" y2="32" stroke="#2a2a3a" stroke-width="0.8"/>
+  <line x1="0" y1="64" x2="128" y2="64" stroke="#3a3a4a" stroke-width="1"/>
+  <line x1="0" y1="96" x2="128" y2="96" stroke="#2a2a3a" stroke-width="0.8"/>
+  <line x1="0" y1="0" x2="0" y2="128" stroke="#2a2a3a" stroke-width="0.8"/>
+  <line x1="32" y1="0" x2="32" y2="128" stroke="#2a2a3a" stroke-width="0.8"/>
+  <line x1="64" y1="0" x2="64" y2="128" stroke="#3a3a4a" stroke-width="1"/>
+  <line x1="96" y1="0" x2="96" y2="128" stroke="#2a2a3a" stroke-width="0.8"/>
+
+  <!-- Sub-panel lines -->
+  <line x1="0" y1="16" x2="32" y2="16" stroke="#1a1a28" stroke-width="0.5"/>
+  <line x1="64" y1="48" x2="96" y2="48" stroke="#1a1a28" stroke-width="0.5"/>
+  <line x1="0" y1="80" x2="32" y2="80" stroke="#1a1a28" stroke-width="0.5"/>
+  <line x1="64" y1="112" x2="96" y2="112" stroke="#1a1a28" stroke-width="0.5"/>
+  <line x1="16" y1="0" x2="16" y2="32" stroke="#1a1a28" stroke-width="0.5"/>
+  <line x1="48" y1="32" x2="48" y2="64" stroke="#1a1a28" stroke-width="0.5"/>
+  <line x1="80" y1="64" x2="80" y2="96" stroke="#1a1a28" stroke-width="0.5"/>
+  <line x1="112" y1="96" x2="112" y2="128" stroke="#1a1a28" stroke-width="0.5"/>
+
+  <!-- Rivet points at intersections -->
+  <circle cx="0" cy="0" r="1.5" fill="#5a5a6a"/>
+  <circle cx="32" cy="0" r="1.5" fill="#5a5a6a"/>
+  <circle cx="64" cy="0" r="1.5" fill="#5a5a6a"/>
+  <circle cx="96" cy="0" r="1.5" fill="#5a5a6a"/>
+  <circle cx="0" cy="32" r="1.5" fill="#5a5a6a"/>
+  <circle cx="32" cy="32" r="1.5" fill="#5a5a6a"/>
+  <circle cx="64" cy="32" r="1.5" fill="#5a5a6a"/>
+  <circle cx="96" cy="32" r="1.5" fill="#5a5a6a"/>
+  <circle cx="0" cy="64" r="1.8" fill="#5a5a6a"/>
+  <circle cx="32" cy="64" r="1.8" fill="#5a5a6a"/>
+  <circle cx="64" cy="64" r="1.8" fill="#5a5a6a"/>
+  <circle cx="96" cy="64" r="1.8" fill="#5a5a6a"/>
+  <circle cx="0" cy="96" r="1.5" fill="#5a5a6a"/>
+  <circle cx="32" cy="96" r="1.5" fill="#5a5a6a"/>
+  <circle cx="64" cy="96" r="1.5" fill="#5a5a6a"/>
+  <circle cx="96" cy="96" r="1.5" fill="#5a5a6a"/>
+
+  <!-- Access hatches -->
+  <rect x="6" y="38" width="10" height="10" fill="#1a1a28" stroke="#3a3a4a" stroke-width="0.5" rx="0.5"/>
+  <rect x="8" y="40" width="6" height="6" fill="#0c0c14" rx="0.3"/>
+  <circle cx="11" cy="43" r="1" fill="#5a5a6a"/>
+  <rect x="70" y="70" width="12" height="8" fill="#1a1a28" stroke="#3a3a4a" stroke-width="0.5" rx="0.5"/>
+  <rect x="38" y="102" width="10" height="10" fill="#1a1a28" stroke="#3a3a4a" stroke-width="0.5" rx="0.5"/>
+  <circle cx="43" cy="107" r="1" fill="#5a5a6a"/>
+
+  <!-- Panel edge highlights -->
+  <line x1="1" y1="33" x2="31" y2="33" stroke="#5a5a6a" stroke-width="0.3"/>
+  <line x1="65" y1="33" x2="65" y2="63" stroke="#5a5a6a" stroke-width="0.3"/>
+  <line x1="1" y1="97" x2="31" y2="97" stroke="#5a5a6a" stroke-width="0.3"/>
+</svg>
