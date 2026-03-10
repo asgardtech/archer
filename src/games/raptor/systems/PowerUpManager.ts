@@ -51,6 +51,10 @@ export class PowerUpManager {
     return this.effects;
   }
 
+  clearEffects(): void {
+    this.effects = [];
+  }
+
   reset(): void {
     this.effects = [];
     this._currentWeapon = "machine-gun";
