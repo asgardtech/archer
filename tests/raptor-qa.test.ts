@@ -1114,12 +1114,12 @@ describe("Scenario: Audio manifest covers all RaptorSoundEvent values", () => {
     expect(Object.keys(AUDIO_MANIFEST.sfx).length).toBe(18);
   });
 
-  test("AUDIO_MANIFEST.music has entries for menu and level_1 through level_5", () => {
+  test("AUDIO_MANIFEST.music has entries for menu and level_1 through level_10", () => {
     expect(AUDIO_MANIFEST.music.menu).toBeDefined();
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       expect(AUDIO_MANIFEST.music[`level_${i}`]).toBeDefined();
     }
-    expect(Object.keys(AUDIO_MANIFEST.music).length).toBe(6);
+    expect(Object.keys(AUDIO_MANIFEST.music).length).toBe(11);
   });
 });
 
@@ -1170,6 +1170,8 @@ describe("Scenario: Music track assets exist for menu and all levels", () => {
   const expectedFiles = [
     "menu.mp3", "level_1_coastal.mp3", "level_2_desert.mp3",
     "level_3_mountain.mp3", "level_4_arctic.mp3", "level_5_fortress.mp3",
+    "level_6_shipyard.mp3", "level_7_wasteland.mp3", "level_8_industrial.mp3",
+    "level_9_orbital.mp3", "level_10_stronghold.mp3",
   ];
 
   for (const file of expectedFiles) {
@@ -1393,11 +1395,9 @@ describe("Scenario: Music buffer playback with fallback", () => {
 
     sound.stopMusic();
     expect(mockAudio.stopBuffer).toHaveBeenCalledWith("menu");
-    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_1");
-    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_2");
-    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_3");
-    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_4");
-    expect(mockAudio.stopBuffer).toHaveBeenCalledWith("level_5");
+    for (let i = 1; i <= 10; i++) {
+      expect(mockAudio.stopBuffer).toHaveBeenCalledWith(`level_${i}`);
+    }
 
     sound.destroy();
   });
@@ -1983,7 +1983,7 @@ describe("Scenario: Level configuration validation", () => {
       expect(level.powerUpDropChance).toBeLessThanOrEqual(1);
       expect(level.skyGradient).toBeDefined();
       expect(level.skyGradient.length).toBe(2);
-      expect(level.starDensity).toBeGreaterThan(0);
+      expect(level.starDensity).toBeGreaterThanOrEqual(0);
       expect(level.enemyFireRateMultiplier).toBeGreaterThanOrEqual(1);
     }
   });

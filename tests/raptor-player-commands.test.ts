@@ -18,7 +18,7 @@ function makePlayer(): Player {
 function makeContext(player: Player, overrides: Partial<CommandContext> = {}): CommandContext {
   return {
     currentLevel: 0,
-    levelCount: 5,
+    levelCount: 10,
     levels: [{ level: 1, name: "Test" }] as any,
     startLevel: () => {},
     setState: () => {},
@@ -30,6 +30,16 @@ function makeContext(player: Player, overrides: Partial<CommandContext> = {}): C
     canvasHeight: CANVAS_HEIGHT,
     powerUpManager: new PowerUpManager(),
     weaponSystem: new WeaponSystem(),
+    score: 0,
+    totalScore: 0,
+    setScore: () => {},
+    addScore: (v: number) => v,
+    enemies: [],
+    enemyBullets: [],
+    spawnEnemy: (variant) => new (require("../src/games/raptor/entities/Enemy").Enemy)(100, -30, variant),
+    destroyAllEnemies: () => 0,
+    showFps: false,
+    toggleFps: () => false,
     ...overrides,
   };
 }

@@ -31,13 +31,18 @@ function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
 
   return {
     currentLevel: 0,
-    levelCount: 5,
+    levelCount: 10,
     levels: [
-      { level: 1, name: "Coastal Raid" },
-      { level: 2, name: "Desert Storm" },
+      { level: 1, name: "Coastal Patrol" },
+      { level: 2, name: "Desert Strike" },
       { level: 3, name: "Mountain Assault" },
-      { level: 4, name: "Arctic Fury" },
-      { level: 5, name: "Fortress" },
+      { level: 4, name: "Arctic Thunder" },
+      { level: 5, name: "Final Fortress" },
+      { level: 6, name: "Shipyard Ruins" },
+      { level: 7, name: "Scorched Wastes" },
+      { level: 8, name: "Industrial Core" },
+      { level: 9, name: "Orbital Debris" },
+      { level: 10, name: "Cylon Stronghold" },
     ] as any,
     startLevel: () => {},
     setState: () => {},
@@ -647,7 +652,7 @@ describe("status command", () => {
     const ctx = makeContext({ currentLevel: 0 });
 
     const result = registry.dispatch("status", ctx);
-    expect(result).toContainEqual("Level: 1 - Coastal Raid");
+    expect(result).toContainEqual("Level: 1 - Coastal Patrol");
   });
 
   test("Status shows correct weapon", () => {

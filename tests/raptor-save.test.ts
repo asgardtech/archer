@@ -339,6 +339,23 @@ describe("Scenario: Additional validation edge cases", () => {
     mockStorage["raptor_save"] = "null";
     expect(SaveSystem.load()).toBeNull();
   });
+
+  test("levelReached values 5 through 9 are valid for the 10-level game", () => {
+    for (let level = 5; level <= 9; level++) {
+      const data = validSaveData({ levelReached: level });
+      SaveSystem.save(data);
+      const loaded = SaveSystem.load();
+      expect(loaded).not.toBeNull();
+      expect(loaded!.levelReached).toBe(level);
+    }
+  });
+
+  test("levelReached of 10 (out of bounds) is rejected", () => {
+    const data = validSaveData({ levelReached: 10 } as any);
+    mockStorage["raptor_save"] = JSON.stringify(data);
+    expect(SaveSystem.load()).toBeNull();
+    expect(SaveSystem.hasSave()).toBe(false);
+  });
 });
 
 // ════════════════════════════════════════════════════════════════
