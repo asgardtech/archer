@@ -25,6 +25,11 @@ export interface EnemyWeaponConfig {
   homingStrength: number;
   fireRateMultiplier: number;
   spriteKey: string;
+  beamWarmupDuration?: number;
+  beamActiveDuration?: number;
+  beamCooldownDuration?: number;
+  beamWidth?: number;
+  beamTrackingSpeed?: number;
 }
 
 export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = {
@@ -71,6 +76,11 @@ export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = 
     homingStrength: 0,
     fireRateMultiplier: 0.0,
     spriteKey: "laser_enemy",
+    beamWarmupDuration: 0.5,
+    beamActiveDuration: 2.5,
+    beamCooldownDuration: 3.0,
+    beamWidth: 8,
+    beamTrackingSpeed: 40,
   },
 };
 
