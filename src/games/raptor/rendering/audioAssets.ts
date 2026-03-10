@@ -30,6 +30,11 @@ export const AUDIO_MANIFEST: AudioAssetManifest = {
     level_2: "assets/raptor/audio/music/level_2_desert.mp3",
     level_3: "assets/raptor/audio/music/level_3_mountain.mp3",
     level_4: "assets/raptor/audio/music/level_4_arctic.mp3",
-    level_5: "assets/raptor/audio/music/level_5_fortress.mp3",
+    level_5:  "assets/raptor/audio/music/level_5_fortress.mp3",
+    level_6:  "assets/raptor/audio/music/level_6_shipyard.mp3",
+    level_7:  "assets/raptor/audio/music/level_7_wasteland.mp3",
+    level_8:  "assets/raptor/audio/music/level_8_industrial.mp3",
+    level_9:  "assets/raptor/audio/music/level_9_orbital.mp3",
+    level_10: "assets/raptor/audio/music/level_10_stronghold.mp3",
   },
 };

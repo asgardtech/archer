@@ -249,7 +249,7 @@ export class SoundSystem {
       this.musicInterval = null;
     }
     this.audio.stopBuffer("menu");
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       this.audio.stopBuffer(`level_${i}`);
     }
   }
