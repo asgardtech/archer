@@ -13,6 +13,67 @@ export type RaptorGameState =
 
 export type EnemyVariant = "scout" | "fighter" | "bomber" | "boss";
 
+export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser";
+
+export interface EnemyWeaponConfig {
+  type: EnemyWeaponType;
+  damage: number;
+  projectileSpeed: number;
+  projectileCount: number;
+  spreadAngle: number;
+  homing: boolean;
+  homingStrength: number;
+  fireRateMultiplier: number;
+  spriteKey: string;
+}
+
+export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = {
+  standard: {
+    type: "standard",
+    damage: 25,
+    projectileSpeed: 300,
+    projectileCount: 1,
+    spreadAngle: 0,
+    homing: false,
+    homingStrength: 0,
+    fireRateMultiplier: 1.0,
+    spriteKey: "bullet_enemy",
+  },
+  spread: {
+    type: "spread",
+    damage: 15,
+    projectileSpeed: 280,
+    projectileCount: 3,
+    spreadAngle: 0.5,
+    homing: false,
+    homingStrength: 0,
+    fireRateMultiplier: 0.7,
+    spriteKey: "bullet_enemy",
+  },
+  missile: {
+    type: "missile",
+    damage: 40,
+    projectileSpeed: 200,
+    projectileCount: 1,
+    spreadAngle: 0,
+    homing: true,
+    homingStrength: 1.5,
+    fireRateMultiplier: 0.4,
+    spriteKey: "missile_enemy",
+  },
+  laser: {
+    type: "laser",
+    damage: 10,
+    projectileSpeed: 0,
+    projectileCount: 1,
+    spreadAngle: 0,
+    homing: false,
+    homingStrength: 0,
+    fireRateMultiplier: 0.0,
+    spriteKey: "laser_enemy",
+  },
+};
+
 export interface EnemyConfig {
   variant: EnemyVariant;
   hitPoints: number;
@@ -21,6 +82,7 @@ export interface EnemyConfig {
   fireRate: number;
   width: number;
   height: number;
+  weaponType?: EnemyWeaponType;
 }
 
 export type RaptorPowerUpType =
@@ -49,7 +111,12 @@ export type RaptorSoundEvent =
   | "missile_hit"
   | "laser_fire"
   | "laser_hit"
-  | "weapon_switch";
+  | "weapon_switch"
+  | "enemy_spread_fire"
+  | "enemy_missile_fire"
+  | "enemy_laser_fire"
+  | "enemy_missile_hit"
+  | "enemy_laser_hit";
 
 export type WeaponType = "machine-gun" | "missile" | "laser";
 
@@ -224,6 +291,7 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     fireRate: 0.8,
     width: 30,
     height: 30,
+    weaponType: "standard",
   },
   bomber: {
     variant: "bomber",
@@ -233,6 +301,7 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     fireRate: 0.5,
     width: 40,
     height: 36,
+    weaponType: "standard",
   },
   boss: {
     variant: "boss",
@@ -242,5 +311,6 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     fireRate: 1.5,
     width: 64,
     height: 56,
+    weaponType: "standard",
   },
 };

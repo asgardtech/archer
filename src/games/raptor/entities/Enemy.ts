@@ -1,4 +1,4 @@
-import { Vec2, EnemyVariant, EnemyConfig, ENEMY_CONFIGS } from "../types";
+import { Vec2, EnemyVariant, EnemyConfig, EnemyWeaponType, ENEMY_CONFIGS } from "../types";
 
 export class Enemy {
   public pos: Vec2;
@@ -11,6 +11,7 @@ export class Enemy {
   public fireCooldown: number;
   public width: number;
   public height: number;
+  public readonly weaponType: EnemyWeaponType;
   public alive = true;
 
   private flashTimer = 0;
@@ -29,6 +30,7 @@ export class Enemy {
     this.fireCooldown = Math.random() * (1 / Math.max(this.fireRate, 0.1));
     this.width = config.width;
     this.height = config.height;
+    this.weaponType = config.weaponType ?? "standard";
 
     const actualSpeed = speed ?? config.speed;
     this.pos = { x, y };
