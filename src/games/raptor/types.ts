@@ -153,7 +153,7 @@ export interface AmbientParticleConfig {
 
 export interface TerrainLayerConfig {
   theme: LevelTheme;
-  horizonAssets: string[];
+  horizonAssets?: string[];
   groundColor: string;
   groundTexture?: string;
   structurePool: string[];
