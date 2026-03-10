@@ -163,12 +163,27 @@ export class HUD {
     return { x: px + panelW - btnW - 10, y: py + 10, w: btnW, h: btnH };
   }
 
+  private getClearSaveButtonRect(width: number, height: number) {
+    const { px, py, panelW, panelH } = this.getSettingsPanelRect(width, height);
+    const btnW = 140;
+    const btnH = 28;
+    const btnX = px + (panelW - btnW) / 2;
+    const btnY = py + panelH - btnH - 16;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  isClearSaveButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getClearSaveButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
   renderSettingsPanel(
     ctx: CanvasRenderingContext2D,
     width: number,
     height: number,
     musicVolume: number,
-    sfxVolume: number
+    sfxVolume: number,
+    hasSave?: boolean
   ): void {
     ctx.save();
 
@@ -210,6 +225,18 @@ export class HUD {
 
     const sfxSlider = this.getSfxSliderLayout(width, height);
     this.renderSlider(ctx, sfxSlider, sfxVolume, "SFX");
+
+    if (hasSave) {
+      const csBtn = this.getClearSaveButtonRect(width, height);
+      ctx.fillStyle = "rgba(231, 76, 60, 0.8)";
+      this.roundedRect(ctx, csBtn.x, csBtn.y, csBtn.w, csBtn.h, 5);
+      ctx.fill();
+      ctx.font = `8px ${RETRO_FONT}`;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Clear Save", csBtn.x + csBtn.w / 2, csBtn.y + csBtn.h / 2);
+    }
 
     ctx.restore();
   }
@@ -311,13 +338,14 @@ export class HUD {
     width: number,
     height: number,
     activeEffects?: ReadonlyArray<ActiveEffect>,
-    currentWeapon?: WeaponType
+    currentWeapon?: WeaponType,
+    hasSave?: boolean
   ): void {
     switch (state) {
       case "loading":
         break;
       case "menu":
-        this.renderMenu(ctx, width, height);
+        this.renderMenu(ctx, width, height, hasSave);
         break;
       case "playing":
         this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon);
@@ -391,16 +419,49 @@ export class HUD {
     return this.isTouchDevice ? `Tap ${suffix}` : `Click ${suffix}`;
   }
 
-  private renderMenu(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+  private getMenuPanelRect(width: number, height: number) {
+    const panelW = 420;
+    const panelH = 220;
+    const px = (width - panelW) / 2;
+    const py = (height - panelH) / 2 - 10;
+    return { px, py, panelW, panelH };
+  }
+
+  private getContinueButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getMenuPanelRect(width, height);
+    const btnW = 180;
+    const btnH = 32;
+    const btnX = px + (panelW / 2 - btnW) / 2;
+    const btnY = py + 125;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  private getNewGameButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getMenuPanelRect(width, height);
+    const btnW = 180;
+    const btnH = 32;
+    const btnX = px + panelW / 2 + (panelW / 2 - btnW) / 2;
+    const btnY = py + 125;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  isContinueButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getContinueButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  isNewGameButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getNewGameButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  private renderMenu(ctx: CanvasRenderingContext2D, width: number, height: number, hasSave?: boolean): void {
     ctx.save();
 
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
     ctx.fillRect(0, 0, width, height);
 
-    const panelW = 420;
-    const panelH = 220;
-    const px = (width - panelW) / 2;
-    const py = (height - panelH) / 2 - 10;
+    const { px, py, panelW, panelH } = this.getMenuPanelRect(width, height);
 
     const panelGrad = ctx.createLinearGradient(px, py, px, py + panelH);
     panelGrad.addColorStop(0, "rgba(20, 30, 60, 0.85)");
@@ -424,13 +485,39 @@ export class HUD {
     ctx.fillStyle = "#B0C4DE";
     ctx.fillText("A Vertical Scrolling Shoot-em-up", width / 2, py + 90);
 
-    ctx.font = `10px ${RETRO_FONT}`;
-    ctx.fillStyle = "#FFD700";
-    ctx.fillText(
-      this.isTouchDevice ? "Tap to Start" : "Click to Start",
-      width / 2,
-      py + 140
-    );
+    if (hasSave) {
+      const contBtn = this.getContinueButtonRect(width, height);
+      ctx.fillStyle = "#2ecc71";
+      this.roundedRect(ctx, contBtn.x, contBtn.y, contBtn.w, contBtn.h, 6);
+      ctx.fill();
+      ctx.font = `10px ${RETRO_FONT}`;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Continue", contBtn.x + contBtn.w / 2, contBtn.y + contBtn.h / 2);
+
+      const newBtn = this.getNewGameButtonRect(width, height);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+      this.roundedRect(ctx, newBtn.x, newBtn.y, newBtn.w, newBtn.h, 6);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 1;
+      this.roundedRect(ctx, newBtn.x, newBtn.y, newBtn.w, newBtn.h, 6);
+      ctx.stroke();
+      ctx.font = `10px ${RETRO_FONT}`;
+      ctx.fillStyle = "#B0C4DE";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("New Game", newBtn.x + newBtn.w / 2, newBtn.y + newBtn.h / 2);
+    } else {
+      ctx.font = `10px ${RETRO_FONT}`;
+      ctx.fillStyle = "#FFD700";
+      ctx.fillText(
+        this.isTouchDevice ? "Tap to Start" : "Click to Start",
+        width / 2,
+        py + 140
+      );
+    }
 
     ctx.font = `7px ${RETRO_FONT}`;
     ctx.fillStyle = "#8899AA";

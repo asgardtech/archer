@@ -53,6 +53,20 @@ export type RaptorSoundEvent =
 
 export type WeaponType = "machine-gun" | "missile" | "laser";
 
+export interface RaptorSaveData {
+  version: 1;
+  /** The highest level index the player has unlocked (0-based). */
+  levelReached: number;
+  /** Cumulative score at the time of save. */
+  totalScore: number;
+  /** Player lives remaining at save point. */
+  lives: number;
+  /** Active weapon type at save point. */
+  weapon: WeaponType;
+  /** ISO-8601 timestamp of when the save was created. */
+  savedAt: string;
+}
+
 export interface WeaponConfig {
   type: WeaponType;
   damage: number;

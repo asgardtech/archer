@@ -1,10 +1,11 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, RaptorSaveData } from "./types";
 import { InputManager } from "./systems/InputManager";
 import { CollisionSystem } from "./systems/CollisionSystem";
 import { EnemySpawner } from "./systems/EnemySpawner";
 import { PowerUpManager } from "./systems/PowerUpManager";
 import { SoundSystem } from "./systems/SoundSystem";
 import { WeaponSystem } from "./systems/WeaponSystem";
+import { SaveSystem } from "./systems/SaveSystem";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
@@ -313,6 +314,12 @@ export class RaptorGame implements IGame {
       return true;
     }
 
+    if (this.hud.isClearSaveButtonHit(mx, my, this.width, this.height)) {
+      SaveSystem.clear();
+      this.input.consume();
+      return true;
+    }
+
     if (!this.hud.isSettingsPanelHit(mx, my, this.width, this.height)) {
       this.settingsOpen = false;
       this.input.consume();
@@ -337,11 +344,29 @@ export class RaptorGame implements IGame {
       case "menu":
         this.updateBackground(dt);
         if (this.input.wasClicked) {
-          this.audio.ensureContext();
-          this.sound.play("menu_start");
-          this.resetGame();
-          this.state = "playing";
-          this.sound.startMusic("playing", 0);
+          const hasSave = this.hasSaveData;
+          if (hasSave) {
+            if (this.hud.isContinueButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+              this.audio.ensureContext();
+              this.sound.play("menu_start");
+              this.continueGame();
+              this.state = "playing";
+              this.sound.startMusic("playing", this.currentLevel);
+            } else if (this.hud.isNewGameButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+              this.audio.ensureContext();
+              this.sound.play("menu_start");
+              SaveSystem.clear();
+              this.resetGame();
+              this.state = "playing";
+              this.sound.startMusic("playing", 0);
+            }
+          } else {
+            this.audio.ensureContext();
+            this.sound.play("menu_start");
+            this.resetGame();
+            this.state = "playing";
+            this.sound.startMusic("playing", 0);
+          }
         }
         break;
 
@@ -603,9 +628,18 @@ export class RaptorGame implements IGame {
       if (this.currentLevel >= LEVELS.length - 1) {
         this.state = "victory";
         this.sound.play("victory");
+        SaveSystem.clear();
       } else {
         this.state = "level_complete";
         this.sound.play("level_complete");
+        SaveSystem.save({
+          version: 1,
+          levelReached: this.currentLevel + 1,
+          totalScore: this.totalScore,
+          lives: this.player.lives,
+          weapon: this.powerUpManager.currentWeapon,
+          savedAt: new Date().toISOString(),
+        });
       }
     }
   }
@@ -668,10 +702,27 @@ export class RaptorGame implements IGame {
     }
   }
 
+  get hasSaveData(): boolean {
+    return SaveSystem.hasSave();
+  }
+
   private resetGame(): void {
     this.totalScore = 0;
     this.vfx.reset();
     this.startLevel(0, true);
+  }
+
+  private continueGame(): void {
+    const data = SaveSystem.load();
+    if (!data) {
+      this.resetGame();
+      return;
+    }
+    this.totalScore = data.totalScore;
+    this.vfx.reset();
+    this.startLevel(data.levelReached, false);
+    this.player.lives = data.lives;
+    this.powerUpManager.setWeapon(data.weapon);
   }
 
   private startLevel(levelIndex: number, fullReset = false): void {
@@ -876,7 +927,8 @@ export class RaptorGame implements IGame {
       this.width,
       this.height,
       this.powerUpManager.getActive(),
-      this.weaponSystem.currentWeapon
+      this.weaponSystem.currentWeapon,
+      this.hasSaveData
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
@@ -884,7 +936,8 @@ export class RaptorGame implements IGame {
     if (this.settingsOpen) {
       this.hud.renderSettingsPanel(
         this.ctx, this.width, this.height,
-        this.audio.musicVolume, this.audio.sfxVolume
+        this.audio.musicVolume, this.audio.sfxVolume,
+        this.hasSaveData
       );
     }
   }
