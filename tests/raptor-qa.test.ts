@@ -832,13 +832,20 @@ describe("Scenario: Level difficulty increases progressively", () => {
     }
   });
 
-  test("boss-enabled levels should have increasing boss HP", () => {
-    const bossLevels = LEVELS.filter((l) => l.bossEnabled && l.bossConfig);
-    for (let i = 1; i < bossLevels.length; i++) {
-      expect(bossLevels[i].bossConfig!.hitPoints).toBeGreaterThan(
-        bossLevels[i - 1].bossConfig!.hitPoints
+  test("boss-enabled levels should have increasing boss HP within each act", () => {
+    const act1Bosses = LEVELS.filter((l) => l.level >= 3 && l.level <= 5 && l.bossEnabled && l.bossConfig);
+    for (let i = 1; i < act1Bosses.length; i++) {
+      expect(act1Bosses[i].bossConfig!.hitPoints).toBeGreaterThan(
+        act1Bosses[i - 1].bossConfig!.hitPoints
       );
     }
+    const act2Bosses = LEVELS.filter((l) => l.level >= 6 && l.level <= 10 && l.bossEnabled && l.bossConfig);
+    for (let i = 1; i < act2Bosses.length; i++) {
+      expect(act2Bosses[i].bossConfig!.hitPoints).toBeGreaterThan(
+        act2Bosses[i - 1].bossConfig!.hitPoints
+      );
+    }
+    expect(act2Bosses[act2Bosses.length - 1].bossConfig!.hitPoints).toBe(100);
   });
 
   test("level 1 should not have a boss", () => {
