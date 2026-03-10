@@ -336,7 +336,21 @@ export class RaptorGame implements IGame {
       return;
     }
 
+    if (this.settingsOpen && this.input.wasEscPressed) {
+      this.settingsOpen = false;
+      this.input.consume();
+      return;
+    }
+
     if (this.handleUIClicks()) return;
+
+    if (this.state === "playing" && this.input.wasEscPressed) {
+      this.weaponSystem.laserBeam.active = false;
+      this.sound.stopMusic();
+      this.state = "menu";
+      this.input.consume();
+      return;
+    }
 
     this.vfx.update(dt);
 

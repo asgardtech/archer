@@ -3,6 +3,7 @@ export class InputManager {
   public targetY: number;
   public isFiring = false;
   public wasClicked = false;
+  public wasEscPressed = false;
   public isMouseDown = false;
   public mouseX = 0;
   public mouseY = 0;
@@ -65,6 +66,7 @@ export class InputManager {
 
   consume(): void {
     this.wasClicked = false;
+    this.wasEscPressed = false;
   }
 
   destroy(): void {
@@ -146,6 +148,10 @@ export class InputManager {
   private onKeyDown(e: KeyboardEvent): void {
     this.keys.add(e.key);
     if (e.key === " ") {
+      e.preventDefault();
+    }
+    if (e.key === "Escape") {
+      this.wasEscPressed = true;
       e.preventDefault();
     }
   }
