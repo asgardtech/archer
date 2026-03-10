@@ -51,7 +51,7 @@ export class Bullet implements Projectile {
     ctx.save();
     if (this.angle !== 0) {
       ctx.translate(this.pos.x, this.pos.y);
-      ctx.rotate(-this.angle);
+      ctx.rotate(this.angle);
       ctx.drawImage(this.sprite!, -this.width / 2, -this.height / 2, this.width, this.height);
     } else {
       ctx.drawImage(

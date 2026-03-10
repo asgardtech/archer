@@ -93,7 +93,7 @@ export class Missile implements Projectile {
   private renderSprite(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
-    ctx.rotate(-this.angle);
+    ctx.rotate(this.angle);
     ctx.drawImage(this.sprite!, -this.width / 2, -this.height / 2, this.width, this.height);
     ctx.restore();
   }
@@ -101,7 +101,7 @@ export class Missile implements Projectile {
   private renderFallback(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
-    ctx.rotate(-this.angle);
+    ctx.rotate(this.angle);
 
     ctx.fillStyle = "#ff6644";
     ctx.beginPath();
