@@ -1,3 +1,5 @@
+import { tryGetStorage, trySetStorage } from "./storage";
+
 export interface EnvelopeParams {
   attack: number;
   decay: number;
@@ -17,22 +19,6 @@ const DEFAULT_ENVELOPE: EnvelopeParams = {
   sustain: 0.6,
   release: 0.1,
 };
-
-function tryGetStorage(key: string, fallback: string): string {
-  try {
-    return localStorage.getItem(key) ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function trySetStorage(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // localStorage unavailable — silently ignore
-  }
-}
 
 export type AudioCategory = "music" | "sfx";
 
