@@ -130,8 +130,8 @@ describe("EnemyConfig weaponType field", () => {
     expect(ENEMY_CONFIGS["fighter"].weaponType).toBe("standard");
   });
 
-  test("ENEMY_CONFIGS bomber has weaponType standard", () => {
-    expect(ENEMY_CONFIGS["bomber"].weaponType).toBe("standard");
+  test("ENEMY_CONFIGS bomber has weaponType spread", () => {
+    expect(ENEMY_CONFIGS["bomber"].weaponType).toBe("spread");
   });
 
   test("ENEMY_CONFIGS boss has weaponType standard", () => {

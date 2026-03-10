@@ -1,4 +1,4 @@
-import { RaptorLevelConfig, WaveConfig, EnemyVariant } from "../types";
+import { RaptorLevelConfig, WaveConfig, EnemyVariant, EnemyConfig } from "../types";
 import { Enemy } from "../entities/Enemy";
 
 interface WaveState {
@@ -51,7 +51,10 @@ export class EnemySpawner {
       if (wave.spawned < wave.config.count && wave.spawnTimer >= wave.config.spawnDelay) {
         wave.spawnTimer -= wave.config.spawnDelay;
         const x = this.getSpawnX(wave.config.formation, wave.spawned, wave.config.count, canvasWidth);
-        const enemy = new Enemy(x, -30, wave.config.enemyVariant, wave.config.speed);
+        const overrides = wave.config.weaponType
+          ? { weaponType: wave.config.weaponType }
+          : undefined;
+        const enemy = new Enemy(x, -30, wave.config.enemyVariant, wave.config.speed, overrides);
         spawned.push(enemy);
         wave.spawned++;
       }
@@ -78,16 +81,20 @@ export class EnemySpawner {
   spawnBoss(canvasWidth: number): Enemy | null {
     if (!this.bossConfig) return null;
     this.bossSpawned = true;
+    const overrides: Partial<EnemyConfig> = {
+      hitPoints: Math.max(10, this.bossConfig.hitPoints),
+      scoreValue: this.bossConfig.scoreValue,
+      fireRate: this.bossConfig.fireRate,
+    };
+    if (this.bossConfig.weaponType) {
+      overrides.weaponType = this.bossConfig.weaponType;
+    }
     return new Enemy(
       canvasWidth / 2,
       -40,
       "boss" as EnemyVariant,
       this.bossConfig.speed,
-      {
-        hitPoints: Math.max(10, this.bossConfig.hitPoints),
-        scoreValue: this.bossConfig.scoreValue,
-        fireRate: this.bossConfig.fireRate,
-      }
+      overrides
     );
   }
 
