@@ -1211,6 +1211,8 @@ describe("Scenario: Procedural audio plays when buffer is unavailable", () => {
     const mockAudio = {
       disabled: false,
       muted: false,
+      sfxGain: null,
+      musicGain: null,
       ensureContext: jest.fn(),
       toggleMute: jest.fn(),
       playTone: jest.fn(),
@@ -1230,7 +1232,7 @@ describe("Scenario: Procedural audio plays when buffer is unavailable", () => {
     const sound = new SoundSystem(mockAudio);
 
     sound.play("player_shoot");
-    expect(mockAudio.playBuffer).toHaveBeenCalledWith("player_shoot");
+    expect(mockAudio.playBuffer).toHaveBeenCalledWith("player_shoot", { category: "sfx" });
     expect(mockAudio.playToneSwept).toHaveBeenCalled();
 
     sound.destroy();
@@ -1241,6 +1243,8 @@ describe("Scenario: Procedural audio plays when buffer is unavailable", () => {
     const mockAudio = {
       disabled: false,
       muted: false,
+      sfxGain: null,
+      musicGain: null,
       ensureContext: jest.fn(),
       toggleMute: jest.fn(),
       playTone: jest.fn(),
@@ -1260,7 +1264,7 @@ describe("Scenario: Procedural audio plays when buffer is unavailable", () => {
     const sound = new SoundSystem(mockAudio);
 
     sound.play("player_shoot");
-    expect(mockAudio.playBuffer).toHaveBeenCalledWith("player_shoot");
+    expect(mockAudio.playBuffer).toHaveBeenCalledWith("player_shoot", { category: "sfx" });
     expect(mockAudio.playToneSwept).not.toHaveBeenCalled();
 
     sound.destroy();
@@ -1273,6 +1277,8 @@ describe("Scenario: Music buffer playback with fallback", () => {
     const mockAudio = {
       disabled: false,
       muted: false,
+      sfxGain: null,
+      musicGain: null,
       ensureContext: jest.fn(),
       toggleMute: jest.fn(),
       playTone: jest.fn(),
@@ -1291,7 +1297,7 @@ describe("Scenario: Music buffer playback with fallback", () => {
 
     sound.startMusic("menu");
     expect(mockAudio.hasBuffer).toHaveBeenCalledWith("menu");
-    expect(mockAudio.playBuffer).toHaveBeenCalledWith("menu", { loop: true });
+    expect(mockAudio.playBuffer).toHaveBeenCalledWith("menu", { loop: true, category: "music" });
 
     sound.destroy();
   });
@@ -1301,6 +1307,8 @@ describe("Scenario: Music buffer playback with fallback", () => {
     const mockAudio = {
       disabled: false,
       muted: false,
+      sfxGain: null,
+      musicGain: null,
       ensureContext: jest.fn(),
       toggleMute: jest.fn(),
       playTone: jest.fn(),
@@ -1319,7 +1327,7 @@ describe("Scenario: Music buffer playback with fallback", () => {
 
     sound.startMusic("playing", 0);
     expect(mockAudio.hasBuffer).toHaveBeenCalledWith("level_1");
-    expect(mockAudio.playBuffer).toHaveBeenCalledWith("level_1", { loop: true });
+    expect(mockAudio.playBuffer).toHaveBeenCalledWith("level_1", { loop: true, category: "music" });
 
     sound.destroy();
   });

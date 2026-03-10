@@ -34,6 +34,8 @@ function trySetStorage(key: string, value: string): void {
   }
 }
 
+export type AudioCategory = "music" | "sfx";
+
 interface BufferEntry {
   buffer: AudioBuffer;
   activeSource: AudioBufferSourceNode | null;
@@ -42,8 +44,12 @@ interface BufferEntry {
 export class AudioManager {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private _musicGain: GainNode | null = null;
+  private _sfxGain: GainNode | null = null;
   private _muted: boolean;
   private _volume: number;
+  private _musicVolume: number;
+  private _sfxVolume: number;
   private _disabled = false;
   private scheduledNodes: AudioScheduledSourceNode[] = [];
   private buffers: Map<string, BufferEntry> = new Map();
@@ -53,6 +59,14 @@ export class AudioManager {
     this._volume = parseFloat(tryGetStorage("audio_volume", "0.5"));
     if (isNaN(this._volume) || this._volume < 0 || this._volume > 1) {
       this._volume = 0.5;
+    }
+    this._musicVolume = parseFloat(tryGetStorage("audio_music_volume", "0.5"));
+    if (isNaN(this._musicVolume) || this._musicVolume < 0 || this._musicVolume > 1) {
+      this._musicVolume = 0.5;
+    }
+    this._sfxVolume = parseFloat(tryGetStorage("audio_sfx_volume", "0.25"));
+    if (isNaN(this._sfxVolume) || this._sfxVolume < 0 || this._sfxVolume > 1) {
+      this._sfxVolume = 0.25;
     }
   }
 
@@ -76,6 +90,14 @@ export class AudioManager {
       this.masterGain.gain.value = this._muted ? 0 : this._volume;
       this.masterGain.connect(this.ctx.destination);
 
+      this._musicGain = this.ctx.createGain();
+      this._musicGain.gain.value = this._musicVolume;
+      this._musicGain.connect(this.masterGain);
+
+      this._sfxGain = this.ctx.createGain();
+      this._sfxGain.gain.value = this._sfxVolume;
+      this._sfxGain.connect(this.masterGain);
+
       if (this.ctx.state === "suspended") {
         this.ctx.resume().catch(() => {});
       }
@@ -84,6 +106,14 @@ export class AudioManager {
     }
 
     return this.ctx!;
+  }
+
+  get musicGain(): GainNode | null {
+    return this._musicGain;
+  }
+
+  get sfxGain(): GainNode | null {
+    return this._sfxGain;
   }
 
   get disabled(): boolean {
@@ -110,6 +140,30 @@ export class AudioManager {
     this.applyVolume();
   }
 
+  get musicVolume(): number {
+    return this._musicVolume;
+  }
+
+  set musicVolume(v: number) {
+    this._musicVolume = Math.max(0, Math.min(1, v));
+    trySetStorage("audio_music_volume", String(this._musicVolume));
+    if (this._musicGain) {
+      this._musicGain.gain.value = this._musicVolume;
+    }
+  }
+
+  get sfxVolume(): number {
+    return this._sfxVolume;
+  }
+
+  set sfxVolume(v: number) {
+    this._sfxVolume = Math.max(0, Math.min(1, v));
+    trySetStorage("audio_sfx_volume", String(this._sfxVolume));
+    if (this._sfxGain) {
+      this._sfxGain.gain.value = this._sfxVolume;
+    }
+  }
+
   toggleMute(): void {
     this.muted = !this._muted;
   }
@@ -124,7 +178,8 @@ export class AudioManager {
     frequency: number,
     duration: number,
     type: OscillatorType = "sine",
-    envelope: EnvelopeParams = DEFAULT_ENVELOPE
+    envelope: EnvelopeParams = DEFAULT_ENVELOPE,
+    routeNode?: AudioNode
   ): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
     const ctx = this.ctx;
@@ -143,7 +198,7 @@ export class AudioManager {
     gain.gain.linearRampToValueAtTime(0, now + duration);
 
     osc.connect(gain);
-    gain.connect(this.masterGain);
+    gain.connect(routeNode ?? this.masterGain);
 
     osc.start(now);
     osc.stop(now + duration + 0.01);
@@ -161,7 +216,8 @@ export class AudioManager {
     freqEnd: number,
     duration: number,
     type: OscillatorType = "sine",
-    envelope: EnvelopeParams = DEFAULT_ENVELOPE
+    envelope: EnvelopeParams = DEFAULT_ENVELOPE,
+    routeNode?: AudioNode
   ): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
     const ctx = this.ctx;
@@ -181,7 +237,7 @@ export class AudioManager {
     gain.gain.linearRampToValueAtTime(0, now + duration);
 
     osc.connect(gain);
-    gain.connect(this.masterGain);
+    gain.connect(routeNode ?? this.masterGain);
 
     osc.start(now);
     osc.stop(now + duration + 0.01);
@@ -194,7 +250,7 @@ export class AudioManager {
     this.scheduledNodes.push(osc);
   }
 
-  playNoise(duration: number, filterFreq = 3000): void {
+  playNoise(duration: number, filterFreq = 3000, routeNode?: AudioNode): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
     const ctx = this.ctx;
     const now = ctx.currentTime;
@@ -219,7 +275,7 @@ export class AudioManager {
 
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(this.masterGain);
+    gain.connect(routeNode ?? this.masterGain);
 
     source.start(now);
     source.stop(now + duration + 0.01);
@@ -233,13 +289,13 @@ export class AudioManager {
     this.scheduledNodes.push(source);
   }
 
-  playSequence(notes: NoteSpec[], bpm: number): void {
+  playSequence(notes: NoteSpec[], bpm: number, routeNode?: AudioNode): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
     const beatDuration = 60 / bpm;
     let offset = 0;
     for (const note of notes) {
       const dur = note.duration * beatDuration;
-      this.playToneDelayed(note.frequency, dur, offset, note.type || "sine");
+      this.playToneDelayed(note.frequency, dur, offset, note.type || "sine", routeNode);
       offset += dur;
     }
   }
@@ -248,7 +304,8 @@ export class AudioManager {
     frequency: number,
     duration: number,
     delay: number,
-    type: OscillatorType
+    type: OscillatorType,
+    routeNode?: AudioNode
   ): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
     const ctx = this.ctx;
@@ -265,7 +322,7 @@ export class AudioManager {
     gain.gain.linearRampToValueAtTime(0, now + duration);
 
     osc.connect(gain);
-    gain.connect(this.masterGain!);
+    gain.connect(routeNode ?? this.masterGain!);
 
     osc.start(now);
     osc.stop(now + duration + 0.01);
@@ -301,7 +358,7 @@ export class AudioManager {
 
   playBuffer(
     key: string,
-    options?: { loop?: boolean; volume?: number }
+    options?: { loop?: boolean; volume?: number; category?: AudioCategory }
   ): AudioBufferSourceNode | null {
     if (this._disabled || !this.ctx || !this.masterGain) return null;
     const entry = this.buffers.get(key);
@@ -314,7 +371,14 @@ export class AudioManager {
     const gain = this.ctx.createGain();
     gain.gain.value = options?.volume ?? 1;
     source.connect(gain);
-    gain.connect(this.masterGain);
+
+    let dest: AudioNode = this.masterGain;
+    if (options?.category === "music" && this._musicGain) {
+      dest = this._musicGain;
+    } else if (options?.category === "sfx" && this._sfxGain) {
+      dest = this._sfxGain;
+    }
+    gain.connect(dest);
 
     source.start(0);
 
@@ -370,6 +434,8 @@ export class AudioManager {
       this.ctx.close().catch(() => {});
       this.ctx = null;
       this.masterGain = null;
+      this._musicGain = null;
+      this._sfxGain = null;
     }
   }
 }

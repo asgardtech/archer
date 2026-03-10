@@ -3,6 +3,7 @@ export class InputManager {
   public targetY: number;
   public isFiring = false;
   public wasClicked = false;
+  public isMouseDown = false;
   public mouseX = 0;
   public mouseY = 0;
   public readonly isTouchDevice: boolean;
@@ -15,6 +16,7 @@ export class InputManager {
 
   private boundMouseMove: (e: MouseEvent) => void;
   private boundMouseDown: (e: MouseEvent) => void;
+  private boundMouseUp: (e: MouseEvent) => void;
   private boundTouchStart: (e: TouchEvent) => void;
   private boundTouchMove: (e: TouchEvent) => void;
   private boundTouchEnd: (e: TouchEvent) => void;
@@ -31,6 +33,7 @@ export class InputManager {
 
     this.boundMouseMove = (e) => this.onMouseMove(e);
     this.boundMouseDown = (e) => this.onMouseDown(e);
+    this.boundMouseUp = (e) => this.onMouseUp(e);
     this.boundTouchStart = (e) => this.onTouchStart(e);
     this.boundTouchMove = (e) => this.onTouchMove(e);
     this.boundTouchEnd = (e) => this.onTouchEnd(e);
@@ -39,6 +42,7 @@ export class InputManager {
 
     canvas.addEventListener("mousemove", this.boundMouseMove);
     canvas.addEventListener("mousedown", this.boundMouseDown);
+    window.addEventListener("mouseup", this.boundMouseUp);
     canvas.addEventListener("touchstart", this.boundTouchStart, { passive: false });
     canvas.addEventListener("touchmove", this.boundTouchMove, { passive: false });
     canvas.addEventListener("touchend", this.boundTouchEnd, { passive: false });
@@ -66,6 +70,7 @@ export class InputManager {
   destroy(): void {
     this.canvas.removeEventListener("mousemove", this.boundMouseMove);
     this.canvas.removeEventListener("mousedown", this.boundMouseDown);
+    window.removeEventListener("mouseup", this.boundMouseUp);
     this.canvas.removeEventListener("touchstart", this.boundTouchStart);
     this.canvas.removeEventListener("touchmove", this.boundTouchMove);
     this.canvas.removeEventListener("touchend", this.boundTouchEnd);
@@ -92,10 +97,15 @@ export class InputManager {
 
   private onMouseDown(e: MouseEvent): void {
     this.wasClicked = true;
+    this.isMouseDown = true;
     this.targetX = this.toCanvasX(e.clientX);
     this.targetY = this.toCanvasY(e.clientY);
     this.mouseX = this.targetX;
     this.mouseY = this.targetY;
+  }
+
+  private onMouseUp(_e: MouseEvent): void {
+    this.isMouseDown = false;
   }
 
   private onTouchStart(e: TouchEvent): void {
@@ -110,6 +120,7 @@ export class InputManager {
     this.mouseX = cx;
     this.mouseY = cy;
     this.wasClicked = true;
+    this.isMouseDown = true;
   }
 
   private onTouchMove(e: TouchEvent): void {
@@ -129,6 +140,7 @@ export class InputManager {
     const touch = this.getActiveTouch(e.changedTouches);
     if (!touch) return;
     this.activeTouchId = null;
+    this.isMouseDown = false;
   }
 
   private onKeyDown(e: KeyboardEvent): void {
