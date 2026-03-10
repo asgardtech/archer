@@ -216,6 +216,7 @@ export interface WaveConfig {
   waveDelay: number;
   formation: "line" | "v" | "random" | "sweep";
   speed: number;
+  weaponType?: EnemyWeaponType;
 }
 
 export interface BossConfig {
@@ -224,6 +225,7 @@ export interface BossConfig {
   fireRate: number;
   scoreValue: number;
   appearsAfterWave: number;
+  weaponType?: EnemyWeaponType;
 }
 
 export interface BackgroundLayerConfig {
