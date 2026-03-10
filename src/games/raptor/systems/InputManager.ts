@@ -120,6 +120,7 @@ export class InputManager {
     this.mouseX = cx;
     this.mouseY = cy;
     this.wasClicked = true;
+    this.isMouseDown = true;
   }
 
   private onTouchMove(e: TouchEvent): void {
@@ -139,6 +140,7 @@ export class InputManager {
     const touch = this.getActiveTouch(e.changedTouches);
     if (!touch) return;
     this.activeTouchId = null;
+    this.isMouseDown = false;
   }
 
   private onKeyDown(e: KeyboardEvent): void {
