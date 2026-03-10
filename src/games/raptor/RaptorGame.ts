@@ -1,5 +1,6 @@
 import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, RaptorSaveData } from "./types";
 import { InputManager } from "./systems/InputManager";
+import { DevConsole } from "./systems/DevConsole";
 import { CollisionSystem } from "./systems/CollisionSystem";
 import { EnemySpawner } from "./systems/EnemySpawner";
 import { PowerUpManager } from "./systems/PowerUpManager";
@@ -73,6 +74,7 @@ export class RaptorGame implements IGame {
   private powerUps: PowerUp[] = [];
 
   private input: InputManager;
+  private devConsole: DevConsole;
   private collisions: CollisionSystem;
   private spawner: EnemySpawner;
   private powerUpManager: PowerUpManager;
@@ -107,6 +109,10 @@ export class RaptorGame implements IGame {
     this.ctx = ctx;
 
     this.input = new InputManager(this.canvas, width, height);
+    this.devConsole = new DevConsole();
+    this.devConsole.onSubmit = (cmd) => {
+      this.devConsole.log(`> ${cmd}`);
+    };
     this.collisions = new CollisionSystem();
     this.spawner = new EnemySpawner();
     this.powerUpManager = new PowerUpManager();
@@ -220,6 +226,7 @@ export class RaptorGame implements IGame {
     clearTimeout(this.resizeTimer);
 
     this.input.destroy();
+    this.devConsole.destroy();
     this.sound.destroy();
     this.audio.destroy();
 
@@ -332,6 +339,21 @@ export class RaptorGame implements IGame {
 
   private update(dt: number): void {
     if (this.state === "loading") {
+      this.input.consume();
+      return;
+    }
+
+    if (this.input.wasConsoleToggled) {
+      this.devConsole.toggle();
+      this.input.consume();
+      return;
+    }
+
+    if (this.devConsole.isOpen) {
+      if (this.input.wasEscPressed) {
+        this.devConsole.close();
+      }
+      this.devConsole.update(dt);
       this.input.consume();
       return;
     }
@@ -954,6 +976,8 @@ export class RaptorGame implements IGame {
         this.hasSaveData
       );
     }
+
+    this.devConsole.render(this.ctx, this.width, this.height);
   }
 
   private renderBackground(): void {

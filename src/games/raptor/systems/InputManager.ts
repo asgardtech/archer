@@ -4,6 +4,7 @@ export class InputManager {
   public isFiring = false;
   public wasClicked = false;
   public wasEscPressed = false;
+  public wasConsoleToggled = false;
   public isMouseDown = false;
   public mouseX = 0;
   public mouseY = 0;
@@ -67,6 +68,7 @@ export class InputManager {
   consume(): void {
     this.wasClicked = false;
     this.wasEscPressed = false;
+    this.wasConsoleToggled = false;
   }
 
   destroy(): void {
@@ -152,6 +154,10 @@ export class InputManager {
     }
     if (e.key === "Escape") {
       this.wasEscPressed = true;
+      e.preventDefault();
+    }
+    if (e.key === "`") {
+      this.wasConsoleToggled = true;
       e.preventDefault();
     }
   }
