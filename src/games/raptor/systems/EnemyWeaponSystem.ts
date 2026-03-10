@@ -70,7 +70,9 @@ export class EnemyWeaponSystem {
       bullets.push(new EnemyBullet(enemy.pos.x, enemy.bottom, bTargetX, bTargetY, {
         damage: config.damage,
         speed: config.projectileSpeed,
+        radius: 3,
         spriteKey: config.spriteKey,
+        fallbackColor: "#ff8800",
       }));
     }
 

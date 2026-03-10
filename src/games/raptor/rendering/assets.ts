@@ -11,6 +11,7 @@ export const ASSET_MANIFEST: AssetManifest = {
   enemy_boss:       `${BASE}enemy_boss.png`,
   bullet_player:    `${BASE}bullet_player.svg`,
   bullet_enemy:     `${BASE}bullet_enemy.svg`,
+  bullet_enemy_spread: `${BASE}bullet_enemy_spread.svg`,
   missile_player:   `${BASE}missile_player.svg`,
   powerup_spread:   `${BASE}powerup_spread.svg`,
   powerup_rapid:    `${BASE}powerup_rapid.svg`,

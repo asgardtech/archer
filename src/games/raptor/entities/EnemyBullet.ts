@@ -5,21 +5,24 @@ const ENEMY_BULLET_SPEED = 300;
 export interface EnemyBulletOptions {
   damage?: number;
   speed?: number;
+  radius?: number;
   homing?: boolean;
   homingStrength?: number;
   spriteKey?: string;
+  fallbackColor?: string;
 }
 
 export class EnemyBullet {
   public pos: Vec2;
   public vel: Vec2;
   public alive = true;
-  public radius = 4;
+  public radius: number;
   public damage: number;
   public homing: boolean;
   public homingStrength: number;
   public speed: number;
   public spriteKey: string;
+  public fallbackColor: string;
 
   private angle: number;
   private sprite: HTMLImageElement | null = null;
@@ -28,9 +31,11 @@ export class EnemyBullet {
     this.pos = { x, y };
     this.damage = options?.damage ?? 25;
     this.speed = options?.speed ?? ENEMY_BULLET_SPEED;
+    this.radius = options?.radius ?? 4;
     this.homing = options?.homing ?? false;
     this.homingStrength = options?.homingStrength ?? 0;
     this.spriteKey = options?.spriteKey ?? "bullet_enemy";
+    this.fallbackColor = options?.fallbackColor ?? "#ff3333";
 
     const dx = targetX - x;
     const dy = targetY - y;
@@ -108,17 +113,23 @@ export class EnemyBullet {
 
   private renderFallback(ctx: CanvasRenderingContext2D): void {
     ctx.save();
-    ctx.fillStyle = "#ff3333";
-    ctx.shadowColor = "#ff3333";
+    ctx.fillStyle = this.fallbackColor;
+    ctx.shadowColor = this.fallbackColor;
     ctx.shadowBlur = 4;
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#ff8888";
+    ctx.fillStyle = this.fallbackCoreColor;
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius * 0.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+  }
+
+  private get fallbackCoreColor(): string {
+    if (this.fallbackColor === "#ff3333") return "#ff8888";
+    if (this.fallbackColor === "#ff8800") return "#ffcc66";
+    return "#ffffff";
   }
 }
