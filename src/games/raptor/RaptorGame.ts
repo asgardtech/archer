@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, RaptorSaveData } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS } from "./types";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
 import { CollisionSystem } from "./systems/CollisionSystem";
@@ -7,7 +7,7 @@ import { PowerUpManager } from "./systems/PowerUpManager";
 import { SoundSystem } from "./systems/SoundSystem";
 import { WeaponSystem } from "./systems/WeaponSystem";
 import { SaveSystem } from "./systems/SaveSystem";
-import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponCommands, registerPowerUpCommands, registerPlayerCommands } from "./systems/CommandRegistry";
+import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponCommands, registerPowerUpCommands, registerPlayerCommands, registerCombatCommands } from "./systems/CommandRegistry";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
@@ -67,6 +67,10 @@ export class RaptorGame implements IGame {
   private score = 0;
   private totalScore = 0;
 
+  private showFps = false;
+  private frameTimes: number[] = new Array(60).fill(16.67);
+  private frameTimeIndex = 0;
+
   private player: Player;
   private projectiles: Projectile[] = [];
   private enemies: Enemy[] = [];
@@ -117,6 +121,7 @@ export class RaptorGame implements IGame {
     registerWeaponCommands(this.commandRegistry);
     registerPowerUpCommands(this.commandRegistry);
     registerPlayerCommands(this.commandRegistry);
+    registerCombatCommands(this.commandRegistry);
     this.devConsole.onSubmit = (cmd) => {
       this.devConsole.log(`> ${cmd}`);
       const output = this.commandRegistry.dispatch(cmd, this.buildCommandContext());
@@ -251,8 +256,12 @@ export class RaptorGame implements IGame {
   private loop(time: number): void {
     if (!this.running) return;
 
-    const dt = Math.min((time - this.lastTime) / 1000, DT_CAP);
+    const elapsed = time - this.lastTime;
+    const dt = Math.min(elapsed / 1000, DT_CAP);
     this.lastTime = time;
+
+    this.frameTimes[this.frameTimeIndex] = elapsed;
+    this.frameTimeIndex = (this.frameTimeIndex + 1) % this.frameTimes.length;
 
     this.update(dt);
     this.render();
@@ -795,6 +804,39 @@ export class RaptorGame implements IGame {
       canvasHeight: this.height,
       powerUpManager: this.powerUpManager,
       weaponSystem: this.weaponSystem,
+
+      score: this.score,
+      totalScore: this.totalScore,
+      setScore: (value: number) => {
+        this.score = value;
+      },
+      addScore: (value: number) => {
+        this.score += value;
+        return this.score;
+      },
+      enemies: this.enemies,
+      enemyBullets: this.enemyBullets,
+      spawnEnemy: (variant: EnemyVariant) => {
+        const margin = 50;
+        const x = margin + Math.random() * (this.width - 2 * margin);
+        const enemy = new Enemy(x, -30, variant);
+        this.assignEnemySprite(enemy);
+        this.enemies.push(enemy);
+        return enemy;
+      },
+      destroyAllEnemies: () => {
+        const count = this.enemies.length;
+        for (const enemy of this.enemies) {
+          enemy.alive = false;
+        }
+        this.enemyBullets.length = 0;
+        return count;
+      },
+      showFps: this.showFps,
+      toggleFps: () => {
+        this.showFps = !this.showFps;
+        return this.showFps;
+      },
     };
   }
 
@@ -1012,6 +1054,14 @@ export class RaptorGame implements IGame {
         this.audio.musicVolume, this.audio.sfxVolume,
         this.hasSaveData
       );
+    }
+
+    if (this.showFps) {
+      const avgFrameTime = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
+      const fps = Math.round(1000 / avgFrameTime);
+      this.ctx.font = "10px monospace";
+      this.ctx.fillStyle = "rgba(0, 255, 65, 0.8)";
+      this.ctx.fillText(`FPS: ${fps}`, 30, 60);
     }
 
     this.devConsole.render(this.ctx, this.width, this.height);

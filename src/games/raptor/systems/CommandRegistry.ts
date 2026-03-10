@@ -1,5 +1,7 @@
-import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_CONFIGS } from "../types";
+import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_CONFIGS, EnemyVariant, ENEMY_CONFIGS } from "../types";
 import { Player } from "../entities/Player";
+import { Enemy } from "../entities/Enemy";
+import { EnemyBullet } from "../entities/EnemyBullet";
 import { PowerUpManager } from "./PowerUpManager";
 import { WeaponSystem } from "./WeaponSystem";
 
@@ -17,6 +19,17 @@ export interface CommandContext {
   canvasHeight: number;
   powerUpManager: PowerUpManager;
   weaponSystem: WeaponSystem;
+
+  score: number;
+  totalScore: number;
+  setScore(value: number): void;
+  addScore(value: number): number;
+  enemies: Enemy[];
+  enemyBullets: EnemyBullet[];
+  spawnEnemy(variant: EnemyVariant): Enemy;
+  destroyAllEnemies(): number;
+  showFps: boolean;
+  toggleFps(): boolean;
 }
 
 export type CommandHandler = (args: string[], ctx: CommandContext) => string | string[];
@@ -249,5 +262,108 @@ export function registerPlayerCommands(registry: CommandRegistry): void {
     ctx.player.alive = false;
     ctx.player.lives = 0;
     return "Player killed";
+  });
+}
+
+const VARIANT_NAMES = Object.keys(ENEMY_CONFIGS) as EnemyVariant[];
+
+export function registerCombatCommands(registry: CommandRegistry): void {
+  registry.register("spawn", (args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+
+    if (args.length === 0) {
+      return `Usage: spawn <variant> [count]. Available: ${VARIANT_NAMES.join(", ")}`;
+    }
+
+    const variantInput = args[0].toLowerCase();
+    if (!(variantInput in ENEMY_CONFIGS)) {
+      return `Unknown enemy variant '${variantInput}'. Available: ${VARIANT_NAMES.join(", ")}`;
+    }
+    const variant = variantInput as EnemyVariant;
+
+    let count = 1;
+    if (args.length >= 2) {
+      const parsed = parseInt(args[1], 10);
+      if (isNaN(parsed) || parsed < 0) {
+        return "Count must be a positive number";
+      }
+      count = Math.max(1, Math.min(parsed, 20));
+    }
+
+    for (let i = 0; i < count; i++) {
+      ctx.spawnEnemy(variant);
+    }
+
+    return `Spawned ${count} ${variant}(s)`;
+  });
+
+  registry.register("killall", (_args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+
+    const count = ctx.enemies.length;
+    if (count === 0) {
+      return "No enemies to destroy";
+    }
+
+    ctx.destroyAllEnemies();
+    return `Destroyed ${count} enemies`;
+  });
+
+  registry.register("score", (args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+
+    if (args.length === 0) {
+      return `Score: ${ctx.score} (Total: ${ctx.totalScore})`;
+    }
+
+    if (args[0] === "add") {
+      const n = parseInt(args[1], 10);
+      if (isNaN(n)) {
+        return "Score must be a number";
+      }
+      const newScore = ctx.addScore(n);
+      return `Added ${n} to score (total: ${newScore})`;
+    }
+
+    const n = parseInt(args[0], 10);
+    if (isNaN(n) || n < 0) {
+      return "Score must be a non-negative number";
+    }
+    ctx.setScore(n);
+    return `Score set to ${n}`;
+  });
+
+  registry.register("fps", (_args, ctx) => {
+    const newValue = ctx.toggleFps();
+    return `FPS display: ${newValue ? "ON" : "OFF"}`;
+  });
+
+  registry.register("status", (_args, ctx) => {
+    const lines: string[] = [
+      `Game State: ${ctx.gameState}`,
+      `Level: ${ctx.currentLevel + 1} - ${ctx.levels[ctx.currentLevel].name}`,
+      `Score: ${ctx.score} (Total: ${ctx.totalScore})`,
+      `Lives: ${ctx.player.lives} | Shield: ${ctx.player.shield}`,
+      `Weapon: ${ctx.weaponSystem.currentWeapon}`,
+      `Enemies: ${ctx.enemies.length} | Bullets: ${ctx.enemyBullets.length}`,
+    ];
+
+    const activeEffects = ctx.powerUpManager.getActive();
+    if (activeEffects.length > 0) {
+      const effectStrs = activeEffects.map(
+        (e) => `${e.type} (${e.remainingTime.toFixed(1)}s)`
+      );
+      lines.push(`Active effects: ${effectStrs.join(", ")}`);
+    } else {
+      lines.push("Active effects: none");
+    }
+
+    return lines;
   });
 }
