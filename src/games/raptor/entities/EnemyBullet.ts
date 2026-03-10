@@ -24,8 +24,8 @@ export class EnemyBullet {
   public spriteKey: string;
   public fallbackColor: string;
 
-  private angle: number;
-  private sprite: HTMLImageElement | null = null;
+  protected angle: number;
+  protected sprite: HTMLImageElement | null = null;
 
   constructor(x: number, y: number, targetX: number, targetY: number, options?: EnemyBulletOptions) {
     this.pos = { x, y };

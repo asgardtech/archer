@@ -14,6 +14,7 @@ import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
 import { Enemy } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
+import { EnemyMissile } from "./entities/EnemyMissile";
 import { Explosion } from "./entities/Explosion";
 import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
@@ -567,6 +568,9 @@ export class RaptorGame implements IGame {
     }
     for (const eb of this.enemyBullets) {
       eb.update(dt, this.width, this.height, this.player.pos);
+      if (eb instanceof EnemyMissile) {
+        this.vfx.addMissileTrail(eb.pos.x, eb.pos.y);
+      }
     }
     for (const exp of this.explosions) {
       exp.update(dt);
@@ -613,6 +617,10 @@ export class RaptorGame implements IGame {
       } else {
         this.sound.play("player_hit");
         this.vfx.triggerScreenShake(3, 0.15);
+        if (hit.bullet instanceof EnemyMissile) {
+          this.sound.play("enemy_missile_hit");
+          this.vfx.triggerExplosionFlash(hit.bullet.pos.x, hit.bullet.pos.y, 15);
+        }
       }
     }
 

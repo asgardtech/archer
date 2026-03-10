@@ -1,5 +1,6 @@
 import { EnemyWeaponType, ENEMY_WEAPON_CONFIGS, RaptorSoundEvent } from "../types";
 import { EnemyBullet } from "../entities/EnemyBullet";
+import { EnemyMissile } from "../entities/EnemyMissile";
 import { Enemy } from "../entities/Enemy";
 
 export interface EnemyFireResult {
@@ -84,12 +85,13 @@ export class EnemyWeaponSystem {
 
   private fireMissile(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
     const config = ENEMY_WEAPON_CONFIGS["missile"];
-    const bullet = new EnemyBullet(enemy.pos.x, enemy.bottom, targetX, targetY, {
+    const bullet = new EnemyMissile(enemy.pos.x, enemy.bottom, targetX, targetY, {
       damage: config.damage,
       speed: config.projectileSpeed,
       homing: config.homing,
       homingStrength: config.homingStrength,
       spriteKey: config.spriteKey,
+      radius: 7,
     });
     return {
       bullets: [bullet],
