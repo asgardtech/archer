@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <linearGradient id="in-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a4a4a"/>
+      <stop offset="50%" stop-color="#3a3a3a"/>
+      <stop offset="100%" stop-color="#2a2a2a"/>
+    </linearGradient>
+    <linearGradient id="in-stack" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#4a4a4a"/>
+    </linearGradient>
+    <linearGradient id="in-pipe" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#4a4a4a"/>
+      <stop offset="50%" stop-color="#6a4a3a"/>
+      <stop offset="100%" stop-color="#4a4a4a"/>
+    </linearGradient>
+    <radialGradient id="in-smog" cx="400" cy="50" r="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4a4a4a" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#2a2a2a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Smog sky -->
+  <rect width="800" height="200" fill="url(#in-sky)"/>
+  <rect width="800" height="120" fill="url(#in-smog)"/>
+
+  <!-- Factory base -->
+  <rect x="0" y="140" width="800" height="60" fill="#2a2a2a"/>
+  <rect x="0" y="155" width="800" height="45" fill="#1a1a1a"/>
+  <line x1="0" y1="155" x2="800" y2="155" stroke="#3a3a3a" stroke-width="0.5"/>
+
+  <!-- Cooling tower 1 -->
+  <ellipse cx="120" cy="140" rx="35" ry="8" fill="#3a3a3a"/>
+  <rect x="85" y="60" width="70" height="80" fill="url(#in-stack)"/>
+  <ellipse cx="120" cy="60" rx="35" ry="8" fill="#4a4a4a"/>
+  <line x1="85" y1="80" x2="155" y2="80" stroke="#2a2a2a" stroke-width="0.5"/>
+  <line x1="85" y1="100" x2="155" y2="100" stroke="#2a2a2a" stroke-width="0.5"/>
+
+  <!-- Cooling tower 2 -->
+  <ellipse cx="320" cy="145" rx="40" ry="8" fill="#3a3a3a"/>
+  <rect x="280" y="50" width="80" height="95" fill="url(#in-stack)"/>
+  <ellipse cx="320" cy="50" rx="40" ry="8" fill="#4a4a4a"/>
+  <line x1="280" y1="70" x2="360" y2="70" stroke="#2a2a2a" stroke-width="0.5"/>
+  <line x1="280" y1="95" x2="360" y2="95" stroke="#2a2a2a" stroke-width="0.5"/>
+
+  <!-- Smokestack 1 -->
+  <rect x="455" y="40" width="25" height="115" fill="url(#in-stack)"/>
+  <rect x="450" y="35" width="35" height="8" fill="#4a4a4a"/>
+  <line x1="455" y1="70" x2="480" y2="70" stroke="#2a2a2a" stroke-width="0.4"/>
+  <line x1="455" y1="95" x2="480" y2="95" stroke="#2a2a2a" stroke-width="0.4"/>
+
+  <!-- Smokestack 2 -->
+  <rect x="520" y="55" width="20" height="100" fill="url(#in-stack)"/>
+  <rect x="516" y="50" width="28" height="8" fill="#4a4a4a"/>
+  <line x1="520" y1="80" x2="540" y2="80" stroke="#2a2a2a" stroke-width="0.4"/>
+
+  <!-- Factory block with warning stripe -->
+  <rect x="580" y="100" width="120" height="55" fill="#3a3a3a"/>
+  <rect x="580" y="100" width="120" height="12" fill="#8a7a20"/>
+  <rect x="580" y="116" width="120" height="6" fill="#4a4a4a"/>
+  <line x1="580" y1="100" x2="700" y2="100" stroke="#2a2a2a" stroke-width="0.5"/>
+  <line x1="620" y1="100" x2="620" y2="155" stroke="#2a2a2a" stroke-width="0.5"/>
+  <line x1="660" y1="100" x2="660" y2="155" stroke="#2a2a2a" stroke-width="0.5"/>
+
+  <!-- Pipe runs -->
+  <rect x="0" y="165" width="200" height="8" fill="url(#in-pipe)"/>
+  <rect x="250" y="168" width="150" height="6" fill="url(#in-pipe)"/>
+  <rect x="480" y="162" width="100" height="7" fill="url(#in-pipe)"/>
+  <rect x="650" y="170" width="150" height="6" fill="url(#in-pipe)"/>
+
+  <!-- Vertical pipe -->
+  <rect x="195" y="120" width="12" height="55" fill="url(#in-pipe)"/>
+  <rect x="398" y="110" width="10" height="50" fill="url(#in-pipe)"/>
+
+  <!-- Low factory buildings -->
+  <rect x="30" y="125" width="60" height="30" fill="#3a3a3a"/>
+  <rect x="35" y="128" width="50" height="8" fill="#2a2a2a"/>
+  <rect x="220" y="130" width="55" height="25" fill="#3a3a3a"/>
+  <rect x="225" y="133" width="45" height="6" fill="#2a2a2a"/>
+  <rect x="720" y="135" width="70" height="25" fill="#3a3a3a"/>
+  <rect x="725" y="138" width="60" height="6" fill="#2a2a2a"/>
+</svg>

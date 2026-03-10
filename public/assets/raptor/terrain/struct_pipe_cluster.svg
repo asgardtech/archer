@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="spc-pipe" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3a3a3a"/>
+      <stop offset="50%" stop-color="#6a4a3a"/>
+      <stop offset="100%" stop-color="#3a3a3a"/>
+    </linearGradient>
+    <linearGradient id="spc-flange" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a4a4a"/>
+      <stop offset="100%" stop-color="#2a2a2a"/>
+    </linearGradient>
+  </defs>
+  <!-- Large horizontal pipe -->
+  <rect x="4" y="28" width="56" height="8" fill="url(#spc-pipe)"/>
+  <circle cx="8" cy="32" r="4" fill="url(#spc-flange)"/>
+  <circle cx="56" cy="32" r="4" fill="url(#spc-flange)"/>
+  <!-- Medium vertical pipe -->
+  <rect x="24" y="12" width="6" height="36" fill="url(#spc-pipe)"/>
+  <circle cx="27" cy="12" r="3" fill="url(#spc-flange)"/>
+  <!-- Valve wheel on vertical pipe -->
+  <circle cx="27" cy="24" r="4" fill="#2a2a2a"/>
+  <line x1="23" y1="24" x2="31" y2="24" stroke="#4a4a4a" stroke-width="2"/>
+  <line x1="27" y1="20" x2="27" y2="28" stroke="#4a4a4a" stroke-width="2"/>
+  <line x1="24.5" y1="21.5" x2="29.5" y2="26.5" stroke="#4a4a4a" stroke-width="1.5"/>
+  <line x1="24.5" y1="26.5" x2="29.5" y2="21.5" stroke="#4a4a4a" stroke-width="1.5"/>
+  <!-- Small pipe branch -->
+  <rect x="38" y="20" width="4" height="20" fill="#6a4a3a"/>
+  <circle cx="40" cy="20" r="2" fill="url(#spc-flange)"/>
+  <!-- Second valve -->
+  <circle cx="40" cy="30" r="3" fill="#2a2a2a"/>
+  <line x1="37" y1="30" x2="43" y2="30" stroke="#4a4a4a" stroke-width="1.5"/>
+  <line x1="40" y1="27" x2="40" y2="33" stroke="#4a4a4a" stroke-width="1.5"/>
+  <!-- Support bracket -->
+  <rect x="20" y="48" width="24" height="4" fill="#2a2a2a"/>
+  <rect x="22" y="44" width="4" height="12" fill="#3a3a3a"/>
+  <rect x="38" y="44" width="4" height="12" fill="#3a3a3a"/>
+</svg>

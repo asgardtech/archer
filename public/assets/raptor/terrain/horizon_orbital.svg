@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <linearGradient id="ob-space" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c0c14"/>
+      <stop offset="70%" stop-color="#0a0a12"/>
+      <stop offset="100%" stop-color="#1a1a30"/>
+    </linearGradient>
+    <linearGradient id="ob-hull" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#2a2a3a"/>
+      <stop offset="50%" stop-color="#5a5a6a"/>
+      <stop offset="100%" stop-color="#4a4a5a"/>
+    </linearGradient>
+    <linearGradient id="ob-planet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a30"/>
+      <stop offset="100%" stop-color="#0c0c14"/>
+    </linearGradient>
+    <radialGradient id="ob-atmosphere" cx="400" cy="220" r="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1a1a30" stop-opacity="0.8"/>
+      <stop offset="70%" stop-color="#3a6a8a" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#3a6a8a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Deep space -->
+  <rect width="800" height="200" fill="url(#ob-space)"/>
+
+  <!-- Stars -->
+  <circle cx="45" cy="25" r="0.8" fill="#5a5a6a"/>
+  <circle cx="120" cy="40" r="0.6" fill="#4a4a5a"/>
+  <circle cx="200" cy="15" r="1" fill="#5a5a6a"/>
+  <circle cx="280" cy="55" r="0.5" fill="#4a4a5a"/>
+  <circle cx="350" cy="30" r="0.7" fill="#5a5a6a"/>
+  <circle cx="420" cy="45" r="0.6" fill="#4a4a5a"/>
+  <circle cx="500" cy="20" r="0.9" fill="#5a5a6a"/>
+  <circle cx="580" cy="50" r="0.5" fill="#4a4a5a"/>
+  <circle cx="650" cy="35" r="0.7" fill="#5a5a6a"/>
+  <circle cx="720" cy="25" r="0.6" fill="#5a5a6a"/>
+  <circle cx="780" cy="42" r="0.8" fill="#4a4a5a"/>
+  <circle cx="150" cy="80" r="0.4" fill="#3a6a8a"/>
+  <circle cx="380" cy="75" r="0.5" fill="#3a6a8a"/>
+  <circle cx="600" cy="85" r="0.4" fill="#3a6a8a"/>
+
+  <!-- Planet curvature -->
+  <ellipse cx="400" cy="220" rx="500" ry="120" fill="url(#ob-planet)"/>
+  <ellipse cx="400" cy="218" rx="480" ry="115" fill="url(#ob-atmosphere)"/>
+
+  <!-- Space station silhouette -->
+  <rect x="80" y="95" width="180" height="25" fill="url(#ob-hull)"/>
+  <rect x="85" y="90" width="40" height="35" fill="url(#ob-hull)"/>
+  <rect x="135" y="85" width="60" height="40" fill="url(#ob-hull)"/>
+  <rect x="205" y="90" width="45" height="35" fill="url(#ob-hull)"/>
+  <rect x="135" y="85" width="60" height="8" fill="#3a6a8a"/>
+  <line x1="80" y1="108" x2="260" y2="108" stroke="#3a6a8a" stroke-width="0.5"/>
+  <line x1="135" y1="85" x2="195" y2="85" stroke="#2a2a3a" stroke-width="0.5"/>
+  <line x1="85" y1="90" x2="125" y2="90" stroke="#2a2a3a" stroke-width="0.5"/>
+
+  <!-- Second station module -->
+  <rect x="420" y="105" width="140" height="20" fill="url(#ob-hull)"/>
+  <rect x="440" y="98" width="50" height="32" fill="url(#ob-hull)"/>
+  <rect x="500" y="92" width="70" height="38" fill="url(#ob-hull)"/>
+  <rect x="500" y="92" width="70" height="6" fill="#3a6a8a"/>
+  <line x1="420" y1="115" x2="560" y2="115" stroke="#3a6a8a" stroke-width="0.5"/>
+  <line x1="440" y1="98" x2="490" y2="98" stroke="#2a2a3a" stroke-width="0.5"/>
+
+  <!-- Debris field -->
+  <rect x="300" y="130" width="8" height="15" fill="#5a5a6a" transform="rotate(-25 304 137)"/>
+  <rect x="340" y="125" width="6" height="12" fill="#4a4a5a" transform="rotate(15 343 131)"/>
+  <rect x="380" y="135" width="10" height="8" fill="#5a5a6a" transform="rotate(-10 385 139)"/>
+  <polygon points="620,140 628,145 625,152 617,147" fill="#4a4a5a"/>
+  <polygon points="680,128 686,132 684,138 678,134" fill="#5a5a6a"/>
+  <rect x="720" y="142" width="5" height="10" fill="#4a4a5a" transform="rotate(20 722 147)"/>
+
+  <!-- Docking arm -->
+  <rect x="255" y="100" width="25" height="8" fill="url(#ob-hull)"/>
+  <rect x="278" y="102" width="35" height="5" fill="#5a5a6a"/>
+  <circle cx="295" cy="104" r="4" fill="#3a6a8a"/>
+</svg>
