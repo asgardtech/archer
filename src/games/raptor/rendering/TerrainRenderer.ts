@@ -129,8 +129,13 @@ export class TerrainRenderer {
       const asset = this.config.structurePool[
         Math.floor(Math.random() * this.config.structurePool.length)
       ];
-      const w = 32 + Math.random() * 32;
-      const h = 32 + Math.random() * 32;
+      const size = 32 + Math.random() * 32;
+      const img = this.assets.getOptional(asset);
+      const aspectRatio = img && img.naturalWidth && img.naturalHeight
+        ? img.naturalWidth / img.naturalHeight
+        : 1;
+      const w = size * aspectRatio;
+      const h = size;
       const placed = this.tryPlace(w, h, occupiedRects);
       if (placed) {
         segment.structures.push({
@@ -153,8 +158,13 @@ export class TerrainRenderer {
       const asset = this.config.propPool[
         Math.floor(Math.random() * this.config.propPool.length)
       ];
-      const w = 12 + Math.random() * 16;
-      const h = 12 + Math.random() * 16;
+      const size = 12 + Math.random() * 16;
+      const img = this.assets.getOptional(asset);
+      const aspectRatio = img && img.naturalWidth && img.naturalHeight
+        ? img.naturalWidth / img.naturalHeight
+        : 1;
+      const w = size * aspectRatio;
+      const h = size;
       segment.props.push({
         asset,
         x: Math.random() * (this.width - w),
