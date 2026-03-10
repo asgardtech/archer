@@ -537,19 +537,21 @@ export class RaptorGame implements IGame {
     for (const enemy of this.enemies) {
       enemy.update(dt, this.height);
 
-      if (enemy.canFire() && this.enemyBullets.length < MAX_ENEMY_BULLETS) {
-        const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
-        for (const eb of result.bullets) {
-          const sprite = this.assets.getOptional(eb.spriteKey);
-          if (sprite) eb.setSprite(sprite);
-          this.enemyBullets.push(eb);
-        }
-        if (result.bullets.length > 0) {
-          const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
-          enemy.resetFireCooldown(
-            (1 / config.enemyFireRateMultiplier) * (1 / weaponConfig.fireRateMultiplier)
-          );
-          this.sound.play(result.soundEvent);
+      if (enemy.canFire()) {
+        const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
+        if (this.enemyBullets.length + weaponConfig.projectileCount <= MAX_ENEMY_BULLETS) {
+          const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
+          for (const eb of result.bullets) {
+            const sprite = this.assets.getOptional(eb.spriteKey);
+            if (sprite) eb.setSprite(sprite);
+            this.enemyBullets.push(eb);
+          }
+          if (result.bullets.length > 0) {
+            enemy.resetFireCooldown(
+              (1 / config.enemyFireRateMultiplier) * (1 / weaponConfig.fireRateMultiplier)
+            );
+            this.sound.play(result.soundEvent);
+          }
         }
       }
     }

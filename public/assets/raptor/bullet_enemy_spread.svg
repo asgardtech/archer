@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8">
+  <defs>
+    <radialGradient id="spread-glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FFDD44" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#FF8800" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#CC4400" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spread-core" cx="0.5" cy="0.4" r="0.4">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#FFCC66"/>
+      <stop offset="100%" stop-color="#FF8800"/>
+    </radialGradient>
+  </defs>
+  <circle cx="4" cy="4" r="3.5" fill="url(#spread-glow)"/>
+  <circle cx="4" cy="4" r="2" fill="url(#spread-core)"/>
+  <circle cx="4" cy="3.5" r="0.8" fill="#FFFFCC" opacity="0.85"/>
+</svg>

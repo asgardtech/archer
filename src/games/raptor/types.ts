@@ -44,11 +44,11 @@ export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = 
     damage: 15,
     projectileSpeed: 280,
     projectileCount: 3,
-    spreadAngle: 0.5,
+    spreadAngle: 0.5, // radians between each adjacent bullet in the fan
     homing: false,
     homingStrength: 0,
     fireRateMultiplier: 0.7,
-    spriteKey: "bullet_enemy",
+    spriteKey: "bullet_enemy_spread",
   },
   missile: {
     type: "missile",
@@ -301,7 +301,7 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     fireRate: 0.5,
     width: 40,
     height: 36,
-    weaponType: "standard",
+    weaponType: "spread",
   },
   boss: {
     variant: "boss",
