@@ -6,6 +6,7 @@ const SEGMENT_COUNT = 6;
 const MAX_STRUCTURES_PER_SEGMENT = 4;
 const MAX_PROPS_PER_SEGMENT = 8;
 const MAX_AMBIENT_PARTICLES = 100;
+const MAX_SECONDARY_PARTICLES = 80;
 const GROUND_SCROLL_SPEED = 60;
 
 interface PlacedObject {
@@ -52,6 +53,8 @@ export class TerrainRenderer {
   private config: TerrainLayerConfig | null = null;
   private segments: TerrainSegment[] = [];
   private ambientParticles: AmbientParticle[] = [];
+  private secondaryParticles: AmbientParticle[] = [];
+  private litStructureSet: Set<string> = new Set();
   private scrollOffset = 0;
 
   constructor(width: number, height: number, assets: AssetLoader) {
@@ -65,6 +68,8 @@ export class TerrainRenderer {
     this.reset();
     this.initSegments();
     this.initAmbientParticles();
+    this.initSecondaryParticles();
+    this.litStructureSet = new Set(config.litStructures);
   }
 
   resize(width: number, height: number): void {
@@ -74,12 +79,16 @@ export class TerrainRenderer {
       this.reset();
       this.initSegments();
       this.initAmbientParticles();
+      this.initSecondaryParticles();
+      this.litStructureSet = new Set(this.config.litStructures);
     }
   }
 
   reset(): void {
     this.segments = [];
     this.ambientParticles = [];
+    this.secondaryParticles = [];
+    this.litStructureSet = new Set();
     this.scrollOffset = 0;
   }
 
@@ -217,6 +226,15 @@ export class TerrainRenderer {
     }
   }
 
+  private initSecondaryParticles(): void {
+    if (!this.config?.secondaryParticles) return;
+    const cfg = this.config.secondaryParticles;
+    const count = Math.min(cfg.count, MAX_SECONDARY_PARTICLES);
+    for (let i = 0; i < count; i++) {
+      this.secondaryParticles.push(this.createParticle(cfg, true));
+    }
+  }
+
   private createParticle(cfg: AmbientParticleConfig, randomY: boolean): AmbientParticle {
     return {
       x: Math.random() * this.width,
@@ -271,13 +289,39 @@ export class TerrainRenderer {
         this.ambientParticles.pop();
       }
     }
+
+    if (this.config.secondaryParticles) {
+      const cfg = this.config.secondaryParticles;
+      for (const p of this.secondaryParticles) {
+        p.y += p.speed * dt;
+        p.x += p.drift * dt;
+        if (p.y > this.height + 10 || p.y < -10 || p.x < -10 || p.x > this.width + 10) {
+          const fresh = this.createParticle(cfg, false);
+          if (fresh.speed < 0) {
+            fresh.y = this.height + 5;
+          }
+          p.x = fresh.x;
+          p.y = fresh.y;
+          p.speed = fresh.speed;
+          p.size = fresh.size;
+          p.drift = fresh.drift;
+          p.alpha = fresh.alpha;
+        }
+      }
+      while (this.secondaryParticles.length > MAX_SECONDARY_PARTICLES) {
+        this.secondaryParticles.pop();
+      }
+    }
   }
 
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.config) return;
     this.renderGround(ctx);
     this.renderStructures(ctx);
+    this.renderHaze(ctx);
     this.renderAmbientParticles(ctx);
+    this.renderSecondaryParticles(ctx);
+    this.renderScanlines(ctx);
   }
 
   renderGround(ctx: CanvasRenderingContext2D): void {
@@ -371,6 +415,9 @@ export class TerrainRenderer {
         const img = this.assets.getOptional(struct.asset);
         if (!img) continue;
         ctx.save();
+        if (this.litStructureSet.has(struct.asset)) {
+          ctx.globalAlpha = 0.7 + Math.random() * 0.3;
+        }
         if (struct.mirrored) {
           ctx.translate(struct.x + struct.width, sy);
           ctx.scale(-1, 1);
@@ -395,6 +442,53 @@ export class TerrainRenderer {
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
     }
+    ctx.restore();
+  }
+
+  private renderHaze(ctx: CanvasRenderingContext2D): void {
+    if (!this.config?.hazeColor || !this.config.hazeOpacity) return;
+
+    const driftOffset = Math.sin(this.scrollOffset * 0.002) * this.height * 0.1;
+
+    ctx.save();
+    ctx.fillStyle = this.config.hazeColor;
+
+    ctx.globalAlpha = this.config.hazeOpacity;
+    ctx.fillRect(0, driftOffset - this.height * 0.1, this.width, this.height * 0.6);
+
+    ctx.globalAlpha = this.config.hazeOpacity * 0.5;
+    ctx.fillRect(0, this.height * 0.4 + driftOffset * 0.5, this.width, this.height * 0.6);
+
+    ctx.restore();
+  }
+
+  private renderSecondaryParticles(ctx: CanvasRenderingContext2D): void {
+    if (!this.config?.secondaryParticles || this.secondaryParticles.length === 0) return;
+
+    const color = this.config.secondaryParticles.color;
+    ctx.save();
+    for (const p of this.secondaryParticles) {
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  private renderScanlines(ctx: CanvasRenderingContext2D): void {
+    if (!this.config?.scanlines) return;
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let y = 0; y < this.height; y += 3) {
+      ctx.moveTo(0, y + 0.5);
+      ctx.lineTo(this.width, y + 0.5);
+    }
+    ctx.stroke();
     ctx.restore();
   }
 }

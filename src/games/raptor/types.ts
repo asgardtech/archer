@@ -179,6 +179,11 @@ export interface TerrainLayerConfig {
   hasWater: boolean;
   hasRoads: boolean;
   ambientParticles?: AmbientParticleConfig;
+  hazeColor?: string;
+  hazeOpacity?: number;
+  secondaryParticles?: AmbientParticleConfig;
+  scanlines?: boolean;
+  litStructures?: string[];
 }
 
 export interface RaptorLevelConfig {
