@@ -1,4 +1,5 @@
 import { AudioManager } from "../../../shared/AudioManager";
+import { LEVELS } from "../levels";
 import { RaptorGameState, RaptorSoundEvent } from "../types";
 
 const DEBOUNCE_MS = 50;
@@ -249,7 +250,7 @@ export class SoundSystem {
       this.musicInterval = null;
     }
     this.audio.stopBuffer("menu");
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= LEVELS.length; i++) {
       this.audio.stopBuffer(`level_${i}`);
     }
   }
