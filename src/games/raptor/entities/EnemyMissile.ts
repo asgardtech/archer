@@ -61,7 +61,7 @@ export class EnemyMissile extends EnemyBullet {
     const size = this.radius * 2;
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
-    ctx.rotate(this.angle);
+    ctx.rotate(-this.angle);
     ctx.drawImage(this.sprite!, -size / 2, -size / 2, size, size);
     ctx.restore();
   }
@@ -71,7 +71,7 @@ export class EnemyMissile extends EnemyBullet {
     const bodyLen = r * 2.5;
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
-    ctx.rotate(this.angle);
+    ctx.rotate(-this.angle);
 
     ctx.fillStyle = "#ff8800";
     ctx.beginPath();
