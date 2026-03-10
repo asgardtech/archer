@@ -380,8 +380,8 @@ describe("Scenario: Save data is cleared on victory", () => {
     expect(SaveSystem.hasSave()).toBe(true);
 
     const { game } = createPlayingGame();
-    game.currentLevel = 4;
-    game.spawner.configure(LEVELS[4]);
+    game.currentLevel = LEVELS.length - 1;
+    game.spawner.configure(LEVELS[LEVELS.length - 1]);
 
     for (let t = 0; t < 200; t += 0.1) {
       game.spawner.update(0.1, 800);
