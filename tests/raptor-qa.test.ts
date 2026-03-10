@@ -767,15 +767,15 @@ describe("Scenario: Advancing to the next level", () => {
   });
 });
 
-describe("Scenario: Victory after completing all 5 levels", () => {
-  test("there are exactly 5 levels", () => {
-    expect(LEVELS.length).toBe(5);
+describe("Scenario: Victory after completing all levels", () => {
+  test("there are exactly 10 levels", () => {
+    expect(LEVELS.length).toBe(10);
   });
 
   test("completing the last level should lead to victory state", () => {
     const { game } = createPlayingGame();
-    game.currentLevel = 4;
-    game.spawner.configure(LEVELS[4]);
+    game.currentLevel = LEVELS.length - 1;
+    game.spawner.configure(LEVELS[LEVELS.length - 1]);
 
     for (let t = 0; t < 200; t += 0.1) {
       game.spawner.update(0.1, 800);
@@ -794,9 +794,9 @@ describe("Scenario: Victory after completing all 5 levels", () => {
 // LEVELS
 // ════════════════════════════════════════════════════════════════
 
-describe("Scenario: Game has 5 levels with correct names", () => {
-  test("there should be exactly 5 levels", () => {
-    expect(LEVELS.length).toBe(5);
+describe("Scenario: Game has 10 levels with correct names", () => {
+  test("there should be exactly 10 levels", () => {
+    expect(LEVELS.length).toBe(10);
   });
 
   test("level names should be correct", () => {
@@ -806,6 +806,11 @@ describe("Scenario: Game has 5 levels with correct names", () => {
       "Mountain Assault",
       "Arctic Thunder",
       "Final Fortress",
+      "Shipyard Ruins",
+      "Scorched Wastes",
+      "Industrial Core",
+      "Orbital Debris",
+      "Cylon Stronghold",
     ];
     const actualNames = LEVELS.map((l) => l.name);
     expect(actualNames).toEqual(expectedNames);

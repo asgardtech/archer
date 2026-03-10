@@ -155,7 +155,9 @@ export interface BackgroundLayerConfig {
   opacity: number;
 }
 
-export type LevelTheme = "coastal" | "desert" | "mountain" | "arctic" | "fortress";
+export type LevelTheme =
+  | "coastal" | "desert" | "mountain" | "arctic" | "fortress"
+  | "shipyard" | "wasteland" | "industrial" | "orbital" | "stronghold";
 
 export interface AmbientParticleConfig {
   color: string;
