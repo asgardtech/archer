@@ -80,6 +80,7 @@ export class TerrainRenderer {
       this.initSegments();
       this.initAmbientParticles();
       this.initSecondaryParticles();
+      this.litStructureSet = new Set(this.config.litStructures);
     }
   }
 
