@@ -7,7 +7,6 @@ const MAX_STRUCTURES_PER_SEGMENT = 4;
 const MAX_PROPS_PER_SEGMENT = 8;
 const MAX_AMBIENT_PARTICLES = 100;
 const GROUND_SCROLL_SPEED = 60;
-const HORIZON_SCROLL_SPEED = 0.15;
 
 interface PlacedObject {
   asset: string;
@@ -53,7 +52,6 @@ export class TerrainRenderer {
   private config: TerrainLayerConfig | null = null;
   private segments: TerrainSegment[] = [];
   private ambientParticles: AmbientParticle[] = [];
-  private horizonY = 0;
   private scrollOffset = 0;
 
   constructor(width: number, height: number, assets: AssetLoader) {
@@ -82,7 +80,6 @@ export class TerrainRenderer {
   reset(): void {
     this.segments = [];
     this.ambientParticles = [];
-    this.horizonY = 0;
     this.scrollOffset = 0;
   }
 
@@ -225,7 +222,6 @@ export class TerrainRenderer {
     if (!this.config) return;
 
     this.scrollOffset += GROUND_SCROLL_SPEED * dt;
-    this.horizonY += GROUND_SCROLL_SPEED * HORIZON_SCROLL_SPEED * dt;
 
     for (const seg of this.segments) {
       seg.y += GROUND_SCROLL_SPEED * 0.6 * dt;
@@ -269,32 +265,15 @@ export class TerrainRenderer {
 
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.config) return;
-    this.renderHorizon(ctx);
     this.renderGround(ctx);
     this.renderStructures(ctx);
     this.renderAmbientParticles(ctx);
   }
 
-  renderHorizon(ctx: CanvasRenderingContext2D): void {
-    if (!this.config) return;
-
-    const horizonHeight = 200;
-    const horizonScreenY = this.height * 0.15 + (this.horizonY % 20);
-
-    for (const assetKey of this.config.horizonAssets) {
-      const img = this.assets.getOptional(assetKey);
-      if (!img) continue;
-      ctx.save();
-      ctx.globalAlpha = 0.6;
-      ctx.drawImage(img, 0, horizonScreenY - horizonHeight * 0.5, this.width, horizonHeight);
-      ctx.restore();
-    }
-  }
-
   renderGround(ctx: CanvasRenderingContext2D): void {
     if (!this.config) return;
 
-    const groundStartY = this.height * 0.25;
+    const groundStartY = 0;
     ctx.save();
     ctx.fillStyle = this.config.groundColor;
     ctx.fillRect(0, groundStartY, this.width, this.height - groundStartY);
