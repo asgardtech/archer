@@ -2,6 +2,7 @@ import { Projectile, WEAPON_CONFIGS } from "../types";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
 import { LaserBeam } from "../entities/LaserBeam";
+import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
 import { Enemy } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { Player } from "../entities/Player";
@@ -25,6 +26,11 @@ export interface EnemyPlayerHit {
 
 export interface PowerUpPlayerHit {
   powerUp: PowerUp;
+}
+
+export interface EnemyBeamPlayerHit {
+  beam: EnemyLaserBeam;
+  damage: number;
 }
 
 export interface SplashHit {
@@ -177,6 +183,32 @@ export class CollisionSystem {
                     powerUp.left, powerUp.top, powerUp.right, powerUp.bottom)) {
         powerUp.alive = false;
         hits.push({ powerUp });
+      }
+    }
+    return hits;
+  }
+
+  checkEnemyBeamPlayer(
+    beams: EnemyLaserBeam[],
+    player: Player,
+    canvasHeight: number,
+    dt: number
+  ): EnemyBeamPlayerHit[] {
+    if (!player.alive || player.isInvincible) return [];
+
+    const hits: EnemyBeamPlayerHit[] = [];
+    for (const beam of beams) {
+      if (!beam.isActive) continue;
+
+      const halfWidth = beam.beamWidth / 2;
+      const beamLeft = beam.beamX - halfWidth;
+      const beamRight = beam.beamX + halfWidth;
+      const beamTop = beam.originY;
+      const beamBottom = canvasHeight;
+
+      if (this.aabb(beamLeft, beamTop, beamRight, beamBottom,
+                    player.left, player.top, player.right, player.bottom)) {
+        hits.push({ beam, damage: beam.damage * dt });
       }
     }
     return hits;

@@ -107,6 +107,7 @@ export class RaptorGame implements IGame {
   private boundResize: (() => void) | null = null;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
   private dpr = 1;
+  private enemyLaserHitSoundCooldown = 0;
 
   public onExit: (() => void) | null = null;
 
@@ -540,7 +541,16 @@ export class RaptorGame implements IGame {
 
       if (enemy.canFire()) {
         const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
-        if (this.enemyBullets.length + weaponConfig.projectileCount <= MAX_ENEMY_BULLETS) {
+
+        if (enemy.weaponType === "laser") {
+          const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
+          if (result.laserActivated) {
+            const totalCycle = (weaponConfig.beamWarmupDuration ?? 0.5)
+              + (weaponConfig.beamActiveDuration ?? 2.5)
+              + (weaponConfig.beamCooldownDuration ?? 3.0);
+            enemy.resetFireCooldown(totalCycle * enemy.fireRate);
+          }
+        } else if (this.enemyBullets.length + weaponConfig.projectileCount <= MAX_ENEMY_BULLETS) {
           const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
           for (const eb of result.bullets) {
             const sprite = this.assets.getOptional(eb.spriteKey);
@@ -551,10 +561,17 @@ export class RaptorGame implements IGame {
             enemy.resetFireCooldown(
               (1 / config.enemyFireRateMultiplier) * (1 / weaponConfig.fireRateMultiplier)
             );
-            this.sound.play(result.soundEvent);
+            if (result.soundEvent) {
+              this.sound.play(result.soundEvent);
+            }
           }
         }
       }
+    }
+
+    const laserSoundEvents = this.enemyWeaponSystem.updateLasers(dt, this.player.pos.x);
+    for (const evt of laserSoundEvents) {
+      this.sound.play(evt);
     }
 
     for (const proj of this.projectiles) {
@@ -621,6 +638,24 @@ export class RaptorGame implements IGame {
           this.sound.play("enemy_missile_hit");
           this.vfx.triggerExplosionFlash(hit.bullet.pos.x, hit.bullet.pos.y, 15);
         }
+      }
+    }
+
+    this.enemyLaserHitSoundCooldown = Math.max(0, this.enemyLaserHitSoundCooldown - dt);
+    const beamHits = this.collisions.checkEnemyBeamPlayer(
+      this.enemyWeaponSystem.getActiveLasers(), this.player, this.height, dt
+    );
+    for (const hit of beamHits) {
+      const dead = this.player.takeDamage(hit.damage);
+      if (dead) {
+        this.sound.play("player_destroy");
+        this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
+        this.vfx.triggerScreenShake(8, 0.4);
+        this.weaponSystem.laserBeam.active = false;
+      } else if (this.enemyLaserHitSoundCooldown <= 0) {
+        this.sound.play("enemy_laser_hit");
+        this.vfx.triggerScreenShake(1, 0.05);
+        this.enemyLaserHitSoundCooldown = 0.15;
       }
     }
 
@@ -699,6 +734,7 @@ export class RaptorGame implements IGame {
       this.enemyBullets = [];
       this.powerUps = [];
       this.weaponSystem.laserBeam.active = false;
+      this.enemyWeaponSystem.resetLasers();
       this.sound.stopMusic();
 
       if (this.currentLevel >= LEVELS.length - 1) {
@@ -870,6 +906,8 @@ export class RaptorGame implements IGame {
     this.powerUps = [];
     this.player.reset(this.width, this.height, fullReset);
 
+    this.enemyWeaponSystem.resetLasers();
+
     if (fullReset) {
       this.weaponSystem.reset();
       this.powerUpManager.reset();
@@ -1039,6 +1077,9 @@ export class RaptorGame implements IGame {
       }
       for (const eb of this.enemyBullets) {
         eb.render(this.ctx);
+      }
+      for (const beam of this.enemyWeaponSystem.getActiveLasers()) {
+        beam.render(this.ctx, this.height);
       }
       for (const exp of this.explosions) {
         exp.render(this.ctx);

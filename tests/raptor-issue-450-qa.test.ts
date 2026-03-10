@@ -201,12 +201,11 @@ describe("EnemyWeaponSystem", () => {
       expect(result.bullets).toHaveLength(0);
     });
 
-    test("returns a sound event (laser fire stub)", () => {
+    test("returns null soundEvent and laserActivated flag", () => {
       const enemy = makeEnemy("laser");
       const result = system.fire(enemy, 400, 500);
-      // The laser type returns enemy_laser_fire but since bullets are empty,
-      // in the game loop the sound won't play (guarded by bullets.length > 0)
-      expect(result.soundEvent).toBeDefined();
+      expect(result.soundEvent).toBeNull();
+      expect(result.laserActivated).toBe(true);
     });
   });
 
@@ -550,9 +549,10 @@ describe("Sound event per weapon type", () => {
     expect(result.soundEvent).toBe("enemy_missile_fire");
   });
 
-  test("laser -> enemy_laser_fire", () => {
+  test("laser -> null (sound emitted by beam lifecycle)", () => {
     const result = system.fire(makeEnemy("laser"), 400, 500);
-    expect(result.soundEvent).toBe("enemy_laser_fire");
+    expect(result.soundEvent).toBeNull();
+    expect(result.laserActivated).toBe(true);
   });
 });
 

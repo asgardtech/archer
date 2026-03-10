@@ -1,11 +1,13 @@
 import { EnemyWeaponType, ENEMY_WEAPON_CONFIGS, RaptorSoundEvent } from "../types";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { EnemyMissile } from "../entities/EnemyMissile";
+import { EnemyLaserBeam, EnemyLaserBeamConfig } from "../entities/EnemyLaserBeam";
 import { Enemy } from "../entities/Enemy";
 
 export interface EnemyFireResult {
   bullets: EnemyBullet[];
-  soundEvent: RaptorSoundEvent;
+  soundEvent: RaptorSoundEvent | null;
+  laserActivated?: boolean;
 }
 
 const WEAPON_SOUND_MAP: Record<EnemyWeaponType, RaptorSoundEvent> = {
@@ -16,6 +18,8 @@ const WEAPON_SOUND_MAP: Record<EnemyWeaponType, RaptorSoundEvent> = {
 };
 
 export class EnemyWeaponSystem {
+  private laserBeams: Map<Enemy, EnemyLaserBeam> = new Map();
+
   fire(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
     const weaponType = enemy.weaponType;
     const config = ENEMY_WEAPON_CONFIGS[weaponType];
@@ -33,11 +37,73 @@ export class EnemyWeaponSystem {
       case "missile":
         return this.fireMissile(enemy, targetX, targetY);
       case "laser":
-        return { bullets: [], soundEvent: "enemy_laser_fire" };
+        return this.fireLaser(enemy, targetX);
       default:
         console.warn(`[EnemyWeaponSystem] Unhandled weapon type "${weaponType}", falling back to standard`);
         return this.fireStandard(enemy, targetX, targetY);
     }
+  }
+
+  fireLaser(enemy: Enemy, playerX: number): EnemyFireResult {
+    let beam = this.laserBeams.get(enemy);
+
+    if (!beam) {
+      const config = ENEMY_WEAPON_CONFIGS["laser"];
+      const beamConfig: EnemyLaserBeamConfig = {
+        warmupDuration: config.beamWarmupDuration ?? 0.5,
+        activeDuration: config.beamActiveDuration ?? 2.5,
+        cooldownDuration: config.beamCooldownDuration ?? 3.0,
+        beamWidth: config.beamWidth ?? 8,
+        trackingSpeed: config.beamTrackingSpeed ?? 40,
+        damage: config.damage,
+      };
+      beam = new EnemyLaserBeam(beamConfig);
+      this.laserBeams.set(enemy, beam);
+    }
+
+    if (beam.canFire) {
+      beam.activate(enemy.pos.x, enemy.bottom, playerX);
+      return { bullets: [], soundEvent: null, laserActivated: true };
+    }
+
+    return { bullets: [], soundEvent: null };
+  }
+
+  updateLasers(dt: number, playerX: number): RaptorSoundEvent[] {
+    const soundEvents: RaptorSoundEvent[] = [];
+
+    for (const [enemy, beam] of this.laserBeams.entries()) {
+      if (!enemy.alive) {
+        beam.reset();
+        this.laserBeams.delete(enemy);
+        continue;
+      }
+
+      beam.update(dt, enemy.pos.x, enemy.bottom, playerX);
+
+      if (beam.didJustActivate) {
+        soundEvents.push("enemy_laser_fire");
+      }
+    }
+
+    return soundEvents;
+  }
+
+  getActiveLasers(): EnemyLaserBeam[] {
+    const active: EnemyLaserBeam[] = [];
+    for (const beam of this.laserBeams.values()) {
+      if (beam.isFiring) {
+        active.push(beam);
+      }
+    }
+    return active;
+  }
+
+  resetLasers(): void {
+    for (const beam of this.laserBeams.values()) {
+      beam.reset();
+    }
+    this.laserBeams.clear();
   }
 
   private fireStandard(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
