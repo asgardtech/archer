@@ -7,6 +7,7 @@ import { PowerUpManager } from "./systems/PowerUpManager";
 import { SoundSystem } from "./systems/SoundSystem";
 import { WeaponSystem } from "./systems/WeaponSystem";
 import { SaveSystem } from "./systems/SaveSystem";
+import { CommandRegistry, CommandContext, registerLevelCommands } from "./systems/CommandRegistry";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
@@ -82,6 +83,7 @@ export class RaptorGame implements IGame {
   private hud: HUD;
   private audio: AudioManager;
   private sound: SoundSystem;
+  private commandRegistry: CommandRegistry;
 
   private assets: AssetLoader;
   private vfx: VFXManager;
@@ -110,8 +112,14 @@ export class RaptorGame implements IGame {
 
     this.input = new InputManager(this.canvas, width, height);
     this.devConsole = new DevConsole();
+    this.commandRegistry = new CommandRegistry();
+    registerLevelCommands(this.commandRegistry);
     this.devConsole.onSubmit = (cmd) => {
       this.devConsole.log(`> ${cmd}`);
+      const output = this.commandRegistry.dispatch(cmd, this.buildCommandContext());
+      for (const line of output) {
+        this.devConsole.log(line);
+      }
     };
     this.collisions = new CollisionSystem();
     this.spawner = new EnemySpawner();
@@ -759,6 +767,26 @@ export class RaptorGame implements IGame {
     this.startLevel(data.levelReached, false);
     this.player.lives = data.lives;
     this.powerUpManager.setWeapon(data.weapon);
+  }
+
+  private buildCommandContext(): CommandContext {
+    return {
+      currentLevel: this.currentLevel,
+      levelCount: LEVELS.length,
+      levels: LEVELS,
+      startLevel: (idx: number) => {
+        this.startLevel(idx);
+      },
+      setState: (state: "playing") => {
+        this.state = state;
+      },
+      startMusic: (levelIndex: number) => {
+        this.sound.startMusic("playing", levelIndex);
+      },
+      stopMusic: () => {
+        this.sound.stopMusic();
+      },
+    };
   }
 
   private startLevel(levelIndex: number, fullReset = false): void {
