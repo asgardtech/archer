@@ -192,6 +192,17 @@ export class VFXManager {
     });
   }
 
+  addRocketTrail(x: number, y: number): void {
+    if (this.trails.length > 300) return;
+    this.trails.push({
+      x: x + (Math.random() - 0.5) * 6,
+      y: y + (Math.random() - 0.5) * 3,
+      alpha: 0.6,
+      size: 2.0 + Math.random() * 2.0,
+      color: `rgba(${140 + Math.random() * 40}, ${130 + Math.random() * 30}, ${100 + Math.random() * 30}, 0.7)`,
+    });
+  }
+
   addPlasmaTrail(x: number, y: number): void {
     if (this.trails.length > 300) return;
     this.trails.push({

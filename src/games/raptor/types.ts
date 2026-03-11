@@ -105,6 +105,7 @@ export type RaptorPowerUpType =
   | "weapon-plasma"
   | "weapon-ion"
   | "weapon-autogun"
+  | "weapon-rocket"
   | "mega-bomb";
 
 export type RaptorSoundEvent =
@@ -135,9 +136,10 @@ export type RaptorSoundEvent =
   | "plasma_hit"
   | "ion_fire"
   | "ion_hit"
+  | "rocket_fire"
   | "mega_bomb_fire";
 
-export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun";
+export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun" | "rocket";
 
 export interface RaptorSaveData {
   version: 1;
@@ -241,6 +243,18 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     homingStrength: 1.0,
     splashRadius: 0,
     rapidFireBonus: 1.8,
+    spreadShotBehavior: "multi-projectile",
+  },
+  "rocket": {
+    type: "rocket",
+    damage: 5,
+    fireRateMultiplier: 0.25,
+    projectileSpeed: 450,
+    piercing: false,
+    homing: false,
+    homingStrength: 0,
+    splashRadius: 55,
+    rapidFireBonus: 1.4,
     spreadShotBehavior: "multi-projectile",
   },
 };

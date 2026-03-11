@@ -15,6 +15,7 @@ import { Missile } from "./entities/Missile";
 import { TrackingBullet } from "./entities/TrackingBullet";
 import { PlasmaBolt } from "./entities/PlasmaBolt";
 import { IonBolt } from "./entities/IonBolt";
+import { Rocket } from "./entities/Rocket";
 import { Enemy } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
 import { EnemyMissile } from "./entities/EnemyMissile";
@@ -612,6 +613,9 @@ export class RaptorGame implements IGame {
       } else if (proj instanceof IonBolt) {
         proj.update(dt, this.width);
         this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(0, 188, 212, 0.5)", 2);
+      } else if (proj instanceof Rocket) {
+        proj.update(dt, this.width, this.height);
+        this.vfx.addRocketTrail(proj.pos.x, proj.pos.y + 8);
       }
     }
     for (const eb of this.enemyBullets) {
@@ -647,6 +651,9 @@ export class RaptorGame implements IGame {
         } else if (hit.bullet instanceof IonBolt) {
           this.sound.play("ion_hit");
           this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 22);
+        } else if (hit.bullet instanceof Rocket) {
+          this.sound.play("missile_hit");
+          this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 30);
         }
       } else {
         if (hit.bullet instanceof Missile) {
@@ -658,6 +665,9 @@ export class RaptorGame implements IGame {
         } else if (hit.bullet instanceof IonBolt) {
           this.sound.play("ion_hit");
           this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 14);
+        } else if (hit.bullet instanceof Rocket) {
+          this.sound.play("missile_hit");
+          this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 20);
         } else if (hit.enemy.variant === "boss") {
           this.sound.play("boss_hit");
         } else {
@@ -768,6 +778,11 @@ export class RaptorGame implements IGame {
             this.sound.play("weapon_switch");
           }
           break;
+        case "weapon-rocket":
+          if (this.powerUpManager.setWeapon("rocket")) {
+            this.sound.play("weapon_switch");
+          }
+          break;
         case "mega-bomb":
           if (this.player.bombs < this.player.maxBombs) {
             this.player.bombs++;
@@ -853,6 +868,9 @@ export class RaptorGame implements IGame {
     } else if (proj instanceof IonBolt) {
       const sprite = this.assets.getOptional("bullet_ion");
       if (sprite) proj.setSprite(sprite);
+    } else if (proj instanceof Rocket) {
+      const sprite = this.assets.getOptional("bullet_rocket");
+      if (sprite) proj.setSprite(sprite);
     }
   }
 
@@ -863,6 +881,7 @@ export class RaptorGame implements IGame {
     plasma: "weapon-plasma",
     "ion-cannon": "weapon-ion",
     "auto-gun": "weapon-autogun",
+    rocket: "weapon-rocket",
   };
 
   private spawnPowerUp(x: number, y: number): void {
