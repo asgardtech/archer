@@ -8,7 +8,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       { enemyVariant: "scout", count: 5, spawnDelay: 0.8, waveDelay: 1, formation: "line", speed: 150 },
       { enemyVariant: "scout", count: 6, spawnDelay: 0.7, waveDelay: 8, formation: "v", speed: 160 },
       { enemyVariant: "scout", count: 5, spawnDelay: 0.6, waveDelay: 15, formation: "random", speed: 170 },
-      { enemyVariant: "drone", count: 8, spawnDelay: 0.4, waveDelay: 18, formation: "random", speed: 160 },
+      { enemyVariant: "drone", count: 7, spawnDelay: 0.4, waveDelay: 18, formation: "random", speed: 160 },
       { enemyVariant: "scout", count: 7, spawnDelay: 0.5, waveDelay: 22, formation: "sweep", speed: 180 },
     ],
     bossEnabled: false,
