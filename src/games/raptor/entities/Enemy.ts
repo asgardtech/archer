@@ -46,7 +46,7 @@ export class Enemy {
   get top(): number { return this.pos.y - this.height / 2; }
   get bottom(): number { return this.pos.y + this.height / 2; }
 
-  update(dt: number, canvasHeight: number): void {
+  update(dt: number, canvasHeight: number, targetX?: number): void {
     if (!this.alive) return;
     this.time += dt;
 
@@ -61,6 +61,13 @@ export class Enemy {
       }
     } else if (this.variant === "interceptor") {
       this.pos.x += Math.sin(this.time * 4) * 120 * dt;
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "drone") {
+      this.pos.x += (Math.random() - 0.5) * 40 * dt;
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "swarmer" && targetX !== undefined) {
+      const dx = targetX - this.pos.x;
+      this.pos.x += dx * 1.5 * dt;
       this.pos.y += this.vel.y * dt;
     } else {
       this.pos.y += this.vel.y * dt;
@@ -125,6 +132,12 @@ export class Enemy {
           break;
         case "dart":
           this.renderDart(ctx, x, y, isFlashing);
+          break;
+        case "drone":
+          this.renderDrone(ctx, x, y, isFlashing);
+          break;
+        case "swarmer":
+          this.renderSwarmer(ctx, x, y, isFlashing);
           break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
@@ -296,11 +309,51 @@ export class Enemy {
     ctx.fill();
   }
 
+  private renderDrone(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const r = this.width / 2;
+    ctx.fillStyle = flash ? "#ffffff" : "#88ee88";
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI / 2;
+      const px = x + r * Math.cos(angle);
+      const py = y + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#338833";
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderSwarmer(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+    ctx.fillStyle = flash ? "#ffffff" : "#cc44cc";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw, y - hh);
+    ctx.lineTo(x - hw * 0.3, y - hh * 0.1);
+    ctx.lineTo(x, y - hh * 0.5);
+    ctx.lineTo(x + hw * 0.3, y - hh * 0.1);
+    ctx.lineTo(x + hw, y - hh);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#662266";
+    ctx.beginPath();
+    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   private static readonly VARIANT_CATEGORY_COLORS: Record<string, string> = {
     interceptor: "#66cc66",
     dart: "#66cc66",
-    drone: "#66cc66",
-    swarmer: "#66cc66",
+    drone: "#88ee88",
+    swarmer: "#cc44cc",
     gunship: "#cc9933",
     cruiser: "#cc9933",
     destroyer: "#cc3333",
