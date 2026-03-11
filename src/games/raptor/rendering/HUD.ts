@@ -65,8 +65,11 @@ interface SliderLayout {
 }
 
 export class HUD {
+  private static readonly TIER_SUFFIXES = ["", " II", " III"];
+
   private isTouchDevice: boolean;
   private assets: AssetLoader | null = null;
+  private tierFlashTimer = 0;
 
   constructor(isTouchDevice: boolean) {
     this.isTouchDevice = isTouchDevice;
@@ -339,6 +342,10 @@ export class HUD {
     return clickX >= px && clickX <= px + panelW && clickY >= py && clickY <= py + panelH;
   }
 
+  triggerTierFlash(): void {
+    this.tierFlashTimer = 0.5;
+  }
+
   render(
     ctx: CanvasRenderingContext2D,
     state: RaptorGameState,
@@ -353,7 +360,8 @@ export class HUD {
     currentWeapon?: WeaponType,
     hasSave?: boolean,
     chargeLevel?: number,
-    bombs?: number
+    bombs?: number,
+    weaponTier?: number
   ): void {
     switch (state) {
       case "loading":
@@ -362,10 +370,10 @@ export class HUD {
         this.renderMenu(ctx, width, height, hasSave);
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.actionText("for next level"));
         break;
@@ -558,7 +566,8 @@ export class HUD {
     activeEffects?: ReadonlyArray<ActiveEffect>,
     currentWeapon?: WeaponType,
     chargeLevel?: number,
-    bombs?: number
+    bombs?: number,
+    weaponTier?: number
   ): void {
     ctx.save();
 
@@ -595,7 +604,7 @@ export class HUD {
     }
 
     if (currentWeapon) {
-      this.renderWeaponIndicator(ctx, currentWeapon, width, chargeLevel);
+      this.renderWeaponIndicator(ctx, currentWeapon, width, chargeLevel, weaponTier);
     }
 
     ctx.restore();
@@ -663,17 +672,39 @@ export class HUD {
     ctx.restore();
   }
 
-  private renderWeaponIndicator(ctx: CanvasRenderingContext2D, weapon: WeaponType, width: number, chargeLevel?: number): void {
+  private brightenColor(hex: string, factor: number): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const br = Math.min(255, Math.round(r * factor));
+    const bg = Math.min(255, Math.round(g * factor));
+    const bb = Math.min(255, Math.round(b * factor));
+    return `rgb(${br}, ${bg}, ${bb})`;
+  }
+
+  private renderWeaponIndicator(ctx: CanvasRenderingContext2D, weapon: WeaponType, width: number, chargeLevel?: number, weaponTier: number = 1): void {
     const label = WEAPON_LABELS[weapon];
+    const suffix = HUD.TIER_SUFFIXES[Math.min(weaponTier, 3) - 1];
     const color = WEAPON_COLORS[weapon];
     const x = width / 2;
     const y = 42;
 
+    const brightness = 1.0 + (weaponTier - 1) * 0.2;
+
     ctx.font = `6px ${RETRO_FONT}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillStyle = color;
-    ctx.fillText(`[${label}]`, x, y);
+    ctx.fillStyle = this.brightenColor(color, brightness);
+    ctx.fillText(`[${label}${suffix}]`, x, y);
+
+    if (this.tierFlashTimer > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.tierFlashTimer / 0.5;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(`[${label}${suffix}]`, x, y);
+      ctx.restore();
+      this.tierFlashTimer = Math.max(0, this.tierFlashTimer - 1 / 60);
+    }
 
     if (weapon === "ion-cannon" && chargeLevel !== undefined && chargeLevel > 0) {
       const barW = 40;

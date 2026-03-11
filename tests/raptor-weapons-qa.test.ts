@@ -151,8 +151,8 @@ describe("Missile Weapon", () => {
   test("Player obtains missile weapon from weapon-missile power-up", () => {
     const pm = new PowerUpManager();
     expect(pm.currentWeapon).toBe("machine-gun");
-    const changed = pm.setWeapon("missile");
-    expect(changed).toBe(true);
+    const result = pm.setWeapon("missile");
+    expect(result).toBe("switched");
     expect(pm.currentWeapon).toBe("missile");
   });
 
@@ -383,8 +383,8 @@ describe("Missile Splash Damage", () => {
 describe("Laser Weapon", () => {
   test("Player obtains laser weapon from weapon-laser power-up", () => {
     const pm = new PowerUpManager();
-    const changed = pm.setWeapon("laser");
-    expect(changed).toBe(true);
+    const result = pm.setWeapon("laser");
+    expect(result).toBe("switched");
     expect(pm.currentWeapon).toBe("laser");
   });
 
@@ -755,11 +755,13 @@ describe("Weapon Switching & Persistence", () => {
     expect(pm.currentWeapon).toBe("machine-gun");
   });
 
-  test("Collecting same weapon power-up returns false (no change)", () => {
+  test("Collecting same weapon power-up upgrades tier instead of no-op", () => {
     const pm = new PowerUpManager();
     pm.setWeapon("missile");
-    const changed = pm.setWeapon("missile");
-    expect(changed).toBe(false);
+    expect(pm.weaponTier).toBe(1);
+    const result = pm.setWeapon("missile");
+    expect(result).toBe("upgraded");
+    expect(pm.weaponTier).toBe(2);
     expect(pm.currentWeapon).toBe("missile");
   });
 
@@ -1075,12 +1077,20 @@ describe("PowerUpManager Weapon Management", () => {
     expect(pm.currentWeapon).toBe("missile");
   });
 
-  test("setWeapon returns true on change, false on same", () => {
+  test("setWeapon returns switched on change, upgraded/maxed on same", () => {
     const pm = new PowerUpManager();
-    expect(pm.setWeapon("missile")).toBe(true);
-    expect(pm.setWeapon("missile")).toBe(false);
-    expect(pm.setWeapon("laser")).toBe(true);
-    expect(pm.setWeapon("laser")).toBe(false);
+    expect(pm.setWeapon("missile")).toBe("switched");
+    expect(pm.weaponTier).toBe(1);
+    expect(pm.setWeapon("missile")).toBe("upgraded");
+    expect(pm.weaponTier).toBe(2);
+    expect(pm.setWeapon("missile")).toBe("upgraded");
+    expect(pm.weaponTier).toBe(3);
+    expect(pm.setWeapon("missile")).toBe("maxed");
+    expect(pm.weaponTier).toBe(3);
+    expect(pm.setWeapon("laser")).toBe("switched");
+    expect(pm.weaponTier).toBe(1);
+    expect(pm.setWeapon("laser")).toBe("upgraded");
+    expect(pm.weaponTier).toBe(2);
   });
 });
 
@@ -1098,7 +1108,7 @@ describe("HUD Weapon Indicator", () => {
   });
 
   test("All WeaponType values are represented in WEAPON_CONFIGS", () => {
-    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(5);
+    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(7);
     expect(WEAPON_CONFIGS["machine-gun"]).toBeDefined();
     expect(WEAPON_CONFIGS["missile"]).toBeDefined();
     expect(WEAPON_CONFIGS["laser"]).toBeDefined();

@@ -20,13 +20,15 @@ export class LaserBeam {
     this.tickInterval = 1 / BASE_TICK_RATE;
   }
 
-  setModifiers(rapidFire: boolean, spreadShot: boolean): void {
+  setModifiers(rapidFire: boolean, spreadShot: boolean, tierVisualScale: number = 1.0, tierDamageMultiplier: number = 1.0): void {
     const tickRate = Math.min(
       MAX_TICK_RATE,
       BASE_TICK_RATE * (rapidFire ? 1.5 : 1)
     );
     this.tickInterval = 1 / tickRate;
-    this.beamWidth = spreadShot ? SPREAD_WIDTH : BASE_WIDTH;
+    const baseWidth = spreadShot ? SPREAD_WIDTH : BASE_WIDTH;
+    this.beamWidth = baseWidth * tierVisualScale;
+    this.damage = 1 * tierDamageMultiplier;
   }
 
   updatePosition(playerX: number, playerTopY: number): void {

@@ -606,7 +606,7 @@ describe("status command", () => {
     expect(result).toContainEqual("Level: 3 - Mountain Assault");
     expect(result).toContainEqual("Score: 1250 (Total: 3400)");
     expect(result).toContainEqual("Lives: 3 | Shield: 75");
-    expect(result).toContainEqual("Weapon: missile");
+    expect(result).toContainEqual("Weapon: missile (Tier 1)");
     expect(result).toContainEqual("Enemies: 4 | Bullets: 12");
 
     const effectsLine = result.find((l: string) => l.startsWith("Active effects:"));
@@ -662,7 +662,7 @@ describe("status command", () => {
     const ctx = makeContext({ weaponSystem });
 
     const result = registry.dispatch("status", ctx);
-    expect(result).toContainEqual("Weapon: laser");
+    expect(result).toContainEqual("Weapon: laser (Tier 1)");
   });
 
   test("Status shows enemy and bullet counts", () => {

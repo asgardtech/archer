@@ -754,34 +754,22 @@ export class RaptorGame implements IGame {
           this.player.lives++;
           break;
         case "weapon-missile":
-          if (this.powerUpManager.setWeapon("missile")) {
-            this.sound.play("weapon_switch");
-          }
+          this.handleWeaponPickup("missile");
           break;
         case "weapon-laser":
-          if (this.powerUpManager.setWeapon("laser")) {
-            this.sound.play("weapon_switch");
-          }
+          this.handleWeaponPickup("laser");
           break;
         case "weapon-plasma":
-          if (this.powerUpManager.setWeapon("plasma")) {
-            this.sound.play("weapon_switch");
-          }
+          this.handleWeaponPickup("plasma");
           break;
         case "weapon-ion":
-          if (this.powerUpManager.setWeapon("ion-cannon")) {
-            this.sound.play("weapon_switch");
-          }
+          this.handleWeaponPickup("ion-cannon");
           break;
         case "weapon-autogun":
-          if (this.powerUpManager.setWeapon("auto-gun")) {
-            this.sound.play("weapon_switch");
-          }
+          this.handleWeaponPickup("auto-gun");
           break;
         case "weapon-rocket":
-          if (this.powerUpManager.setWeapon("rocket")) {
-            this.sound.play("weapon_switch");
-          }
+          this.handleWeaponPickup("rocket");
           break;
         case "mega-bomb":
           if (this.player.bombs < this.player.maxBombs) {
@@ -830,6 +818,7 @@ export class RaptorGame implements IGame {
           weapon: this.powerUpManager.currentWeapon,
           savedAt: new Date().toISOString(),
           bombs: this.player.bombs,
+          weaponTier: this.powerUpManager.weaponTier,
         });
       }
     }
@@ -849,6 +838,17 @@ export class RaptorGame implements IGame {
       if (Math.random() < config.powerUpDropChance) {
         this.spawnPowerUp(enemy.pos.x, enemy.pos.y);
       }
+    }
+  }
+
+  private handleWeaponPickup(weaponType: WeaponType): void {
+    const result = this.powerUpManager.setWeapon(weaponType);
+    if (result === "switched") {
+      this.sound.play("weapon_switch");
+    } else if (result === "upgraded") {
+      this.sound.play("weapon_upgrade");
+      this.vfx.triggerTierUpFlash(this.player.pos.x, this.player.top);
+      this.hud.triggerTierFlash();
     }
   }
 
@@ -889,8 +889,14 @@ export class RaptorGame implements IGame {
     const weaponDrops = config.weaponDrops;
     let type: RaptorPowerUpType | undefined;
 
-    if (weaponDrops && weaponDrops.length > 0 && Math.random() < 0.25) {
-      const weaponType = weaponDrops[Math.floor(Math.random() * weaponDrops.length)];
+    if (weaponDrops && weaponDrops.length > 0 && Math.random() < 0.30) {
+      let weaponType: WeaponType;
+      const currentWeapon = this.powerUpManager.currentWeapon;
+      if (weaponDrops.includes(currentWeapon) && Math.random() < 0.40) {
+        weaponType = currentWeapon;
+      } else {
+        weaponType = weaponDrops[Math.floor(Math.random() * weaponDrops.length)];
+      }
       type = RaptorGame.WEAPON_DROP_MAP[weaponType];
     }
 
@@ -936,7 +942,11 @@ export class RaptorGame implements IGame {
     this.startLevel(data.levelReached, false);
     this.player.lives = data.lives;
     this.player.bombs = data.bombs ?? 0;
+    // Order matters: setWeapon() may transiently bump the tier (e.g. "upgraded"
+    // when restoring the default machine-gun), so setTier() must come second to
+    // overwrite with the saved value.
     this.powerUpManager.setWeapon(data.weapon);
+    this.powerUpManager.setTier(data.weaponTier ?? 1);
   }
 
   private buildCommandContext(): CommandContext {
@@ -1208,7 +1218,8 @@ export class RaptorGame implements IGame {
       this.weaponSystem.currentWeapon,
       this.hasSaveData,
       this.weaponSystem.chargeLevel,
-      this.player.bombs
+      this.player.bombs,
+      this.powerUpManager.weaponTier
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
