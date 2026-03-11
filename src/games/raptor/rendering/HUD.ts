@@ -348,7 +348,8 @@ export class HUD {
     activeEffects?: ReadonlyArray<ActiveEffect>,
     currentWeapon?: WeaponType,
     hasSave?: boolean,
-    chargeLevel?: number
+    chargeLevel?: number,
+    bombs?: number
   ): void {
     switch (state) {
       case "loading":
@@ -357,10 +358,10 @@ export class HUD {
         this.renderMenu(ctx, width, height, hasSave);
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.actionText("for next level"));
         break;
@@ -552,7 +553,8 @@ export class HUD {
     height: number,
     activeEffects?: ReadonlyArray<ActiveEffect>,
     currentWeapon?: WeaponType,
-    chargeLevel?: number
+    chargeLevel?: number,
+    bombs?: number
   ): void {
     ctx.save();
 
@@ -577,6 +579,7 @@ export class HUD {
     ctx.fillText(`Score: ${score}`, 10, 14);
 
     this.renderLivesIcons(ctx, lives, 10, 28);
+    this.renderBombCount(ctx, bombs ?? 0, 10, 40);
 
     ctx.font = `9px ${RETRO_FONT}`;
     ctx.textAlign = "center";
@@ -594,6 +597,7 @@ export class HUD {
     ctx.restore();
 
     this.renderShieldBar(ctx, shield, height);
+    this.renderTouchBombButton(ctx, bombs ?? 0, width, height);
   }
 
   private renderShieldBar(ctx: CanvasRenderingContext2D, shield: number, canvasHeight: number): void {
@@ -701,6 +705,62 @@ export class HUD {
         ctx.fillText("\u2665", ix, y);
       }
     }
+  }
+
+  private getBombButtonRect(width: number, height: number) {
+    const size = 44;
+    const margin = 14;
+    return { x: width - size - margin, y: height - size - margin, w: size, h: size };
+  }
+
+  isBombButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    if (!this.isTouchDevice) return false;
+    const btn = this.getBombButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  private renderTouchBombButton(ctx: CanvasRenderingContext2D, bombs: number, width: number, height: number): void {
+    if (!this.isTouchDevice) return;
+    const btn = this.getBombButtonRect(width, height);
+
+    ctx.save();
+    ctx.globalAlpha = bombs > 0 ? 0.7 : 0.3;
+    ctx.fillStyle = bombs > 0 ? "#e74c3c" : "#555555";
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.font = `10px ${RETRO_FONT}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("BOMB", btn.x + btn.w / 2, btn.y + btn.h / 2 - 6);
+
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.fillText(`${bombs}`, btn.x + btn.w / 2, btn.y + btn.h / 2 + 8);
+    ctx.restore();
+  }
+
+  private renderBombCount(ctx: CanvasRenderingContext2D, bombs: number, startX: number, y: number): void {
+    ctx.save();
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#e74c3c";
+    const label = "BOMB";
+    ctx.fillText(label, startX, y);
+    const labelW = ctx.measureText(label).width;
+    for (let i = 0; i < bombs; i++) {
+      ctx.fillText("\u25CF", startX + labelW + 4 + i * 10, y);
+    }
+    ctx.restore();
   }
 
   private renderActiveEffects(

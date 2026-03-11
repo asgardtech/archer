@@ -1,7 +1,7 @@
 import { Vec2, RaptorPowerUpType } from "../types";
 
 const FALL_SPEED = 100;
-const POWER_UP_TYPES: RaptorPowerUpType[] = ["spread-shot", "rapid-fire", "shield-restore", "bonus-life"];
+const POWER_UP_TYPES: RaptorPowerUpType[] = ["spread-shot", "rapid-fire", "shield-restore", "bonus-life", "mega-bomb"];
 
 const COLORS: Record<RaptorPowerUpType, string> = {
   "spread-shot": "#3498db",
@@ -12,6 +12,7 @@ const COLORS: Record<RaptorPowerUpType, string> = {
   "weapon-laser": "#9b59b6",
   "weapon-plasma": "#8e44ad",
   "weapon-ion": "#00bcd4",
+  "mega-bomb": "#e74c3c",
 };
 
 const ICONS: Record<RaptorPowerUpType, string> = {
@@ -23,6 +24,7 @@ const ICONS: Record<RaptorPowerUpType, string> = {
   "weapon-laser": "L",
   "weapon-plasma": "P",
   "weapon-ion": "I",
+  "mega-bomb": "B",
 };
 
 const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
@@ -34,6 +36,7 @@ const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
   "weapon-laser": "powerup_laser",
   "weapon-plasma": "powerup_plasma",
   "weapon-ion": "powerup_ion",
+  "mega-bomb": "powerup_bomb",
 };
 
 export { SPRITE_KEYS as POWERUP_SPRITE_KEYS };

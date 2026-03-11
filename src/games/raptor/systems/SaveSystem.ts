@@ -72,6 +72,12 @@ export class SaveSystem {
 
     if (typeof d.savedAt !== "string" || d.savedAt.length === 0) return false;
 
+    if (d.bombs !== undefined) {
+      if (typeof d.bombs !== "number" || !Number.isInteger(d.bombs) || d.bombs < 0 || d.bombs > 5) {
+        return false;
+      }
+    }
+
     return true;
   }
 }

@@ -491,6 +491,25 @@ export class RaptorGame implements IGame {
 
     const config = this.currentLevelConfig;
 
+    if (this.input.wasClicked && this.hud.isBombButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+      this.input.wasBombPressed = true;
+    }
+
+    if (this.input.wasBombPressed && this.player.bombs > 0) {
+      this.player.bombs--;
+      this.sound.play("mega_bomb_fire");
+      this.vfx.triggerMegaBombFlash(this.width, this.height);
+      this.vfx.triggerScreenShake(12, 0.6);
+      for (const enemy of this.enemies) {
+        if (enemy.alive) {
+          const destroyed = enemy.hit(10);
+          if (destroyed) {
+            this.handleEnemyDestroyed(enemy, config);
+          }
+        }
+      }
+    }
+
     this.weaponSystem.setWeapon(this.powerUpManager.currentWeapon);
 
     const { newProjectiles, soundEvent } = this.weaponSystem.update(
@@ -740,6 +759,11 @@ export class RaptorGame implements IGame {
             this.sound.play("weapon_switch");
           }
           break;
+        case "mega-bomb":
+          if (this.player.bombs < this.player.maxBombs) {
+            this.player.bombs++;
+          }
+          break;
       }
     }
 
@@ -781,6 +805,7 @@ export class RaptorGame implements IGame {
           lives: this.player.lives,
           weapon: this.powerUpManager.currentWeapon,
           savedAt: new Date().toISOString(),
+          bombs: this.player.bombs,
         });
       }
     }
@@ -878,6 +903,7 @@ export class RaptorGame implements IGame {
     this.vfx.reset();
     this.startLevel(data.levelReached, false);
     this.player.lives = data.lives;
+    this.player.bombs = data.bombs ?? 0;
     this.powerUpManager.setWeapon(data.weapon);
   }
 
@@ -1149,7 +1175,8 @@ export class RaptorGame implements IGame {
       this.powerUpManager.getActive(),
       this.weaponSystem.currentWeapon,
       this.hasSaveData,
-      this.weaponSystem.chargeLevel
+      this.weaponSystem.chargeLevel,
+      this.player.bombs
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
