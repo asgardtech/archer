@@ -837,6 +837,12 @@ export class RaptorGame implements IGame {
       this.sound.play("boss_destroy");
       this.spawner.markBossDefeated();
       this.vfx.triggerScreenShake(10, 0.5);
+    } else if (enemy.variant === "juggernaut") {
+      this.sound.play("enemy_destroy");
+      this.vfx.triggerScreenShake(8, 0.4);
+      if (Math.random() < config.powerUpDropChance) {
+        this.spawnPowerUp(enemy.pos.x, enemy.pos.y);
+      }
     } else {
       this.sound.play("enemy_destroy");
       if (Math.random() < config.powerUpDropChance) {

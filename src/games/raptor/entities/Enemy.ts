@@ -77,6 +77,21 @@ export class Enemy {
       } else {
         this.pos.y += this.vel.y * dt;
       }
+    } else if (this.variant === "destroyer") {
+      const stopY = canvasHeight * 0.25;
+      if (this.pos.y < stopY) {
+        this.pos.y += this.vel.y * dt;
+      } else {
+        this.pos.x += Math.sin(this.time * 0.6) * 40 * dt;
+        this.pos.y += Math.sin(this.time * 0.3) * 5 * dt;
+      }
+    } else if (this.variant === "juggernaut") {
+      const targetY = canvasHeight * 0.2;
+      if (this.pos.y < targetY) {
+        this.pos.y += this.vel.y * dt;
+      } else {
+        this.pos.x += Math.sin(this.time * 1.0) * 70 * dt;
+      }
     } else {
       this.pos.y += this.vel.y * dt;
     }
@@ -85,7 +100,7 @@ export class Enemy {
       this.fireCooldown -= dt;
     }
 
-    if (this.variant !== "boss" && this.pos.y > canvasHeight + 50) {
+    if (this.variant !== "boss" && this.variant !== "destroyer" && this.variant !== "juggernaut" && this.pos.y > canvasHeight + 50) {
       this.alive = false;
     }
   }
@@ -153,6 +168,12 @@ export class Enemy {
         case "cruiser":
           this.renderCruiser(ctx, x, y, isFlashing);
           break;
+        case "destroyer":
+          this.renderDestroyer(ctx, x, y, isFlashing);
+          break;
+        case "juggernaut":
+          this.renderJuggernaut(ctx, x, y, isFlashing);
+          break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
           break;
@@ -177,6 +198,11 @@ export class Enemy {
       ctx.fillStyle = "rgba(255, 50, 50, 0.15)";
       ctx.beginPath();
       ctx.arc(x, y, this.width * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (this.variant === "juggernaut") {
+      ctx.fillStyle = "rgba(102, 68, 136, 0.15)";
+      ctx.beginPath();
+      ctx.arc(x, y, this.width * 0.65, 0, Math.PI * 2);
       ctx.fill();
     }
 
@@ -208,7 +234,7 @@ export class Enemy {
       }
     }
 
-    if (this.variant === "boss" || this.variant === "cruiser") {
+    if (this.variant === "boss" || this.variant === "cruiser" || this.variant === "destroyer" || this.variant === "juggernaut") {
       this.renderHPBar(ctx, x, y);
     }
   }
@@ -430,6 +456,82 @@ export class Enemy {
 
     ctx.fillStyle = flash ? "#cccccc" : "#3a4d5e";
     ctx.fillRect(x - 5, y - 4, 10, 8);
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderDestroyer(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#884444";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.3, y + hh * 0.7);
+    ctx.lineTo(x - hw, y + hh * 0.1);
+    ctx.lineTo(x - hw, y - hh * 0.4);
+    ctx.lineTo(x - hw * 0.5, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.4);
+    ctx.lineTo(x + hw, y + hh * 0.1);
+    ctx.lineTo(x + hw * 0.3, y + hh * 0.7);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#aa5555";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#663333";
+    ctx.fillRect(x - hw * 0.85 - 3, y - hh * 0.1, 6, 10);
+    ctx.fillRect(x + hw * 0.85 - 3, y - hh * 0.1, 6, 10);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#552222";
+    ctx.fillRect(x - 6, y - 5, 12, 10);
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderJuggernaut(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = "rgba(102, 68, 136, 0.15)";
+    ctx.beginPath();
+    ctx.arc(x, y, hw * 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#ffffff" : "#664488";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.35, y + hh * 0.6);
+    ctx.lineTo(x - hw, y + hh * 0.15);
+    ctx.lineTo(x - hw * 0.9, y - hh * 0.3);
+    ctx.lineTo(x - hw * 0.4, y - hh);
+    ctx.lineTo(x + hw * 0.4, y - hh);
+    ctx.lineTo(x + hw * 0.9, y - hh * 0.3);
+    ctx.lineTo(x + hw, y + hh * 0.15);
+    ctx.lineTo(x + hw * 0.35, y + hh * 0.6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#8866aa";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#553377";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.6, y - hh * 0.2);
+    ctx.lineTo(x + hw * 0.6, y - hh * 0.2);
+    ctx.moveTo(x - hw * 0.5, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.5, y + hh * 0.2);
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#443366";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.1, 7, 0, Math.PI * 2);
+    ctx.fill();
 
     this.renderHPBar(ctx, x, y);
   }
