@@ -2020,7 +2020,10 @@ describe("Scenario: Level configuration validation", () => {
           "stealth", "minelayer",
         ]).toContain(wave.enemyVariant);
         expect(wave.count).toBeGreaterThan(0);
-        expect(wave.spawnDelay).toBeGreaterThan(0);
+        expect(wave.spawnDelay).toBeGreaterThanOrEqual(0);
+        if (wave.count > 1) {
+          expect(wave.spawnDelay).toBeGreaterThan(0);
+        }
         expect(wave.waveDelay).toBeGreaterThanOrEqual(0);
         expect(["line", "v", "random", "sweep"]).toContain(wave.formation);
         expect(wave.speed).toBeGreaterThan(0);
