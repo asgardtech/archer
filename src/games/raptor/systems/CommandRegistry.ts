@@ -170,6 +170,7 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
     }
 
     ctx.powerUpManager.setWeapon(resolved);
+    ctx.powerUpManager.setTier(1);
     ctx.weaponSystem.setWeapon(resolved);
     return `Weapon switched to ${resolved}`;
   });

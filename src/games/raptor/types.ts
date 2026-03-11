@@ -285,7 +285,7 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     spreadShotBehavior: "multi-projectile",
     tiers: [
       TIER_1,
-      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 2, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 4, projectileSpread: 0.06, visualScale: 1 },
     ],
   },
