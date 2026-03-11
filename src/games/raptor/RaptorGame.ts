@@ -942,6 +942,9 @@ export class RaptorGame implements IGame {
     this.startLevel(data.levelReached, false);
     this.player.lives = data.lives;
     this.player.bombs = data.bombs ?? 0;
+    // Order matters: setWeapon() may transiently bump the tier (e.g. "upgraded"
+    // when restoring the default machine-gun), so setTier() must come second to
+    // overwrite with the saved value.
     this.powerUpManager.setWeapon(data.weapon);
     this.powerUpManager.setTier(data.weaponTier ?? 1);
   }
