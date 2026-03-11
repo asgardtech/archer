@@ -3,6 +3,7 @@ import { Player } from "../entities/Player";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
 import { PlasmaBolt } from "../entities/PlasmaBolt";
+import { IonBolt } from "../entities/IonBolt";
 import { LaserBeam } from "../entities/LaserBeam";
 import { PowerUpManager } from "./PowerUpManager";
 
@@ -14,12 +15,21 @@ export class WeaponSystem {
   public laserBeam: LaserBeam = new LaserBeam();
   private fireTimer = 0;
   private laserSoundTimer = 0;
+  private chargeTimer = 0;
 
   setWeapon(type: WeaponType): void {
     if (this.currentWeapon === type) return;
     this.currentWeapon = type;
     this.fireTimer = 0;
+    this.chargeTimer = 0;
     this.laserBeam.active = type === "laser";
+  }
+
+  get chargeLevel(): number {
+    if (this.currentWeapon !== "ion-cannon") return 0;
+    const config = WEAPON_CONFIGS["ion-cannon"];
+    const maxCharge = config.chargeTime ?? 2.0;
+    return Math.min(1, this.chargeTimer / maxCharge);
   }
 
   getCurrentConfig() {
@@ -49,6 +59,29 @@ export class WeaponSystem {
 
     this.laserBeam.active = false;
     this.laserSoundTimer = 0;
+
+    if (this.currentWeapon === "ion-cannon") {
+      const maxCharge = weaponConfig.chargeTime ?? 2.0;
+      const effectiveMaxCharge = rapidFire
+        ? maxCharge / weaponConfig.rapidFireBonus
+        : maxCharge;
+
+      this.chargeTimer = Math.min(this.chargeTimer + dt, effectiveMaxCharge);
+
+      if (this.chargeTimer >= effectiveMaxCharge && existingProjectiles.length < MAX_PROJECTILES) {
+        const chargeLevel = 1.0;
+        if (spreadShot) {
+          newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, -0.1));
+          newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, 0.1));
+        } else {
+          newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel));
+        }
+        soundEvent = "ion_fire";
+        this.chargeTimer = 0;
+      }
+
+      return { newProjectiles, soundEvent };
+    }
 
     const rapidMultiplier = rapidFire ? weaponConfig.rapidFireBonus : 1;
     const baseFireRate = config.autoFireRate * weaponConfig.fireRateMultiplier;
@@ -108,6 +141,10 @@ export class WeaponSystem {
     return new PlasmaBolt(x, y, angle);
   }
 
+  private createIonBolt(x: number, y: number, chargeLevel: number, angle = 0): IonBolt {
+    return new IonBolt(x, y, chargeLevel, angle);
+  }
+
   getLaserSoundEvent(dt: number, hasHits: boolean): RaptorSoundEvent | null {
     if (hasHits) {
       this.laserSoundTimer = 0;
@@ -130,6 +167,7 @@ export class WeaponSystem {
   resetForNewLevel(): void {
     this.fireTimer = 0;
     this.laserSoundTimer = 0;
+    this.chargeTimer = 0;
     if (this.currentWeapon === "laser") {
       this.laserBeam.active = true;
       this.laserBeam.resetTimers();
@@ -142,6 +180,7 @@ export class WeaponSystem {
     this.currentWeapon = "machine-gun";
     this.fireTimer = 0;
     this.laserSoundTimer = 0;
+    this.chargeTimer = 0;
     this.laserBeam.reset();
   }
 }
