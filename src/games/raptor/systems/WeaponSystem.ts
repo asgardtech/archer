@@ -1,4 +1,4 @@
-import { WeaponType, WEAPON_CONFIGS, Projectile, RaptorLevelConfig, RaptorSoundEvent } from "../types";
+import { WeaponType, WEAPON_CONFIGS, WeaponTierConfig, Projectile, RaptorLevelConfig, RaptorSoundEvent } from "../types";
 import { Player } from "../entities/Player";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
@@ -38,6 +38,12 @@ export class WeaponSystem {
     return WEAPON_CONFIGS[this.currentWeapon];
   }
 
+  private getTierConfig(powerUpManager: PowerUpManager): WeaponTierConfig {
+    const config = WEAPON_CONFIGS[this.currentWeapon];
+    const tierIndex = Math.max(0, Math.min(2, powerUpManager.weaponTier - 1));
+    return config.tiers[tierIndex];
+  }
+
   update(
     dt: number,
     player: Player,
@@ -47,6 +53,7 @@ export class WeaponSystem {
     existingProjectiles: Projectile[]
   ): { newProjectiles: Projectile[]; soundEvent: RaptorSoundEvent | null } {
     const weaponConfig = WEAPON_CONFIGS[this.currentWeapon];
+    const tierConfig = this.getTierConfig(powerUpManager);
     const rapidFire = powerUpManager.hasUpgrade("rapid-fire");
     const spreadShot = powerUpManager.hasUpgrade("spread-shot");
     const newProjectiles: Projectile[] = [];
@@ -54,7 +61,7 @@ export class WeaponSystem {
 
     if (this.currentWeapon === "laser") {
       this.laserBeam.active = player.alive;
-      this.laserBeam.setModifiers(rapidFire, spreadShot);
+      this.laserBeam.setModifiers(rapidFire, spreadShot, tierConfig.visualScale, tierConfig.damageMultiplier);
       this.laserBeam.updatePosition(player.pos.x, player.top);
       return { newProjectiles: [], soundEvent: null };
     }
@@ -62,21 +69,32 @@ export class WeaponSystem {
     this.laserBeam.active = false;
     this.laserSoundTimer = 0;
 
+    const tierDamage = weaponConfig.damage * tierConfig.damageMultiplier;
+
     if (this.currentWeapon === "ion-cannon") {
       const maxCharge = weaponConfig.chargeTime ?? 2.0;
       const effectiveMaxCharge = rapidFire
-        ? maxCharge / weaponConfig.rapidFireBonus
-        : maxCharge;
+        ? maxCharge / (weaponConfig.rapidFireBonus * tierConfig.fireRateMultiplier)
+        : maxCharge / tierConfig.fireRateMultiplier;
 
       this.chargeTimer = Math.min(this.chargeTimer + dt, effectiveMaxCharge);
 
       if (this.chargeTimer >= effectiveMaxCharge && existingProjectiles.length < MAX_PROJECTILES) {
         const chargeLevel = 1.0;
         if (spreadShot) {
-          newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, -0.1));
-          newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, 0.1));
+          for (let i = 0; i < tierConfig.projectileCount; i++) {
+            const offset = tierConfig.projectileCount > 1
+              ? (i - (tierConfig.projectileCount - 1) / 2) * tierConfig.projectileSpread
+              : 0;
+            newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, -0.1 + offset, tierDamage));
+            newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, 0.1 + offset, tierDamage));
+          }
         } else {
-          newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel));
+          this.spawnProjectiles(
+            tierConfig, player.pos.x, player.top,
+            (x, y, angle) => this.createIonBolt(x, y, chargeLevel, angle, tierDamage),
+            newProjectiles
+          );
         }
         soundEvent = "ion_fire";
         this.chargeTimer = 0;
@@ -86,7 +104,7 @@ export class WeaponSystem {
     }
 
     const rapidMultiplier = rapidFire ? weaponConfig.rapidFireBonus : 1;
-    const baseFireRate = config.autoFireRate * weaponConfig.fireRateMultiplier;
+    const baseFireRate = config.autoFireRate * weaponConfig.fireRateMultiplier * tierConfig.fireRateMultiplier;
     const fireRate = baseFireRate * rapidMultiplier;
 
     if (fireRate <= 0) return { newProjectiles, soundEvent };
@@ -99,49 +117,91 @@ export class WeaponSystem {
 
       if (this.currentWeapon === "machine-gun") {
         if (spreadShot) {
-          newProjectiles.push(this.createBullet(player.pos.x, player.top, -0.2));
-          newProjectiles.push(this.createBullet(player.pos.x, player.top, 0));
-          newProjectiles.push(this.createBullet(player.pos.x, player.top, 0.2));
+          this.spawnProjectilesWithSpread(
+            tierConfig, player.pos.x, player.top,
+            [-0.2, 0, 0.2],
+            (x, y, angle) => this.createBullet(x, y, angle, tierDamage),
+            newProjectiles
+          );
         } else {
-          newProjectiles.push(this.createBullet(player.pos.x, player.top));
+          this.spawnProjectiles(
+            tierConfig, player.pos.x, player.top,
+            (x, y, angle) => this.createBullet(x, y, angle, tierDamage),
+            newProjectiles
+          );
         }
         soundEvent = "player_shoot";
       } else if (this.currentWeapon === "missile") {
         if (spreadShot) {
-          newProjectiles.push(this.createMissile(player.pos.x, player.top, -0.25));
-          newProjectiles.push(this.createMissile(player.pos.x, player.top, 0));
-          newProjectiles.push(this.createMissile(player.pos.x, player.top, 0.25));
+          this.spawnProjectilesWithSpread(
+            tierConfig, player.pos.x, player.top,
+            [-0.25, 0, 0.25],
+            (x, y, angle) => this.createMissile(x, y, angle, tierDamage),
+            newProjectiles
+          );
         } else {
-          newProjectiles.push(this.createMissile(player.pos.x, player.top));
+          this.spawnProjectiles(
+            tierConfig, player.pos.x, player.top,
+            (x, y, angle) => this.createMissile(x, y, angle, tierDamage),
+            newProjectiles
+          );
         }
         soundEvent = "missile_fire";
       } else if (this.currentWeapon === "plasma") {
         if (spreadShot) {
-          newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top, -0.2));
-          newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top, 0));
-          newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top, 0.2));
+          this.spawnProjectilesWithSpread(
+            tierConfig, player.pos.x, player.top,
+            [-0.2, 0, 0.2],
+            (x, y, angle) => this.createPlasmaBolt(x, y, angle, tierDamage),
+            newProjectiles
+          );
         } else {
-          newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top));
+          this.spawnProjectiles(
+            tierConfig, player.pos.x, player.top,
+            (x, y, angle) => this.createPlasmaBolt(x, y, angle, tierDamage),
+            newProjectiles
+          );
         }
         soundEvent = "plasma_fire";
       } else if (this.currentWeapon === "auto-gun") {
         if (spreadShot) {
-          newProjectiles.push(this.createTrackingBullet(player.pos.x - 12, player.top));
-          newProjectiles.push(this.createTrackingBullet(player.pos.x - 4, player.top));
-          newProjectiles.push(this.createTrackingBullet(player.pos.x + 4, player.top));
-          newProjectiles.push(this.createTrackingBullet(player.pos.x + 12, player.top));
+          const baseOffsets = [-12, -4, 4, 12];
+          for (let t = 0; t < tierConfig.projectileCount; t++) {
+            const tierOffset = tierConfig.projectileCount > 1
+              ? (t - (tierConfig.projectileCount - 1) / 2) * tierConfig.projectileSpread
+              : 0;
+            for (const xOff of baseOffsets) {
+              const b = this.createTrackingBullet(player.pos.x + xOff, player.top, tierOffset, tierDamage);
+              newProjectiles.push(b);
+            }
+          }
         } else {
-          newProjectiles.push(this.createTrackingBullet(player.pos.x - 4, player.top));
-          newProjectiles.push(this.createTrackingBullet(player.pos.x + 4, player.top));
+          const baseOffsets = [-4, 4];
+          for (let t = 0; t < tierConfig.projectileCount; t++) {
+            const tierOffset = tierConfig.projectileCount > 1
+              ? (t - (tierConfig.projectileCount - 1) / 2) * tierConfig.projectileSpread
+              : 0;
+            for (const xOff of baseOffsets) {
+              const b = this.createTrackingBullet(player.pos.x + xOff, player.top, tierOffset, tierDamage);
+              newProjectiles.push(b);
+            }
+          }
         }
         soundEvent = "player_shoot";
       } else if (this.currentWeapon === "rocket") {
         if (spreadShot) {
-          newProjectiles.push(this.createRocket(player.pos.x, player.top, -0.15));
-          newProjectiles.push(this.createRocket(player.pos.x, player.top, 0));
-          newProjectiles.push(this.createRocket(player.pos.x, player.top, 0.15));
+          this.spawnProjectilesWithSpread(
+            tierConfig, player.pos.x, player.top,
+            [-0.15, 0, 0.15],
+            (x, y, angle) => this.createRocket(x, y, angle, tierDamage),
+            newProjectiles
+          );
         } else {
-          newProjectiles.push(this.createRocket(player.pos.x, player.top));
+          this.spawnProjectiles(
+            tierConfig, player.pos.x, player.top,
+            (x, y, angle) => this.createRocket(x, y, angle, tierDamage),
+            newProjectiles
+          );
         }
         soundEvent = "rocket_fire";
       }
@@ -150,30 +210,73 @@ export class WeaponSystem {
     return { newProjectiles, soundEvent };
   }
 
-  private createBullet(x: number, y: number, angle = 0): Bullet {
-    return new Bullet(x, y, angle);
+  private spawnProjectiles(
+    tierConfig: WeaponTierConfig,
+    x: number, y: number,
+    factory: (x: number, y: number, angle: number) => Projectile,
+    out: Projectile[]
+  ): void {
+    for (let i = 0; i < tierConfig.projectileCount; i++) {
+      const angle = tierConfig.projectileCount > 1
+        ? (i - (tierConfig.projectileCount - 1) / 2) * tierConfig.projectileSpread
+        : 0;
+      out.push(factory(x, y, angle));
+    }
   }
 
-  private createMissile(x: number, y: number, angle = 0): Missile {
+  private spawnProjectilesWithSpread(
+    tierConfig: WeaponTierConfig,
+    x: number, y: number,
+    spreadAngles: number[],
+    factory: (x: number, y: number, angle: number) => Projectile,
+    out: Projectile[]
+  ): void {
+    for (let t = 0; t < tierConfig.projectileCount; t++) {
+      const tierOffset = tierConfig.projectileCount > 1
+        ? (t - (tierConfig.projectileCount - 1) / 2) * tierConfig.projectileSpread
+        : 0;
+      for (const spreadAngle of spreadAngles) {
+        out.push(factory(x, y, spreadAngle + tierOffset));
+      }
+    }
+  }
+
+  private createBullet(x: number, y: number, angle = 0, damage?: number): Bullet {
+    const b = new Bullet(x, y, angle);
+    if (damage !== undefined) b.damage = damage;
+    return b;
+  }
+
+  private createMissile(x: number, y: number, angle = 0, damage?: number): Missile {
     const config = WEAPON_CONFIGS["missile"];
-    return new Missile(x, y, angle, config.homingStrength);
+    const m = new Missile(x, y, angle, config.homingStrength);
+    if (damage !== undefined) m.damage = damage;
+    return m;
   }
 
-  private createPlasmaBolt(x: number, y: number, angle = 0): PlasmaBolt {
-    return new PlasmaBolt(x, y, angle);
+  private createPlasmaBolt(x: number, y: number, angle = 0, damage?: number): PlasmaBolt {
+    const p = new PlasmaBolt(x, y, angle);
+    if (damage !== undefined) p.damage = damage;
+    return p;
   }
 
-  private createTrackingBullet(x: number, y: number, angle = 0): TrackingBullet {
+  private createTrackingBullet(x: number, y: number, angle = 0, damage?: number): TrackingBullet {
     const config = WEAPON_CONFIGS["auto-gun"];
-    return new TrackingBullet(x, y, angle, config.homingStrength);
+    const t = new TrackingBullet(x, y, angle, config.homingStrength);
+    if (damage !== undefined) t.damage = damage;
+    return t;
   }
 
-  private createRocket(x: number, y: number, angle = 0): Rocket {
-    return new Rocket(x, y, angle);
+  private createRocket(x: number, y: number, angle = 0, damage?: number): Rocket {
+    const r = new Rocket(x, y, angle);
+    if (damage !== undefined) r.damage = damage;
+    return r;
   }
 
-  private createIonBolt(x: number, y: number, chargeLevel: number, angle = 0): IonBolt {
-    return new IonBolt(x, y, chargeLevel, angle);
+  private createIonBolt(x: number, y: number, chargeLevel: number, angle = 0, damage?: number): IonBolt {
+    const bolt = new IonBolt(x, y, chargeLevel, angle);
+    if (damage !== undefined) bolt.damage = damage;
+    return bolt;
   }
 
   getLaserSoundEvent(dt: number, hasHits: boolean): RaptorSoundEvent | null {

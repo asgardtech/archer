@@ -23,6 +23,7 @@ export const AUDIO_MANIFEST: AudioAssetManifest = {
     laser_fire:       "assets/raptor/audio/sfx/laser_fire.mp3",
     laser_hit:        "assets/raptor/audio/sfx/laser_hit.mp3",
     weapon_switch:    "assets/raptor/audio/sfx/weapon_switch.mp3",
+    weapon_upgrade:   "assets/raptor/audio/sfx/weapon_upgrade.mp3",
     enemy_missile_fire: "assets/raptor/audio/sfx/enemy_missile_fire.mp3",
     enemy_missile_hit:  "assets/raptor/audio/sfx/enemy_missile_hit.mp3",
     enemy_spread_fire:  "assets/raptor/audio/sfx/enemy_spread_fire.mp3",

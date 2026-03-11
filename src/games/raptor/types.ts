@@ -127,6 +127,7 @@ export type RaptorSoundEvent =
   | "laser_fire"
   | "laser_hit"
   | "weapon_switch"
+  | "weapon_upgrade"
   | "enemy_spread_fire"
   | "enemy_missile_fire"
   | "enemy_laser_fire"
@@ -155,6 +156,16 @@ export interface RaptorSaveData {
   savedAt: string;
   /** Mega bomb count at save point (0-5). */
   bombs?: number;
+  /** Weapon upgrade tier at save point (1-3, defaults to 1 if absent). */
+  weaponTier?: number;
+}
+
+export interface WeaponTierConfig {
+  damageMultiplier: number;
+  fireRateMultiplier: number;
+  projectileCount: number;
+  projectileSpread: number;
+  visualScale: number;
 }
 
 export interface WeaponConfig {
@@ -169,7 +180,10 @@ export interface WeaponConfig {
   rapidFireBonus: number;
   spreadShotBehavior: "multi-projectile" | "wider-beam";
   chargeTime?: number;
+  tiers: [WeaponTierConfig, WeaponTierConfig, WeaponTierConfig];
 }
+
+const TIER_1: WeaponTierConfig = { damageMultiplier: 1, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1 };
 
 export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
   "machine-gun": {
@@ -183,6 +197,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     splashRadius: 0,
     rapidFireBonus: 2.0,
     spreadShotBehavior: "multi-projectile",
+    tiers: [
+      TIER_1,
+      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 2, projectileSpread: 0.08, visualScale: 1 },
+    ],
   },
   "missile": {
     type: "missile",
@@ -195,6 +214,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     splashRadius: 40,
     rapidFireBonus: 1.5,
     spreadShotBehavior: "multi-projectile",
+    tiers: [
+      TIER_1,
+      { damageMultiplier: 1.33, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.33, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1 },
+    ],
   },
   "laser": {
     type: "laser",
@@ -207,6 +231,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     splashRadius: 0,
     rapidFireBonus: 1.5,
     spreadShotBehavior: "wider-beam",
+    tiers: [
+      TIER_1,
+      { damageMultiplier: 1.5, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1.33 },
+      { damageMultiplier: 2.0, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1.67 },
+    ],
   },
   "plasma": {
     type: "plasma",
@@ -219,6 +248,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     splashRadius: 30,
     rapidFireBonus: 1.8,
     spreadShotBehavior: "multi-projectile",
+    tiers: [
+      TIER_1,
+      { damageMultiplier: 1.5, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1.25 },
+      { damageMultiplier: 1.5, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.12, visualScale: 1 },
+    ],
   },
   "ion-cannon": {
     type: "ion-cannon",
@@ -232,6 +266,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     rapidFireBonus: 1.4,
     spreadShotBehavior: "multi-projectile",
     chargeTime: 2.0,
+    tiers: [
+      TIER_1,
+      { damageMultiplier: 1.4, fireRateMultiplier: 1.2, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.8, fireRateMultiplier: 1.4, projectileCount: 1, projectileSpread: 0, visualScale: 1.3 },
+    ],
   },
   "auto-gun": {
     type: "auto-gun",
@@ -244,6 +283,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     splashRadius: 0,
     rapidFireBonus: 1.8,
     spreadShotBehavior: "multi-projectile",
+    tiers: [
+      TIER_1,
+      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 2, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 4, projectileSpread: 0.06, visualScale: 1 },
+    ],
   },
   "rocket": {
     type: "rocket",
@@ -256,6 +300,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     splashRadius: 55,
     rapidFireBonus: 1.4,
     spreadShotBehavior: "multi-projectile",
+    tiers: [
+      TIER_1,
+      { damageMultiplier: 1.4, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.4, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.1, visualScale: 1 },
+    ],
   },
 };
 

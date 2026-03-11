@@ -78,6 +78,12 @@ export class SaveSystem {
       }
     }
 
+    if (d.weaponTier !== undefined) {
+      if (typeof d.weaponTier !== "number" || !Number.isInteger(d.weaponTier) || d.weaponTier < 1 || d.weaponTier > 3) {
+        return false;
+      }
+    }
+
     return true;
   }
 }

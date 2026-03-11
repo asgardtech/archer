@@ -141,6 +141,8 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
       const lines = ["Available weapons:"];
       const names = Object.keys(WEAPON_CONFIGS) as WeaponType[];
       const maxLen = Math.max(...names.map((n) => n.length));
+      const current = ctx.powerUpManager.currentWeapon;
+      const tier = ctx.powerUpManager.weaponTier;
 
       for (const name of names) {
         const cfg = WEAPON_CONFIGS[name];
@@ -156,7 +158,8 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
         if (cfg.homing) parts.push("HOMING");
         if (cfg.piercing) parts.push("PIERCING");
 
-        lines.push(`  ${paddedName} \u2014 ${parts.join(" ")}`);
+        const marker = name === current ? ` [ACTIVE T${tier}]` : "";
+        lines.push(`  ${paddedName} \u2014 ${parts.join(" ")}${marker}`);
       }
       return lines;
     }
@@ -169,6 +172,21 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
     ctx.powerUpManager.setWeapon(resolved);
     ctx.weaponSystem.setWeapon(resolved);
     return `Weapon switched to ${resolved}`;
+  });
+
+  registry.register("tier", (args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+    if (args.length === 0) {
+      return `Current weapon tier: ${ctx.powerUpManager.weaponTier}`;
+    }
+    const n = parseInt(args[0], 10);
+    if (isNaN(n) || n < 1 || n > 3) {
+      return "Tier must be between 1 and 3";
+    }
+    ctx.powerUpManager.setTier(n);
+    return `Weapon tier set to ${n}`;
   });
 }
 
@@ -359,7 +377,7 @@ export function registerCombatCommands(registry: CommandRegistry): void {
       `Level: ${ctx.currentLevel + 1} - ${ctx.levels[ctx.currentLevel].name}`,
       `Score: ${ctx.score} (Total: ${ctx.totalScore})`,
       `Lives: ${ctx.player.lives} | Shield: ${ctx.player.shield}`,
-      `Weapon: ${ctx.weaponSystem.currentWeapon}`,
+      `Weapon: ${ctx.weaponSystem.currentWeapon} (Tier ${ctx.powerUpManager.weaponTier})`,
       `Enemies: ${ctx.enemies.length} | Bullets: ${ctx.enemyBullets.length}`,
     ];
 

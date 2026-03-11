@@ -229,6 +229,22 @@ export class VFXManager {
     this.muzzleFlashes.push({ x, y, radius, alpha: 1, duration: 0.12, elapsed: 0 });
   }
 
+  triggerTierUpFlash(x: number, y: number): void {
+    const particleCount = 12;
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (i / particleCount) * Math.PI * 2;
+      const dist = 8 + Math.random() * 6;
+      this.trails.push({
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist,
+        alpha: 1.0,
+        size: 2 + Math.random() * 2,
+        color: `rgba(255, ${200 + Math.floor(Math.random() * 55)}, ${100 + Math.floor(Math.random() * 100)}, 0.9)`,
+      });
+    }
+    this.muzzleFlashes.push({ x, y, radius: 16, alpha: 1, duration: 0.2, elapsed: 0 });
+  }
+
   reset(): void {
     this.shake = null;
     this.shakeOffsetX = 0;

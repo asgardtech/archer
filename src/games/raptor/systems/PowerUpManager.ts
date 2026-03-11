@@ -10,9 +10,12 @@ export const EFFECT_DURATIONS: Partial<Record<RaptorPowerUpType, number>> = {
   "rapid-fire": 6,
 };
 
+export type WeaponSetResult = "switched" | "upgraded" | "maxed";
+
 export class PowerUpManager {
   private effects: ActiveEffect[] = [];
   private _currentWeapon: WeaponType = "machine-gun";
+  private _weaponTier: number = 1;
 
   activate(type: RaptorPowerUpType): void {
     const duration = EFFECT_DURATIONS[type];
@@ -26,14 +29,27 @@ export class PowerUpManager {
     }
   }
 
-  setWeapon(type: WeaponType): boolean {
-    if (this._currentWeapon === type) return false;
+  setWeapon(type: WeaponType): WeaponSetResult {
+    if (this._currentWeapon === type) {
+      if (this._weaponTier >= 3) return "maxed";
+      this._weaponTier++;
+      return "upgraded";
+    }
     this._currentWeapon = type;
-    return true;
+    this._weaponTier = 1;
+    return "switched";
   }
 
   get currentWeapon(): WeaponType {
     return this._currentWeapon;
+  }
+
+  get weaponTier(): number {
+    return this._weaponTier;
+  }
+
+  setTier(tier: number): void {
+    this._weaponTier = Math.max(1, Math.min(3, Math.floor(tier)));
   }
 
   update(dt: number): void {
@@ -58,5 +74,6 @@ export class PowerUpManager {
   reset(): void {
     this.effects = [];
     this._currentWeapon = "machine-gun";
+    this._weaponTier = 1;
   }
 }
