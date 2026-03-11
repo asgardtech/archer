@@ -1106,14 +1106,15 @@ describe("Scenario: Audio manifest covers all RaptorSoundEvent values", () => {
     "laser_hit", "weapon_switch",
     "enemy_missile_fire", "enemy_missile_hit", "enemy_spread_fire",
     "enemy_laser_fire", "enemy_laser_hit",
+    "mega_bomb_fire",
   ];
 
-  test("AUDIO_MANIFEST.sfx has an entry for each of the 23 RaptorSoundEvent values", () => {
+  test("AUDIO_MANIFEST.sfx has an entry for each of the 24 RaptorSoundEvent values", () => {
     for (const key of expectedSfxKeys) {
       expect(AUDIO_MANIFEST.sfx[key]).toBeDefined();
       expect(AUDIO_MANIFEST.sfx[key]).toMatch(/\.mp3$/);
     }
-    expect(Object.keys(AUDIO_MANIFEST.sfx).length).toBe(27);
+    expect(Object.keys(AUDIO_MANIFEST.sfx).length).toBe(28);
   });
 
   test("AUDIO_MANIFEST.music has entries for menu and level_1 through level_10", () => {

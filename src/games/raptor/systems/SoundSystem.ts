@@ -49,6 +49,7 @@ export class SoundSystem {
       case "enemy_laser_hit": this.playEnemyLaserHit(); break;
       case "plasma_fire": this.playPlasmaFire(); break;
       case "plasma_hit": this.playPlasmaHit(); break;
+      case "mega_bomb_fire": this.playMegaBombFire(); break;
     }
   }
 
@@ -234,6 +235,13 @@ export class SoundSystem {
       attack: 0.005, decay: 0.03, sustain: 0.4, release: 0.08,
     }, this.sfxNode);
     this.audio.playNoise(0.12, 2500, this.sfxNode);
+  }
+
+  private playMegaBombFire(): void {
+    this.audio.playToneSwept(100, 40, 0.5, "sawtooth", {
+      attack: 0.01, decay: 0.05, sustain: 0.6, release: 0.2,
+    }, this.sfxNode);
+    this.audio.playNoise(0.4, 4000, this.sfxNode);
   }
 
   private get musicNode(): AudioNode | undefined {

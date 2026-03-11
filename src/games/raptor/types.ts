@@ -103,7 +103,8 @@ export type RaptorPowerUpType =
   | "weapon-missile"
   | "weapon-laser"
   | "weapon-plasma"
-  | "weapon-ion";
+  | "weapon-ion"
+  | "mega-bomb";
 
 export type RaptorSoundEvent =
   | "player_shoot"
@@ -132,7 +133,8 @@ export type RaptorSoundEvent =
   | "plasma_fire"
   | "plasma_hit"
   | "ion_fire"
-  | "ion_hit";
+  | "ion_hit"
+  | "mega_bomb_fire";
 
 export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon";
 
@@ -148,6 +150,8 @@ export interface RaptorSaveData {
   weapon: WeaponType;
   /** ISO-8601 timestamp of when the save was created. */
   savedAt: string;
+  /** Mega bomb count at save point (0-5). */
+  bombs?: number;
 }
 
 export interface WeaponConfig {

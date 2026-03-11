@@ -23,12 +23,41 @@ interface MuzzleFlash {
   elapsed: number;
 }
 
+interface MegaBombFlash {
+  alpha: number;
+  duration: number;
+  elapsed: number;
+  width: number;
+  height: number;
+}
+
+interface MegaBombRing {
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  alpha: number;
+  duration: number;
+  elapsed: number;
+}
+
 export class VFXManager {
   private shake: ShakeState | null = null;
   private shakeOffsetX = 0;
   private shakeOffsetY = 0;
   private trails: Trail[] = [];
   private muzzleFlashes: MuzzleFlash[] = [];
+  private megaBombFlash: MegaBombFlash | null = null;
+  private megaBombRing: MegaBombRing | null = null;
+
+  triggerMegaBombFlash(width: number, height: number): void {
+    this.megaBombFlash = { alpha: 1, duration: 0.5, elapsed: 0, width, height };
+    this.megaBombRing = {
+      x: width / 2, y: height / 2,
+      radius: 0, maxRadius: Math.max(width, height),
+      alpha: 1, duration: 0.6, elapsed: 0,
+    };
+  }
 
   triggerScreenShake(intensity: number, duration: number): void {
     if (this.shake && this.shake.intensity > intensity) return;
@@ -70,6 +99,24 @@ export class VFXManager {
       flash.alpha = Math.max(0, 1 - flash.elapsed / flash.duration);
     }
     this.muzzleFlashes = this.muzzleFlashes.filter((f) => f.elapsed < f.duration);
+
+    if (this.megaBombFlash) {
+      this.megaBombFlash.elapsed += dt;
+      this.megaBombFlash.alpha = Math.max(0, 1 - this.megaBombFlash.elapsed / this.megaBombFlash.duration);
+      if (this.megaBombFlash.elapsed >= this.megaBombFlash.duration) {
+        this.megaBombFlash = null;
+      }
+    }
+
+    if (this.megaBombRing) {
+      this.megaBombRing.elapsed += dt;
+      const progress = this.megaBombRing.elapsed / this.megaBombRing.duration;
+      this.megaBombRing.radius = this.megaBombRing.maxRadius * progress;
+      this.megaBombRing.alpha = Math.max(0, 1 - progress);
+      if (this.megaBombRing.elapsed >= this.megaBombRing.duration) {
+        this.megaBombRing = null;
+      }
+    }
   }
 
   applyPreRender(ctx: CanvasRenderingContext2D): void {
@@ -80,6 +127,25 @@ export class VFXManager {
   }
 
   applyPostRender(ctx: CanvasRenderingContext2D): void {
+    if (this.megaBombFlash && this.megaBombFlash.alpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.megaBombFlash.alpha;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, this.megaBombFlash.width, this.megaBombFlash.height);
+      ctx.restore();
+    }
+
+    if (this.megaBombRing && this.megaBombRing.alpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.megaBombRing.alpha * 0.6;
+      ctx.strokeStyle = "#ffaa00";
+      ctx.lineWidth = 4 + (1 - this.megaBombRing.alpha) * 8;
+      ctx.beginPath();
+      ctx.arc(this.megaBombRing.x, this.megaBombRing.y, this.megaBombRing.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     if (this.shakeOffsetX !== 0 || this.shakeOffsetY !== 0) {
       ctx.restore();
     }
@@ -158,5 +224,7 @@ export class VFXManager {
     this.shakeOffsetY = 0;
     this.trails = [];
     this.muzzleFlashes = [];
+    this.megaBombFlash = null;
+    this.megaBombRing = null;
   }
 }

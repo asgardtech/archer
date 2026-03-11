@@ -10,6 +10,8 @@ export class Player {
   public height = 54;
   public shield = 100;
   public lives = 3;
+  public bombs = 0;
+  public readonly maxBombs = 5;
   public alive = true;
   public invincibilityTimer = 0;
   public godMode = false;
@@ -99,6 +101,7 @@ export class Player {
     this.flashTimer = 0;
     if (fullReset) {
       this.lives = 3;
+      this.bombs = 0;
       this.godMode = false;
     }
   }
