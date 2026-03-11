@@ -10,6 +10,8 @@ export interface EnemyBulletOptions {
   homingStrength?: number;
   spriteKey?: string;
   fallbackColor?: string;
+  ttl?: number;
+  isMine?: boolean;
 }
 
 export class EnemyBullet {
@@ -23,9 +25,12 @@ export class EnemyBullet {
   public speed: number;
   public spriteKey: string;
   public fallbackColor: string;
+  public ttl: number | null;
+  public isMine: boolean;
 
   protected angle: number;
   protected sprite: HTMLImageElement | null = null;
+  protected time = 0;
 
   constructor(x: number, y: number, targetX: number, targetY: number, options?: EnemyBulletOptions) {
     this.pos = { x, y };
@@ -36,6 +41,8 @@ export class EnemyBullet {
     this.homingStrength = options?.homingStrength ?? 0;
     this.spriteKey = options?.spriteKey ?? "bullet_enemy";
     this.fallbackColor = options?.fallbackColor ?? "#ff3333";
+    this.ttl = options?.ttl ?? null;
+    this.isMine = options?.isMine ?? false;
 
     const dx = targetX - x;
     const dy = targetY - y;
@@ -64,6 +71,16 @@ export class EnemyBullet {
   update(dt: number, canvasWidth: number, canvasHeight: number, playerPos?: Vec2): void {
     if (!this.alive) return;
 
+    this.time += dt;
+
+    if (this.ttl !== null) {
+      this.ttl -= dt;
+      if (this.ttl <= 0) {
+        this.alive = false;
+        return;
+      }
+    }
+
     if (this.homing && playerPos) {
       const dx = playerPos.x - this.pos.x;
       const dy = playerPos.y - this.pos.y;
@@ -83,8 +100,9 @@ export class EnemyBullet {
     this.pos.y += this.vel.y * dt;
 
     if (
-      this.pos.x < -20 || this.pos.x > canvasWidth + 20 ||
-      this.pos.y < -20 || this.pos.y > canvasHeight + 20
+      !this.isMine &&
+      (this.pos.x < -20 || this.pos.x > canvasWidth + 20 ||
+       this.pos.y < -20 || this.pos.y > canvasHeight + 20)
     ) {
       this.alive = false;
     }
@@ -93,7 +111,9 @@ export class EnemyBullet {
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.alive) return;
 
-    if (this.sprite) {
+    if (this.isMine) {
+      this.renderMine(ctx);
+    } else if (this.sprite) {
       this.renderSprite(ctx);
     } else {
       this.renderFallback(ctx);
@@ -109,6 +129,32 @@ export class EnemyBullet {
       size,
       size
     );
+  }
+
+  private renderMine(ctx: CanvasRenderingContext2D): void {
+    ctx.save();
+    const pulse = 1 + Math.sin(this.time * 4) * 0.2;
+    const r = this.radius * pulse;
+
+    ctx.fillStyle = "rgba(255, 204, 0, 0.3)";
+    ctx.shadowColor = "#ffcc00";
+    ctx.shadowBlur = 8 + Math.sin(this.time * 4) * 4;
+    ctx.beginPath();
+    ctx.arc(this.pos.x, this.pos.y, r * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffcc00";
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(this.pos.x, this.pos.y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(this.pos.x, this.pos.y, r * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 
   private renderFallback(ctx: CanvasRenderingContext2D): void {
