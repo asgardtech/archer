@@ -109,6 +109,8 @@ const WEAPON_ALIASES: Record<string, WeaponType> = {
   lsr: "laser",
   plasma: "plasma",
   pls: "plasma",
+  "ion-cannon": "ion-cannon",
+  ion: "ion-cannon",
 };
 
 const POWERUP_ALIASES: Record<string, RaptorPowerUpType> = {
@@ -156,7 +158,7 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
 
     const resolved = WEAPON_ALIASES[sub];
     if (!resolved) {
-      return `Unknown weapon '${sub}'. Available: machine-gun (mg), missile (msl), laser (lsr), plasma (pls)`;
+      return `Unknown weapon '${sub}'. Available: machine-gun (mg), missile (msl), laser (lsr), plasma (pls), ion-cannon (ion)`;
     }
 
     ctx.powerUpManager.setWeapon(resolved);

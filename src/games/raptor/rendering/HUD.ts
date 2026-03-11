@@ -23,6 +23,7 @@ const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "weapon-missile": "#e67e22",
   "weapon-laser": "#9b59b6",
   "weapon-plasma": "#8e44ad",
+  "weapon-ion": "#00bcd4",
 };
 
 const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
@@ -31,6 +32,7 @@ const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
   "weapon-missile": "MSL",
   "weapon-laser": "LSR",
   "weapon-plasma": "PLS",
+  "weapon-ion": "ION",
 };
 
 const WEAPON_LABELS: Record<WeaponType, string> = {
@@ -38,6 +40,7 @@ const WEAPON_LABELS: Record<WeaponType, string> = {
   "missile": "MSL",
   "laser": "LSR",
   "plasma": "PLS",
+  "ion-cannon": "ION",
 };
 
 const WEAPON_COLORS: Record<WeaponType, string> = {
@@ -45,6 +48,7 @@ const WEAPON_COLORS: Record<WeaponType, string> = {
   "missile": "#e67e22",
   "laser": "#9b59b6",
   "plasma": "#8e44ad",
+  "ion-cannon": "#00bcd4",
 };
 
 interface SliderLayout {
@@ -343,7 +347,8 @@ export class HUD {
     height: number,
     activeEffects?: ReadonlyArray<ActiveEffect>,
     currentWeapon?: WeaponType,
-    hasSave?: boolean
+    hasSave?: boolean,
+    chargeLevel?: number
   ): void {
     switch (state) {
       case "loading":
@@ -352,10 +357,10 @@ export class HUD {
         this.renderMenu(ctx, width, height, hasSave);
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.actionText("for next level"));
         break;
@@ -546,7 +551,8 @@ export class HUD {
     width: number,
     height: number,
     activeEffects?: ReadonlyArray<ActiveEffect>,
-    currentWeapon?: WeaponType
+    currentWeapon?: WeaponType,
+    chargeLevel?: number
   ): void {
     ctx.save();
 
@@ -582,7 +588,7 @@ export class HUD {
     }
 
     if (currentWeapon) {
-      this.renderWeaponIndicator(ctx, currentWeapon, width);
+      this.renderWeaponIndicator(ctx, currentWeapon, width, chargeLevel);
     }
 
     ctx.restore();
@@ -649,7 +655,7 @@ export class HUD {
     ctx.restore();
   }
 
-  private renderWeaponIndicator(ctx: CanvasRenderingContext2D, weapon: WeaponType, width: number): void {
+  private renderWeaponIndicator(ctx: CanvasRenderingContext2D, weapon: WeaponType, width: number, chargeLevel?: number): void {
     const label = WEAPON_LABELS[weapon];
     const color = WEAPON_COLORS[weapon];
     const x = width / 2;
@@ -660,6 +666,22 @@ export class HUD {
     ctx.textBaseline = "top";
     ctx.fillStyle = color;
     ctx.fillText(`[${label}]`, x, y);
+
+    if (weapon === "ion-cannon" && chargeLevel !== undefined && chargeLevel > 0) {
+      const barW = 40;
+      const barH = 4;
+      const barX = x - barW / 2;
+      const barY = y + 10;
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+      ctx.fillRect(barX, barY, barW, barH);
+
+      const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+      grad.addColorStop(0, "#00bcd4");
+      grad.addColorStop(1, "#00e5ff");
+      ctx.fillStyle = grad;
+      ctx.fillRect(barX, barY, barW * chargeLevel, barH);
+    }
   }
 
   private renderLivesIcons(ctx: CanvasRenderingContext2D, lives: number, startX: number, y: number): void {

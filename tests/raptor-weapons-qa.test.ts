@@ -1098,11 +1098,12 @@ describe("HUD Weapon Indicator", () => {
   });
 
   test("All WeaponType values are represented in WEAPON_CONFIGS", () => {
-    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(4);
+    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(5);
     expect(WEAPON_CONFIGS["machine-gun"]).toBeDefined();
     expect(WEAPON_CONFIGS["missile"]).toBeDefined();
     expect(WEAPON_CONFIGS["laser"]).toBeDefined();
     expect(WEAPON_CONFIGS["plasma"]).toBeDefined();
+    expect(WEAPON_CONFIGS["ion-cannon"]).toBeDefined();
   });
 });
 

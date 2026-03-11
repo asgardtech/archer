@@ -1113,7 +1113,7 @@ describe("Scenario: Audio manifest covers all RaptorSoundEvent values", () => {
       expect(AUDIO_MANIFEST.sfx[key]).toBeDefined();
       expect(AUDIO_MANIFEST.sfx[key]).toMatch(/\.mp3$/);
     }
-    expect(Object.keys(AUDIO_MANIFEST.sfx).length).toBe(23);
+    expect(Object.keys(AUDIO_MANIFEST.sfx).length).toBe(27);
   });
 
   test("AUDIO_MANIFEST.music has entries for menu and level_1 through level_10", () => {

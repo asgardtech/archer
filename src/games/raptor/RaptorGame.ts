@@ -13,6 +13,7 @@ import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
 import { PlasmaBolt } from "./entities/PlasmaBolt";
+import { IonBolt } from "./entities/IonBolt";
 import { Enemy } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
 import { EnemyMissile } from "./entities/EnemyMissile";
@@ -585,6 +586,9 @@ export class RaptorGame implements IGame {
       } else if (proj instanceof PlasmaBolt) {
         proj.update(dt, this.width);
         this.vfx.addPlasmaTrail(proj.pos.x, proj.pos.y + 3);
+      } else if (proj instanceof IonBolt) {
+        proj.update(dt, this.width);
+        this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(0, 188, 212, 0.5)", 2);
       }
     }
     for (const eb of this.enemyBullets) {
@@ -617,6 +621,9 @@ export class RaptorGame implements IGame {
         } else if (hit.bullet instanceof PlasmaBolt) {
           this.sound.play("plasma_hit");
           this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 20);
+        } else if (hit.bullet instanceof IonBolt) {
+          this.sound.play("ion_hit");
+          this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 22);
         }
       } else {
         if (hit.bullet instanceof Missile) {
@@ -625,6 +632,9 @@ export class RaptorGame implements IGame {
         } else if (hit.bullet instanceof PlasmaBolt) {
           this.sound.play("plasma_hit");
           this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 12);
+        } else if (hit.bullet instanceof IonBolt) {
+          this.sound.play("ion_hit");
+          this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 14);
         } else if (hit.enemy.variant === "boss") {
           this.sound.play("boss_hit");
         } else {
@@ -725,6 +735,11 @@ export class RaptorGame implements IGame {
             this.sound.play("weapon_switch");
           }
           break;
+        case "weapon-ion":
+          if (this.powerUpManager.setWeapon("ion-cannon")) {
+            this.sound.play("weapon_switch");
+          }
+          break;
       }
     }
 
@@ -798,6 +813,9 @@ export class RaptorGame implements IGame {
     } else if (proj instanceof PlasmaBolt) {
       const sprite = this.assets.getOptional("bullet_plasma");
       if (sprite) proj.setSprite(sprite);
+    } else if (proj instanceof IonBolt) {
+      const sprite = this.assets.getOptional("bullet_ion");
+      if (sprite) proj.setSprite(sprite);
     }
   }
 
@@ -806,6 +824,7 @@ export class RaptorGame implements IGame {
     missile: "weapon-missile",
     laser: "weapon-laser",
     plasma: "weapon-plasma",
+    "ion-cannon": "weapon-ion",
   };
 
   private spawnPowerUp(x: number, y: number): void {
@@ -1129,7 +1148,8 @@ export class RaptorGame implements IGame {
       this.height,
       this.powerUpManager.getActive(),
       this.weaponSystem.currentWeapon,
-      this.hasSaveData
+      this.hasSaveData,
+      this.weaponSystem.chargeLevel
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);

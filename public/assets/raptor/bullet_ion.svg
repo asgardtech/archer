@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 16">
+  <defs>
+    <radialGradient id="ionCore" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="30%" stop-color="#b2ebf2"/>
+      <stop offset="70%" stop-color="#00bcd4"/>
+      <stop offset="100%" stop-color="#006064" stop-opacity="0.6"/>
+    </radialGradient>
+    <radialGradient id="ionGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#00bcd4" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="ionBlur">
+      <feGaussianBlur stdDeviation="0.8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <ellipse cx="6" cy="8" rx="5.5" ry="7.5" fill="url(#ionGlow)"/>
+  <ellipse cx="6" cy="8" rx="3.5" ry="5" fill="url(#ionCore)" filter="url(#ionBlur)"/>
+  <ellipse cx="6" cy="7" rx="1.5" ry="2.5" fill="#FFFFFF" opacity="0.8"/>
+  <polyline points="2,5 4,7 2.5,9" stroke="#80deea" stroke-width="0.5" stroke-opacity="0.6" fill="none" stroke-linecap="round"/>
+  <polyline points="10,5 8,7 9.5,9" stroke="#80deea" stroke-width="0.5" stroke-opacity="0.6" fill="none" stroke-linecap="round"/>
+  <polyline points="4,3 6,5 5,7" stroke="#b2ebf2" stroke-width="0.4" stroke-opacity="0.5" fill="none" stroke-linecap="round"/>
+</svg>
