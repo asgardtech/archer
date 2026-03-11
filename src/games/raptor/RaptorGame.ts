@@ -560,7 +560,7 @@ export class RaptorGame implements IGame {
     }
 
     for (const enemy of this.enemies) {
-      enemy.update(dt, this.height);
+      enemy.update(dt, this.height, this.player.pos.x);
 
       if (enemy.canFire()) {
         const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
