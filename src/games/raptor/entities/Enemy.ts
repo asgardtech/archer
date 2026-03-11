@@ -59,6 +59,9 @@ export class Enemy {
         this.pos.y += this.vel.y * dt;
         if (this.pos.y > bossTargetY) this.pos.y = bossTargetY;
       }
+    } else if (this.variant === "interceptor") {
+      this.pos.x += Math.sin(this.time * 4) * 120 * dt;
+      this.pos.y += this.vel.y * dt;
     } else {
       this.pos.y += this.vel.y * dt;
     }
@@ -116,6 +119,12 @@ export class Enemy {
           break;
         case "boss":
           this.renderBoss(ctx, x, y, isFlashing);
+          break;
+        case "interceptor":
+          this.renderInterceptor(ctx, x, y, isFlashing);
+          break;
+        case "dart":
+          this.renderDart(ctx, x, y, isFlashing);
           break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
@@ -243,6 +252,48 @@ export class Enemy {
 
     ctx.fillStyle = "#886633";
     ctx.fillRect(x - 6, y - 4, 12, 8);
+  }
+
+  private renderInterceptor(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+    ctx.fillStyle = flash ? "#ffffff" : "#44cccc";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw, y - hh);
+    ctx.lineTo(x - hw * 0.3, y - hh * 0.2);
+    ctx.lineTo(x, y - hh * 0.5);
+    ctx.lineTo(x + hw * 0.3, y - hh * 0.2);
+    ctx.lineTo(x + hw, y - hh);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#228888";
+    ctx.beginPath();
+    ctx.arc(x, y + hh * 0.2, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderDart(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+    ctx.fillStyle = flash ? "#ffffff" : "#cccc44";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.4, y);
+    ctx.lineTo(x - hw, y - hh * 0.7);
+    ctx.lineTo(x - hw * 0.3, y - hh * 0.5);
+    ctx.lineTo(x, y - hh);
+    ctx.lineTo(x + hw * 0.3, y - hh * 0.5);
+    ctx.lineTo(x + hw, y - hh * 0.7);
+    ctx.lineTo(x + hw * 0.4, y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = "#888822";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.3, 2.5, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   private static readonly VARIANT_CATEGORY_COLORS: Record<string, string> = {
