@@ -1,6 +1,7 @@
 import { Projectile, WEAPON_CONFIGS } from "../types";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
+import { PlasmaBolt } from "../entities/PlasmaBolt";
 import { LaserBeam } from "../entities/LaserBeam";
 import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
 import { Enemy } from "../entities/Enemy";
@@ -107,6 +108,19 @@ export class CollisionSystem {
 
           if (bullet instanceof Missile) {
             const splashHits = this.applySplashDamage(enemy, enemies, WEAPON_CONFIGS["missile"].splashRadius);
+            for (const sh of splashHits) {
+              hits.push({
+                bullet,
+                enemy: sh.enemy,
+                destroyed: sh.destroyed,
+                damage: 1,
+                splash: true,
+              });
+            }
+          }
+
+          if (bullet instanceof PlasmaBolt) {
+            const splashHits = this.applySplashDamage(enemy, enemies, WEAPON_CONFIGS["plasma"].splashRadius);
             for (const sh of splashHits) {
               hits.push({
                 bullet,

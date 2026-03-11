@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS } from "./types";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
 import { CollisionSystem } from "./systems/CollisionSystem";
@@ -12,6 +12,7 @@ import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponC
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
+import { PlasmaBolt } from "./entities/PlasmaBolt";
 import { Enemy } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
 import { EnemyMissile } from "./entities/EnemyMissile";
@@ -581,6 +582,9 @@ export class RaptorGame implements IGame {
       } else if (proj instanceof Missile) {
         proj.update(dt, this.width, this.height, this.enemies);
         this.vfx.addMissileTrail(proj.pos.x, proj.pos.y + 6);
+      } else if (proj instanceof PlasmaBolt) {
+        proj.update(dt, this.width);
+        this.vfx.addPlasmaTrail(proj.pos.x, proj.pos.y + 3);
       }
     }
     for (const eb of this.enemyBullets) {
@@ -610,11 +614,17 @@ export class RaptorGame implements IGame {
         if (hit.bullet instanceof Missile) {
           this.sound.play("missile_hit");
           this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 25);
+        } else if (hit.bullet instanceof PlasmaBolt) {
+          this.sound.play("plasma_hit");
+          this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 20);
         }
       } else {
         if (hit.bullet instanceof Missile) {
           this.sound.play("missile_hit");
           this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 15);
+        } else if (hit.bullet instanceof PlasmaBolt) {
+          this.sound.play("plasma_hit");
+          this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 12);
         } else if (hit.enemy.variant === "boss") {
           this.sound.play("boss_hit");
         } else {
@@ -710,6 +720,11 @@ export class RaptorGame implements IGame {
             this.sound.play("weapon_switch");
           }
           break;
+        case "weapon-plasma":
+          if (this.powerUpManager.setWeapon("plasma")) {
+            this.sound.play("weapon_switch");
+          }
+          break;
       }
     }
 
@@ -780,8 +795,18 @@ export class RaptorGame implements IGame {
     } else if (proj instanceof Missile) {
       const sprite = this.assets.getOptional("missile_player");
       if (sprite) proj.setSprite(sprite);
+    } else if (proj instanceof PlasmaBolt) {
+      const sprite = this.assets.getOptional("bullet_plasma");
+      if (sprite) proj.setSprite(sprite);
     }
   }
+
+  private static readonly WEAPON_DROP_MAP: Record<WeaponType, RaptorPowerUpType> = {
+    "machine-gun": "weapon-missile",
+    missile: "weapon-missile",
+    laser: "weapon-laser",
+    plasma: "weapon-plasma",
+  };
 
   private spawnPowerUp(x: number, y: number): void {
     const config = this.currentLevelConfig;
@@ -790,7 +815,7 @@ export class RaptorGame implements IGame {
 
     if (weaponDrops && weaponDrops.length > 0 && Math.random() < 0.25) {
       const weaponType = weaponDrops[Math.floor(Math.random() * weaponDrops.length)];
-      type = weaponType === "missile" ? "weapon-missile" : "weapon-laser";
+      type = RaptorGame.WEAPON_DROP_MAP[weaponType];
     }
 
     const pu = new PowerUp(x, y, type);

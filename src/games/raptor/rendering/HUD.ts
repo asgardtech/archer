@@ -22,6 +22,7 @@ const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "rapid-fire": "#f39c12",
   "weapon-missile": "#e67e22",
   "weapon-laser": "#9b59b6",
+  "weapon-plasma": "#8e44ad",
 };
 
 const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
@@ -29,18 +30,21 @@ const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
   "rapid-fire": "RPD",
   "weapon-missile": "MSL",
   "weapon-laser": "LSR",
+  "weapon-plasma": "PLS",
 };
 
 const WEAPON_LABELS: Record<WeaponType, string> = {
   "machine-gun": "GUN",
   "missile": "MSL",
   "laser": "LSR",
+  "plasma": "PLS",
 };
 
 const WEAPON_COLORS: Record<WeaponType, string> = {
   "machine-gun": "#ffdd00",
   "missile": "#e67e22",
   "laser": "#9b59b6",
+  "plasma": "#8e44ad",
 };
 
 interface SliderLayout {
