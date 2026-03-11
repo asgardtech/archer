@@ -117,6 +117,9 @@ export class Enemy {
         case "boss":
           this.renderBoss(ctx, x, y, isFlashing);
           break;
+        default:
+          this.renderFallbackShape(ctx, x, y, isFlashing);
+          break;
       }
     }
 
@@ -240,6 +243,33 @@ export class Enemy {
 
     ctx.fillStyle = "#886633";
     ctx.fillRect(x - 6, y - 4, 12, 8);
+  }
+
+  private static readonly VARIANT_CATEGORY_COLORS: Record<string, string> = {
+    interceptor: "#66cc66",
+    dart: "#66cc66",
+    drone: "#66cc66",
+    swarmer: "#66cc66",
+    gunship: "#cc9933",
+    cruiser: "#cc9933",
+    destroyer: "#cc3333",
+    juggernaut: "#cc3333",
+    stealth: "#9966cc",
+    minelayer: "#9966cc",
+  };
+
+  private renderFallbackShape(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const color = Enemy.VARIANT_CATEGORY_COLORS[this.variant] ?? "#999999";
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : color;
+    ctx.fillRect(x - hw, y - hh, this.width, this.height);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#ffffff";
+    ctx.beginPath();
+    ctx.arc(x, y, Math.min(hw, hh) * 0.3, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   private renderBoss(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {

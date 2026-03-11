@@ -171,7 +171,7 @@ describe("spawn command", () => {
 
     const result = registry.dispatch("spawn dragon", ctx);
     expect(result).toEqual([
-      "Unknown enemy variant 'dragon'. Available: scout, fighter, bomber, boss",
+      "Unknown enemy variant 'dragon'. Available: scout, fighter, bomber, boss, interceptor, dart, drone, swarmer, gunship, cruiser, destroyer, juggernaut, stealth, minelayer",
     ]);
     expect(ctx.enemies.length).toBe(0);
   });
