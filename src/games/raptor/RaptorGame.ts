@@ -12,6 +12,7 @@ import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponC
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
+import { TrackingBullet } from "./entities/TrackingBullet";
 import { PlasmaBolt } from "./entities/PlasmaBolt";
 import { IonBolt } from "./entities/IonBolt";
 import { Enemy } from "./entities/Enemy";
@@ -596,7 +597,10 @@ export class RaptorGame implements IGame {
     }
 
     for (const proj of this.projectiles) {
-      if (proj instanceof Bullet) {
+      if (proj instanceof TrackingBullet) {
+        proj.update(dt, this.width, this.height, this.enemies);
+        this.vfx.addTrail(proj.pos.x, proj.pos.y + 3, "rgba(168, 224, 108, 0.4)", 1.5);
+      } else if (proj instanceof Bullet) {
         proj.update(dt, this.width);
         this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(255, 220, 0, 0.4)", 1.5);
       } else if (proj instanceof Missile) {
@@ -759,6 +763,11 @@ export class RaptorGame implements IGame {
             this.sound.play("weapon_switch");
           }
           break;
+        case "weapon-autogun":
+          if (this.powerUpManager.setWeapon("auto-gun")) {
+            this.sound.play("weapon_switch");
+          }
+          break;
         case "mega-bomb":
           if (this.player.bombs < this.player.maxBombs) {
             this.player.bombs++;
@@ -829,7 +838,10 @@ export class RaptorGame implements IGame {
   }
 
   private assignProjectileSprite(proj: Projectile): void {
-    if (proj instanceof Bullet) {
+    if (proj instanceof TrackingBullet) {
+      const sprite = this.assets.getOptional("bullet_autogun");
+      if (sprite) proj.setSprite(sprite);
+    } else if (proj instanceof Bullet) {
       const sprite = this.assets.getOptional("bullet_player");
       if (sprite) proj.setSprite(sprite);
     } else if (proj instanceof Missile) {
@@ -850,6 +862,7 @@ export class RaptorGame implements IGame {
     laser: "weapon-laser",
     plasma: "weapon-plasma",
     "ion-cannon": "weapon-ion",
+    "auto-gun": "weapon-autogun",
   };
 
   private spawnPowerUp(x: number, y: number): void {

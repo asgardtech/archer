@@ -12,6 +12,7 @@ const COLORS: Record<RaptorPowerUpType, string> = {
   "weapon-laser": "#9b59b6",
   "weapon-plasma": "#8e44ad",
   "weapon-ion": "#00bcd4",
+  "weapon-autogun": "#27ae60",
   "mega-bomb": "#e74c3c",
 };
 
@@ -24,6 +25,7 @@ const ICONS: Record<RaptorPowerUpType, string> = {
   "weapon-laser": "L",
   "weapon-plasma": "P",
   "weapon-ion": "I",
+  "weapon-autogun": "A",
   "mega-bomb": "B",
 };
 
@@ -36,6 +38,7 @@ const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
   "weapon-laser": "powerup_laser",
   "weapon-plasma": "powerup_plasma",
   "weapon-ion": "powerup_ion",
+  "weapon-autogun": "powerup_autogun",
   "mega-bomb": "powerup_bomb",
 };
 

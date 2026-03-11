@@ -91,7 +91,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#4A6670", "#8BA8B7"],
     starDensity: 0,
     enemyFireRateMultiplier: 1.2,
-    weaponDrops: ["missile", "laser"] as WeaponType[],
+    weaponDrops: ["missile", "laser", "auto-gun"] as WeaponType[],
     terrain: {
       theme: "mountain",
       horizonAssets: ["horizon_mountain"],
@@ -131,7 +131,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#B0C4DE", "#D3D3D3"],
     starDensity: 0,
     enemyFireRateMultiplier: 1.4,
-    weaponDrops: ["missile", "laser", "plasma"] as WeaponType[],
+    weaponDrops: ["missile", "laser", "plasma", "auto-gun"] as WeaponType[],
     terrain: {
       theme: "arctic",
       horizonAssets: ["horizon_arctic"],
@@ -172,7 +172,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#2F1B14", "#1a1a1a"],
     starDensity: 0,
     enemyFireRateMultiplier: 1.6,
-    weaponDrops: ["missile", "laser", "plasma"] as WeaponType[],
+    weaponDrops: ["missile", "laser", "plasma", "auto-gun"] as WeaponType[],
     terrain: {
       theme: "fortress",
       horizonAssets: ["horizon_fortress"],
