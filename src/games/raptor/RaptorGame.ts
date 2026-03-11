@@ -590,6 +590,22 @@ export class RaptorGame implements IGame {
           }
         }
       }
+
+      if (enemy.shouldDropMine() && this.enemyBullets.length < MAX_ENEMY_BULLETS) {
+        const mine = new EnemyBullet(
+          enemy.pos.x, enemy.pos.y,
+          enemy.pos.x, enemy.pos.y,
+          {
+            damage: 30,
+            speed: 0,
+            radius: 8,
+            ttl: 8.0,
+            isMine: true,
+            fallbackColor: "#ffcc00",
+          }
+        );
+        this.enemyBullets.push(mine);
+      }
     }
 
     const laserSoundEvents = this.enemyWeaponSystem.updateLasers(dt, this.player.pos.x);

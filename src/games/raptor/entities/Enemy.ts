@@ -20,6 +20,16 @@ export class Enemy {
   private static _flashCanvas: HTMLCanvasElement | null = null;
   private static _flashCtx: CanvasRenderingContext2D | null = null;
 
+  private cloakTimer = 0;
+  private cloakVisible = true;
+  private readonly CLOAK_VISIBLE_DURATION = 2.0;
+  private readonly CLOAK_HIDDEN_DURATION = 1.5;
+
+  private mineTimer = 0;
+  private readonly MINE_DROP_INTERVAL = 2.0;
+  private minelayerDirection = 0;
+  private minelayerInitialized = false;
+
   constructor(x: number, y: number, variant: EnemyVariant, speed?: number, overrideConfig?: Partial<EnemyConfig>) {
     const config = { ...ENEMY_CONFIGS[variant], ...overrideConfig };
     this.variant = variant;
@@ -92,6 +102,48 @@ export class Enemy {
       } else {
         this.pos.x += Math.sin(this.time * 1.0) * 70 * dt;
       }
+    } else if (this.variant === "stealth") {
+      this.pos.x += Math.sin(this.time * 2) * 40 * dt;
+      this.pos.y += this.vel.y * dt;
+
+      this.cloakTimer += dt;
+      if (this.cloakVisible) {
+        if (this.cloakTimer >= this.CLOAK_VISIBLE_DURATION) {
+          this.cloakVisible = false;
+          this.cloakTimer = 0;
+        }
+      } else {
+        if (this.cloakTimer >= this.CLOAK_HIDDEN_DURATION) {
+          this.cloakVisible = true;
+          this.cloakTimer = 0;
+        }
+      }
+    } else if (this.variant === "minelayer") {
+      if (!this.minelayerInitialized) {
+        this.minelayerInitialized = true;
+        this.minelayerDirection = Math.random() < 0.5 ? -1 : 1;
+        this.vel.x = this.minelayerDirection * Math.abs(this.vel.y);
+        this.vel.y = 20;
+        if (this.minelayerDirection > 0) {
+          this.pos.x = -30;
+        } else {
+          this.pos.x = 830;
+        }
+        if (this.pos.y < 0) {
+          this.pos.y = 30 + Math.random() * 100;
+        }
+      }
+
+      this.pos.x += this.vel.x * dt;
+      this.pos.y += this.vel.y * dt;
+      this.mineTimer += dt;
+
+      if (
+        (this.minelayerDirection > 0 && this.pos.x > 850) ||
+        (this.minelayerDirection < 0 && this.pos.x < -50)
+      ) {
+        this.alive = false;
+      }
     } else {
       this.pos.y += this.vel.y * dt;
     }
@@ -100,13 +152,27 @@ export class Enemy {
       this.fireCooldown -= dt;
     }
 
-    if (this.variant !== "boss" && this.variant !== "destroyer" && this.variant !== "juggernaut" && this.pos.y > canvasHeight + 50) {
+    if (
+      this.variant !== "boss" && this.variant !== "destroyer" &&
+      this.variant !== "juggernaut" && this.variant !== "minelayer" &&
+      this.pos.y > canvasHeight + 50
+    ) {
       this.alive = false;
     }
   }
 
   canFire(): boolean {
+    if (this.variant === "stealth" && !this.cloakVisible) return false;
     return this.fireRate > 0 && this.fireCooldown <= 0 && this.alive;
+  }
+
+  shouldDropMine(): boolean {
+    if (this.variant !== "minelayer") return false;
+    if (this.mineTimer >= this.MINE_DROP_INTERVAL) {
+      this.mineTimer = 0;
+      return true;
+    }
+    return false;
   }
 
   resetFireCooldown(multiplier = 1): void {
@@ -174,6 +240,12 @@ export class Enemy {
         case "juggernaut":
           this.renderJuggernaut(ctx, x, y, isFlashing);
           break;
+        case "stealth":
+          this.renderStealth(ctx, x, y, isFlashing);
+          break;
+        case "minelayer":
+          this.renderMinelayer(ctx, x, y, isFlashing);
+          break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
           break;
@@ -204,6 +276,10 @@ export class Enemy {
       ctx.beginPath();
       ctx.arc(x, y, this.width * 0.65, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    if (this.variant === "stealth" && !this.cloakVisible && !flash) {
+      ctx.globalAlpha = 0.1;
     }
 
     if (flash) {
@@ -534,6 +610,61 @@ export class Enemy {
     ctx.fill();
 
     this.renderHPBar(ctx, x, y);
+  }
+
+  private renderStealth(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    if (!this.cloakVisible && !flash) {
+      ctx.globalAlpha = 0.1;
+    }
+
+    ctx.fillStyle = flash ? "#ffffff" : "#666688";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.3, y + hh * 0.4);
+    ctx.lineTo(x - hw, y - hh * 0.2);
+    ctx.lineTo(x - hw * 0.6, y - hh);
+    ctx.lineTo(x, y - hh * 0.6);
+    ctx.lineTo(x + hw * 0.6, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.2);
+    ctx.lineTo(x + hw * 0.3, y + hh * 0.4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#555577";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.1, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+  }
+
+  private renderMinelayer(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#888844";
+    ctx.beginPath();
+    ctx.moveTo(x - hw, y - hh * 0.4);
+    ctx.lineTo(x - hw * 0.7, y - hh);
+    ctx.lineTo(x + hw * 0.7, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.4);
+    ctx.lineTo(x + hw, y + hh * 0.5);
+    ctx.lineTo(x + hw * 0.6, y + hh);
+    ctx.lineTo(x - hw * 0.6, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#666633";
+    ctx.fillRect(x - 5, y + hh * 0.2, 10, hh * 0.5);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#777733";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.2, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   private renderFallbackShape(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {

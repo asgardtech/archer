@@ -11,7 +11,6 @@ const DEFAULT_MAX_TRACKING = 3.0;
 export class EnemyMissile extends EnemyBullet {
   public readonly maxTrackingDuration: number;
   private trackingElapsed = 0;
-  private time = 0;
 
   constructor(
     x: number,
@@ -37,7 +36,6 @@ export class EnemyMissile extends EnemyBullet {
     playerPos?: Vec2,
   ): void {
     if (!this.alive) return;
-    this.time += dt;
     this.trackingElapsed += dt;
 
     if (this.trackingElapsed >= this.maxTrackingDuration) {

@@ -536,7 +536,7 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     hitPoints: 2,
     speed: 100,
     scoreValue: 30,
-    fireRate: 0.4,
+    fireRate: 0,
     width: 32,
     height: 28,
   },
