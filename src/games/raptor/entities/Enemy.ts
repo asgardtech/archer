@@ -69,6 +69,14 @@ export class Enemy {
       const dx = targetX - this.pos.x;
       this.pos.x += dx * 1.5 * dt;
       this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "cruiser") {
+      const patrolThreshold = canvasHeight * 0.3;
+      if (this.pos.y >= patrolThreshold) {
+        this.pos.y += this.vel.y * 0.1 * dt;
+        this.pos.x += Math.sin(this.time * 0.8) * 50 * dt;
+      } else {
+        this.pos.y += this.vel.y * dt;
+      }
     } else {
       this.pos.y += this.vel.y * dt;
     }
@@ -139,6 +147,12 @@ export class Enemy {
         case "swarmer":
           this.renderSwarmer(ctx, x, y, isFlashing);
           break;
+        case "gunship":
+          this.renderGunship(ctx, x, y, isFlashing);
+          break;
+        case "cruiser":
+          this.renderCruiser(ctx, x, y, isFlashing);
+          break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
           break;
@@ -194,7 +208,7 @@ export class Enemy {
       }
     }
 
-    if (this.variant === "boss") {
+    if (this.variant === "boss" || this.variant === "cruiser") {
       this.renderHPBar(ctx, x, y);
     }
   }
@@ -361,6 +375,64 @@ export class Enemy {
     stealth: "#9966cc",
     minelayer: "#9966cc",
   };
+
+  private renderGunship(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#4466cc";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.5, y + hh * 0.4);
+    ctx.lineTo(x - hw, y - hh * 0.1);
+    ctx.lineTo(x - hw * 0.7, y - hh);
+    ctx.lineTo(x + hw * 0.7, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.1);
+    ctx.lineTo(x + hw * 0.5, y + hh * 0.4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#334499";
+    ctx.fillRect(x - hw * 0.85 - 3, y - 3, 6, 6);
+    ctx.fillRect(x + hw * 0.85 - 3, y - 3, 6, 6);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#224477";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.2, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderCruiser(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#556688";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.4, y + hh * 0.6);
+    ctx.lineTo(x - hw, y + hh * 0.2);
+    ctx.lineTo(x - hw, y - hh * 0.3);
+    ctx.lineTo(x - hw * 0.6, y - hh);
+    ctx.lineTo(x + hw * 0.6, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.3);
+    ctx.lineTo(x + hw, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.4, y + hh * 0.6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#778899";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#445566";
+    ctx.fillRect(x - hw * 0.8 - 2, y - hh * 0.2, 5, 8);
+    ctx.fillRect(x + hw * 0.8 - 3, y - hh * 0.2, 5, 8);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#3a4d5e";
+    ctx.fillRect(x - 5, y - 4, 10, 8);
+
+    this.renderHPBar(ctx, x, y);
+  }
 
   private renderFallbackShape(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
     const color = Enemy.VARIANT_CATEGORY_COLORS[this.variant] ?? "#999999";
