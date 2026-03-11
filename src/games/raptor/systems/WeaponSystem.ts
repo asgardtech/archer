@@ -4,6 +4,7 @@ import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
 import { PlasmaBolt } from "../entities/PlasmaBolt";
 import { IonBolt } from "../entities/IonBolt";
+import { TrackingBullet } from "../entities/TrackingBullet";
 import { LaserBeam } from "../entities/LaserBeam";
 import { PowerUpManager } from "./PowerUpManager";
 
@@ -122,6 +123,17 @@ export class WeaponSystem {
           newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top));
         }
         soundEvent = "plasma_fire";
+      } else if (this.currentWeapon === "auto-gun") {
+        if (spreadShot) {
+          newProjectiles.push(this.createTrackingBullet(player.pos.x - 12, player.top));
+          newProjectiles.push(this.createTrackingBullet(player.pos.x - 4, player.top));
+          newProjectiles.push(this.createTrackingBullet(player.pos.x + 4, player.top));
+          newProjectiles.push(this.createTrackingBullet(player.pos.x + 12, player.top));
+        } else {
+          newProjectiles.push(this.createTrackingBullet(player.pos.x - 4, player.top));
+          newProjectiles.push(this.createTrackingBullet(player.pos.x + 4, player.top));
+        }
+        soundEvent = "player_shoot";
       }
     }
 
@@ -139,6 +151,11 @@ export class WeaponSystem {
 
   private createPlasmaBolt(x: number, y: number, angle = 0): PlasmaBolt {
     return new PlasmaBolt(x, y, angle);
+  }
+
+  private createTrackingBullet(x: number, y: number, angle = 0): TrackingBullet {
+    const config = WEAPON_CONFIGS["auto-gun"];
+    return new TrackingBullet(x, y, angle, config.homingStrength);
   }
 
   private createIonBolt(x: number, y: number, chargeLevel: number, angle = 0): IonBolt {

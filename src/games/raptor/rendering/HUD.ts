@@ -41,6 +41,7 @@ const WEAPON_LABELS: Record<WeaponType, string> = {
   "laser": "LSR",
   "plasma": "PLS",
   "ion-cannon": "ION",
+  "auto-gun": "ATG",
 };
 
 const WEAPON_COLORS: Record<WeaponType, string> = {
@@ -49,6 +50,7 @@ const WEAPON_COLORS: Record<WeaponType, string> = {
   "laser": "#9b59b6",
   "plasma": "#8e44ad",
   "ion-cannon": "#00bcd4",
+  "auto-gun": "#27ae60",
 };
 
 interface SliderLayout {

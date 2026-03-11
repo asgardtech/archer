@@ -2,7 +2,7 @@ import { RaptorSaveData, WeaponType } from "../types";
 import { LEVELS } from "../levels";
 import { tryGetStorage, trySetStorage, tryRemoveStorage } from "../../../shared/storage";
 
-const VALID_WEAPONS: WeaponType[] = ["machine-gun", "missile", "laser", "plasma", "ion-cannon"];
+const VALID_WEAPONS: WeaponType[] = ["machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun"];
 
 export class SaveSystem {
   private static readonly STORAGE_KEY = "raptor_save";
