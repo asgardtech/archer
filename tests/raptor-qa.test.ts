@@ -862,9 +862,9 @@ describe("Scenario: Level difficulty increases progressively", () => {
     expect(LEVELS[4].bossEnabled).toBe(true);
   });
 
-  test("level 1 has 4 waves, level 2 has 5 waves", () => {
-    expect(LEVELS[0].waves.length).toBe(4);
-    expect(LEVELS[1].waves.length).toBe(5);
+  test("level 1 has 5 waves, level 2 has 7 waves", () => {
+    expect(LEVELS[0].waves.length).toBe(5);
+    expect(LEVELS[1].waves.length).toBe(7);
   });
 
   test("level 1 auto-fire rate is 5, level 5 auto-fire rate is 7", () => {
@@ -1507,8 +1507,13 @@ describe("Scenario: Type definitions are complete", () => {
   });
 
   test("EnemyVariant type includes all variants", () => {
-    const variants: EnemyVariant[] = ["scout", "fighter", "bomber", "boss"];
-    expect(variants.length).toBe(4);
+    const variants: EnemyVariant[] = [
+      "scout", "fighter", "bomber", "boss",
+      "interceptor", "dart", "drone", "swarmer",
+      "gunship", "cruiser", "destroyer", "juggernaut",
+      "stealth", "minelayer",
+    ];
+    expect(variants.length).toBe(14);
   });
 
   test("RaptorPowerUpType includes all types", () => {
@@ -1517,10 +1522,15 @@ describe("Scenario: Type definitions are complete", () => {
   });
 
   test("ENEMY_CONFIGS has entries for all variants", () => {
-    expect(ENEMY_CONFIGS.scout).toBeDefined();
-    expect(ENEMY_CONFIGS.fighter).toBeDefined();
-    expect(ENEMY_CONFIGS.bomber).toBeDefined();
-    expect(ENEMY_CONFIGS.boss).toBeDefined();
+    const allVariants: EnemyVariant[] = [
+      "scout", "fighter", "bomber", "boss",
+      "interceptor", "dart", "drone", "swarmer",
+      "gunship", "cruiser", "destroyer", "juggernaut",
+      "stealth", "minelayer",
+    ];
+    for (const v of allVariants) {
+      expect(ENEMY_CONFIGS[v]).toBeDefined();
+    }
   });
 
   test("scout: 1 HP, fast, score=10, fireRate=0", () => {
@@ -1740,7 +1750,12 @@ describe("Scenario: Entity rendering", () => {
     const canvas = createMockCanvas();
     const ctx = (canvas as any).__ctx;
 
-    const variants: EnemyVariant[] = ["scout", "fighter", "bomber", "boss"];
+    const variants: EnemyVariant[] = [
+      "scout", "fighter", "bomber", "boss",
+      "interceptor", "dart", "drone", "swarmer",
+      "gunship", "cruiser", "destroyer", "juggernaut",
+      "stealth", "minelayer",
+    ];
     for (const v of variants) {
       const enemy = new Enemy(100, 100, v);
       expect(() => enemy.render(ctx)).not.toThrow();
@@ -1998,7 +2013,12 @@ describe("Scenario: Level configuration validation", () => {
   test("each wave config has required fields", () => {
     for (const level of LEVELS) {
       for (const wave of level.waves) {
-        expect(["scout", "fighter", "bomber", "boss"]).toContain(wave.enemyVariant);
+        expect([
+          "scout", "fighter", "bomber", "boss",
+          "interceptor", "dart", "drone", "swarmer",
+          "gunship", "cruiser", "destroyer", "juggernaut",
+          "stealth", "minelayer",
+        ]).toContain(wave.enemyVariant);
         expect(wave.count).toBeGreaterThan(0);
         expect(wave.spawnDelay).toBeGreaterThan(0);
         expect(wave.waveDelay).toBeGreaterThanOrEqual(0);
