@@ -11,7 +11,12 @@ export type RaptorGameState =
   | "gameover"
   | "victory";
 
-export type EnemyVariant = "scout" | "fighter" | "bomber" | "boss";
+export type EnemyVariant =
+  | "scout" | "fighter" | "bomber" | "boss"
+  | "interceptor" | "dart" | "drone" | "swarmer"
+  | "gunship" | "cruiser"
+  | "destroyer" | "juggernaut"
+  | "stealth" | "minelayer";
 
 export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser";
 
@@ -436,5 +441,103 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     width: 64,
     height: 56,
     weaponType: "standard",
+  },
+  interceptor: {
+    variant: "interceptor",
+    hitPoints: 1,
+    speed: 250,
+    scoreValue: 15,
+    fireRate: 0.5,
+    width: 22,
+    height: 22,
+    weaponType: "standard",
+  },
+  dart: {
+    variant: "dart",
+    hitPoints: 1,
+    speed: 300,
+    scoreValue: 12,
+    fireRate: 0,
+    width: 18,
+    height: 20,
+  },
+  drone: {
+    variant: "drone",
+    hitPoints: 1,
+    speed: 160,
+    scoreValue: 8,
+    fireRate: 0.3,
+    width: 16,
+    height: 16,
+    weaponType: "standard",
+  },
+  swarmer: {
+    variant: "swarmer",
+    hitPoints: 1,
+    speed: 170,
+    scoreValue: 12,
+    fireRate: 0.4,
+    width: 18,
+    height: 18,
+    weaponType: "standard",
+  },
+  gunship: {
+    variant: "gunship",
+    hitPoints: 3,
+    speed: 110,
+    scoreValue: 40,
+    fireRate: 0.9,
+    width: 34,
+    height: 32,
+    weaponType: "spread",
+  },
+  cruiser: {
+    variant: "cruiser",
+    hitPoints: 5,
+    speed: 60,
+    scoreValue: 75,
+    fireRate: 0.6,
+    width: 48,
+    height: 44,
+    weaponType: "missile",
+  },
+  destroyer: {
+    variant: "destroyer",
+    hitPoints: 6,
+    speed: 50,
+    scoreValue: 100,
+    fireRate: 0.8,
+    width: 52,
+    height: 48,
+    weaponType: "laser",
+  },
+  juggernaut: {
+    variant: "juggernaut",
+    hitPoints: 12,
+    speed: 35,
+    scoreValue: 150,
+    fireRate: 1.2,
+    width: 56,
+    height: 52,
+    weaponType: "missile",
+  },
+  stealth: {
+    variant: "stealth",
+    hitPoints: 2,
+    speed: 160,
+    scoreValue: 35,
+    fireRate: 0.7,
+    width: 28,
+    height: 26,
+    weaponType: "standard",
+  },
+  minelayer: {
+    variant: "minelayer",
+    hitPoints: 2,
+    speed: 100,
+    scoreValue: 30,
+    fireRate: 0.4,
+    width: 32,
+    height: 28,
   },
 };

@@ -714,7 +714,9 @@ export class RaptorGame implements IGame {
 
     const enemyPlayerHits = this.collisions.checkPlayerEnemies(this.player, this.enemies);
     for (const hit of enemyPlayerHits) {
-      const explosionSize = hit.enemy.variant === "boss" ? 3 : 2;
+      const explosionSize = (hit.enemy.variant === "boss" || hit.enemy.variant === "juggernaut") ? 3
+        : (hit.enemy.variant === "bomber" || hit.enemy.variant === "gunship" || hit.enemy.variant === "cruiser" || hit.enemy.variant === "destroyer" || hit.enemy.variant === "minelayer") ? 2
+        : 1;
       this.addExplosion(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
       this.score += hit.enemy.scoreValue;
       if (hit.enemy.variant === "boss") {
@@ -826,7 +828,9 @@ export class RaptorGame implements IGame {
 
   private handleEnemyDestroyed(enemy: Enemy, config: RaptorLevelConfig): void {
     this.score += enemy.scoreValue;
-    const explosionSize = enemy.variant === "boss" ? 3 : enemy.variant === "bomber" ? 2 : 1;
+    const explosionSize = (enemy.variant === "boss" || enemy.variant === "juggernaut") ? 3
+      : (enemy.variant === "bomber" || enemy.variant === "gunship" || enemy.variant === "cruiser" || enemy.variant === "destroyer" || enemy.variant === "minelayer") ? 2
+      : 1;
     this.addExplosion(new Explosion(enemy.pos.x, enemy.pos.y, explosionSize));
 
     if (enemy.variant === "boss") {
@@ -913,6 +917,16 @@ export class RaptorGame implements IGame {
       fighter: "enemy_fighter",
       bomber: "enemy_bomber",
       boss: "enemy_boss",
+      interceptor: "enemy_interceptor",
+      dart: "enemy_dart",
+      drone: "enemy_drone",
+      swarmer: "enemy_swarmer",
+      gunship: "enemy_gunship",
+      cruiser: "enemy_cruiser",
+      destroyer: "enemy_destroyer",
+      juggernaut: "enemy_juggernaut",
+      stealth: "enemy_stealth",
+      minelayer: "enemy_minelayer",
     };
     const key = spriteMap[enemy.variant];
     if (key) {
