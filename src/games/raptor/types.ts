@@ -101,7 +101,8 @@ export type RaptorPowerUpType =
   | "shield-restore"
   | "bonus-life"
   | "weapon-missile"
-  | "weapon-laser";
+  | "weapon-laser"
+  | "weapon-plasma";
 
 export type RaptorSoundEvent =
   | "player_shoot"
@@ -126,9 +127,11 @@ export type RaptorSoundEvent =
   | "enemy_missile_fire"
   | "enemy_laser_fire"
   | "enemy_missile_hit"
-  | "enemy_laser_hit";
+  | "enemy_laser_hit"
+  | "plasma_fire"
+  | "plasma_hit";
 
-export type WeaponType = "machine-gun" | "missile" | "laser";
+export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma";
 
 export interface RaptorSaveData {
   version: 1;
@@ -193,6 +196,18 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     splashRadius: 0,
     rapidFireBonus: 1.5,
     spreadShotBehavior: "wider-beam",
+  },
+  "plasma": {
+    type: "plasma",
+    damage: 2,
+    fireRateMultiplier: 0.6,
+    projectileSpeed: 400,
+    piercing: false,
+    homing: false,
+    homingStrength: 0,
+    splashRadius: 30,
+    rapidFireBonus: 1.8,
+    spreadShotBehavior: "multi-projectile",
   },
 };
 

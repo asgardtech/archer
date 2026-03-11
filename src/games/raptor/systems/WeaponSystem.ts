@@ -2,6 +2,7 @@ import { WeaponType, WEAPON_CONFIGS, Projectile, RaptorLevelConfig, RaptorSoundE
 import { Player } from "../entities/Player";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
+import { PlasmaBolt } from "../entities/PlasmaBolt";
 import { LaserBeam } from "../entities/LaserBeam";
 import { PowerUpManager } from "./PowerUpManager";
 
@@ -79,6 +80,15 @@ export class WeaponSystem {
           newProjectiles.push(this.createMissile(player.pos.x, player.top));
         }
         soundEvent = "missile_fire";
+      } else if (this.currentWeapon === "plasma") {
+        if (spreadShot) {
+          newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top, -0.2));
+          newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top, 0));
+          newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top, 0.2));
+        } else {
+          newProjectiles.push(this.createPlasmaBolt(player.pos.x, player.top));
+        }
+        soundEvent = "plasma_fire";
       }
     }
 
@@ -92,6 +102,10 @@ export class WeaponSystem {
   private createMissile(x: number, y: number, angle = 0): Missile {
     const config = WEAPON_CONFIGS["missile"];
     return new Missile(x, y, angle, config.homingStrength);
+  }
+
+  private createPlasmaBolt(x: number, y: number, angle = 0): PlasmaBolt {
+    return new PlasmaBolt(x, y, angle);
   }
 
   getLaserSoundEvent(dt: number, hasHits: boolean): RaptorSoundEvent | null {

@@ -126,6 +126,17 @@ export class VFXManager {
     });
   }
 
+  addPlasmaTrail(x: number, y: number): void {
+    if (this.trails.length > 300) return;
+    this.trails.push({
+      x: x + (Math.random() - 0.5) * 3,
+      y: y + (Math.random() - 0.5) * 2,
+      alpha: 0.6,
+      size: 1.5 + Math.random() * 1.5,
+      color: `rgba(${140 + Math.random() * 30}, ${60 + Math.random() * 40}, ${200 + Math.random() * 55}, 0.7)`,
+    });
+  }
+
   addLaserSpark(x: number, y: number): void {
     if (this.trails.length > 300) return;
     this.trails.push({

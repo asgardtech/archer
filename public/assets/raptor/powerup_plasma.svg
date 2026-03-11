@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <radialGradient id="ppCore" cx="0.5" cy="0.4" r="0.5">
+      <stop offset="0%" stop-color="#D7BDE2"/>
+      <stop offset="40%" stop-color="#8e44ad"/>
+      <stop offset="100%" stop-color="#4A235A"/>
+    </radialGradient>
+    <radialGradient id="ppGlow" cx="0.5" cy="0.4" r="0.55">
+      <stop offset="0%" stop-color="#c77dff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#7b2ff7" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="ppBlur">
+      <feGaussianBlur stdDeviation="0.8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Outer glow -->
+  <circle cx="12" cy="12" r="11" fill="url(#ppGlow)"/>
+  <!-- Energy ring -->
+  <circle cx="12" cy="12" r="9" fill="none" stroke="#9b59b6" stroke-width="0.8" stroke-opacity="0.5"/>
+  <!-- Main orb -->
+  <circle cx="12" cy="12" r="7" fill="url(#ppCore)" filter="url(#ppBlur)"/>
+  <!-- Inner bright core -->
+  <circle cx="12" cy="10" r="3" fill="#D7BDE2" opacity="0.5"/>
+  <!-- P label -->
+  <text x="12" y="15" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="10" fill="#FFFFFF" opacity="0.9">P</text>
+  <!-- Energy arcs -->
+  <polyline points="5,8 7,10 5.5,12" stroke="#c77dff" stroke-width="0.5" stroke-opacity="0.5" fill="none" stroke-linecap="round"/>
+  <polyline points="19,8 17,10 18.5,12" stroke="#c77dff" stroke-width="0.5" stroke-opacity="0.5" fill="none" stroke-linecap="round"/>
+</svg>
