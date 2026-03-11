@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 36">
+  <defs>
+    <linearGradient id="rkBody" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2e4a20"/>
+      <stop offset="40%" stop-color="#4a6b35"/>
+      <stop offset="60%" stop-color="#3d5c2e"/>
+      <stop offset="100%" stop-color="#2a4020"/>
+    </linearGradient>
+    <radialGradient id="rkNose" cx="0.5" cy="0.3" r="0.6">
+      <stop offset="0%" stop-color="#ffcc66"/>
+      <stop offset="50%" stop-color="#ffaa33"/>
+      <stop offset="100%" stop-color="#cc7700"/>
+    </radialGradient>
+    <linearGradient id="rkExhaust" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffaa33"/>
+      <stop offset="40%" stop-color="#ff6600"/>
+      <stop offset="100%" stop-color="#ff4400" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="rkGlow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Exhaust plume -->
+  <polygon points="6,30 10,36 14,30" fill="url(#rkExhaust)" opacity="0.8"/>
+  <polygon points="7.5,30 10,34 12.5,30" fill="#ffcc44" opacity="0.6"/>
+  <!-- Main body -->
+  <rect x="6" y="10" width="8" height="20" rx="1" fill="url(#rkBody)"/>
+  <!-- Body band -->
+  <rect x="6" y="18" width="8" height="2" fill="#2a4020" opacity="0.5"/>
+  <!-- Stabilizer fins -->
+  <polygon points="4,28 6,24 6,30" fill="#2e4a20"/>
+  <polygon points="16,28 14,24 14,30" fill="#2e4a20"/>
+  <!-- Nose cone -->
+  <polygon points="6,11 10,2 14,11" fill="url(#rkNose)" filter="url(#rkGlow)"/>
+  <!-- Nose highlight -->
+  <ellipse cx="10" cy="7" rx="2" ry="3.5" fill="#ffdd88" opacity="0.4" filter="url(#rkGlow)"/>
+  <!-- Tip highlight -->
+  <ellipse cx="10" cy="4" rx="1" ry="1.5" fill="#ffeecc" opacity="0.7"/>
+</svg>

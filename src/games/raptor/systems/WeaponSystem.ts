@@ -5,6 +5,7 @@ import { Missile } from "../entities/Missile";
 import { PlasmaBolt } from "../entities/PlasmaBolt";
 import { IonBolt } from "../entities/IonBolt";
 import { TrackingBullet } from "../entities/TrackingBullet";
+import { Rocket } from "../entities/Rocket";
 import { LaserBeam } from "../entities/LaserBeam";
 import { PowerUpManager } from "./PowerUpManager";
 
@@ -134,6 +135,15 @@ export class WeaponSystem {
           newProjectiles.push(this.createTrackingBullet(player.pos.x + 4, player.top));
         }
         soundEvent = "player_shoot";
+      } else if (this.currentWeapon === "rocket") {
+        if (spreadShot) {
+          newProjectiles.push(this.createRocket(player.pos.x, player.top, -0.15));
+          newProjectiles.push(this.createRocket(player.pos.x, player.top, 0));
+          newProjectiles.push(this.createRocket(player.pos.x, player.top, 0.15));
+        } else {
+          newProjectiles.push(this.createRocket(player.pos.x, player.top));
+        }
+        soundEvent = "rocket_fire";
       }
     }
 
@@ -156,6 +166,10 @@ export class WeaponSystem {
   private createTrackingBullet(x: number, y: number, angle = 0): TrackingBullet {
     const config = WEAPON_CONFIGS["auto-gun"];
     return new TrackingBullet(x, y, angle, config.homingStrength);
+  }
+
+  private createRocket(x: number, y: number, angle = 0): Rocket {
+    return new Rocket(x, y, angle);
   }
 
   private createIonBolt(x: number, y: number, chargeLevel: number, angle = 0): IonBolt {

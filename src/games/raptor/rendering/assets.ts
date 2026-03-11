@@ -26,6 +26,8 @@ export const ASSET_MANIFEST: AssetManifest = {
   powerup_ion:      `${BASE}powerup_ion.svg`,
   bullet_autogun:   `${BASE}bullet_autogun.svg`,
   powerup_autogun:  `${BASE}powerup_autogun.svg`,
+  bullet_rocket:    `${BASE}bullet_rocket.svg`,
+  powerup_rocket:   `${BASE}powerup_rocket.svg`,
   powerup_bomb:     `${BASE}powerup_bomb.svg`,
   bg_nebula:        `${BASE}bg_nebula.svg`,
   planet_01:        `${BASE}planet_01.svg`,
