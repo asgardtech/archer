@@ -8,6 +8,7 @@ import { Balloon } from "./entities/Balloon";
 import { Arrow } from "./entities/Arrow";
 import { Obstacle } from "./entities/Obstacle";
 import { Bow } from "./entities/Bow";
+import { Landmark } from "./entities/Landmark";
 import { HUD } from "./rendering/HUD";
 import { LEVELS, LevelConfig } from "./levels";
 import { IGame } from "../../shared/types";
@@ -56,6 +57,7 @@ export class ArcherGame implements IGame {
   private arrows: Arrow[] = [];
   private obstacles: Obstacle[] = [];
   private bow: Bow;
+  private landmark: Landmark | null = null;
 
   private input: InputManager;
   private spawner: Spawner;
@@ -267,6 +269,9 @@ export class ArcherGame implements IGame {
   private updatePlaying(dt: number): void {
     this.bow.update(this.input.mousePos);
     this.upgradeManager.update(dt);
+    if (this.landmark) {
+      this.landmark.update(dt);
+    }
 
     if (this.input.wasClicked && this.arrowsRemaining > 0) {
       const multiShot = this.upgradeManager.hasUpgrade("multi-shot");
@@ -432,10 +437,15 @@ export class ArcherGame implements IGame {
     this.spawner.configure(config);
     this.upgradeManager.resetForNewLevel();
     this.hud.reset();
+    this.landmark = new Landmark(config.landmark, this.width, this.height);
   }
 
   private render(): void {
     this.renderSky();
+
+    if (this.landmark && (this.state === "playing" || this.state === "gameover" || this.state === "level_complete")) {
+      this.landmark.render(this.ctx);
+    }
 
     if (this.state === "playing" || this.state === "gameover" || this.state === "level_complete") {
       for (const obstacle of this.obstacles) {
