@@ -189,7 +189,15 @@ function createMockCanvas(): HTMLCanvasElement {
 }
 
 function setupDom(canvas: HTMLCanvasElement): void {
-  (global as any).document = { getElementById: jest.fn(() => canvas) };
+  (global as any).document = {
+    getElementById: jest.fn(() => canvas),
+    createElement: jest.fn(() => ({
+      getContext: jest.fn(() => ({
+        font: "",
+        measureText: jest.fn(() => ({ width: 50 })),
+      })),
+    })),
+  };
   (global as any).HTMLCanvasElement = class HTMLCanvasElement {};
   Object.setPrototypeOf(canvas, (global as any).HTMLCanvasElement.prototype);
   (global as any).window = {

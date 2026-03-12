@@ -4,6 +4,7 @@ export class InputManager {
   public mousePos: Vec2 = { x: 400, y: 300 };
   public isMouseDown = false;
   public wasClicked = false;
+  public wasEscPressed = false;
   public readonly isTouchDevice: boolean;
 
   private canvas: HTMLCanvasElement;
@@ -15,6 +16,7 @@ export class InputManager {
   private boundTouchStart: (e: TouchEvent) => void;
   private boundTouchMove: (e: TouchEvent) => void;
   private boundTouchEnd: (e: TouchEvent) => void;
+  private boundKeyDown: (e: KeyboardEvent) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -27,6 +29,7 @@ export class InputManager {
     this.boundTouchStart = (e) => this.onTouchStart(e);
     this.boundTouchMove = (e) => this.onTouchMove(e);
     this.boundTouchEnd = (e) => this.onTouchEnd(e);
+    this.boundKeyDown = (e) => this.onKeyDown(e);
 
     canvas.addEventListener("mousemove", this.boundMouseMove);
     canvas.addEventListener("mousedown", this.boundMouseDown);
@@ -35,10 +38,13 @@ export class InputManager {
     canvas.addEventListener("touchstart", this.boundTouchStart, { passive: false });
     canvas.addEventListener("touchmove", this.boundTouchMove, { passive: false });
     canvas.addEventListener("touchend", this.boundTouchEnd, { passive: false });
+
+    window.addEventListener("keydown", this.boundKeyDown);
   }
 
   consume(): void {
     this.wasClicked = false;
+    this.wasEscPressed = false;
   }
 
   destroy(): void {
@@ -48,6 +54,7 @@ export class InputManager {
     this.canvas.removeEventListener("touchstart", this.boundTouchStart);
     this.canvas.removeEventListener("touchmove", this.boundTouchMove);
     this.canvas.removeEventListener("touchend", this.boundTouchEnd);
+    window.removeEventListener("keydown", this.boundKeyDown);
   }
 
   private toCanvasCoords(clientX: number, clientY: number): Vec2 {
@@ -97,6 +104,12 @@ export class InputManager {
     if (!touch) return;
     this.activeTouchId = null;
     this.isMouseDown = false;
+  }
+
+  private onKeyDown(e: KeyboardEvent): void {
+    if (e.key === "Escape") {
+      this.wasEscPressed = true;
+    }
   }
 
   private getActiveTouch(touches: TouchList): Touch | null {
