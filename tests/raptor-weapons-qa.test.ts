@@ -1606,16 +1606,18 @@ describe("Weapon Availability Curve", () => {
 
 describe("Missile Reduced Homing", () => {
   test("Missile with reduced homing can miss fast-moving enemies", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
-    const enemy = makeEnemy(100, 200);
+    const missile = new Missile(400, 400, 0, WEAPON_CONFIGS["missile"].homingStrength);
+    const enemy = makeEnemy(100, 200, "scout");
+    const dartSpeed = 300;
 
     for (let i = 0; i < 5; i++) {
+      enemy.pos.x += dartSpeed * 0.1;
       missile.update(0.1, 800, 600, [enemy]);
     }
 
     const dx = missile.pos.x - enemy.pos.x;
     const dy = missile.pos.y - enemy.pos.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    expect(dist).toBeGreaterThan(0);
+    expect(dist).toBeGreaterThan(50);
   });
 });
