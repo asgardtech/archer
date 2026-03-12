@@ -113,7 +113,7 @@ export const ASSET_MANIFEST: AssetManifest = {
   struct_antenna_array:  `${TERRAIN}struct_antenna_array.svg`,
 
   // Level 10 Structures (Stronghold)
-  struct_cylon_tower:    `${TERRAIN}struct_cylon_tower.svg`,
+  struct_vektran_tower:    `${TERRAIN}struct_vektran_tower.svg`,
   struct_turret_base:    `${TERRAIN}struct_turret_base.svg`,
   struct_heavy_gate:     `${TERRAIN}struct_heavy_gate.svg`,
   struct_reactor_core:   `${TERRAIN}struct_reactor_core.svg`,

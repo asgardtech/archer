@@ -37,8 +37,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       },
     },
     story: {
-      briefing: "Cylon scouts have been spotted along the coastline. Fly a patrol sweep and eliminate all hostiles before they establish a foothold.",
-      completionText: "Coastal sector secured. Recon data confirms Cylon forces are massing inland — Command is ordering you to press the attack.",
+      briefing: "Vektran scouts have been spotted along the coastline. Fly a patrol sweep and eliminate all hostiles before they establish a foothold.",
+      completionText: "Coastal sector secured. Recon data confirms Vektran forces are massing inland — Command is ordering you to press the attack.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: Radar contact — multiple bogeys inbound." },
         { triggerTime: 9, text: "HQ: Second wave approaching from the north." },
@@ -85,8 +85,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       },
     },
     story: {
-      briefing: "Cylon forces have fortified a desert supply corridor. Destroy their forward positions and cut off reinforcements to the front lines.",
-      completionText: "Desert corridor neutralized. Intelligence has intercepted Cylon transmissions originating from a mountain relay station — you're being rerouted.",
+      briefing: "Vektran forces have fortified a desert supply corridor. Destroy their forward positions and cut off reinforcements to the front lines.",
+      completionText: "Desert corridor neutralized. Intelligence has intercepted Vektran transmissions originating from a mountain relay station — you're being rerouted.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: Sandstorm clearing — hostiles visible." },
         { triggerTime: 12, text: "HQ: Watch for fast movers on your six." },
@@ -136,8 +136,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       },
     },
     story: {
-      briefing: "A Cylon relay station in the mountains is coordinating enemy movements across three sectors. Fight through the mountain pass and take it out.",
-      completionText: "Relay station destroyed. Decrypted signals reveal the Cylons are stockpiling weapons at an arctic research facility. Command wants it gone.",
+      briefing: "A Vektran relay station in the mountains is coordinating enemy movements across three sectors. Fight through the mountain pass and take it out.",
+      completionText: "Relay station destroyed. Decrypted signals reveal the Vektrans are stockpiling weapons at an arctic research facility. Command wants it gone.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: Entering the mountain pass now." },
         { triggerTime: 15, text: "Sensor: Bomber squadron detected ahead." },
@@ -188,8 +188,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       },
     },
     story: {
-      briefing: "The Cylons are developing advanced weaponry at an arctic facility. Punch through their air defenses and level the complex before the prototypes go online.",
-      completionText: "Arctic facility reduced to rubble. Recovered data reveals the Cylons are building a superweapon at a heavily fortified installation to the south.",
+      briefing: "The Vektrans are developing advanced weaponry at an arctic facility. Punch through their air defenses and level the complex before the prototypes go online.",
+      completionText: "Arctic facility reduced to rubble. Recovered data reveals the Vektrans are building a superweapon at a heavily fortified installation to the south.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: Visibility low — instruments only." },
         { triggerTime: 14, text: "Sensor: Missile locks detected — evade!" },
@@ -246,8 +246,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       },
     },
     story: {
-      briefing: "Intelligence confirms the Cylon superweapon is housed in a fortress complex. Breach their final defensive line — nothing gets through after this.",
-      completionText: "The fortress has fallen, but the superweapon was already moved. Cylon transport logs point to a shipyard beyond the front lines. You're going deep.",
+      briefing: "Intelligence confirms the Vektran superweapon is housed in a fortress complex. Breach their final defensive line — nothing gets through after this.",
+      completionText: "The fortress has fallen, but the superweapon was already moved. Vektran transport logs point to a shipyard beyond the front lines. You're going deep.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: This is it — breach the perimeter." },
         { triggerTime: 13, text: "Sensor: Stealth contacts on approach." },
@@ -312,8 +312,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       litStructures: ["struct_crane", "struct_drydock"],
     },
     story: {
-      briefing: "You've crossed behind enemy lines. The Cylon shipyard is producing warships at an alarming rate — destroy the drydocks before their fleet doubles in size.",
-      completionText: "Shipyard demolished. Recon drones report scorched wastelands ahead, littered with the wreckage of earlier battles. The Cylons are regrouping.",
+      briefing: "You've crossed behind enemy lines. The Vektran shipyard is producing warships at an alarming rate — destroy the drydocks before their fleet doubles in size.",
+      completionText: "Shipyard demolished. Recon drones report scorched wastelands ahead, littered with the wreckage of earlier battles. The Vektrans are regrouping.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: You're behind enemy lines now, Raptor-1." },
         { triggerTime: 10, text: "Sensor: Destroyer-class contact detected." },
@@ -383,8 +383,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       litStructures: ["struct_ruin", "struct_wrecked_tank"],
     },
     story: {
-      briefing: "The scorched wastelands are a graveyard of failed offensives. Fight through Cylon patrols guarding the approach to their industrial heartland.",
-      completionText: "Wasteland cleared. Thermal scans reveal massive energy output ahead — the Cylon industrial core. That's where the superweapon is being assembled.",
+      briefing: "The scorched wastelands are a graveyard of failed offensives. Fight through Vektran patrols guarding the approach to their industrial heartland.",
+      completionText: "Wasteland cleared. Thermal scans reveal massive energy output ahead — the Vektran industrial core. That's where the superweapon is being assembled.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: Radiation levels rising — stay alert." },
         { triggerTime: 12, text: "Sensor: Multiple cruiser contacts ahead." },
@@ -455,8 +455,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       litStructures: ["struct_smokestack", "struct_factory", "struct_cooling_tower"],
     },
     story: {
-      briefing: "The Cylon industrial core powers their entire war machine. Cripple the factories and reactor systems to cut off superweapon production for good.",
-      completionText: "Industrial core crippled. Without their factories, the Cylons can't rebuild. But the command core has retreated to orbit — you'll have to follow.",
+      briefing: "The Vektran industrial core powers their entire war machine. Cripple the factories and reactor systems to cut off superweapon production for good.",
+      completionText: "Industrial core crippled. Without their factories, the Vektrans can't rebuild. But the command core has retreated to orbit — you'll have to follow.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: Industrial core in sight. Hit it hard." },
         { triggerTime: 10, text: "Sensor: Destroyer squadron incoming." },
@@ -529,8 +529,8 @@ export const LEVELS: RaptorLevelConfig[] = [
       litStructures: ["struct_station_module", "struct_antenna_array"],
     },
     story: {
-      briefing: "The Cylon command core has retreated to an orbital station surrounded by debris fields. Navigate the wreckage and punch through their orbital defenses.",
-      completionText: "Orbital defenses shattered. The Cylon Stronghold lies ahead — one final push and we end this war. All remaining allied forces are converging on your position.",
+      briefing: "The Vektran command core has retreated to an orbital station surrounded by debris fields. Navigate the wreckage and punch through their orbital defenses.",
+      completionText: "Orbital defenses shattered. The Vektran Stronghold lies ahead — one final push and we end this war. All remaining allied forces are converging on your position.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: You've reached orbit. Watch for debris." },
         { triggerTime: 10, text: "Sensor: Swarm contacts — they're everywhere." },
@@ -541,7 +541,7 @@ export const LEVELS: RaptorLevelConfig[] = [
   },
   {
     level: 10,
-    name: "Cylon Stronghold",
+    name: "Vektran Stronghold",
     waves: [
       { enemyVariant: "fighter", count: 10, spawnDelay: 0.35, waveDelay: 1, formation: "line", speed: 200, weaponType: "laser" },
       { enemyVariant: "dart", count: 10, spawnDelay: 0.25, waveDelay: 4, formation: "sweep", speed: 300 },
@@ -577,7 +577,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       horizonAssets: ["horizon_stronghold"],
       groundColor: "#1a1a1a",
       groundTexture: "ground_dark_metal",
-      structurePool: ["struct_cylon_tower", "struct_turret_base", "struct_heavy_gate", "struct_reactor_core", "struct_aa_gun"],
+      structurePool: ["struct_vektran_tower", "struct_turret_base", "struct_heavy_gate", "struct_reactor_core", "struct_aa_gun"],
       structureDensity: 4,
       propPool: ["prop_red_light", "prop_debris", "prop_cable_cluster", "prop_vent_grate", "prop_blast_mark"],
       propDensity: 7,
@@ -600,11 +600,11 @@ export const LEVELS: RaptorLevelConfig[] = [
         drift: 10,
       },
       scanlines: true,
-      litStructures: ["struct_cylon_tower", "struct_reactor_core", "struct_turret_base"],
+      litStructures: ["struct_vektran_tower", "struct_reactor_core", "struct_turret_base"],
     },
     story: {
-      briefing: "The Cylon Stronghold houses their central command core — destroy it and their entire network collapses. All wings, begin the final assault.",
-      completionText: "The Cylon command core is destroyed. Their forces across the colonies are shutting down. Against all odds, you've done it — humanity is free.",
+      briefing: "The Vektran Stronghold houses their central command core — destroy it and their entire network collapses. All wings, begin the final assault.",
+      completionText: "The Vektran command core is destroyed. Their forces across the colonies are shutting down. Against all odds, you've done it — humanity is free.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: All wings, commence attack!" },
         { triggerTime: 12, text: "Sensor: Cruisers and juggernauts inbound." },

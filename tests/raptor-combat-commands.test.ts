@@ -42,7 +42,7 @@ function makeContext(overrides: Partial<CommandContext> = {}): CommandContext {
       { level: 7, name: "Scorched Wastes" },
       { level: 8, name: "Industrial Core" },
       { level: 9, name: "Orbital Debris" },
-      { level: 10, name: "Cylon Stronghold" },
+      { level: 10, name: "Vektran Stronghold" },
     ] as any,
     startLevel: () => {},
     setState: () => {},
