@@ -30,10 +30,20 @@ export class Missile implements Projectile {
     this.sprite = sprite;
   }
 
+  public get heading(): number { return this.angle; }
+
   get left(): number { return this.pos.x - this.width / 2; }
   get right(): number { return this.pos.x + this.width / 2; }
   get top(): number { return this.pos.y - this.height / 2; }
   get bottom(): number { return this.pos.y + this.height / 2; }
+
+  getExhaustPosition(): Vec2 {
+    const tailOffset = this.height / 2 + 2;
+    return {
+      x: this.pos.x - Math.sin(this.angle) * tailOffset,
+      y: this.pos.y + Math.cos(this.angle) * tailOffset,
+    };
+  }
 
   update(dt: number, canvasWidth = 800, canvasHeight = 600, enemies?: Enemy[]): void {
     if (!this.alive) return;
