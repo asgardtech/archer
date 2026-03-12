@@ -36,6 +36,12 @@ const DEFAULT_CONFIG: LevelConfig = {
     positionX: 0.5,
     hitPoints: 3,
   },
+  terrain: {
+    type: "meadow",
+    baseColor: "#4a8c3f",
+    surfaceColor: "#2d6b2e",
+    accentColor: "#e8554e",
+  },
 };
 
 export class Spawner {

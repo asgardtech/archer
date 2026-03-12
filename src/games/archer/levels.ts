@@ -1,4 +1,4 @@
-import { ObstacleType, LandmarkConfig } from "./types";
+import { ObstacleType, LandmarkConfig, TerrainStyle } from "./types";
 
 export interface LevelConfig {
   level: number;
@@ -25,6 +25,7 @@ export interface LevelConfig {
   obstacleSpeedMin: number;
   obstacleSpeedMax: number;
   landmark: LandmarkConfig;
+  terrain: TerrainStyle;
 }
 
 export const LEVELS: LevelConfig[] = [
@@ -59,6 +60,12 @@ export const LEVELS: LevelConfig[] = [
       positionX: 0.5,
       hitPoints: 3,
     },
+    terrain: {
+      type: "meadow",
+      baseColor: "#4a8c3f",
+      surfaceColor: "#2d6b2e",
+      accentColor: "#e8554e",
+    },
   },
   {
     level: 2,
@@ -90,6 +97,12 @@ export const LEVELS: LevelConfig[] = [
       description: "The forest treehouse is under siege by balloons!",
       positionX: 0.6,
       hitPoints: 4,
+    },
+    terrain: {
+      type: "forest",
+      baseColor: "#3b5a2e",
+      surfaceColor: "#1e3a1e",
+      accentColor: "#c0392b",
     },
   },
   {
@@ -123,6 +136,12 @@ export const LEVELS: LevelConfig[] = [
       positionX: 0.45,
       hitPoints: 5,
     },
+    terrain: {
+      type: "mountains",
+      baseColor: "#6b6b6b",
+      surfaceColor: "#4a4a4a",
+      accentColor: "#e8e8f0",
+    },
   },
   {
     level: 4,
@@ -155,6 +174,12 @@ export const LEVELS: LevelConfig[] = [
       positionX: 0.55,
       hitPoints: 6,
     },
+    terrain: {
+      type: "storm",
+      baseColor: "#3a3530",
+      surfaceColor: "#252220",
+      accentColor: "rgba(100, 140, 180, 0.4)",
+    },
   },
   {
     level: 5,
@@ -186,6 +211,12 @@ export const LEVELS: LevelConfig[] = [
       description: "The sky fortress has fallen to the balloon horde!",
       positionX: 0.5,
       hitPoints: 8,
+    },
+    terrain: {
+      type: "sky_fortress",
+      baseColor: "#7B7872",
+      surfaceColor: "#5a5552",
+      accentColor: "#6B6462",
     },
   },
 ];

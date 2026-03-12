@@ -10,6 +10,7 @@ import { Obstacle } from "./entities/Obstacle";
 import { Bow } from "./entities/Bow";
 import { Landmark } from "./entities/Landmark";
 import { HUD } from "./rendering/HUD";
+import { TerrainRenderer } from "./rendering/TerrainRenderer";
 import { LEVELS, LevelConfig } from "./levels";
 import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
@@ -443,11 +444,18 @@ export class ArcherGame implements IGame {
   private render(): void {
     this.renderSky();
 
-    if (this.landmark && (this.state === "playing" || this.state === "gameover" || this.state === "level_complete")) {
+    const config = this.currentLevelConfig;
+    const isGameplay = this.state === "playing" || this.state === "gameover" || this.state === "level_complete";
+
+    if (isGameplay) {
+      TerrainRenderer.render(this.ctx, this.width, this.height, config.terrain);
+    }
+
+    if (this.landmark && isGameplay) {
       this.landmark.render(this.ctx);
     }
 
-    if (this.state === "playing" || this.state === "gameover" || this.state === "level_complete") {
+    if (isGameplay) {
       for (const obstacle of this.obstacles) {
         obstacle.render(this.ctx);
       }
@@ -458,12 +466,8 @@ export class ArcherGame implements IGame {
         arrow.render(this.ctx);
       }
       this.bow.render(this.ctx, this.arrowsRemaining > 0, this.upgradeManager.getActive());
-
-      this.ctx.fillStyle = "#3a7d44";
-      this.ctx.fillRect(0, this.height - 15, this.width, 15);
     }
 
-    const config = this.currentLevelConfig;
     this.hud.render(
       this.ctx,
       this.state,

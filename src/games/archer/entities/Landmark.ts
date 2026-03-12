@@ -1,6 +1,4 @@
-import { LandmarkConfig, LandmarkType } from "../types";
-
-const GROUND_BAR_HEIGHT = 15;
+import { LandmarkConfig, LandmarkType, GROUND_HEIGHT } from "../types";
 
 export class Landmark {
   private type: LandmarkType;
@@ -15,7 +13,7 @@ export class Landmark {
   constructor(config: LandmarkConfig, canvasWidth: number, canvasHeight: number) {
     this.type = config.type;
     this.x = Math.max(0, Math.min(1, config.positionX)) * canvasWidth;
-    this.groundY = canvasHeight - GROUND_BAR_HEIGHT;
+    this.groundY = canvasHeight - GROUND_HEIGHT;
   }
 
   update(dt: number): void {
