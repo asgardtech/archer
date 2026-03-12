@@ -45,7 +45,8 @@ export type SoundEvent =
   | "game_over"
   | "victory"
   | "menu_start"
-  | "low_ammo";
+  | "low_ammo"
+  | "landmark_liberated";
 
 export type LandmarkType = "windmill" | "treehouse" | "watchtower" | "lighthouse" | "castle";
 

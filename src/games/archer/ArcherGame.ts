@@ -262,6 +262,9 @@ export class ArcherGame implements IGame {
         break;
 
       case "victory":
+        if (this.landmark) {
+          this.landmark.update(dt);
+        }
         if (this.input.wasClicked) {
           this.sound.stopMusic();
           if (this.onExit) {
@@ -398,7 +401,7 @@ export class ArcherGame implements IGame {
 
     if (this.score >= this.currentLevelConfig.targetScore) {
       if (this.landmark) {
-        this.landmark.liberate();
+        this.landmark.celebrate();
       }
       this.totalScore += this.score;
       this.balloons = [];
@@ -407,6 +410,7 @@ export class ArcherGame implements IGame {
       this.sound.stopLowAmmoWarning();
       this.lowAmmoTriggered = false;
       this.sound.stopMusic();
+      this.sound.play("landmark_liberated");
       if (this.currentLevel >= LEVELS.length - 1) {
         this.state = "victory";
         this.sound.play("victory");
@@ -461,11 +465,11 @@ export class ArcherGame implements IGame {
     const config = this.currentLevelConfig;
     const isGameplay = this.state === "playing" || this.state === "gameover" || this.state === "level_complete" || this.state === "level_intro";
 
-    if (isGameplay) {
+    if (isGameplay || this.state === "victory") {
       TerrainRenderer.render(this.ctx, this.width, this.height, config.terrain);
     }
 
-    if (this.landmark && isGameplay) {
+    if (this.landmark && (isGameplay || this.state === "victory")) {
       this.landmark.render(this.ctx);
     }
 

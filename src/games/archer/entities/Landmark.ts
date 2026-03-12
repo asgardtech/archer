@@ -55,11 +55,12 @@ export class Landmark {
     this.siegeProgress = Math.max(0, Math.min(1, progress));
   }
 
-  liberate(): void {
+  celebrate(): void {
+    if (this.state === "liberated") return;
     this.state = "liberated";
     this.siegeProgress = 1;
-    this.liberationTimer = 1.5;
-    this.spawnSparkles(25);
+    this.liberationTimer = 2.0;
+    this.spawnSparkles(30);
   }
 
   update(dt: number): void {
@@ -74,6 +75,7 @@ export class Landmark {
       for (const s of this.sparkles) {
         s.x += s.vx * dt;
         s.y += s.vy * dt;
+        s.vy += 80 * dt;
         s.life -= dt;
       }
       this.sparkles = this.sparkles.filter((s) => s.life > 0);
@@ -170,21 +172,21 @@ export class Landmark {
   }
 
   private renderLiberationEffect(ctx: CanvasRenderingContext2D): void {
-    const burstAlpha = Math.max(0, (this.liberationTimer - 1.0) / 0.5);
+    const burstAlpha = Math.max(0, (this.liberationTimer - 1.2) / 0.8);
     if (burstAlpha > 0) {
       const bounds = LANDMARK_BOUNDS[this.type];
       const gradient = ctx.createRadialGradient(
         0, bounds.offsetY, 0,
-        0, bounds.offsetY, bounds.width
+        0, bounds.offsetY, bounds.width * 1.5
       );
       gradient.addColorStop(0, `rgba(255, 215, 0, ${0.6 * burstAlpha})`);
       gradient.addColorStop(1, "rgba(255, 215, 0, 0)");
       ctx.fillStyle = gradient;
       ctx.fillRect(
-        -bounds.width,
-        bounds.offsetY - bounds.height / 2,
-        bounds.width * 2,
-        bounds.height
+        -bounds.width * 1.5,
+        bounds.offsetY - bounds.height,
+        bounds.width * 3,
+        bounds.height * 2
       );
     }
 
@@ -202,7 +204,7 @@ export class Landmark {
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 30 + Math.random() * 60;
-      const life = 0.8 + Math.random() * 0.7;
+      const life = 1.0 + Math.random() * 1.0;
       this.sparkles.push({
         x: (Math.random() - 0.5) * bounds.width,
         y: bounds.offsetY + (Math.random() - 0.5) * bounds.height * 0.6,
