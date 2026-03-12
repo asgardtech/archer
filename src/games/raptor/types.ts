@@ -219,7 +219,7 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     projectileSpeed: 350,
     piercing: false,
     homing: true,
-    homingStrength: 1.3,
+    homingStrength: 1.8,
     splashRadius: 30,
     splashDamageRatio: 0.4,
     rapidFireBonus: 1.3,
@@ -292,7 +292,7 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     projectileSpeed: 480,
     piercing: false,
     homing: true,
-    homingStrength: 1.8,
+    homingStrength: 2.0,
     splashRadius: 0,
     splashDamageRatio: 0,
     rapidFireBonus: 1.8,
@@ -300,7 +300,7 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     tiers: [
       TIER_1,
       { damageMultiplier: 1.2, fireRateMultiplier: 1.3, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
-      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
+      { damageMultiplier: 1.2, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
     ],
   },
   "rocket": {
