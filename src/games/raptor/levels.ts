@@ -36,6 +36,15 @@ export const LEVELS: RaptorLevelConfig[] = [
         drift: 20,
       },
     },
+    story: {
+      briefing: "Cylon scouts have been spotted along the coastline. Fly a patrol sweep and eliminate all hostiles before they establish a foothold.",
+      completionText: "Coastal sector secured. Recon data confirms Cylon forces are massing inland — Command is ordering you to press the attack.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: Radar contact — multiple bogeys inbound." },
+        { triggerTime: 9, text: "HQ: Second wave approaching from the north." },
+        { triggerTime: 16, text: "HQ: Keep pushing — clear the coast." },
+      ],
+    },
   },
   {
     level: 2,
@@ -74,6 +83,15 @@ export const LEVELS: RaptorLevelConfig[] = [
         sizeRange: [0.5, 2],
         drift: 40,
       },
+    },
+    story: {
+      briefing: "Cylon forces have fortified a desert supply corridor. Destroy their forward positions and cut off reinforcements to the front lines.",
+      completionText: "Desert corridor neutralized. Intelligence has intercepted Cylon transmissions originating from a mountain relay station — you're being rerouted.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: Sandstorm clearing — hostiles visible." },
+        { triggerTime: 12, text: "HQ: Watch for fast movers on your six." },
+        { triggerTime: 21, text: "Wingman: Heavy fire ahead — stay sharp." },
+      ],
     },
   },
   {
@@ -117,6 +135,15 @@ export const LEVELS: RaptorLevelConfig[] = [
         drift: 30,
       },
     },
+    story: {
+      briefing: "A Cylon relay station in the mountains is coordinating enemy movements across three sectors. Fight through the mountain pass and take it out.",
+      completionText: "Relay station destroyed. Decrypted signals reveal the Cylons are stockpiling weapons at an arctic research facility. Command wants it gone.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: Entering the mountain pass now." },
+        { triggerTime: 15, text: "Sensor: Bomber squadron detected ahead." },
+        { triggerTime: 26, text: "HQ: Relay station in range — finish it." },
+      ],
+    },
   },
   {
     level: 4,
@@ -159,6 +186,16 @@ export const LEVELS: RaptorLevelConfig[] = [
         sizeRange: [1, 3],
         drift: 25,
       },
+    },
+    story: {
+      briefing: "The Cylons are developing advanced weaponry at an arctic facility. Punch through their air defenses and level the complex before the prototypes go online.",
+      completionText: "Arctic facility reduced to rubble. Recovered data reveals the Cylons are building a superweapon at a heavily fortified installation to the south.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: Visibility low — instruments only." },
+        { triggerTime: 14, text: "Sensor: Missile locks detected — evade!" },
+        { triggerTime: 25, text: "Wingman: Facility defenses are thinning." },
+        { triggerTime: 35, text: "HQ: Almost through — keep the pressure on." },
+      ],
     },
   },
   {
@@ -207,6 +244,16 @@ export const LEVELS: RaptorLevelConfig[] = [
         sizeRange: [0.5, 2],
         drift: 15,
       },
+    },
+    story: {
+      briefing: "Intelligence confirms the Cylon superweapon is housed in a fortress complex. Breach their final defensive line — nothing gets through after this.",
+      completionText: "The fortress has fallen, but the superweapon was already moved. Cylon transport logs point to a shipyard beyond the front lines. You're going deep.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: This is it — breach the perimeter." },
+        { triggerTime: 13, text: "Sensor: Stealth contacts on approach." },
+        { triggerTime: 23, text: "Wingman: Cruiser sighted — focus fire!" },
+        { triggerTime: 35, text: "HQ: Fortress guns are failing. Push through!" },
+      ],
     },
   },
   {
@@ -263,6 +310,16 @@ export const LEVELS: RaptorLevelConfig[] = [
         drift: 20,
       },
       litStructures: ["struct_crane", "struct_drydock"],
+    },
+    story: {
+      briefing: "You've crossed behind enemy lines. The Cylon shipyard is producing warships at an alarming rate — destroy the drydocks before their fleet doubles in size.",
+      completionText: "Shipyard demolished. Recon drones report scorched wastelands ahead, littered with the wreckage of earlier battles. The Cylons are regrouping.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: You're behind enemy lines now, Raptor-1." },
+        { triggerTime: 10, text: "Sensor: Destroyer-class contact detected." },
+        { triggerTime: 21, text: "Wingman: Mines in the water — stay high." },
+        { triggerTime: 38, text: "HQ: Drydocks are burning. Good work." },
+      ],
     },
   },
   {
@@ -325,6 +382,16 @@ export const LEVELS: RaptorLevelConfig[] = [
       },
       litStructures: ["struct_ruin", "struct_wrecked_tank"],
     },
+    story: {
+      briefing: "The scorched wastelands are a graveyard of failed offensives. Fight through Cylon patrols guarding the approach to their industrial heartland.",
+      completionText: "Wasteland cleared. Thermal scans reveal massive energy output ahead — the Cylon industrial core. That's where the superweapon is being assembled.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: Radiation levels rising — stay alert." },
+        { triggerTime: 12, text: "Sensor: Multiple cruiser contacts ahead." },
+        { triggerTime: 27, text: "Wingman: They're throwing everything at us." },
+        { triggerTime: 42, text: "HQ: You're almost through the kill zone." },
+      ],
+    },
   },
   {
     level: 8,
@@ -386,6 +453,16 @@ export const LEVELS: RaptorLevelConfig[] = [
       },
       scanlines: true,
       litStructures: ["struct_smokestack", "struct_factory", "struct_cooling_tower"],
+    },
+    story: {
+      briefing: "The Cylon industrial core powers their entire war machine. Cripple the factories and reactor systems to cut off superweapon production for good.",
+      completionText: "Industrial core crippled. Without their factories, the Cylons can't rebuild. But the command core has retreated to orbit — you'll have to follow.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: Industrial core in sight. Hit it hard." },
+        { triggerTime: 10, text: "Sensor: Destroyer squadron incoming." },
+        { triggerTime: 25, text: "Wingman: Juggernaut on approach — heavy armor!" },
+        { triggerTime: 45, text: "HQ: Reactors destabilizing. Keep firing!" },
+      ],
     },
   },
   {
@@ -451,6 +528,16 @@ export const LEVELS: RaptorLevelConfig[] = [
       scanlines: true,
       litStructures: ["struct_station_module", "struct_antenna_array"],
     },
+    story: {
+      briefing: "The Cylon command core has retreated to an orbital station surrounded by debris fields. Navigate the wreckage and punch through their orbital defenses.",
+      completionText: "Orbital defenses shattered. The Cylon Stronghold lies ahead — one final push and we end this war. All remaining allied forces are converging on your position.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: You've reached orbit. Watch for debris." },
+        { triggerTime: 10, text: "Sensor: Swarm contacts — they're everywhere." },
+        { triggerTime: 30, text: "Wingman: Destroyers blocking our path." },
+        { triggerTime: 46, text: "HQ: Clear the debris field — almost through." },
+      ],
+    },
   },
   {
     level: 10,
@@ -514,6 +601,17 @@ export const LEVELS: RaptorLevelConfig[] = [
       },
       scanlines: true,
       litStructures: ["struct_cylon_tower", "struct_reactor_core", "struct_turret_base"],
+    },
+    story: {
+      briefing: "This is it. The Cylon Stronghold houses their central command core. Destroy it and their entire network collapses. All wings — begin the final assault.",
+      completionText: "The Cylon command core is destroyed. Their forces across the colonies are shutting down. Against all odds, you've done it — humanity is free.",
+      inGameMessages: [
+        { triggerTime: 2, text: "HQ: All wings, commence attack!" },
+        { triggerTime: 12, text: "Sensor: Cruisers and juggernauts inbound." },
+        { triggerTime: 28, text: "Wingman: Juggernaut down! Keep going!" },
+        { triggerTime: 48, text: "HQ: Command core exposed — hit it now!" },
+        { triggerTime: 60, text: "HQ: Final wave — give it everything!" },
+      ],
     },
   },
 ];

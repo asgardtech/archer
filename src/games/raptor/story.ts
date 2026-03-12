@@ -1,0 +1,25 @@
+export const GAME_STORY = {
+  opening: [
+    "The year is 2187.",
+    "Cylon forces have breached the outer colonies,",
+    "overwhelming our defense perimeters in days.",
+    "Entire fleets have been reduced to debris.",
+    "You are Raptor-1, a recon pilot reassigned",
+    "to the last operational strike wing.",
+    "Your mission: punch through enemy lines",
+    "and destroy the Cylon command core.",
+    "Humanity's survival depends on you.",
+  ],
+  ending: [
+    "The Cylon command core is destroyed.",
+    "Chain reactions tear through the stronghold",
+    "as its reactor collapses in on itself.",
+    "Across the colonies, Cylon forces falter—",
+    "cut off from their central intelligence.",
+    "You break through the debris field,",
+    "battered but alive, as allied ships",
+    "move in to reclaim what was lost.",
+    "The war is not over, but today,",
+    "humanity has earned its future.",
+  ],
+};
