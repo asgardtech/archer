@@ -7,6 +7,7 @@ export type RaptorGameState =
   | "loading"
   | "menu"
   | "story_intro"
+  | "briefing"
   | "playing"
   | "level_complete"
   | "gameover"
