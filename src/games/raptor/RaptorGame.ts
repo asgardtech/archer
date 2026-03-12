@@ -26,9 +26,11 @@ import { AssetLoader } from "./rendering/AssetLoader";
 import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rendering/SpriteSheet";
 import { VFXManager } from "./rendering/VFXManager";
 import { TerrainRenderer } from "./rendering/TerrainRenderer";
+import { StoryRenderer } from "./rendering/StoryRenderer";
 import { ASSET_MANIFEST } from "./rendering/assets";
 import { AUDIO_MANIFEST } from "./rendering/audioAssets";
 import { LEVELS } from "./levels";
+import { GAME_STORY } from "./story";
 import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
 
@@ -107,6 +109,7 @@ export class RaptorGame implements IGame {
   private planetAccents: PlanetAccent[] = [];
   private terrainRenderer: TerrainRenderer;
   private terrainActive = false;
+  private storyRenderer = new StoryRenderer();
 
   private boundResize: (() => void) | null = null;
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -422,16 +425,32 @@ export class RaptorGame implements IGame {
               this.sound.play("menu_start");
               SaveSystem.clear();
               this.resetGame();
-              this.state = "playing";
+              this.storyRenderer.show(GAME_STORY.opening, "center");
+              this.state = "story_intro";
               this.sound.startMusic("playing", 0);
             }
           } else {
             this.audio.ensureContext();
             this.sound.play("menu_start");
             this.resetGame();
-            this.state = "playing";
+            this.storyRenderer.show(GAME_STORY.opening, "center");
+            this.state = "story_intro";
             this.sound.startMusic("playing", 0);
           }
+        }
+        break;
+
+      case "story_intro":
+        this.updateBackground(dt);
+        this.storyRenderer.update(dt);
+
+        if (this.input.wasEscPressed || this.storyRenderer.isComplete || !this.storyRenderer.isActive) {
+          this.state = "playing";
+          break;
+        }
+
+        if (this.input.wasClicked) {
+          this.storyRenderer.advance();
         }
         break;
 
@@ -1203,6 +1222,10 @@ export class RaptorGame implements IGame {
     this.vfx.applyPreRender(this.ctx);
 
     this.renderBackground();
+
+    if (this.state === "story_intro") {
+      this.storyRenderer.render(this.ctx, this.width, this.height);
+    }
 
     if (
       this.state === "playing" ||
