@@ -445,7 +445,22 @@ export class RaptorGame implements IGame {
         this.storyRenderer.update(dt);
 
         if (this.input.wasEscPressed || this.storyRenderer.isComplete || !this.storyRenderer.isActive) {
+          this.enterBriefing();
+          break;
+        }
+
+        if (this.input.wasClicked) {
+          this.storyRenderer.advance();
+        }
+        break;
+
+      case "briefing":
+        this.updateBackground(dt);
+        this.storyRenderer.update(dt);
+
+        if (this.input.wasEscPressed || this.storyRenderer.isComplete || !this.storyRenderer.isActive) {
           this.state = "playing";
+          this.sound.startMusic("playing", this.currentLevel);
           break;
         }
 
@@ -462,8 +477,7 @@ export class RaptorGame implements IGame {
         this.updateBackground(dt);
         if (this.input.wasClicked) {
           this.startLevel(this.currentLevel + 1);
-          this.state = "playing";
-          this.sound.startMusic("playing", this.currentLevel);
+          this.enterBriefing();
         }
         break;
 
@@ -1004,6 +1018,34 @@ export class RaptorGame implements IGame {
     this.powerUpManager.setTier(data.weaponTier ?? 1);
   }
 
+  private enterBriefing(): void {
+    const config = this.currentLevelConfig;
+    const briefingText = config.story?.briefing;
+
+    if (!briefingText) {
+      this.state = "playing";
+      this.sound.startMusic("playing", this.currentLevel);
+      return;
+    }
+
+    this.storyRenderer.show([briefingText], "center");
+    this.state = "briefing";
+  }
+
+  private renderBriefingHeader(): void {
+    const config = this.currentLevelConfig;
+    const ctx = this.ctx;
+    const headerText = `LEVEL ${config.level} \u2014 ${config.name.toUpperCase()}`;
+
+    ctx.save();
+    ctx.font = "14px 'Press Start 2P', monospace";
+    ctx.fillStyle = "#8EAADC";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(headerText, this.width / 2, this.height / 2 - 50);
+    ctx.restore();
+  }
+
   private buildCommandContext(): CommandContext {
     return {
       currentLevel: this.currentLevel,
@@ -1224,6 +1266,11 @@ export class RaptorGame implements IGame {
     this.renderBackground();
 
     if (this.state === "story_intro") {
+      this.storyRenderer.render(this.ctx, this.width, this.height);
+    }
+
+    if (this.state === "briefing") {
+      this.renderBriefingHeader();
       this.storyRenderer.render(this.ctx, this.width, this.height);
     }
 

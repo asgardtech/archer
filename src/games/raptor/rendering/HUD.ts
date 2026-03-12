@@ -369,6 +369,9 @@ export class HUD {
       case "menu":
         this.renderMenu(ctx, width, height, hasSave);
         break;
+      case "story_intro":
+      case "briefing":
+        break;
       case "playing":
         this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier);
         break;
