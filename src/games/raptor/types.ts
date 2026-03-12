@@ -184,6 +184,7 @@ export interface WeaponConfig {
   homing: boolean;
   homingStrength: number;
   splashRadius: number;
+  splashDamageRatio: number;
   rapidFireBonus: number;
   spreadShotBehavior: "multi-projectile" | "wider-beam";
   chargeTime?: number;
@@ -202,12 +203,13 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     homing: false,
     homingStrength: 0,
     splashRadius: 0,
+    splashDamageRatio: 0,
     rapidFireBonus: 2.0,
     spreadShotBehavior: "multi-projectile",
     tiers: [
       TIER_1,
       { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
-      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 2, projectileSpread: 0.08, visualScale: 1 },
+      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.1, visualScale: 1 },
     ],
   },
   "missile": {
@@ -217,9 +219,10 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     projectileSpeed: 350,
     piercing: false,
     homing: true,
-    homingStrength: 2.5,
-    splashRadius: 40,
-    rapidFireBonus: 1.5,
+    homingStrength: 1.3,
+    splashRadius: 30,
+    splashDamageRatio: 0.4,
+    rapidFireBonus: 1.3,
     spreadShotBehavior: "multi-projectile",
     tiers: [
       TIER_1,
@@ -236,7 +239,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     homing: false,
     homingStrength: 0,
     splashRadius: 0,
-    rapidFireBonus: 1.5,
+    splashDamageRatio: 0,
+    rapidFireBonus: 1.8,
     spreadShotBehavior: "wider-beam",
     tiers: [
       TIER_1,
@@ -247,12 +251,13 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
   "plasma": {
     type: "plasma",
     damage: 2,
-    fireRateMultiplier: 0.6,
+    fireRateMultiplier: 0.7,
     projectileSpeed: 400,
     piercing: false,
     homing: false,
     homingStrength: 0,
-    splashRadius: 30,
+    splashRadius: 35,
+    splashDamageRatio: 0.5,
     rapidFireBonus: 1.8,
     spreadShotBehavior: "multi-projectile",
     tiers: [
@@ -270,12 +275,13 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     homing: false,
     homingStrength: 0,
     splashRadius: 0,
+    splashDamageRatio: 0,
     rapidFireBonus: 1.4,
     spreadShotBehavior: "multi-projectile",
-    chargeTime: 2.0,
+    chargeTime: 1.6,
     tiers: [
       TIER_1,
-      { damageMultiplier: 1.4, fireRateMultiplier: 1.2, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.5, fireRateMultiplier: 1.2, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1.8, fireRateMultiplier: 1.4, projectileCount: 1, projectileSpread: 0, visualScale: 1.3 },
     ],
   },
@@ -286,25 +292,27 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     projectileSpeed: 480,
     piercing: false,
     homing: true,
-    homingStrength: 1.0,
+    homingStrength: 1.8,
     splashRadius: 0,
+    splashDamageRatio: 0,
     rapidFireBonus: 1.8,
     spreadShotBehavior: "multi-projectile",
     tiers: [
       TIER_1,
-      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
-      { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 4, projectileSpread: 0.06, visualScale: 1 },
+      { damageMultiplier: 1.2, fireRateMultiplier: 1.3, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.2, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
     ],
   },
   "rocket": {
     type: "rocket",
     damage: 5,
-    fireRateMultiplier: 0.25,
+    fireRateMultiplier: 0.3,
     projectileSpeed: 450,
     piercing: false,
     homing: false,
     homingStrength: 0,
-    splashRadius: 55,
+    splashRadius: 60,
+    splashDamageRatio: 0.6,
     rapidFireBonus: 1.4,
     spreadShotBehavior: "multi-projectile",
     tiers: [
