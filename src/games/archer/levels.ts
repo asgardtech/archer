@@ -1,4 +1,4 @@
-import { ObstacleType } from "./types";
+import { ObstacleType, LandmarkConfig } from "./types";
 
 export interface LevelConfig {
   level: number;
@@ -24,6 +24,7 @@ export interface LevelConfig {
   obstacleMaxInterval: number;
   obstacleSpeedMin: number;
   obstacleSpeedMax: number;
+  landmark: LandmarkConfig;
 }
 
 export const LEVELS: LevelConfig[] = [
@@ -51,6 +52,13 @@ export const LEVELS: LevelConfig[] = [
     obstacleMaxInterval: 15,
     obstacleSpeedMin: 80,
     obstacleSpeedMax: 140,
+    landmark: {
+      type: "windmill",
+      label: "Ancient Windmill",
+      description: "The balloons have overrun the meadow windmill!",
+      positionX: 0.5,
+      hitPoints: 3,
+    },
   },
   {
     level: 2,
@@ -76,6 +84,13 @@ export const LEVELS: LevelConfig[] = [
     obstacleMaxInterval: 15,
     obstacleSpeedMin: 80,
     obstacleSpeedMax: 140,
+    landmark: {
+      type: "treehouse",
+      label: "Great Treehouse",
+      description: "The forest treehouse is under siege by balloons!",
+      positionX: 0.6,
+      hitPoints: 4,
+    },
   },
   {
     level: 3,
@@ -101,6 +116,13 @@ export const LEVELS: LevelConfig[] = [
     obstacleMaxInterval: 10,
     obstacleSpeedMin: 80,
     obstacleSpeedMax: 250,
+    landmark: {
+      type: "watchtower",
+      label: "Stone Watchtower",
+      description: "Balloons swarm the mountain watchtower!",
+      positionX: 0.45,
+      hitPoints: 5,
+    },
   },
   {
     level: 4,
@@ -126,6 +148,13 @@ export const LEVELS: LevelConfig[] = [
     obstacleMaxInterval: 10,
     obstacleSpeedMin: 80,
     obstacleSpeedMax: 250,
+    landmark: {
+      type: "lighthouse",
+      label: "Storm Lighthouse",
+      description: "The lighthouse beacon is lost in a sea of balloons!",
+      positionX: 0.55,
+      hitPoints: 6,
+    },
   },
   {
     level: 5,
@@ -151,5 +180,12 @@ export const LEVELS: LevelConfig[] = [
     obstacleMaxInterval: 7,
     obstacleSpeedMin: 60,
     obstacleSpeedMax: 250,
+    landmark: {
+      type: "castle",
+      label: "Sky Castle",
+      description: "The sky fortress has fallen to the balloon horde!",
+      positionX: 0.5,
+      hitPoints: 8,
+    },
   },
 ];
