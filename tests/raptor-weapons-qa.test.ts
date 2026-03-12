@@ -191,8 +191,8 @@ describe("Missile Weapon", () => {
     expect(missile.pos.x).toBeGreaterThan(400);
   });
 
-  test("Missile turn rate does not exceed homingStrength (1.8 rad/s)", () => {
-    const homingStrength = 1.8;
+  test("Missile turn rate does not exceed homingStrength (1.3 rad/s)", () => {
+    const homingStrength = 1.3;
     const missile = new Missile(400, 400, 0, homingStrength);
     const enemy = makeEnemy(100, 400);
 
@@ -246,7 +246,7 @@ describe("Missile Weapon", () => {
     expect(cfg.projectileSpeed).toBe(350);
     expect(cfg.piercing).toBe(false);
     expect(cfg.homing).toBe(true);
-    expect(cfg.homingStrength).toBe(1.8);
+    expect(cfg.homingStrength).toBe(1.3);
     expect(cfg.splashRadius).toBe(30);
     expect(cfg.splashDamageRatio).toBe(0.4);
     expect(cfg.rapidFireBonus).toBe(1.3);
@@ -1396,14 +1396,19 @@ describe("Edge Cases", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("Weapon Balance Validation", () => {
-  test("Missile homingStrength is 1.8", () => {
+  test("Missile homingStrength is 1.3", () => {
     const missile = WEAPON_CONFIGS["missile"];
-    expect(missile.homingStrength).toBe(1.8);
+    expect(missile.homingStrength).toBe(1.3);
   });
 
-  test("Auto-gun homingStrength is 1.3", () => {
+  test("Auto-gun homingStrength is 1.8", () => {
     const autogun = WEAPON_CONFIGS["auto-gun"];
-    expect(autogun.homingStrength).toBe(1.3);
+    expect(autogun.homingStrength).toBe(1.8);
+  });
+
+  test("Auto-gun has stronger homing than missile", () => {
+    expect(WEAPON_CONFIGS["auto-gun"].homingStrength)
+      .toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
   });
 
   test("Auto-gun homingStrength is increased from original 1.0", () => {
@@ -1418,6 +1423,11 @@ describe("Weapon Balance Validation", () => {
 
   test("Missile homingStrength is reduced from original 2.5", () => {
     expect(WEAPON_CONFIGS["missile"].homingStrength).toBeLessThan(2.5);
+  });
+
+  test("Missile homingStrength is less than auto-gun homingStrength", () => {
+    expect(WEAPON_CONFIGS["missile"].homingStrength)
+      .toBeLessThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
   });
 
   test("Auto-gun tier 2 damageMultiplier is 1.2", () => {
