@@ -382,6 +382,24 @@ export interface TerrainLayerConfig {
   litStructures?: string[];
 }
 
+export interface InGameStoryMessage {
+  /** When to show this message (in seconds from level start) */
+  triggerTime: number;
+  /** The text to display */
+  text: string;
+  /** How long to display the message in seconds (default: 3) */
+  duration?: number;
+}
+
+export interface LevelStoryConfig {
+  /** Brief 1-2 sentence mission briefing shown before the level starts */
+  briefing: string;
+  /** Short narrative text shown when the level is completed */
+  completionText: string;
+  /** In-game story messages triggered at specific moments */
+  inGameMessages?: InGameStoryMessage[];
+}
+
 export interface RaptorLevelConfig {
   level: number;
   name: string;
@@ -397,6 +415,7 @@ export interface RaptorLevelConfig {
   planetAssets?: string[];
   weaponDrops?: WeaponType[];
   terrain?: TerrainLayerConfig;
+  story?: LevelStoryConfig;
 }
 
 export type AssetManifest = Record<string, string>;
