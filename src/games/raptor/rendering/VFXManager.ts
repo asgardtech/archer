@@ -181,22 +181,28 @@ export class VFXManager {
     ctx.restore();
   }
 
-  addMissileTrail(x: number, y: number): void {
+  addMissileTrail(x: number, y: number, angle = 0): void {
     if (this.trails.length > 300) return;
+    const perpX = Math.cos(angle);
+    const perpY = Math.sin(angle);
+    const spread = (Math.random() - 0.5) * 4;
     this.trails.push({
-      x: x + (Math.random() - 0.5) * 4,
-      y: y + (Math.random() - 0.5) * 2,
+      x: x + perpX * spread,
+      y: y + perpY * spread,
       alpha: 0.5,
       size: 1.5 + Math.random() * 1.5,
       color: `rgba(${180 + Math.random() * 40}, ${180 + Math.random() * 40}, ${180 + Math.random() * 40}, 0.6)`,
     });
   }
 
-  addRocketTrail(x: number, y: number): void {
+  addRocketTrail(x: number, y: number, angle = 0): void {
     if (this.trails.length > 300) return;
+    const perpX = Math.cos(angle);
+    const perpY = Math.sin(angle);
+    const spread = (Math.random() - 0.5) * 6;
     this.trails.push({
-      x: x + (Math.random() - 0.5) * 6,
-      y: y + (Math.random() - 0.5) * 3,
+      x: x + perpX * spread,
+      y: y + perpY * spread,
       alpha: 0.6,
       size: 2.0 + Math.random() * 2.0,
       color: `rgba(${140 + Math.random() * 40}, ${130 + Math.random() * 30}, ${100 + Math.random() * 30}, 0.7)`,

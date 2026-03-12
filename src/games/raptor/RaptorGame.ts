@@ -679,13 +679,15 @@ export class RaptorGame implements IGame {
     for (const proj of this.projectiles) {
       if (proj instanceof TrackingBullet) {
         proj.update(dt, this.width, this.height, this.enemies);
-        this.vfx.addTrail(proj.pos.x, proj.pos.y + 3, "rgba(168, 224, 108, 0.4)", 1.5);
+        const exhaust = proj.getExhaustPosition();
+        this.vfx.addTrail(exhaust.x, exhaust.y, "rgba(168, 224, 108, 0.4)", 1.5);
       } else if (proj instanceof Bullet) {
         proj.update(dt, this.width);
         this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(255, 220, 0, 0.4)", 1.5);
       } else if (proj instanceof Missile) {
         proj.update(dt, this.width, this.height, this.enemies);
-        this.vfx.addMissileTrail(proj.pos.x, proj.pos.y + 6);
+        const exhaust = proj.getExhaustPosition();
+        this.vfx.addMissileTrail(exhaust.x, exhaust.y, proj.heading);
       } else if (proj instanceof PlasmaBolt) {
         proj.update(dt, this.width);
         this.vfx.addPlasmaTrail(proj.pos.x, proj.pos.y + 3);
@@ -694,13 +696,14 @@ export class RaptorGame implements IGame {
         this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(0, 188, 212, 0.5)", 2);
       } else if (proj instanceof Rocket) {
         proj.update(dt, this.width, this.height);
-        this.vfx.addRocketTrail(proj.pos.x, proj.pos.y + 8);
+        const exhaust = proj.getExhaustPosition();
+        this.vfx.addRocketTrail(exhaust.x, exhaust.y, proj.heading);
       }
     }
     for (const eb of this.enemyBullets) {
       eb.update(dt, this.width, this.height, this.player.pos);
       if (eb instanceof EnemyMissile) {
-        this.vfx.addMissileTrail(eb.pos.x, eb.pos.y);
+        this.vfx.addMissileTrail(eb.pos.x, eb.pos.y, eb.heading);
       }
     }
     for (const exp of this.explosions) {

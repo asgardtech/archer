@@ -63,6 +63,8 @@ export class EnemyBullet {
     this.sprite = sprite;
   }
 
+  public get heading(): number { return this.angle; }
+
   get left(): number { return this.pos.x - this.radius; }
   get right(): number { return this.pos.x + this.radius; }
   get top(): number { return this.pos.y - this.radius; }
