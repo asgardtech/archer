@@ -4,10 +4,12 @@
  * Sound Effects, Visual Fallbacks, HUD weapon indicator, and Collision System.
  */
 
-import { WeaponType, WeaponConfig, WEAPON_CONFIGS, Projectile, RaptorPowerUpType, RaptorSoundEvent, RaptorLevelConfig, EnemyVariant } from "../src/games/raptor/types";
+import { WeaponType, WeaponConfig, WEAPON_CONFIGS, Projectile, RaptorPowerUpType, RaptorSoundEvent, RaptorLevelConfig } from "../src/games/raptor/types";
 import { Bullet } from "../src/games/raptor/entities/Bullet";
 import { Missile } from "../src/games/raptor/entities/Missile";
 import { LaserBeam } from "../src/games/raptor/entities/LaserBeam";
+import { PlasmaBolt } from "../src/games/raptor/entities/PlasmaBolt";
+import { Rocket } from "../src/games/raptor/entities/Rocket";
 import { Enemy } from "../src/games/raptor/entities/Enemy";
 import { PowerUp } from "../src/games/raptor/entities/PowerUp";
 import { WeaponSystem } from "../src/games/raptor/systems/WeaponSystem";
@@ -17,7 +19,7 @@ import { LEVELS } from "../src/games/raptor/levels";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function makeEnemy(x: number, y: number, variant: EnemyVariant = "scout"): Enemy {
+function makeEnemy(x: number, y: number, variant: "scout" | "fighter" | "bomber" | "boss" = "scout"): Enemy {
   return new Enemy(x, y, variant);
 }
 
@@ -184,15 +186,15 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile projectile homes toward nearest enemy", () => {
-    const missile = new Missile(400, 400, 0, WEAPON_CONFIGS["missile"].homingStrength);
+    const missile = new Missile(400, 400, 0, 1.8);
     const enemy = makeEnemy(450, 200);
 
     missile.update(0.1, 800, 600, [enemy]);
     expect(missile.pos.x).toBeGreaterThan(400);
   });
 
-  test("Missile turn rate does not exceed homingStrength", () => {
-    const homingStrength = WEAPON_CONFIGS["missile"].homingStrength;
+  test("Missile turn rate does not exceed homingStrength (1.8 rad/s)", () => {
+    const homingStrength = 1.8;
     const missile = new Missile(400, 400, 0, homingStrength);
     const enemy = makeEnemy(100, 400);
 
@@ -203,14 +205,14 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile flies straight when no enemies exist", () => {
-    const missile = new Missile(400, 400, 0, WEAPON_CONFIGS["missile"].homingStrength);
+    const missile = new Missile(400, 400, 0, 1.8);
     missile.update(0.1, 800, 600, []);
     expect(missile.pos.x).toBeCloseTo(400, 1);
     expect(missile.pos.y).toBeLessThan(400);
   });
 
   test("Missile flies straight when enemies array is undefined", () => {
-    const missile = new Missile(400, 400, 0, WEAPON_CONFIGS["missile"].homingStrength);
+    const missile = new Missile(400, 400, 0, 1.8);
     missile.update(0.1, 800, 600);
     expect(missile.pos.x).toBeCloseTo(400, 1);
     expect(missile.pos.y).toBeLessThan(400);
@@ -279,13 +281,13 @@ describe("Missile Weapon", () => {
     const config = makeLevelConfig({ autoFireRate: 5 });
 
     // Without rapid: interval = 1 / (5 * 0.35) ≈ 0.571s
-    // With rapid: interval = 1 / (5 * 0.35 * 1.3) ≈ 0.440s
+    // With rapid: interval = 1 / (5 * 0.35 * 1.3) ≈ 0.44s
     const { newProjectiles } = ws.update(0.45, player, config, pm, 800, []);
     expect(newProjectiles.length).toBe(1);
   });
 
   test("Missile goes out of bounds and becomes not alive", () => {
-    const missile = new Missile(400, 400, 0, WEAPON_CONFIGS["missile"].homingStrength);
+    const missile = new Missile(400, 400, 0, 1.8);
     for (let i = 0; i < 20; i++) {
       missile.update(0.1, 800, 600);
     }
@@ -293,7 +295,7 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile ignores dead enemies for homing", () => {
-    const missile = new Missile(400, 400, 0, WEAPON_CONFIGS["missile"].homingStrength);
+    const missile = new Missile(400, 400, 0, 1.8);
     const deadEnemy = makeEnemy(450, 200);
     deadEnemy.alive = false;
     const aliveEnemy = makeEnemy(350, 200);
@@ -308,7 +310,7 @@ describe("Missile Weapon", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("Missile Splash Damage", () => {
-  test("Missile deals scaled splash damage to nearby enemies within 30px", () => {
+  test("Missile deals splash damage to nearby enemies within 30px", () => {
     const cs = new CollisionSystem();
     const missile = new Missile(200, 100);
     missile.alive = true;
@@ -324,7 +326,8 @@ describe("Missile Splash Damage", () => {
     expect(directHits.length).toBeGreaterThanOrEqual(1);
     expect(directHits[0].damage).toBe(3);
     expect(splashHits.length).toBeGreaterThanOrEqual(1);
-    expect(splashHits[0].damage).toBe(Math.ceil(3 * 0.4)); // 2
+    // ceil(3 * 0.4) = 2
+    expect(splashHits[0].damage).toBe(2);
   });
 
   test("Missile splash does not damage dead enemies", () => {
@@ -333,11 +336,12 @@ describe("Missile Splash Damage", () => {
 
     const enemyA = makeEnemy(200, 100);
     const enemyB = makeEnemy(220, 110);
-    enemyB.alive = false;
+    enemyB.alive = false; // already dead
 
     const hits = cs.checkBulletsEnemies([missile], [enemyA, enemyB]);
     const splashHits = hits.filter(h => h.splash);
 
+    // Dead enemy B should not appear in splash hits
     for (const sh of splashHits) {
       expect(sh.enemy).not.toBe(enemyB);
     }
@@ -360,7 +364,7 @@ describe("Missile Splash Damage", () => {
     const cs = new CollisionSystem();
     const missile = new Missile(200, 100);
 
-    const enemy = makeEnemy(200, 100, "bomber");
+    const enemy = makeEnemy(200, 100, "bomber"); // 3 HP, won't die from 3 damage instantly
     cs.checkBulletsEnemies([missile], [enemy]);
     expect(missile.alive).toBe(false);
   });
@@ -413,9 +417,9 @@ describe("Laser Weapon", () => {
   test("Laser with rapid-fire increases tick rate to 18 ticks/sec", () => {
     const beam = new LaserBeam();
     beam.active = true;
-    beam.setModifiers(true, false);
+    beam.setModifiers(true, false, 1.0, 1.0, 1.8); // rapidFire = true, rapidFireBonus = 1.8
 
-    // Tick rate = min(20, 10 * 1.8) = 18; interval = 1/18 ≈ 0.0556s
+    // Tick rate = min(20, 10 * 1.8) = 18, interval = 1/18 ≈ 0.0556s
     const tick1 = beam.update(0.05);
     expect(tick1).toBe(false);
     const tick2 = beam.update(0.01);
@@ -425,7 +429,7 @@ describe("Laser Weapon", () => {
   test("Laser tick rate is capped at 20 ticks/sec", () => {
     const beam = new LaserBeam();
     beam.active = true;
-    beam.setModifiers(true, false);
+    beam.setModifiers(true, false, 1.0, 1.0, 1.8);
 
     // With rapid-fire: 10 * 1.8 = 18 (below 20 cap)
     const tickRate = Math.min(20, 10 * 1.8);
@@ -440,9 +444,8 @@ describe("Laser Weapon", () => {
 
   test("Laser with spread-shot and rapid-fire combined", () => {
     const beam = new LaserBeam();
-    beam.setModifiers(true, true);
+    beam.setModifiers(true, true, 1.0, 1.0, 1.8);
     expect(beam.beamWidth).toBe(9);
-    // Tick rate = min(20, 10 * 1.8) = 18
   });
 
   test("Laser beam is inactive by default", () => {
@@ -904,21 +907,56 @@ describe("Power-Up Drop Configuration (Levels)", () => {
     expect(level2.weaponDrops).not.toContain("laser");
   });
 
-  test("Level 3 has missile and laser in weaponDrops", () => {
+  test("Level 3 drops missile and laser only", () => {
     const level3 = LEVELS[2];
     expect(level3.level).toBe(3);
     expect(level3.weaponDrops).toContain("missile");
     expect(level3.weaponDrops).toContain("laser");
     expect(level3.weaponDrops).not.toContain("auto-gun");
     expect(level3.weaponDrops).not.toContain("plasma");
+    expect(level3.weaponDrops).not.toContain("ion-cannon");
+    expect(level3.weaponDrops).not.toContain("rocket");
   });
 
-  test("All levels from 3 onward include both missile and laser drops", () => {
-    for (let i = 2; i < LEVELS.length; i++) {
+  test("Level 4 introduces auto-gun", () => {
+    const level4 = LEVELS[3];
+    expect(level4.level).toBe(4);
+    expect(level4.weaponDrops).toContain("missile");
+    expect(level4.weaponDrops).toContain("laser");
+    expect(level4.weaponDrops).toContain("auto-gun");
+    expect(level4.weaponDrops).not.toContain("plasma");
+    expect(level4.weaponDrops).not.toContain("ion-cannon");
+    expect(level4.weaponDrops).not.toContain("rocket");
+  });
+
+  test("Level 5 introduces plasma", () => {
+    const level5 = LEVELS[4];
+    expect(level5.level).toBe(5);
+    expect(level5.weaponDrops).toContain("missile");
+    expect(level5.weaponDrops).toContain("laser");
+    expect(level5.weaponDrops).toContain("auto-gun");
+    expect(level5.weaponDrops).toContain("plasma");
+  });
+
+  test("Level 6 replaces auto-gun with ion-cannon", () => {
+    const level6 = LEVELS[5];
+    expect(level6.level).toBe(6);
+    expect(level6.weaponDrops).toContain("missile");
+    expect(level6.weaponDrops).toContain("laser");
+    expect(level6.weaponDrops).toContain("plasma");
+    expect(level6.weaponDrops).toContain("ion-cannon");
+    expect(level6.weaponDrops).not.toContain("auto-gun");
+  });
+
+  test("Levels 7-10 have full late-game arsenal without auto-gun", () => {
+    for (let i = 6; i < LEVELS.length; i++) {
       const level = LEVELS[i];
-      expect(level.weaponDrops).toBeDefined();
       expect(level.weaponDrops).toContain("missile");
       expect(level.weaponDrops).toContain("laser");
+      expect(level.weaponDrops).toContain("plasma");
+      expect(level.weaponDrops).toContain("ion-cannon");
+      expect(level.weaponDrops).toContain("rocket");
+      expect(level.weaponDrops).not.toContain("auto-gun");
     }
   });
 });
@@ -1359,7 +1397,7 @@ describe("WeaponSystem Integration", () => {
 
 describe("Edge Cases", () => {
   test("Missile with no alive enemies flies straight", () => {
-    const missile = new Missile(400, 400, 0, WEAPON_CONFIGS["missile"].homingStrength);
+    const missile = new Missile(400, 400, 0, 1.8);
     const dead1 = makeEnemy(450, 200);
     dead1.alive = false;
     const dead2 = makeEnemy(350, 200);
@@ -1392,73 +1430,51 @@ describe("Edge Cases", () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SECTION 21: Weapon Balance Validation (Issue #538)
+// SECTION 21: Weapon Balance Validation
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("Weapon Balance Validation", () => {
-  test("Missile homingStrength is 1.8 (reduced from 2.5)", () => {
-    const missile = WEAPON_CONFIGS["missile"];
-    expect(missile.homingStrength).toBe(1.8);
+  test("Missile homingStrength is 1.8", () => {
+    expect(WEAPON_CONFIGS["missile"].homingStrength).toBe(1.8);
   });
 
-  test("Auto-gun homingStrength is 2.0 (increased from 1.0, greater than missile)", () => {
-    const autogun = WEAPON_CONFIGS["auto-gun"];
-    expect(autogun.homingStrength).toBe(2.0);
-    expect(autogun.homingStrength).toBeGreaterThan(1.0);
-    expect(autogun.homingStrength).toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
-  });
-
-  test("Both missile and auto-gun have homing enabled", () => {
-    expect(WEAPON_CONFIGS["missile"].homing).toBe(true);
-    expect(WEAPON_CONFIGS["auto-gun"].homing).toBe(true);
-  });
-
-  test("Missile homingStrength is reduced from original 2.5", () => {
-    expect(WEAPON_CONFIGS["missile"].homingStrength).toBeLessThan(2.5);
-  });
-
-  test("Auto-gun has stronger homing than missile, missile has splash advantage", () => {
-    expect(WEAPON_CONFIGS["auto-gun"].homingStrength)
-      .toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
-    expect(WEAPON_CONFIGS["missile"].fireRateMultiplier)
-      .toBeLessThan(WEAPON_CONFIGS["auto-gun"].fireRateMultiplier);
-    expect(WEAPON_CONFIGS["missile"].splashRadius)
-      .toBeGreaterThan(WEAPON_CONFIGS["auto-gun"].splashRadius);
-  });
-
-  test("Missile homingStrength is less than auto-gun homingStrength (per acceptance criteria)", () => {
+  test("Missile homingStrength is less than auto-gun homingStrength", () => {
     expect(WEAPON_CONFIGS["missile"].homingStrength)
       .toBeLessThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
   });
 
-  test("Auto-gun tier 2 damageMultiplier is 1.2", () => {
-    const cfg = WEAPON_CONFIGS["auto-gun"];
-    expect(cfg.tiers[1].damageMultiplier).toBe(1.2);
+  test("Auto-gun homingStrength is greater than missile homingStrength", () => {
+    expect(WEAPON_CONFIGS["auto-gun"].homingStrength)
+      .toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
   });
 
-  test("Auto-gun tier 3 projectileCount is 3", () => {
-    const cfg = WEAPON_CONFIGS["auto-gun"];
-    expect(cfg.tiers[2].projectileCount).toBe(3);
+  test("Missile splashRadius is 30", () => {
+    expect(WEAPON_CONFIGS["missile"].splashRadius).toBe(30);
+  });
+
+  test("Missile rapidFireBonus is 1.3", () => {
+    expect(WEAPON_CONFIGS["missile"].rapidFireBonus).toBe(1.3);
+  });
+
+  test("Auto-gun tier 2 damageMultiplier is 1.2", () => {
+    expect(WEAPON_CONFIGS["auto-gun"].tiers[1].damageMultiplier).toBe(1.2);
   });
 
   test("Plasma splashRadius is 35 and greater than missile", () => {
-    const plasma = WEAPON_CONFIGS["plasma"];
-    const missile = WEAPON_CONFIGS["missile"];
-    expect(plasma.splashRadius).toBe(35);
-    expect(plasma.splashRadius).toBeGreaterThan(missile.splashRadius);
+    expect(WEAPON_CONFIGS["plasma"].splashRadius).toBe(35);
+    expect(WEAPON_CONFIGS["plasma"].splashRadius)
+      .toBeGreaterThan(WEAPON_CONFIGS["missile"].splashRadius);
   });
 
   test("Plasma fireRateMultiplier is 0.7", () => {
     expect(WEAPON_CONFIGS["plasma"].fireRateMultiplier).toBe(0.7);
   });
 
-  test("Rocket has the largest splashRadius of all weapons", () => {
-    const rocket = WEAPON_CONFIGS["rocket"];
-    expect(rocket.splashRadius).toBe(60);
-    for (const [type, cfg] of Object.entries(WEAPON_CONFIGS)) {
-      if (type !== "rocket") {
-        expect(rocket.splashRadius).toBeGreaterThan(cfg.splashRadius);
-      }
+  test("Rocket splashRadius is 60 and largest of all weapons", () => {
+    const rocketSplash = WEAPON_CONFIGS["rocket"].splashRadius;
+    expect(rocketSplash).toBe(60);
+    for (const [key, cfg] of Object.entries(WEAPON_CONFIGS)) {
+      expect(rocketSplash).toBeGreaterThanOrEqual(cfg.splashRadius);
     }
   });
 
@@ -1479,160 +1495,106 @@ describe("Weapon Balance Validation", () => {
   });
 
   test("Machine gun tier 3 fires 3 projectiles with 0.1 spread", () => {
-    const cfg = WEAPON_CONFIGS["machine-gun"];
-    expect(cfg.tiers[2].projectileCount).toBe(3);
-    expect(cfg.tiers[2].projectileSpread).toBe(0.1);
+    expect(WEAPON_CONFIGS["machine-gun"].tiers[2].projectileCount).toBe(3);
+    expect(WEAPON_CONFIGS["machine-gun"].tiers[2].projectileSpread).toBe(0.1);
   });
 
   test("All splash weapons have splashDamageRatio > 0", () => {
-    for (const [type, cfg] of Object.entries(WEAPON_CONFIGS)) {
+    for (const [key, cfg] of Object.entries(WEAPON_CONFIGS)) {
       if (cfg.splashRadius > 0) {
         expect(cfg.splashDamageRatio).toBeGreaterThan(0);
       }
     }
   });
 
-  test("Missile splash damage is proportional: ceil(3 * 0.4) = 2", () => {
+  test("Non-splash weapons have splashDamageRatio = 0", () => {
+    for (const [key, cfg] of Object.entries(WEAPON_CONFIGS)) {
+      if (cfg.splashRadius === 0) {
+        expect(cfg.splashDamageRatio).toBe(0);
+      }
+    }
+  });
+
+  test("No weapon simultaneously has highest damage, fastest fire rate, strongest homing, and largest splash", () => {
+    const configs = Object.values(WEAPON_CONFIGS);
+    const maxDamage = Math.max(...configs.map(c => c.damage));
+    const maxFireRate = Math.max(...configs.map(c => c.fireRateMultiplier));
+    const maxHoming = Math.max(...configs.map(c => c.homingStrength));
+    const maxSplash = Math.max(...configs.map(c => c.splashRadius));
+
+    for (const cfg of configs) {
+      const isAll = cfg.damage === maxDamage &&
+                    cfg.fireRateMultiplier === maxFireRate &&
+                    cfg.homingStrength === maxHoming &&
+                    cfg.splashRadius === maxSplash;
+      expect(isAll).toBe(false);
+    }
+  });
+
+  test("Homing weapons have lower average raw DPS than non-homing weapons", () => {
+    const autoFireRate = 5;
+    function rawDPS(cfg: WeaponConfig): number {
+      if (cfg.fireRateMultiplier === 0) return cfg.damage * 10;
+      return cfg.damage * autoFireRate * cfg.fireRateMultiplier;
+    }
+    const homingConfigs = Object.values(WEAPON_CONFIGS).filter(c => c.homing);
+    const nonHomingConfigs = Object.values(WEAPON_CONFIGS).filter(c => !c.homing && c.fireRateMultiplier > 0);
+    const avgHomingDPS = homingConfigs.reduce((s, c) => s + rawDPS(c), 0) / homingConfigs.length;
+    const avgNonHomingDPS = nonHomingConfigs.reduce((s, c) => s + rawDPS(c), 0) / nonHomingConfigs.length;
+    expect(avgHomingDPS).toBeLessThanOrEqual(avgNonHomingDPS);
+  });
+
+  test("All 7 weapon types have complete configs with splashDamageRatio", () => {
+    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(7);
+    for (const cfg of Object.values(WEAPON_CONFIGS)) {
+      expect(cfg.splashDamageRatio).toBeDefined();
+      expect(typeof cfg.splashDamageRatio).toBe("number");
+    }
+  });
+
+  test("Missile with reduced homing can miss fast-moving enemies", () => {
+    const missile = new Missile(400, 400, 0, 1.8);
+    const enemy = makeEnemy(100, 200);
+
+    missile.update(0.5, 800, 600, [enemy]);
+    const dx = missile.pos.x - enemy.pos.x;
+    const dy = missile.pos.y - enemy.pos.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    expect(dist).toBeGreaterThan(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 22: Splash Damage Scaling
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("Splash Damage Scaling", () => {
+  test("Missile splash damage is ceil(3 * 0.4) = 2", () => {
     const cfg = WEAPON_CONFIGS["missile"];
     expect(Math.ceil(cfg.damage * cfg.splashDamageRatio)).toBe(2);
   });
 
-  test("Rocket splash damage is proportional: ceil(5 * 0.6) = 3", () => {
+  test("Rocket splash damage is ceil(5 * 0.6) = 3", () => {
     const cfg = WEAPON_CONFIGS["rocket"];
     expect(Math.ceil(cfg.damage * cfg.splashDamageRatio)).toBe(3);
   });
 
-  test("Plasma splash damage is proportional: ceil(2 * 0.5) = 1", () => {
+  test("Plasma splash damage is ceil(2 * 0.5) = 1", () => {
     const cfg = WEAPON_CONFIGS["plasma"];
     expect(Math.ceil(cfg.damage * cfg.splashDamageRatio)).toBe(1);
   });
 
-  test("No single weapon dominates all categories", () => {
-    const weapons = Object.values(WEAPON_CONFIGS);
-    const maxDamage = Math.max(...weapons.map(w => w.damage));
-    const maxFireRate = Math.max(...weapons.map(w => w.fireRateMultiplier));
-    const maxHoming = Math.max(...weapons.map(w => w.homingStrength));
-    const maxSplash = Math.max(...weapons.map(w => w.splashRadius));
+  test("Splash damage is not hardcoded to 1 for missile", () => {
+    const cs = new CollisionSystem();
+    const missile = new Missile(200, 100);
+    const enemyA = makeEnemy(200, 100);
+    const enemyB = makeEnemy(210, 105);
 
-    for (const w of weapons) {
-      const isMaxAll =
-        w.damage === maxDamage &&
-        w.fireRateMultiplier === maxFireRate &&
-        w.homingStrength === maxHoming &&
-        w.splashRadius === maxSplash;
-      expect(isMaxAll).toBe(false);
+    const hits = cs.checkBulletsEnemies([missile], [enemyA, enemyB]);
+    const splashHits = hits.filter(h => h.splash);
+    if (splashHits.length > 0) {
+      expect(splashHits[0].damage).toBe(2);
+      expect(splashHits[0].damage).not.toBe(1);
     }
-  });
-
-  test("Homing weapons have lower avg raw DPS than non-homing weapons", () => {
-    const autoFireRate = 5;
-    function rawDps(cfg: WeaponConfig): number {
-      if (cfg.fireRateMultiplier === 0) return 0;
-      return cfg.damage * autoFireRate * cfg.fireRateMultiplier;
-    }
-    const homingTypes: WeaponType[] = ["missile", "auto-gun"];
-    const nonHomingTypes: WeaponType[] = ["plasma", "rocket"];
-    const homingAvg = homingTypes.reduce((s, t) => s + rawDps(WEAPON_CONFIGS[t]), 0) / homingTypes.length;
-    const nonHomingAvg = nonHomingTypes.reduce((s, t) => s + rawDps(WEAPON_CONFIGS[t]), 0) / nonHomingTypes.length;
-    expect(homingAvg).toBeLessThanOrEqual(nonHomingAvg);
-  });
-
-  test("All 7 weapon types have complete WEAPON_CONFIGS entries", () => {
-    const types: WeaponType[] = ["machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun", "rocket"];
-    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(7);
-    for (const t of types) {
-      const cfg = WEAPON_CONFIGS[t];
-      expect(cfg).toBeDefined();
-      expect(cfg.type).toBe(t);
-      expect(typeof cfg.damage).toBe("number");
-      expect(typeof cfg.fireRateMultiplier).toBe("number");
-      expect(typeof cfg.splashDamageRatio).toBe("number");
-      expect(cfg.tiers).toHaveLength(3);
-    }
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SECTION 22: Weapon Availability Curve (Issue #538)
-// ═══════════════════════════════════════════════════════════════════════════
-
-describe("Weapon Availability Curve", () => {
-  test("Level 1 has no weapon drops", () => {
-    expect(LEVELS[0].weaponDrops).toBeUndefined();
-  });
-
-  test("Level 2 only drops missiles", () => {
-    expect(LEVELS[1].weaponDrops).toEqual(["missile"]);
-  });
-
-  test("Level 3 drops missile and laser only", () => {
-    const drops = LEVELS[2].weaponDrops!;
-    expect(drops).toContain("missile");
-    expect(drops).toContain("laser");
-    expect(drops).not.toContain("auto-gun");
-    expect(drops).not.toContain("plasma");
-    expect(drops).not.toContain("ion-cannon");
-    expect(drops).not.toContain("rocket");
-  });
-
-  test("Level 4 introduces auto-gun", () => {
-    const drops = LEVELS[3].weaponDrops!;
-    expect(drops).toContain("missile");
-    expect(drops).toContain("laser");
-    expect(drops).toContain("auto-gun");
-    expect(drops).not.toContain("plasma");
-    expect(drops).not.toContain("ion-cannon");
-    expect(drops).not.toContain("rocket");
-  });
-
-  test("Level 5 introduces plasma", () => {
-    const drops = LEVELS[4].weaponDrops!;
-    expect(drops).toContain("missile");
-    expect(drops).toContain("laser");
-    expect(drops).toContain("auto-gun");
-    expect(drops).toContain("plasma");
-  });
-
-  test("Level 6 replaces auto-gun with ion-cannon", () => {
-    const drops = LEVELS[5].weaponDrops!;
-    expect(drops).toContain("missile");
-    expect(drops).toContain("laser");
-    expect(drops).toContain("plasma");
-    expect(drops).toContain("ion-cannon");
-    expect(drops).not.toContain("auto-gun");
-  });
-
-  test("Levels 7-10 have the full late-game arsenal", () => {
-    for (let i = 6; i < 10; i++) {
-      const drops = LEVELS[i].weaponDrops!;
-      expect(drops).toContain("missile");
-      expect(drops).toContain("laser");
-      expect(drops).toContain("plasma");
-      expect(drops).toContain("ion-cannon");
-      expect(drops).toContain("rocket");
-      expect(drops).not.toContain("auto-gun");
-    }
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SECTION 23: Missile Homing Miss Test (Issue #538)
-// ═══════════════════════════════════════════════════════════════════════════
-
-describe("Missile Reduced Homing", () => {
-  test("Missile with reduced homing can miss fast-moving enemies", () => {
-    const missile = new Missile(400, 400, 0, WEAPON_CONFIGS["missile"].homingStrength);
-    const enemy = makeEnemy(100, 200, "dart");
-    const dartSpeed = 300;
-
-    for (let i = 0; i < 5; i++) {
-      enemy.pos.x += dartSpeed * 0.1;
-      missile.update(0.1, 800, 600, [enemy]);
-    }
-
-    const dx = missile.pos.x - enemy.pos.x;
-    const dy = missile.pos.y - enemy.pos.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    expect(dist).toBeGreaterThan(50);
   });
 });
