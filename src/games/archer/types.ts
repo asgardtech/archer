@@ -56,3 +56,15 @@ export interface LandmarkConfig {
   positionX: number;
   hitPoints: number;
 }
+
+export const GROUND_HEIGHT = 35;
+
+export interface TerrainStyle {
+  type: "meadow" | "forest" | "mountains" | "storm" | "sky_fortress";
+  /** Base fill color for the ground body */
+  baseColor: string;
+  /** Darker shade for the terrain surface/edge line */
+  surfaceColor: string;
+  /** Accent color for decorative details (flowers, snow, puddles, etc.) */
+  accentColor: string;
+}
