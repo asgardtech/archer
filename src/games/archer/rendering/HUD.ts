@@ -68,7 +68,9 @@ export class HUD {
     levelName = "",
     totalScore = 0,
     permanentUpgrades: ReadonlySet<UpgradeType> = new Set(),
-    collectionCounts: ReadonlyMap<UpgradeType, number> = new Map()
+    collectionCounts: ReadonlyMap<UpgradeType, number> = new Map(),
+    landmarkLabel = "",
+    landmarkDescription = ""
   ): void {
     for (const t of this.ammoGainTexts) {
       t.age += dt;
@@ -86,6 +88,9 @@ export class HUD {
         break;
       case "menu":
         this.renderMenu(ctx, canvasW, canvasH);
+        break;
+      case "level_intro":
+        this.renderLevelIntro(ctx, level, levelName, landmarkLabel, landmarkDescription, canvasW, canvasH);
         break;
       case "playing":
         this.renderPlaying(ctx, score, arrowsRemaining, canvasW, activeUpgrades, level, levelName, permanentUpgrades);
@@ -360,6 +365,45 @@ export class HUD {
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "20px sans-serif";
     ctx.fillText(this.isTouchDevice ? "Tap to Return to Menu" : "Click to Return to Menu", w / 2, h / 2 + 80);
+
+    ctx.restore();
+  }
+
+  private renderLevelIntro(
+    ctx: CanvasRenderingContext2D,
+    level: number,
+    levelName: string,
+    landmarkLabel: string,
+    landmarkDescription: string,
+    w: number,
+    h: number
+  ): void {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 44px sans-serif";
+    ctx.fillText(`Level ${level} — ${levelName}`, w / 2, h / 2 - 70);
+
+    ctx.fillStyle = "#f1c40f";
+    ctx.font = "bold 28px sans-serif";
+    ctx.fillText(landmarkLabel, w / 2, h / 2 - 15);
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.font = "italic 20px sans-serif";
+    ctx.fillText(landmarkDescription, w / 2, h / 2 + 25);
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.font = "20px sans-serif";
+    ctx.fillText(
+      this.isTouchDevice ? "Tap to Begin" : "Click to Begin",
+      w / 2, h / 2 + 80
+    );
 
     ctx.restore();
   }

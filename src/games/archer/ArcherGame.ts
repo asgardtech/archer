@@ -225,8 +225,14 @@ export class ArcherGame implements IGame {
           this.audio.ensureContext();
           this.sound.play("menu_start");
           this.resetGame();
+          this.state = "level_intro";
+        }
+        break;
+
+      case "level_intro":
+        if (this.input.wasClicked) {
           this.state = "playing";
-          this.sound.startMusic("playing", 0);
+          this.sound.startMusic("playing", this.currentLevel);
         }
         break;
 
@@ -240,8 +246,7 @@ export class ArcherGame implements IGame {
         }
         if (this.input.wasClicked) {
           this.startLevel(this.currentLevel + 1);
-          this.state = "playing";
-          this.sound.startMusic("playing", this.currentLevel);
+          this.state = "level_intro";
         }
         break;
 
@@ -454,7 +459,7 @@ export class ArcherGame implements IGame {
     this.renderSky();
 
     const config = this.currentLevelConfig;
-    const isGameplay = this.state === "playing" || this.state === "gameover" || this.state === "level_complete";
+    const isGameplay = this.state === "playing" || this.state === "gameover" || this.state === "level_complete" || this.state === "level_intro";
 
     if (isGameplay) {
       TerrainRenderer.render(this.ctx, this.width, this.height, config.terrain);
@@ -490,7 +495,9 @@ export class ArcherGame implements IGame {
       config.name,
       this.totalScore + (this.state === "playing" ? this.score : 0),
       this.upgradeManager.getPermanentUpgrades(),
-      this.upgradeManager.getCollectionCounts()
+      this.upgradeManager.getCollectionCounts(),
+      config.landmark.label,
+      config.landmark.description
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }
