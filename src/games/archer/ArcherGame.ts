@@ -398,7 +398,7 @@ export class ArcherGame implements IGame {
 
     if (this.score >= this.currentLevelConfig.targetScore) {
       if (this.landmark) {
-        this.landmark.liberate();
+        this.landmark.celebrate();
       }
       this.totalScore += this.score;
       this.balloons = [];
@@ -407,6 +407,7 @@ export class ArcherGame implements IGame {
       this.sound.stopLowAmmoWarning();
       this.lowAmmoTriggered = false;
       this.sound.stopMusic();
+      this.sound.play("landmark_liberated");
       if (this.currentLevel >= LEVELS.length - 1) {
         this.state = "victory";
         this.sound.play("victory");

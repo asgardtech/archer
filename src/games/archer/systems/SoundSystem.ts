@@ -62,6 +62,9 @@ export class SoundSystem {
       case "low_ammo":
         this.startLowAmmoWarning();
         break;
+      case "landmark_liberated":
+        this.playLandmarkLiberated();
+        break;
     }
   }
 
@@ -208,6 +211,18 @@ export class SoundSystem {
       sustain: 0.5,
       release: 0.04,
     });
+  }
+
+  private playLandmarkLiberated(): void {
+    this.audio.playSequence(
+      [
+        { frequency: 523,  duration: 0.3, type: "sine" },
+        { frequency: 659,  duration: 0.3, type: "sine" },
+        { frequency: 784,  duration: 0.3, type: "sine" },
+        { frequency: 1047, duration: 0.6, type: "sine" },
+      ],
+      180
+    );
   }
 
   private startLowAmmoWarning(): void {

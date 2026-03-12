@@ -96,7 +96,7 @@ export class HUD {
         this.renderPlaying(ctx, score, arrowsRemaining, canvasW, activeUpgrades, level, levelName, permanentUpgrades);
         break;
       case "level_complete":
-        this.renderLevelComplete(ctx, score, level, levelName, canvasW, canvasH, collectionCounts);
+        this.renderLevelComplete(ctx, score, level, levelName, landmarkLabel, canvasW, canvasH, collectionCounts);
         break;
       case "gameover":
         this.renderGameOver(ctx, totalScore, canvasW, canvasH, level, levelName);
@@ -276,6 +276,7 @@ export class HUD {
     levelScore: number,
     level: number,
     levelName: string,
+    landmarkLabel: string,
     w: number,
     h: number,
     collectionCounts: ReadonlyMap<UpgradeType, number> = new Map()
@@ -290,15 +291,21 @@ export class HUD {
 
     ctx.fillStyle = "#fff";
     ctx.font = "bold 44px sans-serif";
-    ctx.fillText(`Level ${level} Complete!`, w / 2, h / 2 - 60);
+    ctx.fillText(`Level ${level} Complete!`, w / 2, h / 2 - 70);
 
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "24px sans-serif";
-    ctx.fillText(levelName, w / 2, h / 2 - 15);
+    ctx.fillText(levelName, w / 2, h / 2 - 30);
+
+    if (landmarkLabel.length > 0) {
+      ctx.fillStyle = "#f1c40f";
+      ctx.font = "italic 22px sans-serif";
+      ctx.fillText(`${landmarkLabel} has been liberated!`, w / 2, h / 2 + 5);
+    }
 
     ctx.font = "bold 28px sans-serif";
     ctx.fillStyle = "#f1c40f";
-    ctx.fillText(`Score: ${levelScore}`, w / 2, h / 2 + 30);
+    ctx.fillText(`Score: ${levelScore}`, w / 2, h / 2 + 45);
 
     const upgradeTypes: { type: UpgradeType; label: string }[] = [
       { type: "multi-shot", label: "Multi-Shot" },
@@ -307,7 +314,7 @@ export class HUD {
       { type: "bonus-arrows", label: "Bonus Arrows" },
     ];
 
-    let progressY = h / 2 + 60;
+    let progressY = h / 2 + 80;
     let hasProgress = false;
     for (const { type, label } of upgradeTypes) {
       const count = collectionCounts.get(type) ?? 0;
@@ -328,7 +335,7 @@ export class HUD {
     ctx.font = "20px sans-serif";
     ctx.fillText(
       this.isTouchDevice ? "Tap to Continue" : "Click to Continue",
-      w / 2, hasProgress ? progressY + 15 : h / 2 + 80
+      w / 2, hasProgress ? progressY + 15 : h / 2 + 105
     );
 
     ctx.restore();
