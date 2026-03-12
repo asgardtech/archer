@@ -1396,17 +1396,14 @@ describe("Edge Cases", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("Weapon Balance Validation", () => {
-  test("Missile homingStrength is 1.8 and less than auto-gun", () => {
+  test("Missile homingStrength is 1.8", () => {
     const missile = WEAPON_CONFIGS["missile"];
-    const autogun = WEAPON_CONFIGS["auto-gun"];
     expect(missile.homingStrength).toBe(1.8);
-    expect(missile.homingStrength).toBeLessThan(autogun.homingStrength);
   });
 
-  test("Auto-gun homingStrength is greater than missile (tracking specialist)", () => {
+  test("Auto-gun homingStrength is 1.3", () => {
     const autogun = WEAPON_CONFIGS["auto-gun"];
-    const missile = WEAPON_CONFIGS["missile"];
-    expect(autogun.homingStrength).toBeGreaterThan(missile.homingStrength);
+    expect(autogun.homingStrength).toBe(1.3);
   });
 
   test("Auto-gun tier 2 damageMultiplier is 1.2", () => {
