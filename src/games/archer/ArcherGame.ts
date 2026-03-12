@@ -11,7 +11,9 @@ import { Bow } from "./entities/Bow";
 import { Landmark } from "./entities/Landmark";
 import { HUD } from "./rendering/HUD";
 import { TerrainRenderer } from "./rendering/TerrainRenderer";
+import { StoryRenderer } from "./rendering/StoryRenderer";
 import { LEVELS, LevelConfig } from "./levels";
+import { ARCHER_STORY } from "./story";
 import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
 import { AssetLoader } from "../../shared/AssetLoader";
@@ -65,6 +67,7 @@ export class ArcherGame implements IGame {
   private collisions: CollisionSystem;
   private upgradeManager: UpgradeManager;
   private hud: HUD;
+  private storyRenderer: StoryRenderer;
   private audio: AudioManager;
   private sound: SoundSystem;
   private assetLoader: AssetLoader;
@@ -97,6 +100,7 @@ export class ArcherGame implements IGame {
     this.collisions = new CollisionSystem();
     this.upgradeManager = new UpgradeManager();
     this.hud = new HUD(this.input.isTouchDevice);
+    this.storyRenderer = new StoryRenderer(this.input.isTouchDevice);
     this.bow = new Bow(width, height, this.input.isTouchDevice ? 60 : 30);
     this.audio = new AudioManager();
     this.sound = new SoundSystem(this.audio);
@@ -225,7 +229,19 @@ export class ArcherGame implements IGame {
           this.audio.ensureContext();
           this.sound.play("menu_start");
           this.resetGame();
+          this.storyRenderer.show(ARCHER_STORY.opening);
+          this.state = "story_intro";
+        }
+        break;
+
+      case "story_intro":
+        this.storyRenderer.update(dt);
+        if (this.storyRenderer.isComplete) {
           this.state = "level_intro";
+        } else if (this.input.wasEscPressed) {
+          this.state = "level_intro";
+        } else if (this.input.wasClicked) {
+          this.storyRenderer.advance();
         }
         break;
 
@@ -461,6 +477,12 @@ export class ArcherGame implements IGame {
 
   private render(): void {
     this.renderSky();
+
+    if (this.state === "story_intro") {
+      this.storyRenderer.render(this.ctx, this.width, this.height);
+      this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
+      return;
+    }
 
     const config = this.currentLevelConfig;
     const isGameplay = this.state === "playing" || this.state === "gameover" || this.state === "level_complete" || this.state === "level_intro";
