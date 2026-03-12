@@ -70,6 +70,6 @@
   <rect x="350" y="105" width="100" height="4" fill="url(#sh-red)"/>
   <rect x="350" y="125" width="100" height="4" fill="url(#sh-red)"/>
 
-  <!-- Cylon eye slit -->
+  <!-- Vektran eye slit -->
   <rect x="398" y="68" width="4" height="12" fill="#cc0000"/>
 </svg>

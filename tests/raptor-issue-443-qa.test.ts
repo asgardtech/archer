@@ -620,7 +620,7 @@ describe("Scenario: LEVELS array covers all 10 levels", () => {
     [6, 7, "Scorched Wastes"],
     [7, 8, "Industrial Core"],
     [8, 9, "Orbital Debris"],
-    [9, 10, "Cylon Stronghold"],
+    [9, 10, "Vektran Stronghold"],
   ])(
     "LEVELS[%i] is level %i ('%s')",
     (index, levelNum, name) => {

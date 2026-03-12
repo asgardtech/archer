@@ -814,7 +814,7 @@ describe("Scenario: Game has 10 levels with correct names", () => {
       "Scorched Wastes",
       "Industrial Core",
       "Orbital Debris",
-      "Cylon Stronghold",
+      "Vektran Stronghold",
     ];
     const actualNames = LEVELS.map((l) => l.name);
     expect(actualNames).toEqual(expectedNames);
