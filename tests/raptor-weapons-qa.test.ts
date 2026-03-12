@@ -1401,10 +1401,11 @@ describe("Weapon Balance Validation", () => {
     expect(missile.homingStrength).toBe(1.8);
   });
 
-  test("Auto-gun homingStrength is 1.3 (increased from 1.0)", () => {
+  test("Auto-gun homingStrength is 2.0 (increased from 1.0, greater than missile)", () => {
     const autogun = WEAPON_CONFIGS["auto-gun"];
-    expect(autogun.homingStrength).toBe(1.3);
+    expect(autogun.homingStrength).toBe(2.0);
     expect(autogun.homingStrength).toBeGreaterThan(1.0);
+    expect(autogun.homingStrength).toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
   });
 
   test("Both missile and auto-gun have homing enabled", () => {
@@ -1416,11 +1417,18 @@ describe("Weapon Balance Validation", () => {
     expect(WEAPON_CONFIGS["missile"].homingStrength).toBeLessThan(2.5);
   });
 
-  test("Both homing weapons have distinct tradeoffs: missile has stronger homing, auto-gun has higher fire rate", () => {
-    expect(WEAPON_CONFIGS["missile"].homingStrength)
-      .toBeGreaterThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
+  test("Auto-gun has stronger homing than missile, missile has splash advantage", () => {
+    expect(WEAPON_CONFIGS["auto-gun"].homingStrength)
+      .toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
     expect(WEAPON_CONFIGS["missile"].fireRateMultiplier)
       .toBeLessThan(WEAPON_CONFIGS["auto-gun"].fireRateMultiplier);
+    expect(WEAPON_CONFIGS["missile"].splashRadius)
+      .toBeGreaterThan(WEAPON_CONFIGS["auto-gun"].splashRadius);
+  });
+
+  test("Missile homingStrength is less than auto-gun homingStrength (per acceptance criteria)", () => {
+    expect(WEAPON_CONFIGS["missile"].homingStrength)
+      .toBeLessThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
   });
 
   test("Auto-gun tier 2 damageMultiplier is 1.2", () => {
