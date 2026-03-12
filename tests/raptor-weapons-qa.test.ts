@@ -246,7 +246,7 @@ describe("Missile Weapon", () => {
     expect(cfg.projectileSpeed).toBe(350);
     expect(cfg.piercing).toBe(false);
     expect(cfg.homing).toBe(true);
-    expect(cfg.homingStrength).toBe(1.3);
+    expect(cfg.homingStrength).toBe(1.8);
     expect(cfg.splashRadius).toBe(30);
     expect(cfg.splashDamageRatio).toBe(0.4);
     expect(cfg.rapidFireBonus).toBe(1.3);
@@ -1396,27 +1396,14 @@ describe("Edge Cases", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("Weapon Balance Validation", () => {
-  test("Missile homingStrength is 1.3 and less than auto-gun", () => {
+  test("Missile homingStrength is 1.8 (reduced from 2.5)", () => {
     const missile = WEAPON_CONFIGS["missile"];
-    expect(missile.homingStrength).toBe(1.3);
-    expect(missile.homingStrength)
-      .toBeLessThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
+    expect(missile.homingStrength).toBe(1.8);
   });
 
-  test("Auto-gun homingStrength is 1.8", () => {
+  test("Auto-gun homingStrength is 1.3 (increased from 1.0)", () => {
     const autogun = WEAPON_CONFIGS["auto-gun"];
-    expect(autogun.homingStrength).toBe(1.8);
-  });
-
-  test("Auto-gun has stronger homing than missile (homing convenience identity)", () => {
-    expect(WEAPON_CONFIGS["auto-gun"].homingStrength).toBe(1.8);
-    expect(WEAPON_CONFIGS["missile"].homingStrength).toBe(1.3);
-    expect(WEAPON_CONFIGS["auto-gun"].homingStrength)
-      .toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
-  });
-
-  test("Auto-gun homingStrength is increased from original 1.0", () => {
-    const autogun = WEAPON_CONFIGS["auto-gun"];
+    expect(autogun.homingStrength).toBe(1.3);
     expect(autogun.homingStrength).toBeGreaterThan(1.0);
   });
 
@@ -1429,9 +1416,9 @@ describe("Weapon Balance Validation", () => {
     expect(WEAPON_CONFIGS["missile"].homingStrength).toBeLessThan(2.5);
   });
 
-  test("Auto-gun has best homing but lower per-bullet damage; missile has slower fire rate", () => {
-    expect(WEAPON_CONFIGS["auto-gun"].homingStrength)
-      .toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
+  test("Both homing weapons have distinct tradeoffs: missile has stronger homing, auto-gun has higher fire rate", () => {
+    expect(WEAPON_CONFIGS["missile"].homingStrength)
+      .toBeGreaterThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
     expect(WEAPON_CONFIGS["missile"].fireRateMultiplier)
       .toBeLessThan(WEAPON_CONFIGS["auto-gun"].fireRateMultiplier);
   });
