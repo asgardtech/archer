@@ -184,15 +184,15 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile projectile homes toward nearest enemy", () => {
-    const missile = new Missile(400, 400, 0, 1.8);
+    const missile = new Missile(400, 400, 0, 1.3);
     const enemy = makeEnemy(450, 200);
 
     missile.update(0.1, 800, 600, [enemy]);
     expect(missile.pos.x).toBeGreaterThan(400);
   });
 
-  test("Missile turn rate does not exceed homingStrength (1.8 rad/s)", () => {
-    const homingStrength = 1.8;
+  test("Missile turn rate does not exceed homingStrength (1.3 rad/s)", () => {
+    const homingStrength = 1.3;
     const missile = new Missile(400, 400, 0, homingStrength);
     const enemy = makeEnemy(100, 400);
 
@@ -203,14 +203,14 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile flies straight when no enemies exist", () => {
-    const missile = new Missile(400, 400, 0, 1.8);
+    const missile = new Missile(400, 400, 0, 1.3);
     missile.update(0.1, 800, 600, []);
     expect(missile.pos.x).toBeCloseTo(400, 1);
     expect(missile.pos.y).toBeLessThan(400);
   });
 
   test("Missile flies straight when enemies array is undefined", () => {
-    const missile = new Missile(400, 400, 0, 1.8);
+    const missile = new Missile(400, 400, 0, 1.3);
     missile.update(0.1, 800, 600);
     expect(missile.pos.x).toBeCloseTo(400, 1);
     expect(missile.pos.y).toBeLessThan(400);
@@ -246,7 +246,7 @@ describe("Missile Weapon", () => {
     expect(cfg.projectileSpeed).toBe(350);
     expect(cfg.piercing).toBe(false);
     expect(cfg.homing).toBe(true);
-    expect(cfg.homingStrength).toBe(1.8);
+    expect(cfg.homingStrength).toBe(1.3);
     expect(cfg.splashRadius).toBe(30);
     expect(cfg.splashDamageRatio).toBe(0.4);
     expect(cfg.rapidFireBonus).toBe(1.3);
@@ -285,7 +285,7 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile goes out of bounds and becomes not alive", () => {
-    const missile = new Missile(400, 400, 0, 1.8);
+    const missile = new Missile(400, 400, 0, 1.3);
     for (let i = 0; i < 20; i++) {
       missile.update(0.1, 800, 600);
     }
@@ -293,7 +293,7 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile ignores dead enemies for homing", () => {
-    const missile = new Missile(400, 400, 0, 1.8);
+    const missile = new Missile(400, 400, 0, 1.3);
     const deadEnemy = makeEnemy(450, 200);
     deadEnemy.alive = false;
     const aliveEnemy = makeEnemy(350, 200);
@@ -1359,7 +1359,7 @@ describe("WeaponSystem Integration", () => {
 
 describe("Edge Cases", () => {
   test("Missile with no alive enemies flies straight", () => {
-    const missile = new Missile(400, 400, 0, 1.8);
+    const missile = new Missile(400, 400, 0, 1.3);
     const dead1 = makeEnemy(450, 200);
     dead1.alive = false;
     const dead2 = makeEnemy(350, 200);
@@ -1396,14 +1396,24 @@ describe("Edge Cases", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("Weapon Balance Validation", () => {
-  test("Missile homingStrength is 1.8", () => {
+  test("Missile homingStrength is 1.3", () => {
     const missile = WEAPON_CONFIGS["missile"];
-    expect(missile.homingStrength).toBe(1.8);
+    expect(missile.homingStrength).toBe(1.3);
   });
 
-  test("Auto-gun homingStrength is 1.3", () => {
+  test("Auto-gun homingStrength is 1.8", () => {
     const autogun = WEAPON_CONFIGS["auto-gun"];
-    expect(autogun.homingStrength).toBe(1.3);
+    expect(autogun.homingStrength).toBe(1.8);
+  });
+
+  test("Auto-gun homingStrength is greater than missile homingStrength", () => {
+    expect(WEAPON_CONFIGS["auto-gun"].homingStrength)
+      .toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
+  });
+
+  test("Missile homingStrength is less than auto-gun homingStrength", () => {
+    expect(WEAPON_CONFIGS["missile"].homingStrength)
+      .toBeLessThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
   });
 
   test("Auto-gun tier 2 damageMultiplier is 1.2", () => {
@@ -1596,7 +1606,7 @@ describe("Weapon Availability Curve", () => {
 
 describe("Missile Reduced Homing", () => {
   test("Missile with reduced homing can miss fast-moving enemies", () => {
-    const missile = new Missile(400, 400, 0, 1.8);
+    const missile = new Missile(400, 400, 0, 1.3);
     const enemy = makeEnemy(100, 200);
 
     for (let i = 0; i < 5; i++) {
