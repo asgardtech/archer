@@ -497,12 +497,26 @@ export class RaptorGame implements IGame {
 
       case "victory":
         this.updateBackground(dt);
-        if (this.input.wasClicked) {
-          this.sound.stopMusic();
-          if (this.onExit) {
-            this.onExit();
-          } else {
-            this.state = "menu";
+        this.storyRenderer.update(dt);
+
+        if (this.storyRenderer.isActive) {
+          if (this.input.wasEscPressed) {
+            this.storyRenderer = new StoryRenderer();
+            this.hud.setVictoryStoryActive(false);
+          } else if (this.input.wasClicked) {
+            this.storyRenderer.advance();
+          }
+        } else {
+          if (this.hud.victoryStoryActive) {
+            this.hud.setVictoryStoryActive(false);
+          }
+          if (this.input.wasClicked) {
+            this.sound.stopMusic();
+            if (this.onExit) {
+              this.onExit();
+            } else {
+              this.state = "menu";
+            }
           }
         }
         break;
@@ -874,9 +888,12 @@ export class RaptorGame implements IGame {
         this.state = "victory";
         this.sound.play("victory");
         SaveSystem.clear();
+        this.storyRenderer.show(GAME_STORY.ending, "center");
+        this.hud.setVictoryStoryActive(true);
       } else {
         this.state = "level_complete";
         this.sound.play("level_complete");
+        this.hud.setCompletionText(this.currentLevelConfig.story?.completionText ?? null);
         SaveSystem.save({
           version: 1,
           levelReached: this.currentLevel + 1,
@@ -1013,6 +1030,8 @@ export class RaptorGame implements IGame {
   private resetGame(): void {
     this.totalScore = 0;
     this.vfx.reset();
+    this.hud.setCompletionText(null);
+    this.hud.setVictoryStoryActive(false);
     this.startLevel(0, true);
   }
 
@@ -1146,6 +1165,8 @@ export class RaptorGame implements IGame {
 
     this.levelElapsed = 0;
     this.nextStoryMessageIndex = 0;
+    this.hud.setCompletionText(null);
+    this.hud.setVictoryStoryActive(false);
 
     this.spawner.configure(this.currentLevelConfig);
     this.vfx.reset();
@@ -1349,7 +1370,7 @@ export class RaptorGame implements IGame {
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
 
-    if (this.state === "playing") {
+    if (this.state === "playing" || (this.state === "victory" && this.storyRenderer.isActive)) {
       this.storyRenderer.render(this.ctx, this.width, this.height);
     }
 

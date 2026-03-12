@@ -70,9 +70,56 @@ export class HUD {
   private isTouchDevice: boolean;
   private assets: AssetLoader | null = null;
   private tierFlashTimer = 0;
+  private completionLines: string[] = [];
+  private _victoryStoryActive = false;
+  private measureCtx: CanvasRenderingContext2D;
 
   constructor(isTouchDevice: boolean) {
     this.isTouchDevice = isTouchDevice;
+    const offscreen = document.createElement("canvas");
+    this.measureCtx = offscreen.getContext("2d")!;
+  }
+
+  get victoryStoryActive(): boolean {
+    return this._victoryStoryActive;
+  }
+
+  setCompletionText(text: string | null): void {
+    if (!text) {
+      this.completionLines = [];
+      return;
+    }
+    this.completionLines = this.wrapText(text, 340);
+  }
+
+  setVictoryStoryActive(active: boolean): void {
+    this._victoryStoryActive = active;
+  }
+
+  private wrapText(text: string, maxWidth: number): string[] {
+    this.measureCtx.font = `8px ${RETRO_FONT}`;
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let currentLine = "";
+
+    for (const word of words) {
+      if (currentLine === "") {
+        currentLine = word;
+        continue;
+      }
+      const testLine = currentLine + " " + word;
+      const measured = this.measureCtx.measureText(testLine).width;
+      if (measured > maxWidth) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine !== "") {
+      lines.push(currentLine);
+    }
+    return lines;
   }
 
   setAssets(assets: AssetLoader): void {
@@ -378,15 +425,21 @@ export class HUD {
       case "level_complete":
         this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier);
         this.renderOverlay(ctx, width, height, "Level Complete!",
+          this.completionLines,
+          `Score: ${score}`,
           this.actionText("for next level"));
         break;
       case "gameover":
         this.renderOverlay(ctx, width, height, "Game Over",
+          [],
           `Final Score: ${score}`, this.actionText("to return"));
         break;
       case "victory":
-        this.renderOverlay(ctx, width, height, "Victory!",
-          `Final Score: ${score}`, this.actionText("to return"));
+        if (!this._victoryStoryActive) {
+          this.renderOverlay(ctx, width, height, "Victory!",
+            [],
+            `Final Score: ${score}`, this.actionText("to return"));
+        }
         break;
     }
   }
@@ -852,6 +905,7 @@ export class HUD {
     width: number,
     height: number,
     title: string,
+    storyLines: string[],
     ...lines: string[]
   ): void {
     ctx.save();
@@ -860,7 +914,8 @@ export class HUD {
     ctx.fillRect(0, 0, width, height);
 
     const panelW = 380;
-    const panelH = 160 + lines.length * 30;
+    const storyBlockH = storyLines.length * 18;
+    const panelH = 160 + storyBlockH + lines.length * 30;
     const px = (width - panelW) / 2;
     const py = (height - panelH) / 2;
 
@@ -883,10 +938,22 @@ export class HUD {
     ctx.font = `20px ${RETRO_FONT}`;
     ctx.fillText(title, width / 2, py + 55);
 
+    if (storyLines.length > 0) {
+      ctx.font = `8px ${RETRO_FONT}`;
+      ctx.fillStyle = "#A0B0C8";
+      ctx.textAlign = "left";
+      const textX = px + 20;
+      for (let i = 0; i < storyLines.length; i++) {
+        ctx.fillText(storyLines[i], textX, py + 90 + i * 18);
+      }
+      ctx.textAlign = "center";
+    }
+
     ctx.font = `9px ${RETRO_FONT}`;
     ctx.fillStyle = "#D0D8E8";
+    const linesStartY = py + 100 + storyBlockH;
     for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], width / 2, py + 100 + i * 30);
+      ctx.fillText(lines[i], width / 2, linesStartY + i * 30);
     }
 
     ctx.restore();
