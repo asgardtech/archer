@@ -12,6 +12,7 @@ export interface EnemyLaserBeamConfig {
 export class EnemyLaserBeam {
   phase: EnemyLaserPhase = "idle";
   beamX = 0;
+  originX = 0;
   originY = 0;
   beamWidth: number;
   damage: number;
@@ -33,6 +34,7 @@ export class EnemyLaserBeam {
     this.phase = "warmup";
     this.phaseTimer = this.config.warmupDuration;
     this.beamX = enemyX;
+    this.originX = enemyX;
     this.originY = enemyBottomY;
     this.targetX = playerX;
     this.time = 0;
@@ -45,6 +47,7 @@ export class EnemyLaserBeam {
     if (this.phase === "idle") return;
 
     this.time += dt;
+    this.originX = enemyX;
     this.originY = enemyBottomY;
     this.phaseTimer -= dt;
 
@@ -96,7 +99,7 @@ export class EnemyLaserBeam {
     ctx.strokeStyle = `rgba(255, 204, 0, ${pulse})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(this.beamX, this.originY);
+    ctx.moveTo(this.originX, this.originY);
     ctx.lineTo(this.beamX, canvasHeight);
     ctx.stroke();
     ctx.restore();
@@ -104,32 +107,39 @@ export class EnemyLaserBeam {
 
   private renderBeam(ctx: CanvasRenderingContext2D, canvasHeight: number): void {
     const halfWidth = this.beamWidth / 2;
-    const beamTop = this.originY;
-    const beamHeight = canvasHeight - beamTop;
 
     ctx.save();
 
     const pulse = 0.6 + Math.sin(this.time * 20) * 0.15;
 
-    const outerGlow = ctx.createLinearGradient(
-      this.beamX - halfWidth * 4, 0, this.beamX + halfWidth * 4, 0
-    );
-    outerGlow.addColorStop(0, "rgba(255, 80, 0, 0)");
-    outerGlow.addColorStop(0.3, `rgba(255, 80, 0, ${0.15 * pulse})`);
-    outerGlow.addColorStop(0.5, `rgba(255, 120, 20, ${0.3 * pulse})`);
-    outerGlow.addColorStop(0.7, `rgba(255, 80, 0, ${0.15 * pulse})`);
-    outerGlow.addColorStop(1, "rgba(255, 80, 0, 0)");
-    ctx.fillStyle = outerGlow;
-    ctx.fillRect(this.beamX - halfWidth * 4, beamTop, halfWidth * 8, beamHeight);
+    this.fillTrapezoid(ctx, this.originX, this.originY, this.beamX, canvasHeight, halfWidth * 4);
+    ctx.fillStyle = `rgba(255, 120, 20, ${0.3 * pulse})`;
+    ctx.fill();
 
+    this.fillTrapezoid(ctx, this.originX, this.originY, this.beamX, canvasHeight, halfWidth);
     ctx.fillStyle = `rgba(255, 120, 20, ${0.5 * pulse})`;
-    ctx.fillRect(this.beamX - halfWidth, beamTop, this.beamWidth, beamHeight);
+    ctx.fill();
 
     const coreWidth = halfWidth * 0.5;
+    this.fillTrapezoid(ctx, this.originX, this.originY, this.beamX, canvasHeight, coreWidth);
     ctx.fillStyle = `rgba(255, 220, 150, ${0.8 * pulse})`;
-    ctx.fillRect(this.beamX - coreWidth, beamTop, coreWidth * 2, beamHeight);
+    ctx.fill();
 
     ctx.restore();
+  }
+
+  private fillTrapezoid(
+    ctx: CanvasRenderingContext2D,
+    topX: number, topY: number,
+    bottomX: number, bottomY: number,
+    halfWidth: number,
+  ): void {
+    ctx.beginPath();
+    ctx.moveTo(topX - halfWidth, topY);
+    ctx.lineTo(topX + halfWidth, topY);
+    ctx.lineTo(bottomX + halfWidth, bottomY);
+    ctx.lineTo(bottomX - halfWidth, bottomY);
+    ctx.closePath();
   }
 
   get isActive(): boolean {
@@ -153,6 +163,7 @@ export class EnemyLaserBeam {
     this.phaseTimer = 0;
     this.time = 0;
     this.beamX = 0;
+    this.originX = 0;
     this.originY = 0;
     this.justActivated = false;
   }

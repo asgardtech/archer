@@ -225,14 +225,19 @@ export class CollisionSystem {
     if (!player.alive || player.isInvincible) return [];
 
     const hits: EnemyBeamPlayerHit[] = [];
+    const playerCenterY = (player.top + player.bottom) / 2;
+
     for (const beam of beams) {
       if (!beam.isActive) continue;
 
       const halfWidth = beam.beamWidth / 2;
-      const beamLeft = beam.beamX - halfWidth;
-      const beamRight = beam.beamX + halfWidth;
       const beamTop = beam.originY;
       const beamBottom = canvasHeight;
+      const totalHeight = beamBottom - beamTop;
+      const t = totalHeight > 0 ? (playerCenterY - beamTop) / totalHeight : 0;
+      const beamXAtPlayerY = beam.originX + (beam.beamX - beam.originX) * t;
+      const beamLeft = beamXAtPlayerY - halfWidth;
+      const beamRight = beamXAtPlayerY + halfWidth;
 
       if (this.aabb(beamLeft, beamTop, beamRight, beamBottom,
                     player.left, player.top, player.right, player.bottom)) {
