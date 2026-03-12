@@ -85,6 +85,10 @@ function createMockCanvas(): HTMLCanvasElement {
 function setupDom(canvas: HTMLCanvasElement): void {
   (global as any).document = {
     getElementById: jest.fn(() => canvas),
+    createElement: jest.fn(() => {
+      const offCtx = { font: "", measureText: jest.fn(() => ({ width: 50 })) };
+      return { getContext: jest.fn(() => offCtx) };
+    }),
   };
   (global as any).HTMLCanvasElement = class HTMLCanvasElement {};
   Object.setPrototypeOf(canvas, (global as any).HTMLCanvasElement.prototype);
@@ -304,14 +308,14 @@ describe("Scenario: Game starts on the menu screen", () => {
 });
 
 describe("Scenario: Clicking on the menu starts the game", () => {
-  test("clicking in menu transitions to playing state", () => {
+  test("clicking in menu transitions to story_intro state", () => {
     const { game } = createPlayingGame();
     game.state = "menu";
     game.input.wasClicked = true;
 
     (game as any).update(0.016);
 
-    expect(game.state).toBe("playing");
+    expect(game.state).toBe("story_intro");
   });
 
   test("score should be 0 after starting", () => {
