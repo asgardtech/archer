@@ -235,6 +235,9 @@ export class ArcherGame implements IGame {
         break;
 
       case "level_complete":
+        if (this.landmark) {
+          this.landmark.update(dt);
+        }
         if (this.input.wasClicked) {
           this.startLevel(this.currentLevel + 1);
           this.state = "playing";
@@ -272,6 +275,9 @@ export class ArcherGame implements IGame {
     this.upgradeManager.update(dt);
     if (this.landmark) {
       this.landmark.update(dt);
+      this.landmark.setSiegeProgress(
+        Math.min(1, this.score / this.currentLevelConfig.targetScore)
+      );
     }
 
     if (this.input.wasClicked && this.arrowsRemaining > 0) {
@@ -386,6 +392,9 @@ export class ArcherGame implements IGame {
     }
 
     if (this.score >= this.currentLevelConfig.targetScore) {
+      if (this.landmark) {
+        this.landmark.liberate();
+      }
       this.totalScore += this.score;
       this.balloons = [];
       this.arrows = [];
