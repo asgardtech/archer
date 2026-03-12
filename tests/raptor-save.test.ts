@@ -78,6 +78,10 @@ function createMockCanvas(): HTMLCanvasElement {
 function setupDom(canvas: HTMLCanvasElement): void {
   (global as any).document = {
     getElementById: jest.fn(() => canvas),
+    createElement: jest.fn(() => {
+      const offCtx = { font: "", measureText: jest.fn(() => ({ width: 50 })) };
+      return { getContext: jest.fn(() => offCtx) };
+    }),
   };
   (global as any).HTMLCanvasElement = class HTMLCanvasElement {};
   Object.setPrototypeOf(canvas, (global as any).HTMLCanvasElement.prototype);
