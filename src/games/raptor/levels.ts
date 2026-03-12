@@ -603,7 +603,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       litStructures: ["struct_cylon_tower", "struct_reactor_core", "struct_turret_base"],
     },
     story: {
-      briefing: "This is it. The Cylon Stronghold houses their central command core. Destroy it and their entire network collapses. All wings — begin the final assault.",
+      briefing: "The Cylon Stronghold houses their central command core — destroy it and their entire network collapses. All wings, begin the final assault.",
       completionText: "The Cylon command core is destroyed. Their forces across the colonies are shutting down. Against all odds, you've done it — humanity is free.",
       inGameMessages: [
         { triggerTime: 2, text: "HQ: All wings, commence attack!" },
