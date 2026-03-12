@@ -1,3 +1,8 @@
+import { SpeakerType } from "../types";
+import { PilotPortrait } from "./PilotPortrait";
+import { WingmanPortrait } from "./WingmanPortrait";
+import { HQPortrait } from "./HQPortrait";
+
 type StoryPosition = "top" | "center" | "bottom";
 
 type StoryRendererState =
@@ -27,6 +32,48 @@ const TOP_POSITION_Y = 52;
 const BOTTOM_POSITION_MARGIN = 16;
 const QUICK_PADDING_Y = 10;
 
+const PORTRAIT_SIZE_FULL = 100;
+const PORTRAIT_SIZE_QUICK = 48;
+const PORTRAIT_MARGIN = 14;
+const SMALL_CANVAS_THRESHOLD = 500;
+
+const SPEAKER_LABELS: Record<SpeakerType, string> = {
+  pilot: "RAPTOR-1",
+  wingman: "WINGMAN",
+  hq: "HQ COMMAND",
+  sensor: "HQ COMMAND",
+};
+
+export function detectSpeaker(text: string): SpeakerType {
+  if (text.startsWith("Wingman:")) return "wingman";
+  if (text.startsWith("HQ:")) return "hq";
+  if (text.startsWith("Sensor:")) return "sensor";
+  return "pilot";
+}
+
+function renderPortraitForSpeaker(
+  ctx: CanvasRenderingContext2D,
+  speaker: SpeakerType,
+  x: number,
+  y: number,
+  size: number,
+  elapsed: number
+): void {
+  switch (speaker) {
+    case "wingman":
+      WingmanPortrait.render(ctx, x, y, size, elapsed);
+      break;
+    case "hq":
+    case "sensor":
+      HQPortrait.render(ctx, x, y, size, elapsed);
+      break;
+    case "pilot":
+    default:
+      PilotPortrait.render(ctx, x, y, size, elapsed);
+      break;
+  }
+}
+
 export class StoryRenderer {
   private state: StoryRendererState = "idle";
   private messages: string[] = [];
@@ -42,6 +89,8 @@ export class StoryRenderer {
   private quickTimer = 0;
   private completed = false;
   private blinkTimer = 0;
+  private elapsed = 0;
+  private speaker: SpeakerType = "pilot";
 
   private measureCtx: CanvasRenderingContext2D;
 
@@ -50,7 +99,7 @@ export class StoryRenderer {
     this.measureCtx = canvas.getContext("2d")!;
   }
 
-  show(messages: string[], position: StoryPosition = "center"): void {
+  show(messages: string[], position: StoryPosition = "center", speaker?: SpeakerType): void {
     if (messages.length === 0) return;
 
     this.messages = [...messages];
@@ -58,13 +107,16 @@ export class StoryRenderer {
     this.position = position;
     this.isQuickMessage = false;
     this.completed = false;
+    this.speaker = speaker ?? "pilot";
+    this.elapsed = 0;
     this.beginMessage(this.messages[0]);
   }
 
   showQuick(
     message: string,
     duration: number = DEFAULT_QUICK_DURATION,
-    position: StoryPosition = "top"
+    position: StoryPosition = "top",
+    speaker?: SpeakerType
   ): void {
     if (this.state !== "idle" && !this.isQuickMessage) return;
 
@@ -74,6 +126,8 @@ export class StoryRenderer {
     this.isQuickMessage = true;
     this.quickTimer = duration;
     this.completed = false;
+    this.speaker = speaker ?? detectSpeaker(message);
+    this.elapsed = 0;
     this.beginMessage(message);
   }
 
@@ -81,9 +135,6 @@ export class StoryRenderer {
     if (this.state === "typing") {
       this.revealedChars = this.totalChars;
       this.state = "waiting";
-      if (this.isQuickMessage) {
-        // quick messages don't wait — timer handles dismissal
-      }
       return true;
     }
 
@@ -97,6 +148,10 @@ export class StoryRenderer {
   }
 
   update(dt: number): void {
+    if (this.state !== "idle") {
+      this.elapsed += dt;
+    }
+
     switch (this.state) {
       case "fade_in":
         this.fadeProgress += dt / this.fadeDuration;
@@ -110,11 +165,7 @@ export class StoryRenderer {
         this.revealedChars += this.charsPerSecond * dt;
         if (this.revealedChars >= this.totalChars) {
           this.revealedChars = this.totalChars;
-          if (this.isQuickMessage) {
-            this.state = "waiting";
-          } else {
-            this.state = "waiting";
-          }
+          this.state = "waiting";
         }
         break;
 
@@ -149,20 +200,48 @@ export class StoryRenderer {
     ctx.save();
     ctx.globalAlpha = Math.max(0, Math.min(1, this.fadeProgress));
 
+    const isSmall = width < SMALL_CANVAS_THRESHOLD;
+    const portraitVisible = !isSmall;
+    const portraitSize = this.isQuickMessage ? PORTRAIT_SIZE_QUICK : PORTRAIT_SIZE_FULL;
+    const portraitAreaW = portraitVisible ? portraitSize + PORTRAIT_MARGIN * 2 : 0;
+
     const paddingY = this.isQuickMessage ? QUICK_PADDING_Y : PANEL_PADDING_Y;
-    const panelW = Math.min(width - PANEL_MARGIN * 2, PANEL_MAX_WIDTH);
-    const panelH = paddingY * 2 + this.wrappedLines.length * LINE_HEIGHT;
-    const panelX = (width - panelW) / 2;
+    const textPanelW = Math.min(width - PANEL_MARGIN * 2, PANEL_MAX_WIDTH);
+    const totalPanelW = textPanelW + portraitAreaW;
+    const textContentH = paddingY * 2 + this.wrappedLines.length * LINE_HEIGHT;
+
+    let minPortraitH = 0;
+    if (portraitVisible) {
+      const portraitContentH = portraitSize * 1.2 + (this.isQuickMessage ? 0 : 22);
+      minPortraitH = portraitContentH + paddingY * 2;
+    }
+    const panelH = Math.max(textContentH, minPortraitH);
+
+    const panelX = (width - totalPanelW) / 2;
     const panelY = this.computePanelY(height, panelH);
 
-    this.renderPanel(ctx, panelX, panelY, panelW, panelH);
-    this.renderText(ctx, panelX, panelY, paddingY);
+    this.renderPanel(ctx, panelX, panelY, totalPanelW, panelH);
 
-    if (
-      this.state === "waiting" &&
-      !this.isQuickMessage
-    ) {
-      this.renderPromptIndicator(ctx, panelX, panelY, panelW, panelH);
+    if (portraitVisible) {
+      const portraitX = panelX + PORTRAIT_MARGIN;
+      const portraitY = panelY + paddingY;
+      renderPortraitForSpeaker(ctx, this.speaker, portraitX, portraitY, portraitSize, this.elapsed);
+
+      if (!this.isQuickMessage) {
+        const label = SPEAKER_LABELS[this.speaker] || "RAPTOR-1";
+        ctx.font = `bold ${7}px ${RETRO_FONT}`;
+        ctx.fillStyle = this.getSpeakerLabelColor();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillText(label, portraitX + portraitSize / 2, portraitY + portraitSize * 1.2 + 10);
+      }
+    }
+
+    const textX = panelX + portraitAreaW;
+    this.renderText(ctx, textX, panelY, paddingY);
+
+    if (this.state === "waiting" && !this.isQuickMessage) {
+      this.renderPromptIndicator(ctx, panelX, panelY, totalPanelW, panelH);
     }
 
     ctx.restore();
@@ -174,6 +253,19 @@ export class StoryRenderer {
 
   get isComplete(): boolean {
     return this.completed;
+  }
+
+  private getSpeakerLabelColor(): string {
+    switch (this.speaker) {
+      case "wingman":
+        return "rgba(80, 180, 100, 0.8)";
+      case "hq":
+      case "sensor":
+        return "rgba(220, 180, 60, 0.8)";
+      case "pilot":
+      default:
+        return "rgba(80, 130, 220, 0.8)";
+    }
   }
 
   private beginMessage(message: string): void {

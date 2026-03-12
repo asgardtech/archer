@@ -1,4 +1,5 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType } from "./types";
+import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
 import { CollisionSystem } from "./systems/CollisionSystem";
@@ -427,7 +428,7 @@ export class RaptorGame implements IGame {
               this.sound.play("menu_start");
               SaveSystem.clear();
               this.resetGame();
-              this.storyRenderer.show(GAME_STORY.opening, "center");
+              this.storyRenderer.show(GAME_STORY.opening, "center", "pilot");
               this.state = "story_intro";
               this.sound.startMusic("playing", 0);
             }
@@ -435,7 +436,7 @@ export class RaptorGame implements IGame {
             this.audio.ensureContext();
             this.sound.play("menu_start");
             this.resetGame();
-            this.storyRenderer.show(GAME_STORY.opening, "center");
+            this.storyRenderer.show(GAME_STORY.opening, "center", "pilot");
             this.state = "story_intro";
             this.sound.startMusic("playing", 0);
           }
@@ -615,7 +616,8 @@ export class RaptorGame implements IGame {
     if (storyMessages && this.nextStoryMessageIndex < storyMessages.length) {
       const msg = storyMessages[this.nextStoryMessageIndex];
       if (this.levelElapsed >= msg.triggerTime) {
-        this.storyRenderer.showQuick(msg.text, msg.duration, "bottom");
+        const speaker: SpeakerType = msg.speaker ?? detectSpeaker(msg.text);
+        this.storyRenderer.showQuick(msg.text, msg.duration, "bottom", speaker);
         this.nextStoryMessageIndex++;
       }
     }
@@ -891,7 +893,7 @@ export class RaptorGame implements IGame {
         this.state = "victory";
         this.sound.play("victory");
         SaveSystem.clear();
-        this.storyRenderer.show(GAME_STORY.ending, "center");
+        this.storyRenderer.show(GAME_STORY.ending, "center", "pilot");
         this.hud.setVictoryStoryActive(true);
       } else {
         this.state = "level_complete";
@@ -1066,7 +1068,7 @@ export class RaptorGame implements IGame {
       return;
     }
 
-    this.storyRenderer.show([briefingText], "center");
+    this.storyRenderer.show([briefingText], "center", "pilot");
     this.state = "briefing";
   }
 

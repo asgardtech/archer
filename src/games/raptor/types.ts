@@ -384,6 +384,8 @@ export interface TerrainLayerConfig {
   litStructures?: string[];
 }
 
+export type SpeakerType = "pilot" | "wingman" | "hq" | "sensor";
+
 export interface InGameStoryMessage {
   /** When to show this message (in seconds from level start) */
   triggerTime: number;
@@ -391,6 +393,8 @@ export interface InGameStoryMessage {
   text: string;
   /** How long to display the message in seconds (default: 3) */
   duration?: number;
+  /** Which character portrait to show (auto-detected from text prefix if omitted) */
+  speaker?: SpeakerType;
 }
 
 export interface LevelStoryConfig {
