@@ -184,7 +184,7 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile projectile homes toward nearest enemy", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     const enemy = makeEnemy(450, 200);
 
     missile.update(0.1, 800, 600, [enemy]);
@@ -203,14 +203,14 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile flies straight when no enemies exist", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     missile.update(0.1, 800, 600, []);
     expect(missile.pos.x).toBeCloseTo(400, 1);
     expect(missile.pos.y).toBeLessThan(400);
   });
 
   test("Missile flies straight when enemies array is undefined", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     missile.update(0.1, 800, 600);
     expect(missile.pos.x).toBeCloseTo(400, 1);
     expect(missile.pos.y).toBeLessThan(400);
@@ -285,7 +285,7 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile goes out of bounds and becomes not alive", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     for (let i = 0; i < 20; i++) {
       missile.update(0.1, 800, 600);
     }
@@ -293,7 +293,7 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile ignores dead enemies for homing", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     const deadEnemy = makeEnemy(450, 200);
     deadEnemy.alive = false;
     const aliveEnemy = makeEnemy(350, 200);
@@ -1404,7 +1404,7 @@ describe("WeaponSystem Integration", () => {
 
 describe("Edge Cases", () => {
   test("Missile with no alive enemies flies straight", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     const dead1 = makeEnemy(450, 200);
     dead1.alive = false;
     const dead2 = makeEnemy(350, 200);
@@ -1581,7 +1581,7 @@ describe("Weapon Balance Validation", () => {
   });
 
   test("Missile with reduced homing can miss fast-moving enemies", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     const enemy = makeEnemy(100, 200);
 
     missile.update(0.5, 800, 600, [enemy]);
