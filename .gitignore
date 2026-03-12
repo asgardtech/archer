@@ -4,3 +4,4 @@ dist/
 *.tsbuildinfo
 .DS_Store
 .prompt.txt
+.cursor/
