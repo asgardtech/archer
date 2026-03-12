@@ -61,12 +61,16 @@ export class StoryRenderer {
     this.beginMessage(this.messages[0]);
   }
 
-  showQuick(message: string, duration: number = DEFAULT_QUICK_DURATION): void {
+  showQuick(
+    message: string,
+    duration: number = DEFAULT_QUICK_DURATION,
+    position: StoryPosition = "top"
+  ): void {
     if (this.state !== "idle" && !this.isQuickMessage) return;
 
     this.messages = [message];
     this.currentIndex = 0;
-    this.position = "top";
+    this.position = position;
     this.isQuickMessage = true;
     this.quickTimer = duration;
     this.completed = false;

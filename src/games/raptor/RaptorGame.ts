@@ -115,6 +115,8 @@ export class RaptorGame implements IGame {
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
   private dpr = 1;
   private enemyLaserHitSoundCooldown = 0;
+  private levelElapsed = 0;
+  private nextStoryMessageIndex = 0;
 
   public onExit: (() => void) | null = null;
 
@@ -519,6 +521,7 @@ export class RaptorGame implements IGame {
   }
 
   private updatePlaying(dt: number): void {
+    this.levelElapsed += dt;
     this.input.updateFromKeyboard(dt, this.width, this.height);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.height);
     this.updateBackground(dt);
@@ -528,6 +531,8 @@ export class RaptorGame implements IGame {
 
     if (this.input.wasClicked && this.hud.isBombButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
       this.input.wasBombPressed = true;
+    } else if (this.input.wasClicked && this.storyRenderer.isActive) {
+      this.storyRenderer.advance();
     }
 
     if (this.input.wasBombPressed && this.player.bombs > 0) {
@@ -591,6 +596,17 @@ export class RaptorGame implements IGame {
         this.enemies.push(boss);
       }
     }
+
+    const storyMessages = config.story?.inGameMessages;
+    if (storyMessages && this.nextStoryMessageIndex < storyMessages.length) {
+      const msg = storyMessages[this.nextStoryMessageIndex];
+      if (this.levelElapsed >= msg.triggerTime) {
+        this.storyRenderer.showQuick(msg.text, msg.duration, "bottom");
+        this.nextStoryMessageIndex++;
+      }
+    }
+
+    this.storyRenderer.update(dt);
 
     for (const enemy of this.enemies) {
       enemy.update(dt, this.height, this.player.pos.x);
@@ -1128,6 +1144,9 @@ export class RaptorGame implements IGame {
     if (playerSprite) this.player.setSprite(playerSprite);
     if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
 
+    this.levelElapsed = 0;
+    this.nextStoryMessageIndex = 0;
+
     this.spawner.configure(this.currentLevelConfig);
     this.vfx.reset();
 
@@ -1329,6 +1348,10 @@ export class RaptorGame implements IGame {
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
+
+    if (this.state === "playing") {
+      this.storyRenderer.render(this.ctx, this.width, this.height);
+    }
 
     if (this.settingsOpen) {
       this.hud.renderSettingsPanel(
