@@ -29,6 +29,13 @@ const DEFAULT_CONFIG: LevelConfig = {
   obstacleMaxInterval: 15,
   obstacleSpeedMin: 80,
   obstacleSpeedMax: 140,
+  landmark: {
+    type: "windmill",
+    label: "Ancient Windmill",
+    description: "The balloons have overrun the meadow windmill!",
+    positionX: 0.5,
+    hitPoints: 3,
+  },
 };
 
 export class Spawner {

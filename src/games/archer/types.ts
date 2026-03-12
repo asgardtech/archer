@@ -46,3 +46,13 @@ export type SoundEvent =
   | "victory"
   | "menu_start"
   | "low_ammo";
+
+export type LandmarkType = "windmill" | "treehouse" | "watchtower" | "lighthouse" | "castle";
+
+export interface LandmarkConfig {
+  type: LandmarkType;
+  label: string;
+  description: string;
+  positionX: number;
+  hitPoints: number;
+}
