@@ -183,10 +183,10 @@ export class Landmark {
       gradient.addColorStop(1, "rgba(255, 215, 0, 0)");
       ctx.fillStyle = gradient;
       ctx.fillRect(
-        -bounds.width,
-        bounds.offsetY - bounds.height / 2,
-        bounds.width * 2,
-        bounds.height
+        -bounds.width * 1.5,
+        bounds.offsetY - bounds.height,
+        bounds.width * 3,
+        bounds.height * 2
       );
     }
 
