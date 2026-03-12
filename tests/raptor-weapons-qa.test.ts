@@ -1401,14 +1401,16 @@ describe("Weapon Balance Validation", () => {
     expect(missile.homingStrength).toBe(1.8);
   });
 
-  test("Auto-gun homingStrength is 2.0", () => {
+  test("Auto-gun homingStrength is 1.3", () => {
     const autogun = WEAPON_CONFIGS["auto-gun"];
-    expect(autogun.homingStrength).toBe(2.0);
+    expect(autogun.homingStrength).toBe(1.3);
   });
 
-  test("Auto-gun has stronger homing than missile", () => {
-    expect(WEAPON_CONFIGS["auto-gun"].homingStrength)
-      .toBeGreaterThan(WEAPON_CONFIGS["missile"].homingStrength);
+  test("Auto-gun has moderate homing while missile has stronger per-projectile tracking", () => {
+    expect(WEAPON_CONFIGS["auto-gun"].homingStrength).toBe(1.3);
+    expect(WEAPON_CONFIGS["missile"].homingStrength).toBe(1.8);
+    expect(WEAPON_CONFIGS["auto-gun"].fireRateMultiplier)
+      .toBeGreaterThan(WEAPON_CONFIGS["missile"].fireRateMultiplier);
   });
 
   test("Auto-gun homingStrength is increased from original 1.0", () => {
@@ -1425,9 +1427,11 @@ describe("Weapon Balance Validation", () => {
     expect(WEAPON_CONFIGS["missile"].homingStrength).toBeLessThan(2.5);
   });
 
-  test("Missile homingStrength is less than auto-gun homingStrength", () => {
+  test("Missile has stronger per-projectile homing but slower fire rate than auto-gun", () => {
     expect(WEAPON_CONFIGS["missile"].homingStrength)
-      .toBeLessThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
+      .toBeGreaterThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
+    expect(WEAPON_CONFIGS["missile"].fireRateMultiplier)
+      .toBeLessThan(WEAPON_CONFIGS["auto-gun"].fireRateMultiplier);
   });
 
   test("Auto-gun tier 2 damageMultiplier is 1.2", () => {

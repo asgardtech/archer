@@ -292,7 +292,7 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     projectileSpeed: 480,
     piercing: false,
     homing: true,
-    homingStrength: 2.0,
+    homingStrength: 1.3,
     splashRadius: 0,
     splashDamageRatio: 0,
     rapidFireBonus: 1.8,
