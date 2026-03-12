@@ -109,7 +109,7 @@ export class CollisionSystem {
 
           if (bullet instanceof Missile) {
             const cfg = WEAPON_CONFIGS["missile"];
-            const splashDamage = Math.ceil(bullet.damage * cfg.splashDamageRatio);
+            const splashDamage = Math.ceil(cfg.damage * cfg.splashDamageRatio);
             const splashHits = this.applySplashDamage(enemy, enemies, cfg.splashRadius, splashDamage);
             for (const sh of splashHits) {
               hits.push({
@@ -124,7 +124,7 @@ export class CollisionSystem {
 
           if (bullet instanceof PlasmaBolt) {
             const cfg = WEAPON_CONFIGS["plasma"];
-            const splashDamage = Math.ceil(bullet.damage * cfg.splashDamageRatio);
+            const splashDamage = Math.ceil(cfg.damage * cfg.splashDamageRatio);
             const splashHits = this.applySplashDamage(enemy, enemies, cfg.splashRadius, splashDamage);
             for (const sh of splashHits) {
               hits.push({
@@ -139,7 +139,7 @@ export class CollisionSystem {
 
           if (bullet instanceof Rocket) {
             const cfg = WEAPON_CONFIGS["rocket"];
-            const splashDamage = Math.ceil(bullet.damage * cfg.splashDamageRatio);
+            const splashDamage = Math.ceil(cfg.damage * cfg.splashDamageRatio);
             const splashHits = this.applySplashDamage(enemy, enemies, cfg.splashRadius, splashDamage);
             for (const sh of splashHits) {
               hits.push({
