@@ -11,6 +11,7 @@ interface AmmoGainText {
   amount: number;
   age: number;
   offsetY: number;
+  label?: string;
 }
 
 interface PenaltyText {
@@ -73,9 +74,10 @@ export class HUD {
 
   showShieldGain(): void {
     this.ammoGainTexts.push({
-      amount: 0,
+      amount: 1,
       age: 0,
       offsetY: this.ammoGainTexts.length * 22,
+      label: "+1 \u{1F6E1}",
     });
   }
 
@@ -285,7 +287,7 @@ export class HUD {
       const drift = progress * AMMO_GAIN_DRIFT;
       ctx.font = "bold 18px sans-serif";
       ctx.fillStyle = `rgba(46, 204, 113, ${alpha})`;
-      ctx.fillText(`+${t.amount}`, w - 16, 50 + t.offsetY - drift);
+      ctx.fillText(t.label ?? `+${t.amount}`, w - 16, 50 + t.offsetY - drift);
     }
 
     ctx.textAlign = "left";

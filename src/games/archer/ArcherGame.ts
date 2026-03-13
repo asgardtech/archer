@@ -422,17 +422,6 @@ export class ArcherGame implements IGame {
     this.handleWeaponInput();
     this.handleShieldInput();
 
-    if (this.shieldActive) {
-      this.shieldTimer -= dt;
-      if (this.shieldTimer <= 0) {
-        this.shieldActive = false;
-        this.shieldCooldownTimer = SHIELD_COOLDOWN;
-      }
-    }
-    if (this.shieldCooldownTimer > 0) {
-      this.shieldCooldownTimer -= dt;
-    }
-
     if (this.input.wasClicked && this.arrowsRemaining > 0) {
       const weapon = this.weaponManager.currentWeapon;
       const multiShot = weapon === "multi-shot";
@@ -497,6 +486,17 @@ export class ArcherGame implements IGame {
         this.hud.showPenalty(penalty.score);
         this.sound.play("obstacle_hit");
       }
+    }
+
+    if (this.shieldActive) {
+      this.shieldTimer -= dt;
+      if (this.shieldTimer <= 0) {
+        this.shieldActive = false;
+        this.shieldCooldownTimer = SHIELD_COOLDOWN;
+      }
+    }
+    if (this.shieldCooldownTimer > 0) {
+      this.shieldCooldownTimer -= dt;
     }
 
     const hits = this.collisions.check(this.arrows, this.balloons);

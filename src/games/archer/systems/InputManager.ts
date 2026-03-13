@@ -81,7 +81,9 @@ export class InputManager {
 
   private onMouseDown(e: MouseEvent): void {
     this.isMouseDown = true;
-    this.wasClicked = true;
+    if (e.button === 0) {
+      this.wasClicked = true;
+    }
     this.mousePos = this.toCanvasCoords(e.clientX, e.clientY);
   }
 
