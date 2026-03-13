@@ -1,4 +1,4 @@
-import { GeneralPortrait } from "./GeneralPortrait";
+import { AdmiralPortrait } from "./AdmiralPortrait";
 
 export interface StoryFooter {
   heading: string;
@@ -50,6 +50,7 @@ export class StoryRenderer {
   private measureCtx: CanvasRenderingContext2D;
   private footer: StoryFooter | undefined;
   private footerFadeProgress = 0;
+  private admiralImage: HTMLImageElement | null = null;
 
   constructor(isTouchDevice = false) {
     this.isTouchDevice = isTouchDevice;
@@ -181,13 +182,13 @@ export class StoryRenderer {
     if (portraitVisible) {
       const portraitX = panelX + PORTRAIT_MARGIN;
       const portraitY = panelY + PANEL_PADDING;
-      GeneralPortrait.render(ctx, portraitX, portraitY, PORTRAIT_SIZE, this.elapsed);
+      AdmiralPortrait.render(ctx, portraitX, portraitY, PORTRAIT_SIZE, this.elapsed, this.admiralImage);
 
       ctx.font = `bold 11px ${FONT_FAMILY}`;
       ctx.fillStyle = TITLE_COLOR;
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
-      ctx.fillText("THE GENERAL", portraitX + PORTRAIT_SIZE / 2, portraitY + PORTRAIT_SIZE * 1.2 + 12);
+      ctx.fillText("ADMIRAL HAWKRIDGE", portraitX + PORTRAIT_SIZE / 2, portraitY + PORTRAIT_SIZE * 1.2 + 12);
     }
 
     ctx.font = `${FONT_SIZE}px ${FONT_FAMILY}`;
@@ -297,6 +298,10 @@ export class StoryRenderer {
 
   get isActive(): boolean {
     return this.state !== "idle";
+  }
+
+  setAdmiralImage(img: HTMLImageElement | null): void {
+    this.admiralImage = img;
   }
 
   private wrapAllLines(maxWidth: number): string[] {

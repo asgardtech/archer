@@ -13,4 +13,5 @@ export const ARCHER_ASSET_MANIFEST: AssetManifest = {
   powerup_piercing:     `${BASE}powerup_piercing.png`,
   powerup_rapidfire:    `${BASE}powerup_rapidfire.png`,
   powerup_bonusarrows:  `${BASE}powerup_bonusarrows.png`,
+  admiral_portrait:     `${BASE}admiral_portrait.png`,
 };

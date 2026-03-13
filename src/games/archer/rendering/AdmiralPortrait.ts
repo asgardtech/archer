@@ -1,5 +1,56 @@
-export class GeneralPortrait {
+export class AdmiralPortrait {
   static render(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    elapsed: number,
+    image?: HTMLImageElement | null
+  ): void {
+    if (image) {
+      AdmiralPortrait.renderFromImage(ctx, x, y, size, image);
+    } else {
+      AdmiralPortrait.renderProcedural(ctx, x, y, size, elapsed);
+    }
+  }
+
+  private static renderFromImage(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    image: HTMLImageElement
+  ): void {
+    const frameX = x - 4;
+    const frameY = y - 4;
+    const frameW = size + 8;
+    const frameH = size * 1.2 + 8;
+
+    ctx.save();
+
+    // Clip inside the frame and draw the image
+    ctx.beginPath();
+    ctx.roundRect(x, y, size, size * 1.2, 4);
+    ctx.clip();
+    ctx.drawImage(image, x, y, size, size * 1.2);
+
+    ctx.restore();
+
+    // Gold decorative frame border (drawn on top of image)
+    ctx.strokeStyle = "rgba(180, 150, 80, 0.7)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(frameX, frameY, frameW, frameH, 6);
+    ctx.stroke();
+
+    ctx.strokeStyle = "rgba(140, 110, 50, 0.4)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(frameX - 2, frameY - 2, frameW + 4, frameH + 4, 8);
+    ctx.stroke();
+  }
+
+  private static renderProcedural(
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
@@ -184,8 +235,8 @@ export class GeneralPortrait {
 
     // Rank stars on chest area
     const starY = shoulderY + 10 * s;
-    GeneralPortrait.drawStar(ctx, cx - 6 * s, starY, 3 * s, "#b89a4a");
-    GeneralPortrait.drawStar(ctx, cx + 6 * s, starY, 3 * s, "#b89a4a");
+    AdmiralPortrait.drawStar(ctx, cx - 6 * s, starY, 3 * s, "#b89a4a");
+    AdmiralPortrait.drawStar(ctx, cx + 6 * s, starY, 3 * s, "#b89a4a");
 
     ctx.restore();
   }
