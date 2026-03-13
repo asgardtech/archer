@@ -15,6 +15,8 @@ const SHIELD_REGEN_DELAY = 4.0;
 const MAX_SHIELD = 100;
 const DODGE_DURATION = 0.3;
 const DODGE_COOLDOWN = 3.0;
+const EMP_COOLDOWN = 15.0;
+const EMP_DURATION = 0.15;
 
 export class Player {
   public pos: Vec2;
@@ -31,6 +33,11 @@ export class Player {
   public dodgeTimer = 0;
   public dodgeCooldown = 0;
   public armorActive = false;
+  public shieldBattery = 0;
+  public readonly maxShieldBattery = 100;
+  public empTimer = 0;
+  public empCooldown = 0;
+  public deflectorActive = false;
 
   private flashTimer = 0;
   /** @deprecated Retained for backward compatibility; procedural rendering is used instead. */
@@ -73,6 +80,10 @@ export class Player {
 
   get dodgeCooldownFraction(): number {
     return this.dodgeCooldown / DODGE_COOLDOWN;
+  }
+
+  get empCooldownFraction(): number {
+    return this.empCooldown / EMP_COOLDOWN;
   }
 
   get isShieldRegenerating(): boolean {
@@ -161,9 +172,36 @@ export class Player {
     }
   }
 
+  emp(): boolean {
+    if (!this.alive) return false;
+    if (this.empCooldown > 0) return false;
+    this.empTimer = EMP_DURATION;
+    this.empCooldown = EMP_COOLDOWN;
+    return true;
+  }
+
+  updateEmp(dt: number): void {
+    if (this.empTimer > 0) {
+      this.empTimer = Math.max(0, this.empTimer - dt);
+    }
+    if (this.empCooldown > 0) {
+      this.empCooldown = Math.max(0, this.empCooldown - dt);
+    }
+  }
+
   takeDamage(amount: number): boolean {
     if (this.godMode) return false;
     if (this.isInvincible || !this.alive) return false;
+
+    if (this.shieldBattery > 0) {
+      if (this.shieldBattery >= amount) {
+        this.shieldBattery -= amount;
+        this.shieldRegenTimer = 0;
+        return false;
+      }
+      amount -= this.shieldBattery;
+      this.shieldBattery = 0;
+    }
 
     if (this.armorActive) {
       amount = Math.max(1, Math.floor(amount * 0.5));
@@ -198,6 +236,9 @@ export class Player {
     this.dodgeTimer = 0;
     this.dodgeCooldown = 0;
     this.armorActive = false;
+    this.empTimer = 0;
+    this.empCooldown = 0;
+    this.deflectorActive = false;
     this.bankAngle = 0;
     this.runningLightPhase = 0;
     this.lastDx = 0;
@@ -207,6 +248,7 @@ export class Player {
     if (fullReset) {
       this.lives = 3;
       this.bombs = 0;
+      this.shieldBattery = 0;
       this.godMode = false;
     }
   }
@@ -241,6 +283,38 @@ export class Player {
       ctx.beginPath();
       ctx.ellipse(this.pos.x, this.pos.y, this.width * 0.65, this.height * 0.65, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+    }
+
+    if (this.shieldBattery > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.14 + 0.06 * Math.sin(Date.now() / 350);
+      ctx.fillStyle = "#ff9800";
+      ctx.beginPath();
+      ctx.ellipse(this.pos.x, this.pos.y, this.width * 0.72, this.height * 0.72, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (this.deflectorActive) {
+      ctx.save();
+      const rotation = Date.now() / 1000;
+      ctx.translate(this.pos.x, this.pos.y);
+      ctx.rotate(rotation);
+      ctx.strokeStyle = "#e91e63";
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.5 + 0.2 * Math.sin(Date.now() / 250);
+      ctx.beginPath();
+      const sides = 6;
+      const hexRadius = this.width * 0.6;
+      for (let i = 0; i <= sides; i++) {
+        const angle = (i / sides) * Math.PI * 2;
+        const hx = Math.cos(angle) * hexRadius;
+        const hy = Math.sin(angle) * hexRadius;
+        if (i === 0) ctx.moveTo(hx, hy);
+        else ctx.lineTo(hx, hy);
+      }
+      ctx.stroke();
       ctx.restore();
     }
 

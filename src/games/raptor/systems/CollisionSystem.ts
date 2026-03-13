@@ -20,6 +20,7 @@ export interface BulletEnemyHit {
 
 export interface EnemyBulletPlayerHit {
   bullet: EnemyBullet;
+  reflected?: boolean;
 }
 
 export interface EnemyPlayerHit {
@@ -184,11 +185,37 @@ export class CollisionSystem {
 
     const hits: EnemyBulletPlayerHit[] = [];
     for (const bullet of bullets) {
-      if (!bullet.alive) continue;
+      if (!bullet.alive || bullet.reflected) continue;
       if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
                     player.left, player.top, player.right, player.bottom)) {
-        bullet.alive = false;
-        hits.push({ bullet });
+        if (player.deflectorActive && !bullet.isMine && !bullet.homing && Math.random() < 0.4) {
+          bullet.vel.x = -bullet.vel.x;
+          bullet.vel.y = -bullet.vel.y;
+          bullet.reflected = true;
+          bullet.homing = false;
+          hits.push({ bullet, reflected: true });
+        } else {
+          bullet.alive = false;
+          hits.push({ bullet });
+        }
+      }
+    }
+    return hits;
+  }
+
+  checkReflectedBulletsEnemies(bullets: EnemyBullet[], enemies: Enemy[]): BulletEnemyHit[] {
+    const hits: BulletEnemyHit[] = [];
+    for (const bullet of bullets) {
+      if (!bullet.alive || !bullet.reflected) continue;
+      for (const enemy of enemies) {
+        if (!enemy.alive) continue;
+        if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
+                      enemy.left, enemy.top, enemy.right, enemy.bottom)) {
+          const destroyed = enemy.hit(bullet.damage);
+          bullet.alive = false;
+          hits.push({ bullet: bullet as unknown as Projectile, enemy, destroyed, damage: bullet.damage });
+          break;
+        }
       }
     }
     return hits;

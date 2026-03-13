@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <radialGradient id="batt_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FFB74D" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#FF9800" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="batt_body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFB74D"/>
+      <stop offset="100%" stop-color="#E65100"/>
+    </linearGradient>
+    <linearGradient id="batt_charge" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#FF9800"/>
+      <stop offset="100%" stop-color="#FFF176"/>
+    </linearGradient>
+  </defs>
+  <circle cx="12" cy="12" r="11" fill="url(#batt_glow)"/>
+  <circle cx="12" cy="12" r="10.5" fill="none" stroke="#FF9800" stroke-width="0.7" stroke-opacity="0.3"/>
+  <!-- Battery terminal -->
+  <rect x="10" y="3" width="4" height="2" rx="0.5" fill="#FFB74D" stroke="#E65100" stroke-width="0.4"/>
+  <!-- Battery body -->
+  <rect x="7" y="5" width="10" height="15" rx="1.5" fill="url(#batt_body)" stroke="#BF360C" stroke-width="0.6"/>
+  <!-- Charge fill -->
+  <rect x="8.5" y="7" width="7" height="11.5" rx="0.8" fill="url(#batt_charge)" opacity="0.9"/>
+  <!-- Charge segments -->
+  <rect x="8.5" y="14" width="7" height="0.5" fill="#E65100" opacity="0.3"/>
+  <rect x="8.5" y="11" width="7" height="0.5" fill="#E65100" opacity="0.3"/>
+  <!-- Lightning bolt -->
+  <path d="M13.5,8 L11,12.5 L12.5,12.5 L10.5,17 L14,11.5 L12.5,11.5 Z" fill="#FFFFFF" opacity="0.9"/>
+  <!-- Highlight -->
+  <rect x="8" y="6" width="2" height="6" rx="0.5" fill="#FFFFFF" opacity="0.15"/>
+</svg>

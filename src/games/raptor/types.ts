@@ -114,7 +114,9 @@ export type RaptorPowerUpType =
   | "weapon-ion"
   | "weapon-autogun"
   | "weapon-rocket"
-  | "mega-bomb";
+  | "mega-bomb"
+  | "shield-battery"
+  | "deflector";
 
 export type RaptorSoundEvent =
   | "player_shoot"
@@ -147,7 +149,9 @@ export type RaptorSoundEvent =
   | "ion_hit"
   | "rocket_fire"
   | "mega_bomb_fire"
-  | "dodge";
+  | "dodge"
+  | "emp_burst"
+  | "deflect";
 
 export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun" | "rocket";
 
@@ -169,6 +173,8 @@ export interface RaptorSaveData {
   savedAt: string;
   /** Mega bomb count at save point (0-5). */
   bombs?: number;
+  /** Shield battery HP at save point (0-100). */
+  shieldBattery?: number;
   /** @deprecated Kept for backward compat; use weaponInventory instead. */
   weaponTier?: number;
   /** Full weapon inventory mapping weapon type to tier (1-3). */

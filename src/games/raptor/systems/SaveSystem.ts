@@ -84,6 +84,12 @@ export class SaveSystem {
       }
     }
 
+    if (d.shieldBattery !== undefined) {
+      if (typeof d.shieldBattery !== "number" || d.shieldBattery < 0 || d.shieldBattery > 100) {
+        d.shieldBattery = 0;
+      }
+    }
+
     if (d.weaponInventory !== undefined) {
       if (typeof d.weaponInventory !== "object" || d.weaponInventory === null || Array.isArray(d.weaponInventory)) {
         return false;

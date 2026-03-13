@@ -26,6 +26,7 @@ const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "weapon-plasma": "#8e44ad",
   "weapon-ion": "#00bcd4",
   "armor": "#00bcd4",
+  "deflector": "#e91e63",
 };
 
 const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
@@ -36,6 +37,7 @@ const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
   "weapon-plasma": "PLS",
   "weapon-ion": "ION",
   "armor": "ARM",
+  "deflector": "DEF",
 };
 
 const WEAPON_LABELS: Record<WeaponType, string> = {
@@ -415,7 +417,9 @@ export class HUD {
     weaponTier?: number,
     isShieldRegenerating?: boolean,
     dodgeCooldownFraction?: number,
-    inventory?: ReadonlyMap<WeaponType, number>
+    inventory?: ReadonlyMap<WeaponType, number>,
+    shieldBattery?: number,
+    empCooldownFraction?: number
   ): void {
     switch (state) {
       case "loading":
@@ -427,10 +431,10 @@ export class HUD {
       case "briefing":
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.completionLines,
           `Score: ${score}`,
@@ -633,7 +637,9 @@ export class HUD {
     weaponTier?: number,
     isShieldRegenerating?: boolean,
     dodgeCooldownFraction?: number,
-    inventory?: ReadonlyMap<WeaponType, number>
+    inventory?: ReadonlyMap<WeaponType, number>,
+    shieldBattery?: number,
+    empCooldownFraction?: number
   ): void {
     ctx.save();
 
@@ -676,9 +682,12 @@ export class HUD {
     ctx.restore();
 
     this.renderShieldBar(ctx, shield, height, isShieldRegenerating);
+    this.renderBatteryBar(ctx, shieldBattery ?? 0, height);
     this.renderDodgeCooldown(ctx, dodgeCooldownFraction ?? 0, 10, 52);
+    this.renderEmpCooldown(ctx, empCooldownFraction ?? 0, 10, 64);
     this.renderTouchBombButton(ctx, bombs ?? 0, width, height);
     this.renderTouchDodgeButton(ctx, dodgeCooldownFraction ?? 0, width, height);
+    this.renderTouchEmpButton(ctx, empCooldownFraction ?? 0, width, height);
 
     if (inventory && inventory.size > 1) {
       this.renderWeaponTray(ctx, inventory, currentWeapon ?? "machine-gun", width);
@@ -750,6 +759,138 @@ export class HUD {
     ctx.fillText("SHIELD", 0, 0);
     ctx.restore();
 
+    ctx.restore();
+  }
+
+  private renderBatteryBar(ctx: CanvasRenderingContext2D, battery: number, canvasHeight: number): void {
+    if (battery <= 0) return;
+
+    ctx.save();
+
+    const barX = SHIELD_BAR_X + SHIELD_BAR_W + 16;
+    const barY = SHIELD_BAR_TOP;
+    const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
+    if (barH <= 0) { ctx.restore(); return; }
+
+    ctx.fillStyle = "rgba(0, 10, 30, 0.6)";
+    this.roundedRect(ctx, barX - 3, barY - 3, SHIELD_BAR_W + 6, barH + 6, 6);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
+    ctx.fill();
+
+    const battFrac = Math.min(1, Math.max(0, battery / 100));
+    if (battFrac > 0) {
+      const fillH = barH * battFrac;
+      const fillY = barY + barH - fillH;
+      const grad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
+      grad.addColorStop(0, "#e65100");
+      grad.addColorStop(1, "#ff9800");
+      ctx.fillStyle = grad;
+      this.roundedRect(ctx, barX, fillY, SHIELD_BAR_W, fillH, 4);
+      ctx.fill();
+    }
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.lineWidth = 0.5;
+    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.font = `6px ${RETRO_FONT}`;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.translate(barX + SHIELD_BAR_W + 10, barY + barH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("BATT", 0, 0);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  private renderEmpCooldown(
+    ctx: CanvasRenderingContext2D,
+    cooldownFraction: number,
+    startX: number,
+    y: number
+  ): void {
+    ctx.save();
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+
+    const ready = cooldownFraction <= 0;
+    ctx.fillStyle = ready ? "#64b5f6" : "#95a5a6";
+    ctx.fillText("EMP", startX, y);
+
+    const labelW = ctx.measureText("EMP").width;
+    const barX = startX + labelW + 6;
+    const barW = 40;
+    const barH = 5;
+    const barY = y - barH / 2;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.fillRect(barX, barY, barW, barH);
+
+    const fillFrac = 1 - cooldownFraction;
+    if (fillFrac > 0) {
+      ctx.fillStyle = ready ? "#64b5f6" : "#42a5f5";
+      ctx.fillRect(barX, barY, barW * fillFrac, barH);
+    }
+
+    if (ready) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.font = `5px ${RETRO_FONT}`;
+      ctx.fillText("[V]", barX + barW + 4, y);
+    }
+
+    ctx.restore();
+  }
+
+  private getEmpButtonRect(width: number, height: number) {
+    const dodgeBtn = this.getDodgeButtonRect(width, height);
+    const size = 44;
+    return { x: dodgeBtn.x - size - 8, y: dodgeBtn.y, w: size, h: size };
+  }
+
+  isEmpButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    if (!this.isTouchDevice) return false;
+    const btn = this.getEmpButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w
+        && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  private renderTouchEmpButton(
+    ctx: CanvasRenderingContext2D,
+    cooldownFraction: number,
+    width: number,
+    height: number
+  ): void {
+    if (!this.isTouchDevice) return;
+    const btn = this.getEmpButtonRect(width, height);
+    const ready = cooldownFraction <= 0;
+
+    ctx.save();
+    ctx.globalAlpha = ready ? 0.7 : 0.3;
+    ctx.fillStyle = ready ? "#64b5f6" : "#555555";
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.font = `9px ${RETRO_FONT}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("EMP", btn.x + btn.w / 2, btn.y + btn.h / 2);
     ctx.restore();
   }
 
@@ -1002,9 +1143,9 @@ export class HUD {
   }
 
   private getWeaponCycleButtonRect(width: number, height: number) {
-    const dodgeBtn = this.getDodgeButtonRect(width, height);
+    const empBtn = this.getEmpButtonRect(width, height);
     const size = 44;
-    return { x: dodgeBtn.x - size - 8, y: dodgeBtn.y, w: size, h: size };
+    return { x: empBtn.x - size - 8, y: empBtn.y, w: size, h: size };
   }
 
   isWeaponCycleButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -1082,6 +1223,7 @@ export class HUD {
         "spread-shot": "powerup_spread",
         "rapid-fire": "powerup_rapid",
         "armor": "powerup_armor",
+        "deflector": "powerup_deflector",
       };
       const sprite = this.assets?.getOptional(spriteKeyMap[eff.type] ?? "");
 

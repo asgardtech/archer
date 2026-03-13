@@ -9,6 +9,7 @@ export const EFFECT_DURATIONS: Partial<Record<RaptorPowerUpType, number>> = {
   "spread-shot": 8,
   "rapid-fire": 6,
   "armor": 10,
+  "deflector": 8,
 };
 
 export type WeaponSetResult = "switched" | "upgraded" | "maxed";
