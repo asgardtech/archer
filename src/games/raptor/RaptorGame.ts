@@ -430,7 +430,7 @@ export class RaptorGame implements IGame {
               this.sound.play("menu_start");
               SaveSystem.clear();
               this.resetGame();
-              this.storyRenderer.show(GAME_STORY.opening, "center", "pilot");
+              this.storyRenderer.show([GAME_STORY.opening.join(" ")], "center", "pilot");
               this.state = "story_intro";
               this.sound.startMusic("playing", 0);
             }
@@ -438,7 +438,7 @@ export class RaptorGame implements IGame {
             this.audio.ensureContext();
             this.sound.play("menu_start");
             this.resetGame();
-            this.storyRenderer.show(GAME_STORY.opening, "center", "pilot");
+            this.storyRenderer.show([GAME_STORY.opening.join(" ")], "center", "pilot");
             this.state = "story_intro";
             this.sound.startMusic("playing", 0);
           }
@@ -917,7 +917,7 @@ export class RaptorGame implements IGame {
         this.state = "victory";
         this.sound.play("victory");
         SaveSystem.clear();
-        this.storyRenderer.show(GAME_STORY.ending, "center", "pilot");
+        this.storyRenderer.show([GAME_STORY.ending.join(" ")], "center", "pilot");
         this.hud.setVictoryStoryActive(true);
       } else {
         this.state = "level_complete";

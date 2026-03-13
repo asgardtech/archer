@@ -23,6 +23,7 @@ import {
   Vec2,
 } from "../src/games/raptor/types";
 import { AUDIO_MANIFEST } from "../src/games/raptor/rendering/audioAssets";
+import { GAME_STORY } from "../src/games/raptor/story";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -333,6 +334,57 @@ describe("Scenario: Clicking on the menu starts the game", () => {
     (game as any).update(0.016);
 
     expect(game.player.lives).toBe(3);
+  });
+});
+
+describe("Scenario: Opening story displays all text in one panel", () => {
+  test("storyRenderer.show is called with a single joined string for opening", () => {
+    const { game } = createPlayingGame();
+    const showSpy = jest.spyOn(game.storyRenderer, "show");
+    game.state = "menu";
+    game.input.wasClicked = true;
+
+    (game as any).update(0.016);
+
+    expect(showSpy).toHaveBeenCalledTimes(1);
+    const messages = showSpy.mock.calls[0][0] as string[];
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toBe(GAME_STORY.opening.join(" "));
+    showSpy.mockRestore();
+  });
+
+  test("opening story is a single message, not one per sentence", () => {
+    const joined = GAME_STORY.opening.join(" ");
+    expect(GAME_STORY.opening.length).toBeGreaterThan(1);
+    for (const sentence of GAME_STORY.opening) {
+      expect(joined).toContain(sentence);
+    }
+  });
+});
+
+describe("Scenario: Ending story displays all text in one panel", () => {
+  test("storyRenderer.show is called with a single joined string for ending", () => {
+    const { game } = createPlayingGame();
+    const showSpy = jest.spyOn(game.storyRenderer, "show");
+    game.currentLevel = LEVELS.length - 1;
+    game.spawner.configure(LEVELS[LEVELS.length - 1]);
+
+    for (let t = 0; t < 200; t += 0.1) {
+      game.spawner.update(0.1, 800);
+    }
+    game.spawner.spawnBoss(800);
+    game.spawner.markBossDefeated();
+    game.enemies = [];
+
+    (game as any).updatePlaying(0.001);
+
+    expect(game.state).toBe("victory");
+    expect(showSpy).toHaveBeenCalled();
+    const lastCall = showSpy.mock.calls[showSpy.mock.calls.length - 1];
+    const messages = lastCall[0] as string[];
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toBe(GAME_STORY.ending.join(" "));
+    showSpy.mockRestore();
   });
 });
 
