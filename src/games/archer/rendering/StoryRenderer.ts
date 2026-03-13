@@ -1,5 +1,12 @@
 import { GeneralPortrait } from "./GeneralPortrait";
 
+export interface StoryFooter {
+  heading: string;
+  subheading?: string;
+  detail?: string;
+  score?: number;
+}
+
 type StoryRendererState = "idle" | "fade_in" | "typing" | "waiting" | "fade_out";
 
 const FONT_FAMILY = "sans-serif";
@@ -23,6 +30,12 @@ const PANEL_BORDER_COLOR = "rgba(180, 150, 80, 0.4)";
 const TEXT_COLOR = "#e8dcc8";
 const TITLE_COLOR = "#b89a4a";
 
+const FOOTER_HEADING_SIZE = 24;
+const FOOTER_SUBHEADING_SIZE = 18;
+const FOOTER_DETAIL_SIZE = 16;
+const FOOTER_SCORE_SIZE = 28;
+const FOOTER_DIVIDER_GAP = 18;
+
 export class StoryRenderer {
   private state: StoryRendererState = "idle";
   private lines: string[] = [];
@@ -35,6 +48,8 @@ export class StoryRenderer {
   private completed = false;
   private isTouchDevice: boolean;
   private measureCtx: CanvasRenderingContext2D;
+  private footer: StoryFooter | undefined;
+  private footerFadeProgress = 0;
 
   constructor(isTouchDevice = false) {
     this.isTouchDevice = isTouchDevice;
@@ -42,7 +57,7 @@ export class StoryRenderer {
     this.measureCtx = canvas.getContext("2d")!;
   }
 
-  show(lines: string[]): void {
+  show(lines: string[], footer?: StoryFooter): void {
     if (lines.length === 0) return;
     this.lines = [...lines];
     this.wrappedLines = [];
@@ -52,6 +67,8 @@ export class StoryRenderer {
     this.blinkTimer = 0;
     this.elapsed = 0;
     this.completed = false;
+    this.footer = footer;
+    this.footerFadeProgress = 0;
     this.state = "fade_in";
   }
 
@@ -87,6 +104,9 @@ export class StoryRenderer {
 
       case "waiting":
         this.blinkTimer += dt;
+        if (this.footer && this.footerFadeProgress < 1) {
+          this.footerFadeProgress = Math.min(1, this.footerFadeProgress + dt / FADE_DURATION);
+        }
         break;
 
       case "fade_out":
@@ -100,17 +120,29 @@ export class StoryRenderer {
     }
   }
 
+  private computeFooterHeight(isSmall: boolean): number {
+    if (!this.footer) return 0;
+    let h = FOOTER_DIVIDER_GAP;
+    h += FOOTER_HEADING_SIZE + 8;
+    if (this.footer.subheading) h += (isSmall ? FOOTER_SUBHEADING_SIZE - 2 : FOOTER_SUBHEADING_SIZE) + 6;
+    if (this.footer.detail) h += (isSmall ? FOOTER_DETAIL_SIZE - 2 : FOOTER_DETAIL_SIZE) + 6;
+    if (this.footer.score != null) h += FOOTER_SCORE_SIZE + 6;
+    return h;
+  }
+
   render(ctx: CanvasRenderingContext2D, canvasW: number, canvasH: number): void {
     if (this.state === "idle") return;
-
-    const panelW = Math.min(canvasW * PANEL_WIDTH_RATIO, 680);
-    const panelH = Math.min(canvasH * PANEL_HEIGHT_RATIO, 420);
-    const panelX = (canvasW - panelW) / 2;
-    const panelY = (canvasH - panelH) / 2;
 
     const isSmall = canvasW < SMALL_CANVAS_THRESHOLD;
     const portraitVisible = !isSmall;
     const portraitAreaW = portraitVisible ? PORTRAIT_SIZE + PORTRAIT_MARGIN * 2 : 0;
+
+    const panelW = Math.min(canvasW * PANEL_WIDTH_RATIO, 680);
+    const footerHeight = this.computeFooterHeight(isSmall);
+    const basePanelH = Math.min(canvasH * PANEL_HEIGHT_RATIO, 420);
+    const panelH = Math.min(canvasH * PANEL_HEIGHT_RATIO, basePanelH + footerHeight);
+    const panelX = (canvasW - panelW) / 2;
+    const panelY = (canvasH - panelH) / 2;
 
     const textAreaX = panelX + PANEL_PADDING + portraitAreaW;
     const textAreaW = panelW - PANEL_PADDING * 2 - portraitAreaW;
@@ -123,11 +155,9 @@ export class StoryRenderer {
     ctx.save();
     ctx.globalAlpha = Math.max(0, Math.min(1, this.fadeProgress));
 
-    // Dim overlay
     ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
     ctx.fillRect(0, 0, canvasW, canvasH);
 
-    // Panel background
     const grad = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelH);
     grad.addColorStop(0, PANEL_BG_TOP);
     grad.addColorStop(1, PANEL_BG_BOTTOM);
@@ -136,27 +166,23 @@ export class StoryRenderer {
     ctx.roundRect(panelX, panelY, panelW, panelH, PANEL_RADIUS);
     ctx.fill();
 
-    // Panel border
     ctx.strokeStyle = PANEL_BORDER_COLOR;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.roundRect(panelX, panelY, panelW, panelH, PANEL_RADIUS);
     ctx.stroke();
 
-    // Inner glow border
     ctx.strokeStyle = "rgba(180, 150, 80, 0.15)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.roundRect(panelX + 3, panelY + 3, panelW - 6, panelH - 6, PANEL_RADIUS - 2);
     ctx.stroke();
 
-    // Portrait
     if (portraitVisible) {
       const portraitX = panelX + PORTRAIT_MARGIN;
       const portraitY = panelY + PANEL_PADDING;
       GeneralPortrait.render(ctx, portraitX, portraitY, PORTRAIT_SIZE, this.elapsed);
 
-      // Name plate under portrait
       ctx.font = `bold 11px ${FONT_FAMILY}`;
       ctx.fillStyle = TITLE_COLOR;
       ctx.textAlign = "center";
@@ -164,7 +190,6 @@ export class StoryRenderer {
       ctx.fillText("THE GENERAL", portraitX + PORTRAIT_SIZE / 2, portraitY + PORTRAIT_SIZE * 1.2 + 12);
     }
 
-    // Text with typewriter effect
     ctx.font = `${FONT_SIZE}px ${FONT_FAMILY}`;
     ctx.fillStyle = TEXT_COLOR;
     ctx.textAlign = "left";
@@ -187,7 +212,10 @@ export class StoryRenderer {
       textY += LINE_HEIGHT;
     }
 
-    // "Click/Tap to continue" prompt
+    if (this.footer && this.state === "waiting" && this.footerFadeProgress > 0) {
+      this.renderFooter(ctx, panelX, panelY, panelW, panelH, textAreaX, textAreaW, textY, isSmall);
+    }
+
     if (this.state === "waiting") {
       const cycle = this.blinkTimer % (PROMPT_BLINK_RATE * 2);
       if (cycle < PROMPT_BLINK_RATE) {
@@ -201,6 +229,66 @@ export class StoryRenderer {
     }
 
     ctx.restore();
+  }
+
+  private renderFooter(
+    ctx: CanvasRenderingContext2D,
+    panelX: number,
+    panelY: number,
+    panelW: number,
+    _panelH: number,
+    textAreaX: number,
+    textAreaW: number,
+    textY: number,
+    isSmall: boolean
+  ): void {
+    if (!this.footer) return;
+
+    const prevAlpha = ctx.globalAlpha;
+    ctx.globalAlpha = prevAlpha * this.footerFadeProgress;
+
+    let y = textY + FOOTER_DIVIDER_GAP;
+
+    const dividerX1 = textAreaX;
+    const dividerX2 = textAreaX + textAreaW;
+    ctx.strokeStyle = "rgba(180, 150, 80, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(dividerX1, y - FOOTER_DIVIDER_GAP / 2);
+    ctx.lineTo(dividerX2, y - FOOTER_DIVIDER_GAP / 2);
+    ctx.stroke();
+
+    const headingSize = isSmall ? FOOTER_HEADING_SIZE - 2 : FOOTER_HEADING_SIZE;
+    ctx.font = `bold ${headingSize}px ${FONT_FAMILY}`;
+    ctx.fillStyle = TITLE_COLOR;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(this.footer.heading, panelX + panelW / 2, y);
+    y += headingSize + 8;
+
+    if (this.footer.subheading) {
+      const subSize = isSmall ? FOOTER_SUBHEADING_SIZE - 2 : FOOTER_SUBHEADING_SIZE;
+      ctx.font = `bold ${subSize}px ${FONT_FAMILY}`;
+      ctx.fillStyle = "#f1c40f";
+      ctx.fillText(this.footer.subheading, panelX + panelW / 2, y);
+      y += subSize + 6;
+    }
+
+    if (this.footer.detail) {
+      const detailSize = isSmall ? FOOTER_DETAIL_SIZE - 2 : FOOTER_DETAIL_SIZE;
+      ctx.font = `italic ${detailSize}px ${FONT_FAMILY}`;
+      ctx.fillStyle = "rgba(232, 220, 200, 0.8)";
+      ctx.fillText(this.footer.detail, panelX + panelW / 2, y);
+      y += detailSize + 6;
+    }
+
+    if (this.footer.score != null) {
+      ctx.font = `bold ${FOOTER_SCORE_SIZE}px ${FONT_FAMILY}`;
+      ctx.fillStyle = "#f1c40f";
+      ctx.fillText(`Total Score: ${this.footer.score}`, panelX + panelW / 2, y);
+    }
+
+    ctx.globalAlpha = prevAlpha;
   }
 
   get isComplete(): boolean {

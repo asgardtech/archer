@@ -246,7 +246,12 @@ export class ArcherGame implements IGame {
           this.audio.ensureContext();
           this.sound.play("menu_start");
           this.resetGame();
-          this.storyRenderer.show(ARCHER_STORY.opening);
+          const menuConfig = this.currentLevelConfig;
+          this.storyRenderer.show(ARCHER_STORY.opening, {
+            heading: `Level ${menuConfig.level} \u2014 ${menuConfig.name}`,
+            subheading: menuConfig.landmark.label,
+            detail: menuConfig.landmark.description,
+          });
           this.state = "story_intro";
         }
         break;
@@ -254,9 +259,11 @@ export class ArcherGame implements IGame {
       case "story_intro":
         this.storyRenderer.update(dt);
         if (this.storyRenderer.isComplete) {
-          this.state = "level_intro";
+          this.state = "playing";
+          this.sound.startMusic("playing", this.currentLevel);
         } else if (this.input.wasEscPressed) {
-          this.state = "level_intro";
+          this.state = "playing";
+          this.sound.startMusic("playing", this.currentLevel);
         } else if (this.input.wasClicked) {
           this.storyRenderer.advance();
         }
@@ -305,6 +312,28 @@ export class ArcherGame implements IGame {
           } else {
             this.state = "menu";
           }
+        }
+        break;
+
+      case "story_ending":
+        this.storyRenderer.update(dt);
+        if (this.landmark) this.landmark.update(dt);
+        if (this.storyRenderer.isComplete) {
+          this.sound.stopMusic();
+          if (this.onExit) {
+            this.onExit();
+          } else {
+            this.state = "menu";
+          }
+        } else if (this.input.wasEscPressed) {
+          this.sound.stopMusic();
+          if (this.onExit) {
+            this.onExit();
+          } else {
+            this.state = "menu";
+          }
+        } else if (this.input.wasClicked) {
+          this.storyRenderer.advance();
         }
         break;
     }
@@ -483,8 +512,12 @@ export class ArcherGame implements IGame {
       this.sound.stopMusic();
       this.sound.play("landmark_liberated");
       if (this.currentLevel >= LEVELS.length - 1) {
-        this.state = "victory";
+        this.state = "story_ending";
         this.sound.play("victory");
+        this.storyRenderer.show(ARCHER_STORY.ending, {
+          heading: "Victory!",
+          score: this.totalScore,
+        });
       } else {
         this.state = "level_complete";
         this.sound.play("level_complete");
@@ -533,7 +566,12 @@ export class ArcherGame implements IGame {
   private render(): void {
     this.renderSky();
 
-    if (this.state === "story_intro") {
+    if (this.state === "story_intro" || this.state === "story_ending") {
+      if (this.state === "story_ending") {
+        const endConfig = this.currentLevelConfig;
+        TerrainRenderer.render(this.ctx, this.width, this.height, endConfig.terrain);
+        if (this.landmark) this.landmark.render(this.ctx);
+      }
       this.storyRenderer.render(this.ctx, this.width, this.height);
       this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
       return;

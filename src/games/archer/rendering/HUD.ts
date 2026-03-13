@@ -118,6 +118,7 @@ export class HUD {
         this.renderMenu(ctx, canvasW, canvasH);
         break;
       case "story_intro":
+      case "story_ending":
         break;
       case "level_intro":
         this.renderLevelIntro(ctx, level, levelName, landmarkLabel, landmarkDescription, canvasW, canvasH);

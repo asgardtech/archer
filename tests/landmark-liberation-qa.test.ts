@@ -796,7 +796,7 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
       (gi.input as any).wasClicked = false;
       gi.updatePlaying(0.016);
 
-      expect(gi.state).toBe("victory");
+      expect(gi.state).toBe("story_ending");
       expect(celebrateSpy).toHaveBeenCalled();
 
       randomSpy.mockRestore();
