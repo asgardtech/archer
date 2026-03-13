@@ -24,7 +24,7 @@ import { Explosion } from "./entities/Explosion";
 import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
 import { AssetLoader } from "./rendering/AssetLoader";
-import { SpriteSheet, generateExplosionSheet, generateThrustSheet, generateDualThrustSheet } from "./rendering/SpriteSheet";
+import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rendering/SpriteSheet";
 import { VFXManager } from "./rendering/VFXManager";
 import { TerrainRenderer } from "./rendering/TerrainRenderer";
 import { StoryRenderer } from "./rendering/StoryRenderer";
@@ -103,7 +103,6 @@ export class RaptorGame implements IGame {
   private vfx: VFXManager;
   private explosionSheet: SpriteSheet | null = null;
   private thrustSheet: SpriteSheet | null = null;
-  private dualThrustSheet: SpriteSheet | null = null;
 
   private stars: Star[] = [];
   private starsNear: Star[] = [];
@@ -187,6 +186,7 @@ export class RaptorGame implements IGame {
       this.canvas.width = Math.round(this.width * this.dpr);
       this.canvas.height = Math.round(this.height * this.dpr);
 
+      this.player.dpr = this.dpr;
       if (oldDpr !== this.dpr) {
         this.generateProceduralAssets();
         if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
@@ -241,9 +241,6 @@ export class RaptorGame implements IGame {
 
       const thrustCanvas = generateThrustSheet(4, 16, 24, this.dpr);
       this.thrustSheet = new SpriteSheet(thrustCanvas, 16, 24, 4, this.dpr);
-
-      const dualThrustCanvas = generateDualThrustSheet(4, 32, 28, 12, this.dpr);
-      this.dualThrustSheet = new SpriteSheet(dualThrustCanvas, 32, 28, 4, this.dpr);
     } catch (e) {
       console.warn("[RaptorGame] Failed to generate procedural assets:", e);
     }

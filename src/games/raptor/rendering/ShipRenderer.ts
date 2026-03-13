@@ -21,14 +21,18 @@ const PANEL_LIGHT = "#ffaa22";
 const HULL_NUMBER_COLOR = "#8899aa";
 
 export class ShipRenderer {
+  private dpr = 1;
+
   render(
     ctx: CanvasRenderingContext2D,
     x: number,
     y: number,
     width: number,
     height: number,
-    state: ShipRenderState
+    state: ShipRenderState,
+    dpr: number = 1
   ): void {
+    this.dpr = dpr;
     ctx.save();
     const hw = width / 2;
     const hh = height / 2;
@@ -43,7 +47,9 @@ export class ShipRenderer {
     this.renderEngineGlow(ctx, x, y, hw, hh, state.thrustLevel);
     this.renderHull(ctx, x, y, hw, hh);
     this.renderArmorPanels(ctx, x, y, hw, hh);
-    this.renderWeldSeams(ctx, x, y, hw, hh);
+    if (this.dpr >= 1) {
+      this.renderWeldSeams(ctx, x, y, hw, hh);
+    }
     this.renderWeathering(ctx, x, y, hw, hh, state.damageLevel);
     this.renderWings(ctx, x, y, hw, hh);
     this.renderEngineHousings(ctx, x, y, hw, hh);
@@ -51,6 +57,7 @@ export class ShipRenderer {
     this.renderDetails(ctx, x, y, hw, hh);
     this.renderRunningLights(ctx, x, y, hw, hh, state.runningLightPhase);
     this.renderPanelWarningLight(ctx, x, y, hw, hh, state.panelLightFlicker);
+    this.renderHeatShimmer(ctx, x, y, hw, hh, state.heatShimmer);
 
     if (state.damageLevel > 0.5) {
       this.renderDamageOverlay(ctx, x, y, hw, hh, state.damageLevel);
@@ -73,7 +80,7 @@ export class ShipRenderer {
     const cy = y + hh;
 
     ctx.strokeStyle = HULL_HIGHLIGHT;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx, cy - hh);
     ctx.lineTo(cx + hw * 0.35, cy - hh * 0.2);
@@ -486,32 +493,34 @@ export class ShipRenderer {
   ): void {
     ctx.save();
 
-    ctx.fillStyle = HULL_HIGHLIGHT;
-    ctx.globalAlpha = 0.5;
-    const rivetPositions = [
-      [x - hw * 0.28, y - hh * 0.05],
-      [x + hw * 0.28, y - hh * 0.05],
-      [x - hw * 0.3, y + hh * 0.2],
-      [x + hw * 0.3, y + hh * 0.2],
-      [x - hw * 0.25, y + hh * 0.45],
-      [x + hw * 0.25, y + hh * 0.45],
-      [x - hw * 0.15, y + hh * 0.6],
-      [x + hw * 0.15, y + hh * 0.6],
-      [x - hw * 0.2, y - hh * 0.25],
-      [x + hw * 0.2, y - hh * 0.25],
-      [x, y + hh * 0.15],
-      [x, y + hh * 0.35],
-      [x - hw * 0.32, y + hh * 0.35],
-      [x + hw * 0.32, y + hh * 0.35],
-      [x - hw * 0.08, y - hh * 0.45],
-      [x + hw * 0.08, y - hh * 0.45],
-    ];
-    for (const [rx, ry] of rivetPositions) {
-      ctx.beginPath();
-      ctx.arc(rx, ry, 0.6, 0, Math.PI * 2);
-      ctx.fill();
+    if (this.dpr >= 1) {
+      ctx.fillStyle = HULL_HIGHLIGHT;
+      ctx.globalAlpha = 0.5;
+      const rivetPositions = [
+        [x - hw * 0.28, y - hh * 0.05],
+        [x + hw * 0.28, y - hh * 0.05],
+        [x - hw * 0.3, y + hh * 0.2],
+        [x + hw * 0.3, y + hh * 0.2],
+        [x - hw * 0.25, y + hh * 0.45],
+        [x + hw * 0.25, y + hh * 0.45],
+        [x - hw * 0.15, y + hh * 0.6],
+        [x + hw * 0.15, y + hh * 0.6],
+        [x - hw * 0.2, y - hh * 0.25],
+        [x + hw * 0.2, y - hh * 0.25],
+        [x, y + hh * 0.15],
+        [x, y + hh * 0.35],
+        [x - hw * 0.32, y + hh * 0.35],
+        [x + hw * 0.32, y + hh * 0.35],
+        [x - hw * 0.08, y - hh * 0.45],
+        [x + hw * 0.08, y - hh * 0.45],
+      ];
+      for (const [rx, ry] of rivetPositions) {
+        ctx.beginPath();
+        ctx.arc(rx, ry, 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     }
-    ctx.globalAlpha = 1;
 
     ctx.font = "4px monospace";
     ctx.fillStyle = HULL_NUMBER_COLOR;
@@ -621,7 +630,7 @@ export class ShipRenderer {
     hh: number,
     flicker: number
   ): void {
-    if (flicker < 0.6) return;
+    if (flicker >= 0.6) return;
     ctx.save();
     ctx.fillStyle = PANEL_LIGHT;
     ctx.globalAlpha = 0.8 * flicker;
@@ -633,6 +642,35 @@ export class ShipRenderer {
     ctx.beginPath();
     ctx.arc(x - hw * 0.08, y - hh * 0.05, 3, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
+  }
+
+  private renderHeatShimmer(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    hw: number,
+    hh: number,
+    shimmer: number
+  ): void {
+    if (shimmer <= 0) return;
+    ctx.save();
+    const engineSpacing = hw * 0.42;
+    const baseY = y + hh;
+    const displacement = shimmer * 1;
+
+    ctx.globalAlpha = 0.06 + shimmer * 0.04;
+    ctx.fillStyle = HULL_HIGHLIGHT;
+
+    for (const side of [-1, 1]) {
+      const ex = x + side * engineSpacing;
+      for (let line = 0; line < 2; line++) {
+        const ly = baseY + 2 + line * 3;
+        const offset = Math.sin(Date.now() * 0.015 + line * 2 + side) * displacement;
+        ctx.fillRect(ex - hw * 0.12, ly + offset, hw * 0.24, 1);
+      }
+    }
+
     ctx.restore();
   }
 

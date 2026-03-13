@@ -518,8 +518,9 @@ describe("God Mode Visual Indicator", () => {
       get(_target, prop) {
         if (typeof prop === "string") {
           if (["save", "restore", "beginPath", "closePath", "fill", "stroke",
-               "moveTo", "lineTo", "arc", "ellipse", "fillRect", "translate",
-               "rotate", "drawImage", "clearRect"].includes(prop)) {
+               "moveTo", "lineTo", "arc", "ellipse", "fillRect", "fillText",
+               "translate", "rotate", "transform", "quadraticCurveTo",
+               "drawImage", "clearRect"].includes(prop)) {
             return (...args: any[]) => { calls.push({ method: prop, args }); };
           }
           if (prop === "createLinearGradient" || prop === "createRadialGradient") {
@@ -555,8 +556,9 @@ describe("God Mode Visual Indicator", () => {
       get(_target, prop) {
         if (typeof prop === "string") {
           if (["save", "restore", "beginPath", "closePath", "fill", "stroke",
-               "moveTo", "lineTo", "arc", "ellipse", "fillRect", "translate",
-               "rotate", "drawImage", "clearRect"].includes(prop)) {
+               "moveTo", "lineTo", "arc", "ellipse", "fillRect", "fillText",
+               "translate", "rotate", "transform", "quadraticCurveTo",
+               "drawImage", "clearRect"].includes(prop)) {
             return (...args: any[]) => { calls.push({ method: prop, args }); };
           }
           if (prop === "createLinearGradient" || prop === "createRadialGradient") {

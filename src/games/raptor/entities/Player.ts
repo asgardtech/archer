@@ -21,6 +21,7 @@ export class Player {
   public alive = true;
   public invincibilityTimer = 0;
   public godMode = false;
+  public dpr = 1;
 
   private flashTimer = 0;
   /** @deprecated Retained for backward compatibility; procedural rendering is used instead. */
@@ -166,7 +167,8 @@ export class Player {
       this.pos.y,
       this.width,
       this.height,
-      state
+      state,
+      this.dpr
     );
   }
 }
