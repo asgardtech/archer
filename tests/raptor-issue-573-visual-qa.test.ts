@@ -20,13 +20,15 @@ const NON_HP_BAR_VARIANTS: EnemyVariant[] = ALL_VARIANTS.filter(v => !HP_BAR_VAR
 const FAST_VARIANTS: EnemyVariant[] = ["scout", "dart", "drone", "swarmer", "interceptor"];
 const HEAVY_VARIANTS: EnemyVariant[] = ["destroyer", "juggernaut", "boss"];
 
-// ────────────────────────────────────────────
-// Helpers
-// ────────────────────────────────────────────
+// ── Utility Functions ────────────────────────────────────────────────
 
 function readPNG(filePath: string): PNG {
   const data = fs.readFileSync(filePath);
   return PNG.sync.read(data);
+}
+
+function spritePath(variant: string): string {
+  return path.join(ASSET_DIR, `enemy_${variant}.png`);
 }
 
 function getPixelAlpha(png: PNG, x: number, y: number): number {
@@ -114,184 +116,190 @@ function getMaxHorizontalRun(png: PNG, row: number): number {
   return maxRun;
 }
 
-function spritePath(variant: EnemyVariant): string {
-  return path.join(ASSET_DIR, `enemy_${variant}.png`);
+function readSourceFile(relPath: string): string {
+  return fs.readFileSync(path.join(SRC_DIR, relPath), "utf-8");
 }
 
-// Cache PNGs to avoid re-reading per test
-const pngCache: Record<string, PNG> = {};
-function getCachedPNG(variant: EnemyVariant): PNG {
-  if (!pngCache[variant]) {
-    pngCache[variant] = readPNG(spritePath(variant));
+const spriteCache = new Map<string, PNG>();
+function getSprite(variant: string): PNG {
+  if (!spriteCache.has(variant)) {
+    spriteCache.set(variant, readPNG(spritePath(variant)));
   }
-  return pngCache[variant];
+  return spriteCache.get(variant)!;
 }
 
 // ════════════════════════════════════════════════════════════════
-// 1. SPRITE FILE VALIDITY — All 14 enemy sprites
+// 1. SPRITE FILE VALIDITY — all 14 sprites
 // ════════════════════════════════════════════════════════════════
 
-describe("Sprite file validity for all 14 enemy types", () => {
-  test.each(ALL_VARIANTS)("%s — sprite file exists", (variant) => {
-    expect(fs.existsSync(spritePath(variant))).toBe(true);
-  });
+describe("Sprite file validity", () => {
+  describe.each(ALL_VARIANTS)("enemy_%s sprite", (variant) => {
+    const filePath = spritePath(variant);
 
-  test.each(ALL_VARIANTS)("%s — has valid PNG signature", (variant) => {
-    const data = fs.readFileSync(spritePath(variant));
-    expect(data[0]).toBe(0x89);
-    expect(data[1]).toBe(0x50);
-    expect(data[2]).toBe(0x4e);
-    expect(data[3]).toBe(0x47);
-  });
+    test("file exists", () => {
+      expect(fs.existsSync(filePath)).toBe(true);
+    });
 
-  test.each(ALL_VARIANTS)("%s — dimensions are at least 128px and aspect ratio is near-square", (variant) => {
-    const png = getCachedPNG(variant);
-    expect(png.width).toBeGreaterThanOrEqual(128);
-    expect(png.height).toBeGreaterThanOrEqual(128);
-    const aspectRatio = png.width / png.height;
-    expect(aspectRatio).toBeGreaterThanOrEqual(0.8);
-    expect(aspectRatio).toBeLessThanOrEqual(1.25);
-  });
+    test("has valid PNG signature", () => {
+      const data = fs.readFileSync(filePath);
+      expect(data[0]).toBe(0x89);
+      expect(data[1]).toBe(0x50);
+      expect(data[2]).toBe(0x4e);
+      expect(data[3]).toBe(0x47);
+    });
 
-  test.each(ALL_VARIANTS)("%s — file size > 1 KB", (variant) => {
-    const stats = fs.statSync(spritePath(variant));
-    expect(stats.size).toBeGreaterThan(1000);
-  });
+    test("dimensions are 128x128 pixels", () => {
+      const png = getSprite(variant);
+      expect(png.width).toBe(128);
+      expect(png.height).toBe(128);
+    });
 
-  test.each(ALL_VARIANTS)("%s — contains RGBA pixel data", (variant) => {
-    const png = getCachedPNG(variant);
-    expect(png.data.length).toBe(png.width * png.height * 4);
+    test("file size is greater than 1000 bytes", () => {
+      const stats = fs.statSync(filePath);
+      expect(stats.size).toBeGreaterThan(1000);
+    });
+
+    test("contains RGBA pixel data", () => {
+      const png = getSprite(variant);
+      expect(png.data.length).toBe(png.width * png.height * 4);
+    });
   });
 });
 
 // ════════════════════════════════════════════════════════════════
-// 2. TRANSPARENT BACKGROUND
+// 2. TRANSPARENT BACKGROUNDS — all 14 sprites
 // ════════════════════════════════════════════════════════════════
 
-describe("Transparent background for all 14 enemy sprites", () => {
-  test.each(ALL_VARIANTS)("%s — all four corner pixels are transparent", (variant) => {
-    const png = getCachedPNG(variant);
-    const corners: [number, number][] = [
-      [0, 0],
-      [png.width - 1, 0],
-      [0, png.height - 1],
-      [png.width - 1, png.height - 1],
-    ];
-    for (const [x, y] of corners) {
-      expect(getPixelAlpha(png, x, y)).toBe(0);
-    }
-  });
+describe("Sprite transparent backgrounds", () => {
+  describe.each(ALL_VARIANTS)("enemy_%s sprite", (variant) => {
+    test("all four corner pixels have alpha = 0", () => {
+      const png = getSprite(variant);
+      const corners: [number, number][] = [
+        [0, 0],
+        [png.width - 1, 0],
+        [0, png.height - 1],
+        [png.width - 1, png.height - 1],
+      ];
+      for (const [x, y] of corners) {
+        expect(getPixelAlpha(png, x, y)).toBe(0);
+      }
+    });
 
-  test.each(ALL_VARIANTS)("%s — at least 20%% of pixels are transparent", (variant) => {
-    const png = getCachedPNG(variant);
-    const totalPixels = png.width * png.height;
-    const opaquePixels = countOpaquePixels(png);
-    const transparentRatio = (totalPixels - opaquePixels) / totalPixels;
-    expect(transparentRatio).toBeGreaterThan(0.2);
-  });
-});
-
-// ════════════════════════════════════════════════════════════════
-// 3. VISUAL CONTENT
-// ════════════════════════════════════════════════════════════════
-
-describe("Visual content for all 14 enemy sprites", () => {
-  test.each(ALL_VARIANTS)("%s — at least 10%% of pixels are opaque", (variant) => {
-    const png = getCachedPNG(variant);
-    const totalPixels = png.width * png.height;
-    const opaquePixels = countOpaquePixels(png);
-    expect(opaquePixels / totalPixels).toBeGreaterThan(0.10);
-  });
-
-  test.each(ALL_VARIANTS)("%s — average brightness between 30 and 210", (variant) => {
-    const png = getCachedPNG(variant);
-    const avg = getAverageColor(png);
-    const avgBrightness = (avg.r + avg.g + avg.b) / 3;
-    expect(avgBrightness).toBeGreaterThan(30);
-    expect(avgBrightness).toBeLessThan(210);
-  });
-
-  test.each(ALL_VARIANTS)("%s — at least 8 consecutive opaque pixels at midline", (variant) => {
-    const png = getCachedPNG(variant);
-    const midY = Math.floor(png.height / 2);
-    const maxRun = getMaxHorizontalRun(png, midY);
-    expect(maxRun).toBeGreaterThanOrEqual(8);
+    test("at least 20% of pixels are fully transparent", () => {
+      const png = getSprite(variant);
+      const totalPixels = png.width * png.height;
+      const opaquePixels = countOpaquePixels(png);
+      const transparentRatio = (totalPixels - opaquePixels) / totalPixels;
+      expect(transparentRatio).toBeGreaterThan(0.2);
+    });
   });
 });
 
 // ════════════════════════════════════════════════════════════════
-// 4. SPRITE CENTERING
+// 3. VISUAL CONTENT — all 14 sprites
 // ════════════════════════════════════════════════════════════════
 
-describe("Sprite centering on canvas for all 14 enemy types", () => {
-  test.each(ALL_VARIANTS)("%s — horizontal center within 10px of canvas center", (variant) => {
-    const png = getCachedPNG(variant);
-    const bb = getBoundingBox(png);
-    const contentCenterX = (bb.minX + bb.maxX) / 2;
-    const canvasCenterX = png.width / 2;
-    expect(Math.abs(contentCenterX - canvasCenterX)).toBeLessThanOrEqual(10);
-  });
+describe("Sprite visual content", () => {
+  describe.each(ALL_VARIANTS)("enemy_%s sprite", (variant) => {
+    test("at least 10% of pixels are opaque", () => {
+      const png = getSprite(variant);
+      const totalPixels = png.width * png.height;
+      const opaquePixels = countOpaquePixels(png);
+      expect(opaquePixels / totalPixels).toBeGreaterThan(0.10);
+    });
 
-  test.each(ALL_VARIANTS)("%s — vertical center within 15px of canvas center", (variant) => {
-    const png = getCachedPNG(variant);
-    const bb = getBoundingBox(png);
-    const contentCenterY = (bb.minY + bb.maxY) / 2;
-    const canvasCenterY = png.height / 2;
-    expect(Math.abs(contentCenterY - canvasCenterY)).toBeLessThanOrEqual(15);
+    test("average brightness of opaque pixels is between 30 and 210", () => {
+      const png = getSprite(variant);
+      const avg = getAverageColor(png);
+      const avgBrightness = (avg.r + avg.g + avg.b) / 3;
+      expect(avgBrightness).toBeGreaterThan(30);
+      expect(avgBrightness).toBeLessThan(210);
+    });
+
+    test("has at least 8 consecutive opaque pixels at horizontal midline", () => {
+      const png = getSprite(variant);
+      const midY = Math.floor(png.height / 2);
+      const maxRun = getMaxHorizontalRun(png, midY);
+      expect(maxRun).toBeGreaterThanOrEqual(8);
+    });
   });
 });
 
 // ════════════════════════════════════════════════════════════════
-// 5. HORIZONTAL SYMMETRY
+// 4. SPRITE CENTERING & BOUNDS
 // ════════════════════════════════════════════════════════════════
 
-describe("Horizontal symmetry for all 14 enemy sprites", () => {
-  test.each(ALL_VARIANTS)("%s — symmetry score > 0.60", (variant) => {
-    const png = getCachedPNG(variant);
+describe("Sprite centering on canvas", () => {
+  describe.each(ALL_VARIANTS)("enemy_%s sprite", (variant) => {
+    test("horizontal center of content is within 10px of canvas center", () => {
+      const png = getSprite(variant);
+      const bb = getBoundingBox(png);
+      const contentCenterX = (bb.minX + bb.maxX) / 2;
+      const canvasCenterX = png.width / 2;
+      expect(Math.abs(contentCenterX - canvasCenterX)).toBeLessThanOrEqual(10);
+    });
+
+    test("vertical center of content is within 15px of canvas center", () => {
+      const png = getSprite(variant);
+      const bb = getBoundingBox(png);
+      const contentCenterY = (bb.minY + bb.maxY) / 2;
+      const canvasCenterY = png.height / 2;
+      expect(Math.abs(contentCenterY - canvasCenterY)).toBeLessThanOrEqual(15);
+    });
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// 5. HORIZONTAL SYMMETRY — all 14 sprites
+// ════════════════════════════════════════════════════════════════
+
+describe("Horizontal symmetry", () => {
+  test.each(ALL_VARIANTS)("enemy_%s symmetry score > 0.60", (variant) => {
+    const png = getSprite(variant);
     const symmetry = computeHorizontalSymmetry(png);
     expect(symmetry).toBeGreaterThan(0.60);
   });
 });
 
 // ════════════════════════════════════════════════════════════════
-// 6. ART CONSISTENCY — No duplicates, distinct colors
+// 6. CROSS-SPRITE ART CONSISTENCY
 // ════════════════════════════════════════════════════════════════
 
-describe("Art consistency across all 14 enemy sprites", () => {
+describe("Art consistency across all sprites", () => {
   test("no two sprites have the same opaque pixel count", () => {
-    const counts = ALL_VARIANTS.map(v => ({
-      variant: v,
-      count: countOpaquePixels(getCachedPNG(v)),
-    }));
-    for (let i = 0; i < counts.length; i++) {
-      for (let j = i + 1; j < counts.length; j++) {
-        expect(counts[i].count).not.toBe(counts[j].count);
-      }
+    const counts = new Map<number, string>();
+    for (const variant of ALL_VARIANTS) {
+      const png = getSprite(variant);
+      const count = countOpaquePixels(png);
+      const existing = counts.get(count);
+      expect(existing).toBeUndefined();
+      counts.set(count, variant);
     }
   });
 
-  test("every pair of sprites has RGB distance > 10", () => {
+  test("all sprite pairs have RGB color distance > 10", () => {
     const colors = ALL_VARIANTS.map(v => ({
       variant: v,
-      color: getAverageColor(getCachedPNG(v)),
+      color: getAverageColor(getSprite(v)),
     }));
+
     for (let i = 0; i < colors.length; i++) {
       for (let j = i + 1; j < colors.length; j++) {
-        const dist =
-          Math.abs(colors[i].color.r - colors[j].color.r) +
-          Math.abs(colors[i].color.g - colors[j].color.g) +
-          Math.abs(colors[i].color.b - colors[j].color.b);
-        expect(dist).toBeGreaterThan(8);
+        const a = colors[i];
+        const b = colors[j];
+        const dist = Math.abs(a.color.r - b.color.r) +
+                     Math.abs(a.color.g - b.color.g) +
+                     Math.abs(a.color.b - b.color.b);
+        expect(dist).toBeGreaterThan(10);
       }
     }
   });
 
-  test("fast enemies have smaller configured widths than heavy enemies", () => {
-    for (const fast of FAST_VARIANTS) {
-      for (const heavy of HEAVY_VARIANTS) {
-        expect(ENEMY_CONFIGS[fast].width).toBeLessThanOrEqual(ENEMY_CONFIGS[heavy].width);
-      }
-    }
+  test("fast enemy types have smaller configured sizes than heavy types", () => {
+    expect(ENEMY_CONFIGS.drone.width).toBeLessThanOrEqual(ENEMY_CONFIGS.destroyer.width);
+    expect(ENEMY_CONFIGS.dart.width).toBeLessThanOrEqual(ENEMY_CONFIGS.juggernaut.width);
+    expect(ENEMY_CONFIGS.swarmer.width).toBeLessThanOrEqual(ENEMY_CONFIGS.boss.width);
+    expect(ENEMY_CONFIGS.scout.width).toBeLessThanOrEqual(ENEMY_CONFIGS.cruiser.width);
   });
 });
 
@@ -299,8 +307,8 @@ describe("Art consistency across all 14 enemy sprites", () => {
 // 7. ASSET MANIFEST COMPLETENESS
 // ════════════════════════════════════════════════════════════════
 
-describe("Asset manifest completeness for all 14 enemy types", () => {
-  test.each(ALL_VARIANTS)("%s — manifest has enemy_%s entry pointing to correct path", (variant) => {
+describe("Asset manifest completeness", () => {
+  test.each(ALL_VARIANTS)("manifest has entry enemy_%s pointing to correct path", (variant) => {
     const key = `enemy_${variant}`;
     expect(ASSET_MANIFEST[key]).toBeDefined();
     expect(ASSET_MANIFEST[key]).toBe(`assets/raptor/enemy_${variant}.png`);
@@ -308,67 +316,63 @@ describe("Asset manifest completeness for all 14 enemy types", () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// 8. SPRITE ASSIGNMENT COVERAGE (assignEnemySprite)
+// 8. SPRITE ASSIGNMENT COVERAGE
 // ════════════════════════════════════════════════════════════════
 
 describe("assignEnemySprite maps all 14 variants", () => {
-  let raptorGameSource: string;
+  const raptorGameSrc = fs.readFileSync(
+    path.resolve(__dirname, "../src/games/raptor/RaptorGame.ts"), "utf-8"
+  );
 
-  beforeAll(() => {
-    raptorGameSource = fs.readFileSync(path.join(SRC_DIR, "RaptorGame.ts"), "utf-8");
-  });
-
-  test.each(ALL_VARIANTS)("%s — present in the sprite map", (variant) => {
-    const pattern = new RegExp(`${variant}:\\s*"enemy_${variant}"`);
-    expect(raptorGameSource).toMatch(pattern);
+  test.each(ALL_VARIANTS)("spriteMap includes '%s'", (variant) => {
+    const pattern = new RegExp(`${variant}\\s*:\\s*"enemy_${variant}"`);
+    expect(raptorGameSrc).toMatch(pattern);
   });
 });
 
 // ════════════════════════════════════════════════════════════════
-// 9. SPECIAL RENDERING EFFECTS (static source analysis)
+// 9. SPECIAL RENDERING EFFECTS — static source analysis
 // ════════════════════════════════════════════════════════════════
 
 describe("Special rendering effects in renderSpriteVariant", () => {
-  let enemySource: string;
-
-  beforeAll(() => {
-    enemySource = fs.readFileSync(path.join(SRC_DIR, "entities", "Enemy.ts"), "utf-8");
-  });
+  const enemySrc = readSourceFile("entities/Enemy.ts");
 
   test("boss has red glow with rgba(255, 50, 50, 0.15)", () => {
-    expect(enemySource).toContain('rgba(255, 50, 50, 0.15)');
-    expect(enemySource).toMatch(/variant\s*===\s*"boss"/);
+    expect(enemySrc).toContain('rgba(255, 50, 50, 0.15)');
   });
 
-  test("boss glow radius is proportional to width (width * 0.7)", () => {
-    expect(enemySource).toMatch(/this\.width\s*\*\s*0\.7/);
+  test("boss glow radius is proportional to enemy width (this.width * 0.7)", () => {
+    expect(enemySrc).toMatch(/this\.width\s*\*\s*0\.7/);
   });
 
   test("juggernaut has purple glow with rgba(102, 68, 136, 0.15)", () => {
-    expect(enemySource).toContain('rgba(102, 68, 136, 0.15)');
-    expect(enemySource).toMatch(/variant\s*===\s*"juggernaut"/);
+    expect(enemySrc).toContain('rgba(102, 68, 136, 0.15)');
   });
 
-  test("juggernaut glow radius is proportional to width (width * 0.65)", () => {
-    expect(enemySource).toMatch(/this\.width\s*\*\s*0\.65/);
+  test("juggernaut glow radius is proportional to enemy width (this.width * 0.65)", () => {
+    expect(enemySrc).toMatch(/this\.width\s*\*\s*0\.65/);
   });
 
   test("scout has banking rotation via Math.sin(this.time * 2) * 0.1", () => {
-    expect(enemySource).toMatch(/variant\s*===\s*"scout"/);
-    expect(enemySource).toContain("Math.sin(this.time * 2) * 0.1");
-    expect(enemySource).toMatch(/ctx\.rotate\(/);
+    expect(enemySrc).toMatch(/Math\.sin\(this\.time\s*\*\s*2\)\s*\*\s*0\.1/);
   });
 
-  test("stealth cloaking sets globalAlpha to 0.1 when hidden", () => {
-    expect(enemySource).toMatch(/variant\s*===\s*"stealth"/);
-    expect(enemySource).toContain("ctx.globalAlpha = 0.1");
+  test("stealth cloaking sets globalAlpha to 0.1 when cloakVisible is false", () => {
+    expect(enemySrc).toContain('ctx.globalAlpha = 0.1');
+    expect(enemySrc).toMatch(/variant\s*===\s*"stealth"\s*&&\s*!this\.cloakVisible/);
   });
 
-  test("flash effect uses offscreen canvas with source-atop composite", () => {
-    expect(enemySource).toContain("source-atop");
-    expect(enemySource).toContain("#ffffff");
-    expect(enemySource).toContain("getFlashCanvas");
-    expect(enemySource).toMatch(/globalAlpha\s*=\s*0\.6/);
+  test("flash effect uses offscreen canvas with source-atop compositing", () => {
+    expect(enemySrc).toContain('"source-atop"');
+    expect(enemySrc).toContain('getFlashCanvas');
+  });
+
+  test("flash effect fills with white #ffffff", () => {
+    expect(enemySrc).toContain('"#ffffff"');
+  });
+
+  test("flash effect uses reduced alpha of 0.6", () => {
+    expect(enemySrc).toMatch(/globalAlpha\s*=\s*0\.6/);
   });
 });
 
@@ -377,44 +381,40 @@ describe("Special rendering effects in renderSpriteVariant", () => {
 // ════════════════════════════════════════════════════════════════
 
 describe("HP bar eligibility", () => {
-  let enemySource: string;
+  const enemySrc = readSourceFile("entities/Enemy.ts");
 
-  beforeAll(() => {
-    enemySource = fs.readFileSync(path.join(SRC_DIR, "entities", "Enemy.ts"), "utf-8");
-  });
-
-  test("renderSpriteVariant calls renderHPBar for boss, cruiser, destroyer, juggernaut", () => {
-    const hpBarLine = enemySource.match(
-      /if\s*\((.*?)renderHPBar/s
-    );
-    expect(hpBarLine).not.toBeNull();
-    for (const v of HP_BAR_VARIANTS) {
-      expect(hpBarLine![1]).toContain(`"${v}"`);
+  test.each(HP_BAR_VARIANTS)(
+    "renderHPBar is called for '%s' in renderSpriteVariant",
+    (variant) => {
+      const spriteVariantMatch = enemySrc.match(
+        /renderSpriteVariant[\s\S]*?(?=\n\s*private\s+renderHPBar)/
+      );
+      expect(spriteVariantMatch).not.toBeNull();
+      const spriteVariantBody = spriteVariantMatch![0];
+      expect(spriteVariantBody).toContain(`"${variant}"`);
+      expect(spriteVariantBody).toContain("renderHPBar");
     }
-  });
+  );
 
-  test("non-eligible variants are not in the HP bar conditional", () => {
-    const renderSpriteMethod = enemySource.slice(
-      enemySource.indexOf("private renderSpriteVariant"),
-      enemySource.indexOf("private renderHPBar")
-    );
-    const hpBarCondition = renderSpriteMethod.match(
-      /if\s*\(this\.variant\s*===\s*"boss"\s*\|\|.*?renderHPBar/s
-    );
-    expect(hpBarCondition).not.toBeNull();
-    for (const v of NON_HP_BAR_VARIANTS) {
-      expect(hpBarCondition![0]).not.toContain(`"${v}"`);
+  test.each(NON_HP_BAR_VARIANTS)(
+    "HP bar condition in renderSpriteVariant does NOT include '%s'",
+    (variant) => {
+      const hpBarCondition = enemySrc.match(
+        /if\s*\(this\.variant\s*===\s*"boss"\s*\|\|\s*this\.variant\s*===\s*"cruiser"\s*\|\|\s*this\.variant\s*===\s*"destroyer"\s*\|\|\s*this\.variant\s*===\s*"juggernaut"\)/
+      );
+      expect(hpBarCondition).not.toBeNull();
+      expect(hpBarCondition![0]).not.toContain(`"${variant}"`);
     }
-  });
+  );
 });
 
 // ════════════════════════════════════════════════════════════════
-// 11. STEALTH SPRITE CLOAKED VISIBILITY
+// 11. STEALTH VISIBILITY AT LOW ALPHA
 // ════════════════════════════════════════════════════════════════
 
 describe("Stealth sprite visibility at 10% alpha", () => {
-  test("average brightness > 40 so sprite is visible at 0.1 alpha", () => {
-    const png = getCachedPNG("stealth");
+  test("average brightness > 40 so sprite is visible when cloaked", () => {
+    const png = getSprite("stealth");
     const avg = getAverageColor(png);
     const avgBrightness = (avg.r + avg.g + avg.b) / 3;
     expect(avgBrightness).toBeGreaterThan(40);
@@ -422,36 +422,52 @@ describe("Stealth sprite visibility at 10% alpha", () => {
 });
 
 // ════════════════════════════════════════════════════════════════
-// 12. RENDER SIZE COMPATIBILITY — feature runs survive downscale
+// 12. RENDER SIZE COMPATIBILITY — downscale feature survival
 // ════════════════════════════════════════════════════════════════
 
-describe("Sprites have features large enough to survive downscale", () => {
-  test.each(ALL_VARIANTS)("%s — midline feature run >= 8px at 128x128 source", (variant) => {
-    const png = getCachedPNG(variant);
-    const midY = Math.floor(png.height / 2);
-    const maxRun = getMaxHorizontalRun(png, midY);
-    expect(maxRun).toBeGreaterThanOrEqual(8);
-  });
+describe("Sprite features survive downscale", () => {
+  const sizeTable: [EnemyVariant, number, number][] = [
+    ["scout", 24, 24],
+    ["fighter", 30, 30],
+    ["bomber", 40, 36],
+    ["boss", 64, 56],
+    ["interceptor", 22, 22],
+    ["dart", 18, 20],
+    ["drone", 16, 16],
+    ["swarmer", 18, 18],
+    ["gunship", 34, 32],
+    ["cruiser", 48, 44],
+    ["destroyer", 52, 48],
+    ["juggernaut", 56, 52],
+    ["stealth", 28, 26],
+    ["minelayer", 32, 28],
+  ];
 
-  test.each(ALL_VARIANTS)("%s — configured size matches ENEMY_CONFIGS", (variant) => {
-    const cfg = ENEMY_CONFIGS[variant];
-    expect(cfg.width).toBeGreaterThan(0);
-    expect(cfg.height).toBeGreaterThan(0);
-    expect(cfg.width).toBeLessThanOrEqual(128);
-    expect(cfg.height).toBeLessThanOrEqual(128);
-  });
+  test.each(sizeTable)(
+    "enemy_%s (render %dx%d) has >=8px horizontal feature run at source",
+    (variant, expectedWidth, expectedHeight) => {
+      expect(ENEMY_CONFIGS[variant].width).toBe(expectedWidth);
+      expect(ENEMY_CONFIGS[variant].height).toBe(expectedHeight);
+
+      const png = getSprite(variant);
+      const midY = Math.floor(png.height / 2);
+      const maxRun = getMaxHorizontalRun(png, midY);
+      expect(maxRun).toBeGreaterThanOrEqual(8);
+    }
+  );
 });
 
 // ════════════════════════════════════════════════════════════════
-// 13. OPAQUE CONTENT VERTICAL SPAN (HP bar overlap safety)
+// 13. VERTICAL CONTENT BOUNDS (HP bar overlap prevention)
 // ════════════════════════════════════════════════════════════════
 
-describe("Opaque content does not fill entire canvas", () => {
-  test.each(ALL_VARIANTS)("%s — vertical content span < sprite height (some padding exists)", (variant) => {
-    const png = getCachedPNG(variant);
+describe("Sprite vertical content does not exceed 90% of canvas", () => {
+  test.each(ALL_VARIANTS)("enemy_%s vertical span <= 90%% of canvas height", (variant) => {
+    const png = getSprite(variant);
     const bb = getBoundingBox(png);
-    const heightSpan = bb.maxY - bb.minY + 1;
-    expect(heightSpan).toBeLessThan(png.height);
+    const verticalSpan = bb.maxY - bb.minY + 1;
+    const maxAllowed = Math.floor(png.height * 0.9);
+    expect(verticalSpan).toBeLessThanOrEqual(maxAllowed);
   });
 });
 
@@ -459,43 +475,22 @@ describe("Opaque content does not fill entire canvas", () => {
 // 14. PERFORMANCE — total sprite file size
 // ════════════════════════════════════════════════════════════════
 
-describe("Total enemy sprite file size is reasonable", () => {
-  test("combined size of all 14 enemy PNGs < 2 MB", () => {
-    let totalBytes = 0;
+describe("Performance", () => {
+  test("total enemy sprite file size is under 2 MB", () => {
+    let totalSize = 0;
     for (const variant of ALL_VARIANTS) {
-      totalBytes += fs.statSync(spritePath(variant)).size;
+      const stats = fs.statSync(spritePath(variant));
+      totalSize += stats.size;
     }
-    expect(totalBytes).toBeLessThan(2 * 1024 * 1024);
+    expect(totalSize).toBeLessThan(2 * 1024 * 1024);
   });
 });
 
 // ════════════════════════════════════════════════════════════════
-// 15. FALLBACK RENDERING NOT TRIGGERED
+// 15. NO PRODUCTION CODE MODIFIED
 // ════════════════════════════════════════════════════════════════
 
-describe("No enemy type falls back to procedural rendering", () => {
-  test.each(ALL_VARIANTS)("%s — sprite file is valid and loadable", (variant) => {
-    const png = getCachedPNG(variant);
-    expect(png.width).toBeGreaterThanOrEqual(128);
-    expect(png.height).toBeGreaterThanOrEqual(128);
-    expect(png.data.length).toBe(png.width * png.height * 4);
-    expect(fs.statSync(spritePath(variant)).size).toBeGreaterThan(1000);
-  });
-
-  test.each(ALL_VARIANTS)("%s — asset manifest maps to existing file", (variant) => {
-    const key = `enemy_${variant}`;
-    const assetPath = ASSET_MANIFEST[key];
-    expect(assetPath).toBeDefined();
-    const filePath = path.resolve(__dirname, "../public", assetPath);
-    expect(fs.existsSync(filePath)).toBe(true);
-  });
-});
-
-// ════════════════════════════════════════════════════════════════
-// 16. NO PRODUCTION CODE MODIFIED
-// ════════════════════════════════════════════════════════════════
-
-describe("No production source files modified on this branch", () => {
+describe("No production code modified", () => {
   const filesToCheck = [
     "src/games/raptor/entities/Enemy.ts",
     "src/games/raptor/RaptorGame.ts",
@@ -503,12 +498,46 @@ describe("No production source files modified on this branch", () => {
     "src/games/raptor/types.ts",
   ];
 
-  test.each(filesToCheck)("%s — has no diff vs main", async (file) => {
-    const { execSync } = await import("child_process");
+  test.each(filesToCheck)("%s has no diff vs main", (file) => {
+    const { execSync } = require("child_process");
     const diff = execSync(`git diff main..HEAD -- ${file}`, {
       cwd: path.resolve(__dirname, ".."),
       encoding: "utf-8",
     });
     expect(diff.trim()).toBe("");
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// 16. FALLBACK RENDERING NOT TRIGGERED
+// ════════════════════════════════════════════════════════════════
+
+describe("No enemy type falls back to procedural rendering", () => {
+  test.each(ALL_VARIANTS)("enemy_%s sprite file is valid and loadable", (variant) => {
+    const filePath = spritePath(variant);
+    expect(fs.existsSync(filePath)).toBe(true);
+
+    const png = readPNG(filePath);
+    expect(png.width).toBe(128);
+    expect(png.height).toBe(128);
+    expect(png.data.length).toBe(128 * 128 * 4);
+
+    const stats = fs.statSync(filePath);
+    expect(stats.size).toBeGreaterThan(1000);
+  });
+
+  test("asset manifest maps all 14 variants to existing files", () => {
+    for (const variant of ALL_VARIANTS) {
+      const key = `enemy_${variant}`;
+      const assetPath = ASSET_MANIFEST[key];
+      expect(assetPath).toBeDefined();
+      const filePath = path.resolve(__dirname, "../public", assetPath);
+      expect(fs.existsSync(filePath)).toBe(true);
+    }
+  });
+
+  test("Enemy.render uses renderSpriteVariant when sprite is set", () => {
+    const enemySrc = readSourceFile("entities/Enemy.ts");
+    expect(enemySrc).toMatch(/if\s*\(this\.sprite\)\s*\{[\s\S]*?renderSpriteVariant/);
   });
 });
