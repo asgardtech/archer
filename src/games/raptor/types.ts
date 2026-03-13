@@ -145,7 +145,8 @@ export type RaptorSoundEvent =
   | "ion_fire"
   | "ion_hit"
   | "rocket_fire"
-  | "mega_bomb_fire";
+  | "mega_bomb_fire"
+  | "dodge";
 
 export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun" | "rocket";
 

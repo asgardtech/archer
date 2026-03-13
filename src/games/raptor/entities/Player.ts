@@ -13,6 +13,8 @@ const PANEL_LIGHT_BASE_INTERVAL = 0.5;
 const SHIELD_REGEN_RATE = 2.5;
 const SHIELD_REGEN_DELAY = 4.0;
 const MAX_SHIELD = 100;
+const DODGE_DURATION = 0.3;
+const DODGE_COOLDOWN = 3.0;
 
 export class Player {
   public pos: Vec2;
@@ -26,6 +28,8 @@ export class Player {
   public invincibilityTimer = 0;
   public godMode = false;
   public dpr = 1;
+  public dodgeTimer = 0;
+  public dodgeCooldown = 0;
 
   private flashTimer = 0;
   /** @deprecated Retained for backward compatibility; procedural rendering is used instead. */
@@ -63,7 +67,12 @@ export class Player {
   get right(): number { return this.pos.x + this.width / 2 - HITBOX_INSET_X; }
   get top(): number { return this.pos.y - this.height / 2 + HITBOX_INSET_Y; }
   get bottom(): number { return this.pos.y + this.height / 2 - HITBOX_INSET_Y; }
-  get isInvincible(): boolean { return this.invincibilityTimer > 0; }
+  get isDodging(): boolean { return this.dodgeTimer > 0; }
+  get isInvincible(): boolean { return this.invincibilityTimer > 0 || this.dodgeTimer > 0; }
+
+  get dodgeCooldownFraction(): number {
+    return this.dodgeCooldown / DODGE_COOLDOWN;
+  }
 
   get isShieldRegenerating(): boolean {
     return this.alive
@@ -131,6 +140,26 @@ export class Player {
     }
   }
 
+  dodge(): boolean {
+    if (!this.alive) return false;
+    if (this.dodgeCooldown > 0) return false;
+    if (this.dodgeTimer > 0) return false;
+    if (this.invincibilityTimer > 0) return false;
+
+    this.dodgeTimer = DODGE_DURATION;
+    this.dodgeCooldown = DODGE_COOLDOWN;
+    return true;
+  }
+
+  updateDodge(dt: number): void {
+    if (this.dodgeTimer > 0) {
+      this.dodgeTimer = Math.max(0, this.dodgeTimer - dt);
+    }
+    if (this.dodgeCooldown > 0) {
+      this.dodgeCooldown = Math.max(0, this.dodgeCooldown - dt);
+    }
+  }
+
   takeDamage(amount: number): boolean {
     if (this.godMode) return false;
     if (this.isInvincible || !this.alive) return false;
@@ -161,6 +190,8 @@ export class Player {
     this.invincibilityTimer = 0;
     this.flashTimer = 0;
     this.shieldRegenTimer = 0;
+    this.dodgeTimer = 0;
+    this.dodgeCooldown = 0;
     this.bankAngle = 0;
     this.runningLightPhase = 0;
     this.lastDx = 0;
@@ -177,8 +208,14 @@ export class Player {
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.alive) return;
 
-    if (this.isInvincible && Math.floor(this.flashTimer * 10) % 2 === 0) {
+    if (this.invincibilityTimer > 0 && !this.isDodging
+        && Math.floor(this.flashTimer * 10) % 2 === 0) {
       return;
+    }
+
+    if (this.isDodging) {
+      ctx.save();
+      ctx.globalAlpha = 0.3 + 0.15 * Math.sin(this.dodgeTimer * 40);
     }
 
     if (this.godMode) {
@@ -209,5 +246,9 @@ export class Player {
       state,
       this.dpr
     );
+
+    if (this.isDodging) {
+      ctx.restore();
+    }
   }
 }
