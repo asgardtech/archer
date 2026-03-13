@@ -3,7 +3,7 @@ import { Obstacle } from "../entities/Obstacle";
 import { UpgradeType, ObstacleType } from "../types";
 import { LevelConfig } from "../levels";
 
-const UPGRADE_TYPES: UpgradeType[] = ["multi-shot", "piercing", "rapid-fire", "bonus-arrows"];
+const UPGRADE_TYPES: UpgradeType[] = ["multi-shot", "piercing", "rapid-fire", "bonus-arrows", "shield"];
 
 const DEFAULT_CONFIG: LevelConfig = {
   level: 1,

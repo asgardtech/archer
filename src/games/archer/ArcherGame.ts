@@ -26,11 +26,18 @@ const MILESTONE_INTERVAL = 25;
 const MILESTONE_AMMO_BONUS = 5;
 const BOSS_KILL_AMMO_BONUS = 15;
 
+const SHIELD_DURATION = 5.0;
+const SHIELD_COOLDOWN = 15.0;
+const MAX_SHIELD_CHARGES = 3;
+const INITIAL_SHIELD_CHARGES = 1;
+const SHIELD_EXPIRE_WARN = 1.5;
+
 const UPGRADE_ICON_KEYS: Record<UpgradeType, string> = {
   "multi-shot": "powerup_multishot",
   "piercing": "powerup_piercing",
   "rapid-fire": "powerup_rapidfire",
   "bonus-arrows": "powerup_bonusarrows",
+  "shield": "powerup_shield",
 };
 
 const WEAPON_LABELS: Record<string, string> = {
@@ -77,6 +84,10 @@ export class ArcherGame implements IGame {
   private audio: AudioManager;
   private sound: SoundSystem;
   private assetLoader: AssetLoader;
+  private shieldActive = false;
+  private shieldTimer = 0;
+  private shieldCooldownTimer = 0;
+  private shieldCharges = INITIAL_SHIELD_CHARGES;
   private lowAmmoTriggered = false;
 
   private boundResize: (() => void) | null = null;
@@ -374,6 +385,31 @@ export class ArcherGame implements IGame {
     }
   }
 
+  private handleShieldInput(): void {
+    if (this.input.shieldPressed && !this.shieldActive
+        && this.shieldCooldownTimer <= 0 && this.shieldCharges > 0) {
+      this.shieldActive = true;
+      this.shieldTimer = SHIELD_DURATION;
+      this.shieldCharges--;
+      this.sound.play("shield_activate");
+    }
+
+    if (this.input.wasClicked && this.input.isTouchDevice) {
+      if (this.hud.isShieldButtonHit(
+        this.input.mousePos.x, this.input.mousePos.y,
+        this.width, this.height
+      )) {
+        if (!this.shieldActive && this.shieldCooldownTimer <= 0 && this.shieldCharges > 0) {
+          this.shieldActive = true;
+          this.shieldTimer = SHIELD_DURATION;
+          this.shieldCharges--;
+          this.sound.play("shield_activate");
+        }
+        this.input.wasClicked = false;
+      }
+    }
+  }
+
   private updatePlaying(dt: number): void {
     this.bow.update(this.input.mousePos);
     if (this.landmark) {
@@ -384,6 +420,18 @@ export class ArcherGame implements IGame {
     }
 
     this.handleWeaponInput();
+    this.handleShieldInput();
+
+    if (this.shieldActive) {
+      this.shieldTimer -= dt;
+      if (this.shieldTimer <= 0) {
+        this.shieldActive = false;
+        this.shieldCooldownTimer = SHIELD_COOLDOWN;
+      }
+    }
+    if (this.shieldCooldownTimer > 0) {
+      this.shieldCooldownTimer -= dt;
+    }
 
     if (this.input.wasClicked && this.arrowsRemaining > 0) {
       const weapon = this.weaponManager.currentWeapon;
@@ -440,11 +488,15 @@ export class ArcherGame implements IGame {
 
     const obstacleHits = this.collisions.checkObstacles(this.arrows, this.obstacles);
     for (const hit of obstacleHits) {
-      const penalty = OBSTACLE_PENALTIES[hit.obstacle.obstacleType];
-      this.score = Math.max(0, this.score - penalty.score);
-      this.arrowsRemaining = Math.max(0, this.arrowsRemaining - penalty.arrows);
-      this.hud.showPenalty(penalty.score);
-      this.sound.play("obstacle_hit");
+      if (this.shieldActive) {
+        this.sound.play("shield_block");
+      } else {
+        const penalty = OBSTACLE_PENALTIES[hit.obstacle.obstacleType];
+        this.score = Math.max(0, this.score - penalty.score);
+        this.arrowsRemaining = Math.max(0, this.arrowsRemaining - penalty.arrows);
+        this.hud.showPenalty(penalty.score);
+        this.sound.play("obstacle_hit");
+      }
     }
 
     const hits = this.collisions.check(this.arrows, this.balloons);
@@ -465,16 +517,28 @@ export class ArcherGame implements IGame {
       }
 
       if (hit.grantedUpgrade) {
-        const result = this.weaponManager.collectUpgrade(hit.grantedUpgrade, (amount: number) => {
-          this.arrowsRemaining += amount;
-          this.hud.showAmmoGain(amount);
-          this.sound.play("ammo_gain");
-        });
+        if (hit.grantedUpgrade === "shield") {
+          if (this.shieldCharges < MAX_SHIELD_CHARGES) {
+            this.shieldCharges++;
+            this.hud.showShieldGain();
+            this.sound.play("upgrade_activate");
+          } else {
+            this.arrowsRemaining += 5;
+            this.hud.showAmmoGain(5);
+            this.sound.play("ammo_gain");
+          }
+        } else {
+          const result = this.weaponManager.collectUpgrade(hit.grantedUpgrade, (amount: number) => {
+            this.arrowsRemaining += amount;
+            this.hud.showAmmoGain(amount);
+            this.sound.play("ammo_gain");
+          });
 
-        if (result.isNewWeapon) {
-          this.sound.play("upgrade_activate");
-          const label = WEAPON_LABELS[hit.grantedUpgrade] ?? hit.grantedUpgrade;
-          this.hud.showWeaponNotification(label);
+          if (result.isNewWeapon) {
+            this.sound.play("upgrade_activate");
+            const label = WEAPON_LABELS[hit.grantedUpgrade] ?? hit.grantedUpgrade;
+            this.hud.showWeaponNotification(label);
+          }
         }
       }
     }
@@ -542,6 +606,10 @@ export class ArcherGame implements IGame {
     this.totalScore = 0;
     this.arrowsRemaining = 0;
     this.lowAmmoTriggered = false;
+    this.shieldActive = false;
+    this.shieldTimer = 0;
+    this.shieldCooldownTimer = 0;
+    this.shieldCharges = INITIAL_SHIELD_CHARGES;
     this.sound.stopLowAmmoWarning();
     this.weaponManager.resetAll();
     this.startLevel(0);
@@ -555,6 +623,9 @@ export class ArcherGame implements IGame {
     this.arrowsRemaining += config.arrowsGranted;
     this.balloonsEscaped = 0;
     this.nextAmmoMilestone = MILESTONE_INTERVAL;
+    this.shieldActive = false;
+    this.shieldTimer = 0;
+    this.shieldCooldownTimer = 0;
     this.balloons = [];
     this.arrows = [];
     this.obstacles = [];
@@ -601,7 +672,8 @@ export class ArcherGame implements IGame {
       for (const arrow of this.arrows) {
         arrow.render(this.ctx);
       }
-      this.bow.render(this.ctx, this.arrowsRemaining > 0, this.weaponManager.currentWeapon);
+      this.bow.render(this.ctx, this.arrowsRemaining > 0, this.weaponManager.currentWeapon,
+        this.shieldActive, this.shieldTimer, SHIELD_EXPIRE_WARN);
     }
 
     this.hud.render(
@@ -618,7 +690,12 @@ export class ArcherGame implements IGame {
       config.name,
       this.totalScore + (this.state === "playing" ? this.score : 0),
       config.landmark.label,
-      config.landmark.description
+      config.landmark.description,
+      this.shieldCharges,
+      this.shieldActive,
+      this.shieldCooldownTimer,
+      SHIELD_COOLDOWN,
+      this.input.isTouchDevice
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }
