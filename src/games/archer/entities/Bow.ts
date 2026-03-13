@@ -1,9 +1,9 @@
-import { Vec2, UpgradeState } from "../types";
+import { Vec2, WeaponType } from "../types";
 
 const BOW_RADIUS = 40;
 const SPRITE_SIZE = 80;
 
-const UPGRADE_GLOW_COLORS: Record<string, string> = {
+const WEAPON_GLOW_COLORS: Record<string, string> = {
   "multi-shot": "rgba(52, 152, 219, 0.6)",
   "piercing": "rgba(230, 126, 34, 0.6)",
   "rapid-fire": "rgba(241, 196, 15, 0.6)",
@@ -39,17 +39,17 @@ export class Bow {
     return [this.angle];
   }
 
-  private getSpriteKey(activeUpgrades?: ReadonlyArray<UpgradeState>): string {
-    if (activeUpgrades) {
-      if (activeUpgrades.some(u => u.type === "multi-shot")) return "bow_multishot";
-      if (activeUpgrades.some(u => u.type === "piercing")) return "bow_piercing";
-      if (activeUpgrades.some(u => u.type === "rapid-fire")) return "bow_rapidfire";
+  private getSpriteKey(weapon: WeaponType): string {
+    switch (weapon) {
+      case "multi-shot": return "bow_multishot";
+      case "piercing":   return "bow_piercing";
+      case "rapid-fire": return "bow_rapidfire";
+      default:           return "bow_default";
     }
-    return "bow_default";
   }
 
-  render(ctx: CanvasRenderingContext2D, hasAmmo: boolean, activeUpgrades?: ReadonlyArray<UpgradeState>): void {
-    const spriteKey = this.getSpriteKey(activeUpgrades);
+  render(ctx: CanvasRenderingContext2D, hasAmmo: boolean, weapon: WeaponType = "default"): void {
+    const spriteKey = this.getSpriteKey(weapon);
     const sprite = this.sprites.get(spriteKey);
 
     ctx.save();
@@ -59,17 +59,13 @@ export class Bow {
     if (sprite) {
       ctx.drawImage(sprite, -SPRITE_SIZE / 2, -SPRITE_SIZE / 2, SPRITE_SIZE, SPRITE_SIZE);
 
-      if (activeUpgrades) {
-        for (const u of activeUpgrades) {
-          const glowColor = UPGRADE_GLOW_COLORS[u.type];
-          if (glowColor) {
-            ctx.beginPath();
-            ctx.arc(0, 0, BOW_RADIUS + 8, -0.9, 0.9, false);
-            ctx.strokeStyle = glowColor;
-            ctx.lineWidth = 5;
-            ctx.stroke();
-          }
-        }
+      const glowColor = WEAPON_GLOW_COLORS[weapon];
+      if (glowColor) {
+        ctx.beginPath();
+        ctx.arc(0, 0, BOW_RADIUS + 8, -0.9, 0.9, false);
+        ctx.strokeStyle = glowColor;
+        ctx.lineWidth = 5;
+        ctx.stroke();
       }
 
       if (hasAmmo) {
@@ -89,24 +85,20 @@ export class Bow {
         ctx.fill();
       }
     } else {
-      this.renderFallback(ctx, hasAmmo, activeUpgrades);
+      this.renderFallback(ctx, hasAmmo, weapon);
     }
 
     ctx.restore();
   }
 
-  private renderFallback(ctx: CanvasRenderingContext2D, hasAmmo: boolean, activeUpgrades?: ReadonlyArray<UpgradeState>): void {
-    if (activeUpgrades) {
-      for (const u of activeUpgrades) {
-        const glowColor = UPGRADE_GLOW_COLORS[u.type];
-        if (glowColor) {
-          ctx.beginPath();
-          ctx.arc(0, 0, BOW_RADIUS + 8, -0.9, 0.9, false);
-          ctx.strokeStyle = glowColor;
-          ctx.lineWidth = 5;
-          ctx.stroke();
-        }
-      }
+  private renderFallback(ctx: CanvasRenderingContext2D, hasAmmo: boolean, weapon: WeaponType): void {
+    const glowColor = WEAPON_GLOW_COLORS[weapon];
+    if (glowColor) {
+      ctx.beginPath();
+      ctx.arc(0, 0, BOW_RADIUS + 8, -0.9, 0.9, false);
+      ctx.strokeStyle = glowColor;
+      ctx.lineWidth = 5;
+      ctx.stroke();
     }
 
     ctx.beginPath();

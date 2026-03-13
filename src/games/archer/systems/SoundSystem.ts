@@ -65,6 +65,9 @@ export class SoundSystem {
       case "landmark_liberated":
         this.playLandmarkLiberated();
         break;
+      case "weapon_switch":
+        this.playWeaponSwitch();
+        break;
     }
   }
 
@@ -223,6 +226,23 @@ export class SoundSystem {
       ],
       180
     );
+  }
+
+  private playWeaponSwitch(): void {
+    this.audio.playTone(880, 0.06, "sine", {
+      attack: 0.005,
+      decay: 0.01,
+      sustain: 0.3,
+      release: 0.02,
+    });
+    setTimeout(() => {
+      this.audio.playTone(1100, 0.06, "sine", {
+        attack: 0.005,
+        decay: 0.01,
+        sustain: 0.3,
+        release: 0.02,
+      });
+    }, 50);
   }
 
   private startLowAmmoWarning(): void {

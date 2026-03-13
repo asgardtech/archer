@@ -5,6 +5,7 @@ export class InputManager {
   public isMouseDown = false;
   public wasClicked = false;
   public wasEscPressed = false;
+  public weaponSlotPressed: number | null = null;
   public readonly isTouchDevice: boolean;
 
   private canvas: HTMLCanvasElement;
@@ -45,6 +46,7 @@ export class InputManager {
   consume(): void {
     this.wasClicked = false;
     this.wasEscPressed = false;
+    this.weaponSlotPressed = null;
   }
 
   destroy(): void {
@@ -109,6 +111,9 @@ export class InputManager {
   private onKeyDown(e: KeyboardEvent): void {
     if (e.key === "Escape") {
       this.wasEscPressed = true;
+    }
+    if (e.key >= "1" && e.key <= "4") {
+      this.weaponSlotPressed = parseInt(e.key, 10);
     }
   }
 

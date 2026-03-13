@@ -33,6 +33,7 @@ function createMockCanvas(): HTMLCanvasElement {
     translate: jest.fn(),
     rotate: jest.fn(),
     createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
+    roundRect: jest.fn(),
   };
 
   const canvas = {
@@ -582,7 +583,7 @@ describe("HUD penalty text", () => {
     const fillTextCalls = (canvas as any).__fillTextCalls;
 
     hud.showPenalty(3);
-    hud.render(ctx as any, "playing", 0, 100, 800, 600, [], 0.016);
+    hud.render(ctx as any, "playing", 0, 100, 800, 600, "default", new Set(["default"] as const), 0.016);
 
     const penaltyCall = fillTextCalls.find(
       (c: { text: string }) => c.text.includes("3") && c.text.includes("\u2212")
@@ -598,14 +599,14 @@ describe("HUD penalty text", () => {
     hud.showPenalty(3);
 
     // Render with enough dt to exceed 1.5s duration
-    hud.render(ctx as any, "playing", 0, 100, 800, 600, [], 2.0);
+    hud.render(ctx as any, "playing", 0, 100, 800, 600, "default", new Set(["default"] as const), 2.0);
 
     const fillTextCalls2: Array<{ text: string }> = [];
     ctx.fillText.mockImplementation((text: string, x: number, y: number) => {
       fillTextCalls2.push({ text });
     });
 
-    hud.render(ctx as any, "playing", 0, 100, 800, 600, [], 0.016);
+    hud.render(ctx as any, "playing", 0, 100, 800, 600, "default", new Set(["default"] as const), 0.016);
 
     const penaltyCall = fillTextCalls2.find(
       (c: { text: string }) => c.text.includes("\u2212")

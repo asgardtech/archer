@@ -4,7 +4,6 @@ import { Arrow } from "../src/games/archer/entities/Arrow";
 import { CollisionSystem } from "../src/games/archer/systems/CollisionSystem";
 import { Spawner } from "../src/games/archer/systems/Spawner";
 import { HUD } from "../src/games/archer/rendering/HUD";
-import { UpgradeManager } from "../src/games/archer/systems/UpgradeManager";
 
 // ============================================================
 // Helpers (reused from existing tests)
@@ -37,6 +36,7 @@ function createMockCanvas(): HTMLCanvasElement {
     translate: jest.fn(),
     rotate: jest.fn(),
     createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
+    roundRect: jest.fn(),
   };
 
   const canvas = {
@@ -97,7 +97,7 @@ function getGameInternals(game: any) {
     set nextAmmoMilestone(v: number) { game["nextAmmoMilestone"] = v; },
     get balloonsEscaped() { return game["balloonsEscaped"]; },
     set balloonsEscaped(v: number) { game["balloonsEscaped"] = v; },
-    get upgradeManager() { return game["upgradeManager"]; },
+    get weaponManager() { return game["weaponManager"]; },
     get hud() { return game["hud"]; },
     get spawner() { return game["spawner"]; },
     resetGame: () => game["resetGame"](),
@@ -230,7 +230,7 @@ describe("Scenario: Level complete screen is shown between levels", () => {
     const ctx = (canvas as any).__ctx;
     const fillTextCalls = (canvas as any).__fillTextCalls;
 
-    hud.render(ctx as any, "level_complete", 35, 50, 800, 600, [], 0, 2, "Forest", 55);
+    hud.render(ctx as any, "level_complete", 35, 50, 800, 600, "default", new Set(["default"] as const), 0, 2, "Forest", 55);
 
     const levelCompleteText = fillTextCalls.find(
       (c: { text: string }) => c.text.includes("Level 2 Complete!")
@@ -472,7 +472,7 @@ describe("Scenario: HUD displays current level information during gameplay", () 
     const ctx = (canvas as any).__ctx;
     const fillTextCalls = (canvas as any).__fillTextCalls;
 
-    hud.render(ctx as any, "playing", 10, 60, 800, 600, [], 0.016, 3, "Mountains", 45);
+    hud.render(ctx as any, "playing", 10, 60, 800, 600, "default", new Set(["default"] as const), 0.016, 3, "Mountains", 45);
 
     const levelText = fillTextCalls.find(
       (c: { text: string }) => c.text.includes("Level 3") && c.text.includes("Mountains")
@@ -520,7 +520,7 @@ describe("Scenario: Victory screen displays the total score across all levels", 
     const ctx = (canvas as any).__ctx;
     const fillTextCalls = (canvas as any).__fillTextCalls;
 
-    hud.render(ctx as any, "victory", 0, 0, 800, 600, [], 0, 5, "Sky Fortress", 350);
+    hud.render(ctx as any, "victory", 0, 0, 800, 600, "default", new Set(["default"] as const), 0, 5, "Sky Fortress", 350);
 
     const victoryText = fillTextCalls.find(
       (c: { text: string }) => c.text.includes("Victory!")
@@ -589,7 +589,7 @@ describe("Scenario: Game over screen shows level reached and total score", () =>
     const ctx = (canvas as any).__ctx;
     const fillTextCalls = (canvas as any).__fillTextCalls;
 
-    hud.render(ctx as any, "gameover", 0, 0, 800, 600, [], 0, 3, "Mountains", 105);
+    hud.render(ctx as any, "gameover", 0, 0, 800, 600, "default", new Set(["default"] as const), 0, 3, "Mountains", 105);
 
     const levelText = fillTextCalls.find(
       (c: { text: string }) => c.text.includes("Level 3") && c.text.includes("Mountains")
@@ -689,22 +689,24 @@ describe("Scenario: Boss alive when level target is reached", () => {
   });
 });
 
-describe("Scenario: Active upgrades are cleared between levels", () => {
-  it("upgrades are reset when advancing to next level", () => {
+describe("Scenario: Weapon unlocks persist between levels", () => {
+  it("unlocked weapons persist when advancing to next level", () => {
     const canvas = createMockCanvas();
     setupDom(canvas);
     const game = new Game("test-canvas");
     const internals = getGameInternals(game);
 
     internals.resetGame();
-    internals.upgradeManager.activate("multi-shot");
+    internals.weaponManager.unlock("multi-shot");
+    internals.weaponManager.switchTo("multi-shot");
 
-    expect(internals.upgradeManager.hasUpgrade("multi-shot")).toBe(true);
+    expect(internals.weaponManager.isUnlocked("multi-shot")).toBe(true);
+    expect(internals.weaponManager.currentWeapon).toBe("multi-shot");
 
     internals.startLevel(1); // advance to level 2
 
-    expect(internals.upgradeManager.hasUpgrade("multi-shot")).toBe(false);
-    expect(internals.upgradeManager.getActive()).toHaveLength(0);
+    expect(internals.weaponManager.isUnlocked("multi-shot")).toBe(true);
+    expect(internals.weaponManager.currentWeapon).toBe("multi-shot");
   });
 });
 
@@ -914,7 +916,7 @@ describe("Victory HUD renders correct content", () => {
     const ctx = (canvas as any).__ctx;
     const fillTextCalls = (canvas as any).__fillTextCalls;
 
-    hud.render(ctx as any, "victory", 0, 0, 800, 600, [], 0, 5, "Sky Fortress", 275);
+    hud.render(ctx as any, "victory", 0, 0, 800, 600, "default", new Set(["default"] as const), 0, 5, "Sky Fortress", 275);
 
     const conqueredText = fillTextCalls.find(
       (c: { text: string }) => c.text.includes("conquered all 5 levels")
@@ -928,7 +930,7 @@ describe("Victory HUD renders correct content", () => {
     const ctx = (canvas as any).__ctx;
     const fillTextCalls = (canvas as any).__fillTextCalls;
 
-    hud.render(ctx as any, "victory", 0, 0, 800, 600, [], 0, 5, "Sky Fortress", 275);
+    hud.render(ctx as any, "victory", 0, 0, 800, 600, "default", new Set(["default"] as const), 0, 5, "Sky Fortress", 275);
 
     const returnText = fillTextCalls.find(
       (c: { text: string }) =>
