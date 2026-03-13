@@ -5,6 +5,8 @@ const SHRINK_AMOUNT = 30;
 const WIDE_AMOUNT = 40;
 const SHIELD_DURATION = 12;
 const SHIELD_EXPIRE_WARN = 3;
+const DEFLECT_WINDOW = 0.3;
+const DEFLECT_COOLDOWN = 1.5;
 
 export class Paddle {
   public x: number;
@@ -16,12 +18,27 @@ export class Paddle {
   public wideTimer = 0;
   public shieldActive = false;
   public shieldTimer = 0;
+  public deflectTimer = 0;
+  public deflectCooldownTimer = 0;
 
   constructor(canvasWidth: number, canvasHeight: number) {
     this.baseWidth = 100;
     this.width = this.baseWidth;
     this.x = canvasWidth / 2;
     this.y = canvasHeight - 30;
+  }
+
+  get isDeflecting(): boolean {
+    return this.deflectTimer > 0;
+  }
+
+  get canDeflect(): boolean {
+    return this.deflectCooldownTimer <= 0 && this.deflectTimer <= 0;
+  }
+
+  get deflectCooldownFraction(): number {
+    if (this.deflectCooldownTimer <= 0) return 0;
+    return this.deflectCooldownTimer / DEFLECT_COOLDOWN;
   }
 
   get left(): number {
@@ -63,6 +80,21 @@ export class Paddle {
         this.shieldActive = false;
       }
     }
+
+    if (this.deflectTimer > 0) {
+      this.deflectTimer -= dt;
+      if (this.deflectTimer <= 0) {
+        this.deflectTimer = 0;
+        this.deflectCooldownTimer = DEFLECT_COOLDOWN;
+      }
+    }
+
+    if (this.deflectCooldownTimer > 0) {
+      this.deflectCooldownTimer -= dt;
+      if (this.deflectCooldownTimer <= 0) {
+        this.deflectCooldownTimer = 0;
+      }
+    }
   }
 
   applyShrink(): boolean {
@@ -72,6 +104,12 @@ export class Paddle {
     this.shrinkTimer = 5;
     this.recalcWidth();
     return false;
+  }
+
+  deflect(): boolean {
+    if (this.deflectCooldownTimer > 0 || this.deflectTimer > 0) return false;
+    this.deflectTimer = DEFLECT_WINDOW;
+    return true;
   }
 
   activateShield(): void {
@@ -98,6 +136,8 @@ export class Paddle {
     this.wideTimer = 0;
     this.shieldActive = false;
     this.shieldTimer = 0;
+    this.deflectTimer = 0;
+    this.deflectCooldownTimer = 0;
   }
 
   getState(): PaddleState {
@@ -110,6 +150,9 @@ export class Paddle {
       shrinkTimer: this.shrinkTimer,
       shieldActive: this.shieldActive,
       shieldTimer: this.shieldTimer,
+      deflectTimer: this.deflectTimer,
+      deflectCooldownTimer: this.deflectCooldownTimer,
+      isDeflecting: this.isDeflecting,
     };
   }
 
@@ -143,6 +186,10 @@ export class Paddle {
     if (this.shieldActive) {
       this.renderShield(ctx);
     }
+
+    if (this.isDeflecting) {
+      this.renderDeflect(ctx);
+    }
   }
 
   private renderShield(ctx: CanvasRenderingContext2D): void {
@@ -164,6 +211,28 @@ export class Paddle {
     ctx.fill();
 
     ctx.strokeStyle = `rgba(0, 220, 255, ${alpha + 0.2})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, Math.PI, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  private renderDeflect(ctx: CanvasRenderingContext2D): void {
+    const cx = this.x;
+    const cy = this.top;
+    const rx = this.width / 2 + 4;
+    const ry = 12;
+    const progress = this.deflectTimer / DEFLECT_WINDOW;
+
+    ctx.save();
+    ctx.fillStyle = `rgba(255, 255, 100, ${0.4 * progress})`;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, Math.PI, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = `rgba(255, 255, 200, ${0.7 * progress})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.ellipse(cx, cy, rx, ry, 0, Math.PI, 0);

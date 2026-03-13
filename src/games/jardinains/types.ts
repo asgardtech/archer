@@ -23,6 +23,9 @@ export interface PaddleState {
   shrinkTimer: number;
   shieldActive: boolean;
   shieldTimer: number;
+  deflectTimer: number;
+  deflectCooldownTimer: number;
+  isDeflecting: boolean;
 }
 
 export interface BallState {
@@ -63,6 +66,7 @@ export interface FlowerPotEntity {
   pos: Vec2;
   vel: Vec2;
   alive: boolean;
+  deflected: boolean;
 }
 
 export interface PowerUpEntity {
@@ -88,7 +92,9 @@ export type JardinainsSoundEvent =
   | "victory"
   | "menu_start"
   | "shield_activate"
-  | "shield_block";
+  | "shield_block"
+  | "pot_deflect"
+  | "pot_hit_gnome";
 
 export interface JardinainsLevelConfig {
   level: number;
