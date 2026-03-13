@@ -211,7 +211,7 @@ export class Balloon {
 
     if (this.upgradeType) {
       if (this.upgradeIcon) {
-        const iconSize = r * 0.8;
+        const iconSize = r * 1.1;
         ctx.drawImage(this.upgradeIcon, -iconSize / 2, -iconSize / 2, iconSize, iconSize);
       } else {
         ctx.fillStyle = "#333";
