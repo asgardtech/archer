@@ -265,6 +265,8 @@ export class RaptorGame implements IGame {
     this.sound.destroy();
     this.audio.destroy();
 
+    this.canvas.style.cursor = "";
+
     if (this.boundResize) {
       window.removeEventListener("resize", this.boundResize);
       window.removeEventListener("orientationchange", this.boundResize);
@@ -528,6 +530,16 @@ export class RaptorGame implements IGame {
         break;
     }
     this.input.consume();
+    this.updateCursorVisibility();
+  }
+
+  private updateCursorVisibility(): void {
+    const shouldHide =
+      this.state === "playing" &&
+      !this.settingsOpen &&
+      !this.devConsole.isOpen;
+
+    this.canvas.style.cursor = shouldHide ? "none" : "";
   }
 
   private updateBackground(dt: number): void {
