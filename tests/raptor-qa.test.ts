@@ -773,15 +773,19 @@ describe("Scenario: Boss is defeated", () => {
 // ════════════════════════════════════════════════════════════════
 
 describe("Scenario: Level completes when all waves and boss are defeated", () => {
-  test("spawner reports level complete when all waves done (no boss)", () => {
+  test("spawner reports level complete when all waves done and boss defeated", () => {
     const spawner = new EnemySpawner();
-    spawner.configure(LEVELS[0]); // Level 1 - no boss
+    spawner.configure(LEVELS[0]); // Level 1 - has boss
 
     for (let t = 0; t < 100; t += 0.1) {
       spawner.update(0.1, 800);
     }
 
     expect(spawner.allWavesComplete).toBe(true);
+    expect(spawner.isLevelComplete).toBe(false);
+
+    spawner.spawnBoss(800);
+    spawner.markBossDefeated();
     expect(spawner.isLevelComplete).toBe(true);
   });
 
@@ -886,7 +890,7 @@ describe("Scenario: Level difficulty increases progressively", () => {
   });
 
   test("boss-enabled levels should have increasing boss HP within each act", () => {
-    const act1Bosses = LEVELS.filter((l) => l.level >= 3 && l.level <= 5 && l.bossEnabled && l.bossConfig);
+    const act1Bosses = LEVELS.filter((l) => l.level >= 1 && l.level <= 5 && l.bossEnabled && l.bossConfig);
     for (let i = 1; i < act1Bosses.length; i++) {
       expect(act1Bosses[i].bossConfig!.hitPoints).toBeGreaterThan(
         act1Bosses[i - 1].bossConfig!.hitPoints
@@ -901,15 +905,9 @@ describe("Scenario: Level difficulty increases progressively", () => {
     expect(act2Bosses[act2Bosses.length - 1].bossConfig!.hitPoints).toBe(100);
   });
 
-  test("level 1 should not have a boss", () => {
-    expect(LEVELS[0].bossEnabled).toBe(false);
-  });
-
-  test("level 2 should not have a boss", () => {
-    expect(LEVELS[1].bossEnabled).toBe(false);
-  });
-
-  test("levels 3-5 should have bosses", () => {
+  test("levels 1-5 should have bosses", () => {
+    expect(LEVELS[0].bossEnabled).toBe(true);
+    expect(LEVELS[1].bossEnabled).toBe(true);
     expect(LEVELS[2].bossEnabled).toBe(true);
     expect(LEVELS[3].bossEnabled).toBe(true);
     expect(LEVELS[4].bossEnabled).toBe(true);
@@ -930,8 +928,13 @@ describe("Scenario: Level difficulty increases progressively", () => {
     expect(LEVELS[4].powerUpDropChance).toBeCloseTo(0.18);
   });
 
-  test("level 3 boss has HP 20, level 4 boss has HP 30, level 5 boss has HP 50", () => {
+  test("level 1 boss has HP 10, level 2 boss has HP 15, level 3 boss has HP 20", () => {
+    expect(LEVELS[0].bossConfig!.hitPoints).toBe(10);
+    expect(LEVELS[1].bossConfig!.hitPoints).toBe(15);
     expect(LEVELS[2].bossConfig!.hitPoints).toBe(20);
+  });
+
+  test("level 4 boss has HP 30, level 5 boss has HP 50", () => {
     expect(LEVELS[3].bossConfig!.hitPoints).toBe(30);
     expect(LEVELS[4].bossConfig!.hitPoints).toBe(50);
   });
@@ -1749,7 +1752,12 @@ describe("Scenario: EnemySpawner detailed behavior", () => {
 
   test("boss should not spawn on non-boss levels", () => {
     const spawner = new EnemySpawner();
-    spawner.configure(LEVELS[0]);
+    const noBossConfig: RaptorLevelConfig = {
+      ...LEVELS[0],
+      bossEnabled: false,
+      bossConfig: undefined,
+    };
+    spawner.configure(noBossConfig);
 
     for (let t = 0; t < 100; t += 0.1) {
       spawner.update(0.1, 800);
