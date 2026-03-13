@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorPowerUpType, WeaponType } from "../types";
+import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER } from "../types";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
 import { ShipRenderer } from "./ShipRenderer";
@@ -414,7 +414,8 @@ export class HUD {
     bombs?: number,
     weaponTier?: number,
     isShieldRegenerating?: boolean,
-    dodgeCooldownFraction?: number
+    dodgeCooldownFraction?: number,
+    inventory?: ReadonlyMap<WeaponType, number>
   ): void {
     switch (state) {
       case "loading":
@@ -426,10 +427,10 @@ export class HUD {
       case "briefing":
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.completionLines,
           `Score: ${score}`,
@@ -631,7 +632,8 @@ export class HUD {
     bombs?: number,
     weaponTier?: number,
     isShieldRegenerating?: boolean,
-    dodgeCooldownFraction?: number
+    dodgeCooldownFraction?: number,
+    inventory?: ReadonlyMap<WeaponType, number>
   ): void {
     ctx.save();
 
@@ -677,6 +679,11 @@ export class HUD {
     this.renderDodgeCooldown(ctx, dodgeCooldownFraction ?? 0, 10, 52);
     this.renderTouchBombButton(ctx, bombs ?? 0, width, height);
     this.renderTouchDodgeButton(ctx, dodgeCooldownFraction ?? 0, width, height);
+
+    if (inventory && inventory.size > 1) {
+      this.renderWeaponTray(ctx, inventory, currentWeapon ?? "machine-gun", width);
+    }
+    this.renderTouchWeaponCycleButton(ctx, width, height, inventory);
   }
 
   private renderShieldBar(ctx: CanvasRenderingContext2D, shield: number, canvasHeight: number, isRegenerating?: boolean): void {
@@ -930,6 +937,112 @@ export class HUD {
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#FFFFFF";
     ctx.fillText("DASH", btn.x + btn.w / 2, btn.y + btn.h / 2);
+    ctx.restore();
+  }
+
+  private renderWeaponTray(
+    ctx: CanvasRenderingContext2D,
+    inventory: ReadonlyMap<WeaponType, number>,
+    activeWeapon: WeaponType,
+    canvasWidth: number
+  ): void {
+    const TIER_PIPS = ["I", "II", "III"];
+    const slotW = 38;
+    const slotH = 28;
+    const gap = 3;
+    const ownedWeapons = WEAPON_SLOT_ORDER.filter((w) => inventory.has(w));
+    const totalW = ownedWeapons.length * slotW + (ownedWeapons.length - 1) * gap;
+    const startX = (canvasWidth - totalW) / 2;
+    const trayY = 50;
+
+    ctx.save();
+
+    for (let i = 0; i < ownedWeapons.length; i++) {
+      const weapon = ownedWeapons[i];
+      const tier = inventory.get(weapon) ?? 1;
+      const isActive = weapon === activeWeapon;
+      const x = startX + i * (slotW + gap);
+
+      ctx.fillStyle = isActive
+        ? "rgba(255, 255, 255, 0.15)"
+        : "rgba(0, 0, 0, 0.3)";
+      this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
+      ctx.fill();
+
+      if (isActive) {
+        ctx.strokeStyle = WEAPON_COLORS[weapon];
+        ctx.lineWidth = 1.5;
+        this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = isActive ? 1.0 : 0.5;
+
+      ctx.font = `6px ${RETRO_FONT}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = WEAPON_COLORS[weapon];
+      ctx.fillText(WEAPON_LABELS[weapon], x + slotW / 2, trayY + 10);
+
+      ctx.font = `5px ${RETRO_FONT}`;
+      ctx.fillStyle = isActive ? "#ffffff" : "#aaaaaa";
+      ctx.fillText(TIER_PIPS[tier - 1], x + slotW / 2, trayY + 20);
+
+      if (!this.isTouchDevice) {
+        const slotIndex = WEAPON_SLOT_ORDER.indexOf(weapon) + 1;
+        ctx.font = `5px ${RETRO_FONT}`;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fillText(`${slotIndex}`, x + slotW / 2, trayY + slotH + 6);
+      }
+
+      ctx.globalAlpha = 1.0;
+    }
+
+    ctx.restore();
+  }
+
+  private getWeaponCycleButtonRect(width: number, height: number) {
+    const dodgeBtn = this.getDodgeButtonRect(width, height);
+    const size = 44;
+    return { x: dodgeBtn.x - size - 8, y: dodgeBtn.y, w: size, h: size };
+  }
+
+  isWeaponCycleButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    if (!this.isTouchDevice) return false;
+    const btn = this.getWeaponCycleButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w
+        && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  private renderTouchWeaponCycleButton(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    inventory?: ReadonlyMap<WeaponType, number>
+  ): void {
+    if (!this.isTouchDevice) return;
+    if (!inventory || inventory.size <= 1) return;
+    const btn = this.getWeaponCycleButtonRect(width, height);
+
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = "#8e44ad";
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("WPN", btn.x + btn.w / 2, btn.y + btn.h / 2);
     ctx.restore();
   }
 

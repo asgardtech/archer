@@ -84,6 +84,20 @@ export class SaveSystem {
       }
     }
 
+    if (d.weaponInventory !== undefined) {
+      if (typeof d.weaponInventory !== "object" || d.weaponInventory === null || Array.isArray(d.weaponInventory)) {
+        return false;
+      }
+      const inv = d.weaponInventory as Record<string, unknown>;
+      const cleaned: Record<string, number> = {};
+      for (const [key, val] of Object.entries(inv)) {
+        if (!VALID_WEAPONS.includes(key as WeaponType)) continue;
+        if (typeof val !== "number" || !Number.isInteger(val) || val < 1 || val > 3) continue;
+        cleaned[key] = val;
+      }
+      d.weaponInventory = cleaned;
+    }
+
     return true;
   }
 }
