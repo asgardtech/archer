@@ -44,10 +44,36 @@ export class Landmark {
   private liberationTimer = 0;
   private sparkles: Sparkle[] = [];
 
+  private currentHitPoints: number;
+  private maxHitPoints: number;
+  private damageFlashTimer = 0;
+
   constructor(config: LandmarkConfig, canvasWidth: number, canvasHeight: number) {
     this.type = config.type;
     this.x = Math.max(0, Math.min(1, config.positionX)) * canvasWidth;
     this.groundY = canvasHeight - GROUND_HEIGHT;
+    this.maxHitPoints = config.hitPoints;
+    this.currentHitPoints = config.hitPoints;
+  }
+
+  takeDamage(amount: number): void {
+    if (this.state === "liberated" || this.currentHitPoints <= 0) return;
+    this.currentHitPoints = Math.max(0, this.currentHitPoints - amount);
+    this.damageFlashTimer = 0.3;
+  }
+
+  getHealthPercent(): number {
+    return this.maxHitPoints > 0
+      ? this.currentHitPoints / this.maxHitPoints
+      : 0;
+  }
+
+  isDestroyed(): boolean {
+    return this.currentHitPoints <= 0;
+  }
+
+  getPosition(): { x: number; y: number } {
+    return { x: this.x, y: this.groundY };
   }
 
   setSiegeProgress(progress: number): void {
@@ -69,6 +95,7 @@ export class Landmark {
     this.flagPhase += dt * 3.0;
     this.swayPhase += dt * 1.2;
     this.shakeTimer += dt;
+    if (this.damageFlashTimer > 0) this.damageFlashTimer -= dt;
 
     if (this.state === "liberated" && this.liberationTimer > 0) {
       this.liberationTimer -= dt;
@@ -88,8 +115,9 @@ export class Landmark {
 
     if (this.state === "siege") {
       const siegeIntensity = 1 - this.siegeProgress;
-      const shakeX = Math.sin(this.shakeTimer * 15) * 1.5 * siegeIntensity;
-      const shakeY = Math.cos(this.shakeTimer * 12) * 1.0 * siegeIntensity;
+      const damageShake = this.damageFlashTimer > 0 ? 3 : 0;
+      const shakeX = Math.sin(this.shakeTimer * 15) * (1.5 * siegeIntensity + damageShake);
+      const shakeY = Math.cos(this.shakeTimer * 12) * (1.0 * siegeIntensity + damageShake);
       ctx.translate(shakeX, shakeY);
     }
 
@@ -129,6 +157,18 @@ export class Landmark {
           bounds.height
         );
       }
+    }
+
+    if (this.damageFlashTimer > 0) {
+      const bounds = LANDMARK_BOUNDS[this.type];
+      const flashAlpha = 0.4 * (this.damageFlashTimer / 0.3);
+      ctx.fillStyle = `rgba(231, 76, 60, ${flashAlpha})`;
+      ctx.fillRect(
+        -bounds.width / 2,
+        bounds.offsetY - bounds.height / 2,
+        bounds.width,
+        bounds.height
+      );
     }
 
     if (this.state === "liberated" && this.liberationTimer > 0) {

@@ -26,6 +26,13 @@ export interface LevelConfig {
   obstacleSpeedMax: number;
   landmark: LandmarkConfig;
   terrain: TerrainStyle;
+  siegeEnabled: boolean;
+  siegeDelay: number;
+  siegeIntervalMin: number;
+  siegeIntervalMax: number;
+  siegeSpeedMin: number;
+  siegeSpeedMax: number;
+  siegeDamage: number;
 }
 
 export const LEVELS: LevelConfig[] = [
@@ -66,6 +73,13 @@ export const LEVELS: LevelConfig[] = [
       surfaceColor: "#2d6b2e",
       accentColor: "#e8554e",
     },
+    siegeEnabled: false,
+    siegeDelay: 0,
+    siegeIntervalMin: 0,
+    siegeIntervalMax: 0,
+    siegeSpeedMin: 0,
+    siegeSpeedMax: 0,
+    siegeDamage: 0,
   },
   {
     level: 2,
@@ -104,6 +118,13 @@ export const LEVELS: LevelConfig[] = [
       surfaceColor: "#1e3a1e",
       accentColor: "#c0392b",
     },
+    siegeEnabled: false,
+    siegeDelay: 0,
+    siegeIntervalMin: 0,
+    siegeIntervalMax: 0,
+    siegeSpeedMin: 0,
+    siegeSpeedMax: 0,
+    siegeDamage: 0,
   },
   {
     level: 3,
@@ -142,6 +163,13 @@ export const LEVELS: LevelConfig[] = [
       surfaceColor: "#4a4a4a",
       accentColor: "#e8e8f0",
     },
+    siegeEnabled: true,
+    siegeDelay: 15,
+    siegeIntervalMin: 8,
+    siegeIntervalMax: 14,
+    siegeSpeedMin: 40,
+    siegeSpeedMax: 60,
+    siegeDamage: 1,
   },
   {
     level: 4,
@@ -180,6 +208,13 @@ export const LEVELS: LevelConfig[] = [
       surfaceColor: "#252220",
       accentColor: "rgba(100, 140, 180, 0.4)",
     },
+    siegeEnabled: true,
+    siegeDelay: 10,
+    siegeIntervalMin: 5,
+    siegeIntervalMax: 10,
+    siegeSpeedMin: 50,
+    siegeSpeedMax: 80,
+    siegeDamage: 1,
   },
   {
     level: 5,
@@ -218,5 +253,12 @@ export const LEVELS: LevelConfig[] = [
       surfaceColor: "#5a5552",
       accentColor: "#6B6462",
     },
+    siegeEnabled: true,
+    siegeDelay: 5,
+    siegeIntervalMin: 3,
+    siegeIntervalMax: 7,
+    siegeSpeedMin: 60,
+    siegeSpeedMax: 100,
+    siegeDamage: 2,
   },
 ];

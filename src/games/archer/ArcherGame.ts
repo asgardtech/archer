@@ -25,6 +25,7 @@ const BOSS_BALLOON_SCORE = 10;
 const MILESTONE_INTERVAL = 25;
 const MILESTONE_AMMO_BONUS = 5;
 const BOSS_KILL_AMMO_BONUS = 15;
+const SIEGE_BALLOON_SCORE = 5;
 
 const SHIELD_DURATION = 5.0;
 const SHIELD_COOLDOWN = 15.0;
@@ -461,6 +462,11 @@ export class ArcherGame implements IGame {
       this.obstacles.push(o);
     }
 
+    const newSiegeBalloons = this.spawner.updateSiegeBalloons(dt, this.width);
+    for (const b of newSiegeBalloons) {
+      this.balloons.push(b);
+    }
+
     for (const balloon of this.balloons) {
       const wasAlive = balloon.alive;
       balloon.update(dt);
@@ -499,9 +505,24 @@ export class ArcherGame implements IGame {
       this.shieldCooldownTimer -= dt;
     }
 
+    if (this.landmark) {
+      const landmarkPos = this.landmark.getPosition();
+      for (const balloon of this.balloons) {
+        if (!balloon.alive || balloon.variant !== "siege") continue;
+        if (balloon.pos.y >= landmarkPos.y) {
+          balloon.alive = false;
+          this.landmark.takeDamage(this.currentLevelConfig.siegeDamage);
+          this.sound.play("landmark_damaged");
+        }
+      }
+    }
+
     const hits = this.collisions.check(this.arrows, this.balloons);
     for (const hit of hits) {
-      if (hit.isBossKill) {
+      if (hit.balloon.variant === "siege") {
+        this.score += SIEGE_BALLOON_SCORE;
+        this.sound.play("siege_hit");
+      } else if (hit.isBossKill) {
         this.score += BOSS_BALLOON_SCORE;
         this.arrowsRemaining += BOSS_KILL_AMMO_BONUS;
         this.hud.showAmmoGain(BOSS_KILL_AMMO_BONUS);
@@ -564,6 +585,19 @@ export class ArcherGame implements IGame {
         this.lowAmmoTriggered = false;
         this.sound.stopLowAmmoWarning();
       }
+    }
+
+    if (this.landmark && this.landmark.isDestroyed()) {
+      this.totalScore += this.score;
+      this.balloons = [];
+      this.arrows = [];
+      this.obstacles = [];
+      this.sound.stopLowAmmoWarning();
+      this.lowAmmoTriggered = false;
+      this.sound.stopMusic();
+      this.sound.play("game_over");
+      this.state = "gameover";
+      return;
     }
 
     if (this.score >= this.currentLevelConfig.targetScore) {
@@ -695,7 +729,10 @@ export class ArcherGame implements IGame {
       this.shieldActive,
       this.shieldCooldownTimer,
       SHIELD_COOLDOWN,
-      this.input.isTouchDevice
+      this.input.isTouchDevice,
+      this.landmark?.getHealthPercent() ?? 1,
+      this.landmark !== null && !this.landmark.isDestroyed() &&
+        this.balloons.some(b => b.variant === "siege" && b.alive)
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }

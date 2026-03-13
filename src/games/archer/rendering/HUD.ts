@@ -106,7 +106,9 @@ export class HUD {
     shieldActive = false,
     shieldCooldownTimer = 0,
     shieldCooldownMax = 15,
-    isTouchInput = false
+    isTouchInput = false,
+    landmarkHealthPercent = 1,
+    siegeActive = false
   ): void {
     for (const t of this.ammoGainTexts) {
       t.age += dt;
@@ -140,13 +142,13 @@ export class HUD {
         break;
       case "playing":
         this.renderPlaying(ctx, score, arrowsRemaining, canvasW, canvasH, currentWeapon, unlockedWeapons, level, levelName,
-          shieldCharges, shieldActive, shieldCooldownTimer, shieldCooldownMax, isTouchInput);
+          shieldCharges, shieldActive, shieldCooldownTimer, shieldCooldownMax, isTouchInput, landmarkHealthPercent, siegeActive);
         break;
       case "level_complete":
         this.renderLevelComplete(ctx, score, level, levelName, landmarkLabel, canvasW, canvasH);
         break;
       case "gameover":
-        this.renderGameOver(ctx, totalScore, canvasW, canvasH, level, levelName);
+        this.renderGameOver(ctx, totalScore, canvasW, canvasH, level, levelName, landmarkHealthPercent);
         break;
       case "victory":
         this.renderVictory(ctx, totalScore, canvasW, canvasH);
@@ -262,7 +264,9 @@ export class HUD {
     shieldActive = false,
     shieldCooldownTimer = 0,
     shieldCooldownMax = 15,
-    isTouchInput = false
+    isTouchInput = false,
+    landmarkHealthPercent = 1,
+    siegeActive = false
   ): void {
     ctx.save();
     ctx.font = "bold 20px sans-serif";
@@ -301,6 +305,9 @@ export class HUD {
     }
 
     this.renderShieldStatus(ctx, shieldCharges, shieldActive, shieldCooldownTimer, shieldCooldownMax, w);
+    if (landmarkHealthPercent < 1 || siegeActive) {
+      this.renderLandmarkHealth(ctx, landmarkHealthPercent, siegeActive, w);
+    }
     this.renderWeaponBar(ctx, w, h, currentWeapon, unlockedWeapons, isTouchInput);
 
     if (this.weaponNotification) {
@@ -453,6 +460,53 @@ export class HUD {
     return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
   }
 
+  private renderLandmarkHealth(
+    ctx: CanvasRenderingContext2D,
+    healthPercent: number,
+    siegeActive: boolean,
+    w: number
+  ): void {
+    const barW = 120;
+    const barH = 8;
+    const x = (w - barW) / 2;
+    const y = 34;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.fillRect(x, y, barW, barH);
+
+    const fillColor = healthPercent > 0.5
+      ? "#2ecc71"
+      : healthPercent > 0.25
+        ? "#f1c40f"
+        : "#e74c3c";
+    ctx.fillStyle = fillColor;
+    ctx.fillRect(x, y, barW * healthPercent, barH);
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, barW, barH);
+
+    ctx.font = "bold 10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.fillText("LANDMARK", w / 2, y + barH + 12);
+
+    if (healthPercent <= 0.25 && healthPercent > 0) {
+      const flash = Math.sin(Date.now() * 0.01) > 0;
+      if (flash) {
+        ctx.fillStyle = "rgba(231, 76, 60, 0.3)";
+        ctx.fillRect(x - 2, y - 2, barW + 4, barH + 4);
+      }
+    }
+
+    if (siegeActive) {
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(231, 76, 60, 0.9)";
+      ctx.fillText("\u26A0 UNDER ATTACK", w / 2, y + barH + 26);
+    }
+  }
+
   private renderShieldStatus(
     ctx: CanvasRenderingContext2D,
     charges: number,
@@ -554,7 +608,8 @@ export class HUD {
     w: number,
     h: number,
     level: number,
-    levelName: string
+    levelName: string,
+    landmarkHealthPercent = 1
   ): void {
     ctx.save();
 
@@ -564,9 +619,10 @@ export class HUD {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
+    const title = landmarkHealthPercent <= 0 ? "Landmark Destroyed!" : "Game Over";
     ctx.fillStyle = "#fff";
     ctx.font = "bold 44px sans-serif";
-    ctx.fillText("Game Over", w / 2, h / 2 - 60);
+    ctx.fillText(title, w / 2, h / 2 - 60);
 
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "22px sans-serif";

@@ -12,7 +12,7 @@ export interface EntityBase {
   alive: boolean;
 }
 
-export type BalloonVariant = "standard" | "upgrade" | "boss";
+export type BalloonVariant = "standard" | "upgrade" | "boss" | "siege";
 
 export type UpgradeType = "multi-shot" | "piercing" | "rapid-fire" | "bonus-arrows" | "shield";
 
@@ -39,7 +39,9 @@ export type SoundEvent =
   | "landmark_liberated"
   | "weapon_switch"
   | "shield_activate"
-  | "shield_block";
+  | "shield_block"
+  | "siege_hit"
+  | "landmark_damaged";
 
 export type LandmarkType = "windmill" | "treehouse" | "watchtower" | "lighthouse" | "castle";
 

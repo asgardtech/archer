@@ -42,6 +42,13 @@ const DEFAULT_CONFIG: LevelConfig = {
     surfaceColor: "#2d6b2e",
     accentColor: "#e8554e",
   },
+  siegeEnabled: false,
+  siegeDelay: 0,
+  siegeIntervalMin: 0,
+  siegeIntervalMax: 0,
+  siegeSpeedMin: 0,
+  siegeSpeedMax: 0,
+  siegeDamage: 0,
 };
 
 export class Spawner {
@@ -55,6 +62,10 @@ export class Spawner {
   private bossInterval: number;
   private obstacleTimer = 0;
   private obstacleInterval: number;
+  private siegeTimer = 0;
+  private siegeDelaySatisfied = false;
+  private siegeInterval = 0;
+  private siegeElapsed = 0;
 
   private config: LevelConfig;
 
@@ -78,6 +89,10 @@ export class Spawner {
     this.bossInterval = this.randomBossInterval();
     this.obstacleTimer = 0;
     this.obstacleInterval = this.randomObstacleInterval();
+    this.siegeTimer = 0;
+    this.siegeDelaySatisfied = false;
+    this.siegeElapsed = 0;
+    this.siegeInterval = this.randomSiegeInterval();
   }
 
   reset(): void {
@@ -91,6 +106,10 @@ export class Spawner {
     this.bossInterval = this.randomBossInterval();
     this.obstacleTimer = 0;
     this.obstacleInterval = this.randomObstacleInterval();
+    this.siegeTimer = 0;
+    this.siegeDelaySatisfied = false;
+    this.siegeElapsed = 0;
+    this.siegeInterval = this.randomSiegeInterval();
   }
 
   update(dt: number, canvasW: number, canvasH: number): Balloon[] {
@@ -180,6 +199,42 @@ export class Spawner {
 
   private randomBossInterval(): number {
     return this.config.bossIntervalMin + Math.random() * (this.config.bossIntervalMax - this.config.bossIntervalMin);
+  }
+
+  updateSiegeBalloons(dt: number, canvasW: number): Balloon[] {
+    const cfg = this.config;
+    if (!cfg.siegeEnabled) return [];
+
+    const spawned: Balloon[] = [];
+    this.siegeElapsed += dt;
+
+    if (!this.siegeDelaySatisfied) {
+      if (this.siegeElapsed >= cfg.siegeDelay) {
+        this.siegeDelaySatisfied = true;
+        this.siegeTimer = this.siegeInterval;
+      }
+      return spawned;
+    }
+
+    this.siegeTimer += dt;
+    if (this.siegeTimer >= this.siegeInterval) {
+      this.siegeTimer -= this.siegeInterval;
+      this.siegeInterval = this.randomSiegeInterval();
+
+      const margin = 50;
+      const x = margin + Math.random() * (canvasW - margin * 2);
+      const speed = cfg.siegeSpeedMin +
+        Math.random() * (cfg.siegeSpeedMax - cfg.siegeSpeedMin);
+      spawned.push(new Balloon(x, -40, speed, "siege"));
+    }
+
+    return spawned;
+  }
+
+  private randomSiegeInterval(): number {
+    const cfg = this.config;
+    if (cfg.siegeIntervalMax <= cfg.siegeIntervalMin) return cfg.siegeIntervalMin || 10;
+    return cfg.siegeIntervalMin + Math.random() * (cfg.siegeIntervalMax - cfg.siegeIntervalMin);
   }
 
   private randomObstacleInterval(): number {

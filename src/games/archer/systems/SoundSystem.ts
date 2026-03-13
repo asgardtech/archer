@@ -74,6 +74,12 @@ export class SoundSystem {
       case "shield_block":
         this.playShieldBlock();
         break;
+      case "siege_hit":
+        this.playSiegeHit();
+        break;
+      case "landmark_damaged":
+        this.playLandmarkDamaged();
+        break;
     }
   }
 
@@ -280,6 +286,26 @@ export class SoundSystem {
       release: 0.02,
     });
     this.audio.playNoise(0.05, 5000);
+  }
+
+  private playSiegeHit(): void {
+    this.audio.playNoise(0.08, 3000);
+    this.audio.playTone(400, 0.1, "sine", {
+      attack: 0.005,
+      decay: 0.02,
+      sustain: 0.3,
+      release: 0.04,
+    });
+  }
+
+  private playLandmarkDamaged(): void {
+    this.audio.playToneSwept(200, 80, 0.3, "sawtooth", {
+      attack: 0.01,
+      decay: 0.05,
+      sustain: 0.5,
+      release: 0.1,
+    });
+    this.audio.playNoise(0.2, 1500);
   }
 
   private startLowAmmoWarning(): void {
