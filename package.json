@@ -1,7 +1,7 @@
 {
-  "name": "game-collection",
+  "name": "raptor-skies",
   "version": "1.0.0",
-  "description": "A collection of browser-based games built with TypeScript and Canvas",
+  "description": "Raptor Skies — a browser-based aerial combat game built with TypeScript and Canvas",
   "private": true,
   "scripts": {
     "build": "webpack --mode production",

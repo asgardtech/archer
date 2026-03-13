@@ -1,4 +1,5 @@
-import { Launcher } from "./launcher/Launcher";
+import { RaptorGame } from "./games/raptor/RaptorGame";
 
-const launcher = new Launcher("game-canvas");
-launcher.start();
+const canvas = document.getElementById("game-canvas") as HTMLCanvasElement;
+const game = new RaptorGame(canvas);
+game.start();

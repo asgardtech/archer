@@ -27,7 +27,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: "./public/index.html",
-      title: "Game Collection",
+      title: "Raptor Skies",
     }),
   ],
   devServer: {
