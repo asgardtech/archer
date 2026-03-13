@@ -10,6 +10,9 @@ const MAX_BANK_ANGLE = 0.12;
 const BANK_LERP_SPEED = 8;
 const RUNNING_LIGHT_FREQ = 1.5;
 const PANEL_LIGHT_BASE_INTERVAL = 0.5;
+const SHIELD_REGEN_RATE = 2.5;
+const SHIELD_REGEN_DELAY = 4.0;
+const MAX_SHIELD = 100;
 
 export class Player {
   public pos: Vec2;
@@ -31,6 +34,8 @@ export class Player {
   private thrustSheet: SpriteSheet | null = null;
   private thrustFrame = 0;
   private thrustTimer = 0;
+
+  private shieldRegenTimer = 0;
 
   private shipRenderer = new ShipRenderer();
   private bankAngle = 0;
@@ -59,6 +64,13 @@ export class Player {
   get top(): number { return this.pos.y - this.height / 2 + HITBOX_INSET_Y; }
   get bottom(): number { return this.pos.y + this.height / 2 - HITBOX_INSET_Y; }
   get isInvincible(): boolean { return this.invincibilityTimer > 0; }
+
+  get isShieldRegenerating(): boolean {
+    return this.alive
+      && !this.isInvincible
+      && this.shield < MAX_SHIELD
+      && this.shieldRegenTimer >= SHIELD_REGEN_DELAY;
+  }
 
   update(dt: number, targetX: number, targetY: number, canvasWidth: number, canvasHeight: number): void {
     if (!this.alive) return;
@@ -109,9 +121,21 @@ export class Player {
     this.pos.y = Math.max(minY, Math.min(maxY, this.pos.y));
   }
 
+  updateShieldRegen(dt: number): void {
+    if (!this.alive || this.isInvincible || this.shield >= MAX_SHIELD) {
+      return;
+    }
+    this.shieldRegenTimer += dt;
+    if (this.shieldRegenTimer >= SHIELD_REGEN_DELAY) {
+      this.shield = Math.min(MAX_SHIELD, this.shield + SHIELD_REGEN_RATE * dt);
+    }
+  }
+
   takeDamage(amount: number): boolean {
     if (this.godMode) return false;
     if (this.isInvincible || !this.alive) return false;
+
+    this.shieldRegenTimer = 0;
 
     if (this.shield > 0) {
       this.shield = Math.max(0, this.shield - amount);
@@ -136,6 +160,7 @@ export class Player {
     this.alive = true;
     this.invincibilityTimer = 0;
     this.flashTimer = 0;
+    this.shieldRegenTimer = 0;
     this.bankAngle = 0;
     this.runningLightPhase = 0;
     this.lastDx = 0;

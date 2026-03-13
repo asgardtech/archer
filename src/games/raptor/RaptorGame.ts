@@ -876,6 +876,8 @@ export class RaptorGame implements IGame {
     this.explosions = this.explosions.filter((e) => e.alive);
     this.powerUps = this.powerUps.filter((p) => p.alive);
 
+    this.player.updateShieldRegen(dt);
+
     if (!this.player.alive) {
       this.totalScore += this.score;
       this.weaponSystem.laserBeam.active = false;
@@ -1375,7 +1377,8 @@ export class RaptorGame implements IGame {
       this.hasSaveData,
       this.weaponSystem.chargeLevel,
       this.player.bombs,
-      this.powerUpManager.weaponTier
+      this.powerUpManager.weaponTier,
+      this.player.isShieldRegenerating
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
