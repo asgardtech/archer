@@ -181,6 +181,20 @@ export class VFXManager {
     ctx.restore();
   }
 
+  addEngineTrail(x: number, y: number, spacing: number): void {
+    if (this.trails.length > 300) return;
+    for (const side of [-1, 1]) {
+      const ex = x + side * spacing / 2;
+      this.trails.push({
+        x: ex + (Math.random() - 0.5) * 3,
+        y: y + Math.random() * 2,
+        alpha: 0.3,
+        size: 1.5 + Math.random() * 1.5,
+        color: `rgba(120, 110, 100, 0.3)`,
+      });
+    }
+  }
+
   addMissileTrail(x: number, y: number, angle = 0): void {
     if (this.trails.length > 300) return;
     const perpX = Math.cos(angle);

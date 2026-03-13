@@ -24,7 +24,7 @@ import { Explosion } from "./entities/Explosion";
 import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
 import { AssetLoader } from "./rendering/AssetLoader";
-import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rendering/SpriteSheet";
+import { SpriteSheet, generateExplosionSheet, generateThrustSheet, generateDualThrustSheet } from "./rendering/SpriteSheet";
 import { VFXManager } from "./rendering/VFXManager";
 import { TerrainRenderer } from "./rendering/TerrainRenderer";
 import { StoryRenderer } from "./rendering/StoryRenderer";
@@ -103,6 +103,7 @@ export class RaptorGame implements IGame {
   private vfx: VFXManager;
   private explosionSheet: SpriteSheet | null = null;
   private thrustSheet: SpriteSheet | null = null;
+  private dualThrustSheet: SpriteSheet | null = null;
 
   private stars: Star[] = [];
   private starsNear: Star[] = [];
@@ -240,6 +241,9 @@ export class RaptorGame implements IGame {
 
       const thrustCanvas = generateThrustSheet(4, 16, 24, this.dpr);
       this.thrustSheet = new SpriteSheet(thrustCanvas, 16, 24, 4, this.dpr);
+
+      const dualThrustCanvas = generateDualThrustSheet(4, 32, 28, 12, this.dpr);
+      this.dualThrustSheet = new SpriteSheet(dualThrustCanvas, 32, 28, 4, this.dpr);
     } catch (e) {
       console.warn("[RaptorGame] Failed to generate procedural assets:", e);
     }
@@ -539,6 +543,9 @@ export class RaptorGame implements IGame {
     this.levelElapsed += dt;
     this.input.updateFromKeyboard(dt, this.width, this.height);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.height);
+    if (this.player.alive) {
+      this.vfx.addEngineTrail(this.player.pos.x, this.player.pos.y + this.player.height / 2, 24);
+    }
     this.updateBackground(dt);
     this.powerUpManager.update(dt);
 

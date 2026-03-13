@@ -1,13 +1,19 @@
 import { Vec2 } from "../types";
 import { SpriteSheet } from "../rendering/SpriteSheet";
+import { ShipRenderer, ShipRenderState } from "../rendering/ShipRenderer";
 
 const MOVE_SPEED = 500;
 const INVINCIBILITY_DURATION = 2.0;
+const HITBOX_INSET_X = 4;
+const HITBOX_INSET_Y = 5;
+const MAX_BANK_ANGLE = 0.12;
+const BANK_LERP_SPEED = 8;
+const RUNNING_LIGHT_FREQ = 1.5;
 
 export class Player {
   public pos: Vec2;
-  public width = 48;
-  public height = 54;
+  public width = 56;
+  public height = 64;
   public shield = 100;
   public lives = 3;
   public bombs = 0;
@@ -17,27 +23,36 @@ export class Player {
   public godMode = false;
 
   private flashTimer = 0;
+  /** @deprecated Retained for backward compatibility; procedural rendering is used instead. */
   private sprite: HTMLImageElement | null = null;
+  /** @deprecated Retained for backward compatibility; dual thrust is now rendered by ShipRenderer. */
   private thrustSheet: SpriteSheet | null = null;
   private thrustFrame = 0;
   private thrustTimer = 0;
+
+  private shipRenderer = new ShipRenderer();
+  private bankAngle = 0;
+  private runningLightPhase = 0;
+  private lastDx = 0;
 
   constructor(canvasWidth: number, canvasHeight: number) {
     this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
   }
 
+  /** @deprecated Use procedural rendering instead. */
   setSprite(sprite: HTMLImageElement): void {
     this.sprite = sprite;
   }
 
+  /** @deprecated Use procedural rendering instead. */
   setThrustSheet(sheet: SpriteSheet): void {
     this.thrustSheet = sheet;
   }
 
-  get left(): number { return this.pos.x - this.width / 2; }
-  get right(): number { return this.pos.x + this.width / 2; }
-  get top(): number { return this.pos.y - this.height / 2; }
-  get bottom(): number { return this.pos.y + this.height / 2; }
+  get left(): number { return this.pos.x - this.width / 2 + HITBOX_INSET_X; }
+  get right(): number { return this.pos.x + this.width / 2 - HITBOX_INSET_X; }
+  get top(): number { return this.pos.y - this.height / 2 + HITBOX_INSET_Y; }
+  get bottom(): number { return this.pos.y + this.height / 2 - HITBOX_INSET_Y; }
   get isInvincible(): boolean { return this.invincibilityTimer > 0; }
 
   update(dt: number, targetX: number, targetY: number, canvasWidth: number, canvasHeight: number): void {
@@ -62,7 +77,17 @@ export class Player {
       const moveAmount = Math.min(MOVE_SPEED * dt, dist);
       this.pos.x += (dx / dist) * moveAmount;
       this.pos.y += (dy / dist) * moveAmount;
+      this.lastDx = dx / dist;
+    } else {
+      this.lastDx = 0;
     }
+
+    const targetBank = Math.sign(this.lastDx) * Math.min(Math.abs(this.lastDx), 1) * MAX_BANK_ANGLE;
+    this.bankAngle += (targetBank - this.bankAngle) * Math.min(1, BANK_LERP_SPEED * dt);
+    this.bankAngle = Math.max(-0.15, Math.min(0.15, this.bankAngle));
+
+    this.runningLightPhase += dt * RUNNING_LIGHT_FREQ;
+    if (this.runningLightPhase > 1000) this.runningLightPhase -= 1000;
 
     const padding = this.width / 2;
     this.pos.x = Math.max(padding, Math.min(canvasWidth - padding, this.pos.x));
@@ -99,6 +124,9 @@ export class Player {
     this.alive = true;
     this.invincibilityTimer = 0;
     this.flashTimer = 0;
+    this.bankAngle = 0;
+    this.runningLightPhase = 0;
+    this.lastDx = 0;
     if (fullReset) {
       this.lives = 3;
       this.bombs = 0;
@@ -123,102 +151,22 @@ export class Player {
       ctx.restore();
     }
 
-    if (this.sprite) {
-      this.renderSprite(ctx);
-    } else {
-      this.renderFallback(ctx);
-    }
-  }
+    const state: ShipRenderState = {
+      thrustLevel: 0.6 + (this.thrustFrame / 3) * 0.4,
+      bankAngle: this.bankAngle,
+      runningLightPhase: this.runningLightPhase,
+      panelLightFlicker: Math.random(),
+      heatShimmer: Math.sin(Date.now() * 0.01) * 0.5 + 0.5,
+      damageLevel: 1 - this.shield / 100,
+    };
 
-  private renderSprite(ctx: CanvasRenderingContext2D): void {
-    const x = this.pos.x;
-    const y = this.pos.y;
-
-    if (this.thrustSheet) {
-      this.thrustSheet.drawFrame(
-        ctx,
-        this.thrustFrame,
-        x,
-        y + this.height / 2 + 12,
-        24,
-        30
-      );
-    }
-
-    ctx.drawImage(
-      this.sprite!,
-      x - this.width / 2,
-      y - this.height / 2,
+    this.shipRenderer.render(
+      ctx,
+      this.pos.x,
+      this.pos.y,
       this.width,
-      this.height
+      this.height,
+      state
     );
-  }
-
-  private renderFallback(ctx: CanvasRenderingContext2D): void {
-    const x = this.pos.x;
-    const y = this.pos.y;
-    const hw = this.width / 2;
-    const hh = this.height / 2;
-
-    ctx.save();
-
-    ctx.fillStyle = "rgba(255, 150, 0, 0.6)";
-    ctx.beginPath();
-    ctx.moveTo(x - 6, y + hh);
-    ctx.lineTo(x, y + hh + 12 + Math.random() * 6);
-    ctx.lineTo(x + 6, y + hh);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(255, 200, 50, 0.4)";
-    ctx.beginPath();
-    ctx.moveTo(x - 3, y + hh);
-    ctx.lineTo(x, y + hh + 8 + Math.random() * 4);
-    ctx.lineTo(x + 3, y + hh);
-    ctx.fill();
-
-    ctx.fillStyle = "#3a7dff";
-    ctx.beginPath();
-    ctx.moveTo(x, y - hh);
-    ctx.lineTo(x + hw * 0.4, y);
-    ctx.lineTo(x + hw * 0.35, y + hh * 0.7);
-    ctx.lineTo(x - hw * 0.35, y + hh * 0.7);
-    ctx.lineTo(x - hw * 0.4, y);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = "#2a5dc8";
-    ctx.beginPath();
-    ctx.moveTo(x - hw * 0.3, y + hh * 0.1);
-    ctx.lineTo(x - hw, y + hh * 0.6);
-    ctx.lineTo(x - hw * 0.8, y + hh * 0.8);
-    ctx.lineTo(x - hw * 0.3, y + hh * 0.5);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(x + hw * 0.3, y + hh * 0.1);
-    ctx.lineTo(x + hw, y + hh * 0.6);
-    ctx.lineTo(x + hw * 0.8, y + hh * 0.8);
-    ctx.lineTo(x + hw * 0.3, y + hh * 0.5);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = "#80d4ff";
-    ctx.beginPath();
-    ctx.ellipse(x, y - hh * 0.2, hw * 0.15, hh * 0.25, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = "#ff4444";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(x - hw * 0.6, y + hh * 0.4);
-    ctx.lineTo(x - hw * 0.9, y + hh * 0.7);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x + hw * 0.6, y + hh * 0.4);
-    ctx.lineTo(x + hw * 0.9, y + hh * 0.7);
-    ctx.stroke();
-
-    ctx.restore();
   }
 }

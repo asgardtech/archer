@@ -4,6 +4,7 @@ const BASE = "assets/raptor/";
 const TERRAIN = `${BASE}terrain/`;
 
 export const ASSET_MANIFEST: AssetManifest = {
+  // player.png is retained as optional legacy asset; the ship is now procedurally rendered via ShipRenderer.
   player:           `${BASE}player.png`,
   enemy_scout:      `${BASE}enemy_scout.png`,
   enemy_fighter:    `${BASE}enemy_fighter.png`,

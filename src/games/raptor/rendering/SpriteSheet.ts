@@ -108,6 +108,54 @@ export function generateExplosionSheet(frames = 8, frameSize = 64, dpr = 1): HTM
   return canvas;
 }
 
+export function generateDualThrustSheet(
+  frames = 4,
+  frameWidth = 32,
+  frameHeight = 28,
+  engineSpacing = 12,
+  dpr = 1
+): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = frameWidth * frames * dpr;
+  canvas.height = frameHeight * dpr;
+  const ctx = canvas.getContext("2d")!;
+  ctx.scale(dpr, dpr);
+
+  for (let f = 0; f < frames; f++) {
+    const cx = f * frameWidth + frameWidth / 2;
+    const intensity = 0.6 + Math.sin((f / frames) * Math.PI * 2) * 0.4;
+    const flameH = frameHeight * 0.8 * intensity;
+
+    for (const offset of [-engineSpacing / 2, engineSpacing / 2]) {
+      const ex = cx + offset;
+
+      const grad = ctx.createLinearGradient(ex, 0, ex, flameH);
+      grad.addColorStop(0, `rgba(255, 180, 50, ${0.8 * intensity})`);
+      grad.addColorStop(0.4, `rgba(255, 120, 0, ${0.6 * intensity})`);
+      grad.addColorStop(1, `rgba(255, 50, 0, ${0.1 * intensity})`);
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(ex - 4, 0);
+      ctx.quadraticCurveTo(ex - 2.5, flameH * 0.6, ex, flameH);
+      ctx.quadraticCurveTo(ex + 2.5, flameH * 0.6, ex + 4, 0);
+      ctx.fill();
+
+      const innerGrad = ctx.createLinearGradient(ex, 0, ex, flameH * 0.6);
+      innerGrad.addColorStop(0, `rgba(255, 255, 200, ${0.9 * intensity})`);
+      innerGrad.addColorStop(1, `rgba(255, 200, 80, ${0.2 * intensity})`);
+      ctx.fillStyle = innerGrad;
+      ctx.beginPath();
+      ctx.moveTo(ex - 1.8, 0);
+      ctx.quadraticCurveTo(ex - 1, flameH * 0.3, ex, flameH * 0.5);
+      ctx.quadraticCurveTo(ex + 1, flameH * 0.3, ex + 1.8, 0);
+      ctx.fill();
+    }
+  }
+
+  return canvas;
+}
+
 export function generateThrustSheet(frames = 4, frameWidth = 16, frameHeight = 24, dpr = 1): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   canvas.width = frameWidth * frames * dpr;
