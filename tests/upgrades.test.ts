@@ -329,7 +329,7 @@ describe("Spawner upgrade balloon spawning", () => {
 
     for (const ub of upgradeBalloons) {
       expect(ub.upgradeType).toBeDefined();
-      expect(["multi-shot", "piercing", "rapid-fire", "bonus-arrows"]).toContain(ub.upgradeType);
+      expect(["multi-shot", "piercing", "rapid-fire", "bonus-arrows", "shield"]).toContain(ub.upgradeType);
     }
   });
 

@@ -7,6 +7,7 @@ const UPGRADE_ICONS: Record<UpgradeType, string> = {
   "piercing": "➤",
   "rapid-fire": "⚡",
   "bonus-arrows": "+10",
+  "shield": "\u{1F6E1}",
 };
 
 export class Balloon {

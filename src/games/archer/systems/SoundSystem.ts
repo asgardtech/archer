@@ -68,6 +68,12 @@ export class SoundSystem {
       case "weapon_switch":
         this.playWeaponSwitch();
         break;
+      case "shield_activate":
+        this.playShieldActivate();
+        break;
+      case "shield_block":
+        this.playShieldBlock();
+        break;
     }
   }
 
@@ -243,6 +249,37 @@ export class SoundSystem {
         release: 0.02,
       });
     }, 50);
+  }
+
+  private playShieldActivate(): void {
+    this.audio.playToneSwept(400, 1200, 0.2, "sine", {
+      attack: 0.01,
+      decay: 0.03,
+      sustain: 0.4,
+      release: 0.08,
+    });
+    this.audio.playToneSwept(600, 1400, 0.15, "sine", {
+      attack: 0.02,
+      decay: 0.03,
+      sustain: 0.3,
+      release: 0.06,
+    });
+  }
+
+  private playShieldBlock(): void {
+    this.audio.playTone(600, 0.08, "square", {
+      attack: 0.003,
+      decay: 0.01,
+      sustain: 0.3,
+      release: 0.03,
+    });
+    this.audio.playTone(1200, 0.06, "sine", {
+      attack: 0.003,
+      decay: 0.01,
+      sustain: 0.2,
+      release: 0.02,
+    });
+    this.audio.playNoise(0.05, 5000);
   }
 
   private startLowAmmoWarning(): void {

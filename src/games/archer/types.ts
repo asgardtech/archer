@@ -14,7 +14,7 @@ export interface EntityBase {
 
 export type BalloonVariant = "standard" | "upgrade" | "boss";
 
-export type UpgradeType = "multi-shot" | "piercing" | "rapid-fire" | "bonus-arrows";
+export type UpgradeType = "multi-shot" | "piercing" | "rapid-fire" | "bonus-arrows" | "shield";
 
 export type WeaponType = "default" | "multi-shot" | "piercing" | "rapid-fire";
 
@@ -37,7 +37,9 @@ export type SoundEvent =
   | "menu_start"
   | "low_ammo"
   | "landmark_liberated"
-  | "weapon_switch";
+  | "weapon_switch"
+  | "shield_activate"
+  | "shield_block";
 
 export type LandmarkType = "windmill" | "treehouse" | "watchtower" | "lighthouse" | "castle";
 

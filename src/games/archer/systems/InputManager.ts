@@ -5,6 +5,7 @@ export class InputManager {
   public isMouseDown = false;
   public wasClicked = false;
   public wasEscPressed = false;
+  public shieldPressed = false;
   public weaponSlotPressed: number | null = null;
   public readonly isTouchDevice: boolean;
 
@@ -18,6 +19,7 @@ export class InputManager {
   private boundTouchMove: (e: TouchEvent) => void;
   private boundTouchEnd: (e: TouchEvent) => void;
   private boundKeyDown: (e: KeyboardEvent) => void;
+  private boundContextMenu: (e: MouseEvent) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -31,6 +33,7 @@ export class InputManager {
     this.boundTouchMove = (e) => this.onTouchMove(e);
     this.boundTouchEnd = (e) => this.onTouchEnd(e);
     this.boundKeyDown = (e) => this.onKeyDown(e);
+    this.boundContextMenu = (e) => this.onContextMenu(e);
 
     canvas.addEventListener("mousemove", this.boundMouseMove);
     canvas.addEventListener("mousedown", this.boundMouseDown);
@@ -41,11 +44,13 @@ export class InputManager {
     canvas.addEventListener("touchend", this.boundTouchEnd, { passive: false });
 
     window.addEventListener("keydown", this.boundKeyDown);
+    canvas.addEventListener("contextmenu", this.boundContextMenu);
   }
 
   consume(): void {
     this.wasClicked = false;
     this.wasEscPressed = false;
+    this.shieldPressed = false;
     this.weaponSlotPressed = null;
   }
 
@@ -57,6 +62,7 @@ export class InputManager {
     this.canvas.removeEventListener("touchmove", this.boundTouchMove);
     this.canvas.removeEventListener("touchend", this.boundTouchEnd);
     window.removeEventListener("keydown", this.boundKeyDown);
+    this.canvas.removeEventListener("contextmenu", this.boundContextMenu);
   }
 
   private toCanvasCoords(clientX: number, clientY: number): Vec2 {
@@ -75,7 +81,9 @@ export class InputManager {
 
   private onMouseDown(e: MouseEvent): void {
     this.isMouseDown = true;
-    this.wasClicked = true;
+    if (e.button === 0) {
+      this.wasClicked = true;
+    }
     this.mousePos = this.toCanvasCoords(e.clientX, e.clientY);
   }
 
@@ -115,6 +123,15 @@ export class InputManager {
     if (e.key >= "1" && e.key <= "4") {
       this.weaponSlotPressed = parseInt(e.key, 10);
     }
+    if (e.key === " " || e.code === "Space") {
+      e.preventDefault();
+      this.shieldPressed = true;
+    }
+  }
+
+  private onContextMenu(e: MouseEvent): void {
+    e.preventDefault();
+    this.shieldPressed = true;
   }
 
   private getActiveTouch(touches: TouchList): Touch | null {

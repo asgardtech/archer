@@ -48,7 +48,14 @@ export class Bow {
     }
   }
 
-  render(ctx: CanvasRenderingContext2D, hasAmmo: boolean, weapon: WeaponType = "default"): void {
+  render(
+    ctx: CanvasRenderingContext2D,
+    hasAmmo: boolean,
+    weapon: WeaponType = "default",
+    shieldActive = false,
+    shieldTimer = 0,
+    shieldExpireWarn = 1.5
+  ): void {
     const spriteKey = this.getSpriteKey(weapon);
     const sprite = this.sprites.get(spriteKey);
 
@@ -86,6 +93,31 @@ export class Bow {
       }
     } else {
       this.renderFallback(ctx, hasAmmo, weapon);
+    }
+
+    if (shieldActive) {
+      ctx.save();
+      ctx.rotate(-this.angle);
+
+      const domeRadius = 55;
+      const expiring = shieldTimer <= shieldExpireWarn;
+      const baseAlpha = expiring
+        ? 0.15 + Math.sin(shieldTimer * 10) * 0.15
+        : 0.25;
+
+      ctx.beginPath();
+      ctx.arc(0, 0, domeRadius, Math.PI, 0, false);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(100, 200, 255, ${baseAlpha})`;
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(100, 200, 255, ${baseAlpha + 0.3})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, domeRadius, Math.PI, 0, false);
+      ctx.stroke();
+
+      ctx.restore();
     }
 
     ctx.restore();

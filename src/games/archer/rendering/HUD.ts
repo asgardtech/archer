@@ -11,6 +11,7 @@ interface AmmoGainText {
   amount: number;
   age: number;
   offsetY: number;
+  label?: string;
 }
 
 interface PenaltyText {
@@ -71,6 +72,15 @@ export class HUD {
     this.weaponNotification = { label, age: 0 };
   }
 
+  showShieldGain(): void {
+    this.ammoGainTexts.push({
+      amount: 1,
+      age: 0,
+      offsetY: this.ammoGainTexts.length * 22,
+      label: "+1 \u{1F6E1}",
+    });
+  }
+
   reset(): void {
     this.ammoGainTexts = [];
     this.penaltyTexts = [];
@@ -91,7 +101,12 @@ export class HUD {
     levelName = "",
     totalScore = 0,
     landmarkLabel = "",
-    landmarkDescription = ""
+    landmarkDescription = "",
+    shieldCharges = 0,
+    shieldActive = false,
+    shieldCooldownTimer = 0,
+    shieldCooldownMax = 15,
+    isTouchInput = false
   ): void {
     for (const t of this.ammoGainTexts) {
       t.age += dt;
@@ -124,7 +139,8 @@ export class HUD {
         this.renderLevelIntro(ctx, level, levelName, landmarkLabel, landmarkDescription, canvasW, canvasH);
         break;
       case "playing":
-        this.renderPlaying(ctx, score, arrowsRemaining, canvasW, canvasH, currentWeapon, unlockedWeapons, level, levelName);
+        this.renderPlaying(ctx, score, arrowsRemaining, canvasW, canvasH, currentWeapon, unlockedWeapons, level, levelName,
+          shieldCharges, shieldActive, shieldCooldownTimer, shieldCooldownMax, isTouchInput);
         break;
       case "level_complete":
         this.renderLevelComplete(ctx, score, level, levelName, landmarkLabel, canvasW, canvasH);
@@ -241,7 +257,12 @@ export class HUD {
     currentWeapon: WeaponType,
     unlockedWeapons: ReadonlySet<WeaponType>,
     level: number,
-    levelName: string
+    levelName: string,
+    shieldCharges = 0,
+    shieldActive = false,
+    shieldCooldownTimer = 0,
+    shieldCooldownMax = 15,
+    isTouchInput = false
   ): void {
     ctx.save();
     ctx.font = "bold 20px sans-serif";
@@ -266,7 +287,7 @@ export class HUD {
       const drift = progress * AMMO_GAIN_DRIFT;
       ctx.font = "bold 18px sans-serif";
       ctx.fillStyle = `rgba(46, 204, 113, ${alpha})`;
-      ctx.fillText(`+${t.amount}`, w - 16, 50 + t.offsetY - drift);
+      ctx.fillText(t.label ?? `+${t.amount}`, w - 16, 50 + t.offsetY - drift);
     }
 
     ctx.textAlign = "left";
@@ -279,7 +300,8 @@ export class HUD {
       ctx.fillText(`\u2212${t.amount}`, 16, 50 + t.offsetY + drift);
     }
 
-    this.renderWeaponBar(ctx, w, h, currentWeapon, unlockedWeapons);
+    this.renderShieldStatus(ctx, shieldCharges, shieldActive, shieldCooldownTimer, shieldCooldownMax, w);
+    this.renderWeaponBar(ctx, w, h, currentWeapon, unlockedWeapons, isTouchInput);
 
     if (this.weaponNotification) {
       const progress = this.weaponNotification.age / WEAPON_NOTIFY_DURATION;
@@ -303,7 +325,8 @@ export class HUD {
     canvasW: number,
     canvasH: number,
     currentWeapon: WeaponType,
-    unlockedWeapons: ReadonlySet<WeaponType>
+    unlockedWeapons: ReadonlySet<WeaponType>,
+    isTouchInput = false
   ): void {
     const totalW = WEAPON_SLOTS.length * SLOT_SIZE + (WEAPON_SLOTS.length - 1) * SLOT_GAP;
     const startX = (canvasW - totalW) / 2;
@@ -382,6 +405,90 @@ export class HUD {
         ctx.fillStyle = "rgba(255,255,255,0.25)";
         ctx.fillText("🔒", sx + SLOT_SIZE / 2, slotY + SLOT_SIZE / 2);
       }
+    }
+
+    if (!isTouchInput) {
+      const hintX = startX + totalW + 16;
+      ctx.font = "bold 11px sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillText("[Space] Shield", hintX, barY + TOOLBAR_HEIGHT / 2);
+    } else {
+      const btnLayout = this.getShieldButtonRect(canvasW, canvasH);
+      ctx.fillStyle = "rgba(100, 200, 255, 0.2)";
+      ctx.beginPath();
+      ctx.roundRect(btnLayout.x, btnLayout.y, btnLayout.w, btnLayout.h, SLOT_BORDER_RADIUS);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(100, 200, 255, 0.5)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(btnLayout.x, btnLayout.y, btnLayout.w, btnLayout.h, SLOT_BORDER_RADIUS);
+      ctx.stroke();
+      ctx.font = "18px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#5dade2";
+      ctx.fillText("\u{1F6E1}", btnLayout.x + btnLayout.w / 2, btnLayout.y + btnLayout.h / 2);
+    }
+
+    ctx.restore();
+  }
+
+  private getShieldButtonRect(canvasW: number, canvasH: number): { x: number; y: number; w: number; h: number } {
+    const totalW = WEAPON_SLOTS.length * SLOT_SIZE + (WEAPON_SLOTS.length - 1) * SLOT_GAP;
+    const startX = (canvasW - totalW) / 2;
+    const barY = canvasH - TOOLBAR_HEIGHT;
+    const slotY = barY + (TOOLBAR_HEIGHT - SLOT_SIZE) / 2;
+    return {
+      x: startX + totalW + SLOT_GAP,
+      y: slotY,
+      w: SLOT_SIZE,
+      h: SLOT_SIZE,
+    };
+  }
+
+  isShieldButtonHit(x: number, y: number, canvasW: number, canvasH: number): boolean {
+    const r = this.getShieldButtonRect(canvasW, canvasH);
+    return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+  }
+
+  private renderShieldStatus(
+    ctx: CanvasRenderingContext2D,
+    charges: number,
+    active: boolean,
+    cooldownTimer: number,
+    cooldownMax: number,
+    w: number
+  ): void {
+    const x = w - 16;
+    const y = 55;
+
+    ctx.save();
+    ctx.textAlign = "right";
+    ctx.font = "bold 16px sans-serif";
+
+    if (active) {
+      ctx.fillStyle = "#5dade2";
+      ctx.fillText("\u{1F6E1} ACTIVE", x, y);
+    } else if (cooldownTimer > 0) {
+      ctx.fillStyle = "rgba(255,255,255,0.4)";
+      ctx.fillText(`\u{1F6E1} \u00D7${charges}`, x, y);
+      const barW = 60;
+      const barH = 4;
+      const barX = x - barW;
+      const barY = y + 4;
+      const progress = 1 - cooldownTimer / cooldownMax;
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.fillRect(barX, barY, barW, barH);
+      ctx.fillStyle = "rgba(93, 173, 226, 0.6)";
+      ctx.fillRect(barX, barY, barW * progress, barH);
+    } else if (charges > 0) {
+      ctx.fillStyle = "#5dade2";
+      ctx.fillText(`\u{1F6E1} \u00D7${charges}`, x, y);
+    } else {
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.fillText(`\u{1F6E1} \u00D70`, x, y);
     }
 
     ctx.restore();
