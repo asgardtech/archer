@@ -4,12 +4,9 @@ export class HQPortrait {
     x: number,
     y: number,
     size: number,
-    elapsed: number
+    elapsed: number,
+    portraitImage?: HTMLImageElement | null
   ): void {
-    const s = size / 100;
-    const cx = x + size / 2;
-    const cy = y + (size * 1.2) / 2;
-
     ctx.save();
 
     const frameX = x - 4;
@@ -33,17 +30,34 @@ export class HQPortrait {
     ctx.roundRect(x, y, size, size * 1.2, 4);
     ctx.clip();
 
-    // Dark screen background
+    if (portraitImage) {
+      ctx.drawImage(portraitImage, x, y, size, size * 1.2);
+    } else {
+      HQPortrait.renderRadar(ctx, x, y, size, elapsed);
+    }
+
+    ctx.restore();
+  }
+
+  static renderRadar(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    size: number,
+    elapsed: number
+  ): void {
+    const s = size / 100;
+    const cx = x + size / 2;
+    const cy = y + (size * 1.2) / 2;
+
     ctx.fillStyle = "#0a0e14";
     ctx.fillRect(x, y, size, size * 1.2);
 
-    // Subtle scan-line effect
     ctx.fillStyle = "rgba(40, 60, 30, 0.08)";
     for (let ly = 0; ly < size * 1.2; ly += 3 * s) {
       ctx.fillRect(x, y + ly, size, 1 * s);
     }
 
-    // Radar sweep glow
     const sweepAngle = (elapsed * 1.2) % (Math.PI * 2);
     const radarR = 30 * s;
 
@@ -55,7 +69,6 @@ export class HQPortrait {
     ctx.arc(cx, cy, radarR, 0, Math.PI * 2);
     ctx.fill();
 
-    // Radar rings
     ctx.strokeStyle = "rgba(80, 200, 60, 0.25)";
     ctx.lineWidth = 1 * s;
     for (let r = 10; r <= 30; r += 10) {
@@ -64,7 +77,6 @@ export class HQPortrait {
       ctx.stroke();
     }
 
-    // Cross-hairs
     ctx.strokeStyle = "rgba(80, 200, 60, 0.2)";
     ctx.lineWidth = 0.5 * s;
     ctx.beginPath();
@@ -76,7 +88,6 @@ export class HQPortrait {
     ctx.lineTo(cx, cy + 38 * s);
     ctx.stroke();
 
-    // Sweep line
     const sweepEndX = cx + Math.cos(sweepAngle) * radarR;
     const sweepEndY = cy + Math.sin(sweepAngle) * radarR;
     ctx.strokeStyle = "rgba(100, 255, 80, 0.6)";
@@ -86,7 +97,6 @@ export class HQPortrait {
     ctx.lineTo(sweepEndX, sweepEndY);
     ctx.stroke();
 
-    // Sweep fade trail
     ctx.fillStyle = "rgba(80, 200, 60, 0.12)";
     ctx.beginPath();
     ctx.moveTo(cx, cy);
@@ -94,7 +104,6 @@ export class HQPortrait {
     ctx.closePath();
     ctx.fill();
 
-    // Blip dots (pulse with elapsed)
     const blipPulse = Math.sin(elapsed * 3) * 0.3 + 0.7;
     ctx.fillStyle = `rgba(100, 255, 80, ${blipPulse * 0.8})`;
     ctx.beginPath();
@@ -107,20 +116,17 @@ export class HQPortrait {
     ctx.arc(cx + 5 * s, cy + 18 * s, 1.8 * s, 0, Math.PI * 2);
     ctx.fill();
 
-    // Center dot (own position)
     ctx.fillStyle = "rgba(220, 180, 60, 0.9)";
     ctx.beginPath();
     ctx.arc(cx, cy, 2.5 * s, 0, Math.PI * 2);
     ctx.fill();
 
-    // "HQ" label at top of screen
     ctx.fillStyle = "rgba(220, 180, 60, 0.7)";
     ctx.font = `bold ${8 * s}px monospace`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText("HQ-COMM", cx, y + 6 * s);
+    ctx.fillText("SENSOR", cx, y + 6 * s);
 
-    // Signal bars bottom-right
     const barX = x + size - 18 * s;
     const barBaseY = y + size * 1.2 - 10 * s;
     const barBlink = elapsed % 2 < 1.7;
@@ -131,7 +137,5 @@ export class HQPortrait {
       const bh = (i + 1) * 3 * s;
       ctx.fillRect(barX + i * 3.5 * s, barBaseY - bh, 2 * s, bh);
     }
-
-    ctx.restore();
   }
 }
