@@ -3,7 +3,7 @@ export interface Vec2 {
   y: number;
 }
 
-export type GameState = "loading" | "menu" | "story_intro" | "level_intro" | "playing" | "level_complete" | "gameover" | "victory";
+export type GameState = "loading" | "menu" | "story_intro" | "level_intro" | "playing" | "level_complete" | "gameover" | "victory" | "story_ending";
 
 export interface EntityBase {
   pos: Vec2;

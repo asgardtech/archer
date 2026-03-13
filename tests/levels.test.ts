@@ -508,7 +508,7 @@ describe("Scenario: Completing level 5 shows the victory screen", () => {
     internals.updatePlaying(0.016);
 
     expect(internals.score).toBe(100);
-    expect(internals.state).toBe("victory");
+    expect(internals.state).toBe("story_ending");
     randomSpy.mockRestore();
   });
 });
@@ -964,7 +964,7 @@ describe("Level complete on last level transitions to victory, not level_complet
     (internals.input as any).wasClicked = false;
     internals.updatePlaying(0.016);
 
-    expect(internals.state).toBe("victory");
+    expect(internals.state).toBe("story_ending");
     expect(internals.state).not.toBe("level_complete");
 
     randomSpy.mockRestore();
