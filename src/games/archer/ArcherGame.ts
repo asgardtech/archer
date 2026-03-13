@@ -175,6 +175,9 @@ export class ArcherGame implements IGame {
       if (img) upgradeIcons.set(upgradeType, img);
     }
     this.hud.setUpgradeIcons(upgradeIcons);
+
+    const admiralImg = this.assetLoader.getOptional("admiral_portrait");
+    this.storyRenderer.setAdmiralImage(admiralImg);
   }
 
   private getArrowSprite(piercing: boolean): HTMLImageElement | null {
