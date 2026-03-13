@@ -379,6 +379,8 @@ export class RaptorGame implements IGame {
   }
 
   private update(dt: number): void {
+    this.updateCursorVisibility();
+
     if (this.state === "loading") {
       this.input.consume();
       return;
@@ -530,7 +532,6 @@ export class RaptorGame implements IGame {
         break;
     }
     this.input.consume();
-    this.updateCursorVisibility();
   }
 
   private updateCursorVisibility(): void {
