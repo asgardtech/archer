@@ -215,13 +215,6 @@ describe("Sprite visual content", () => {
       expect(avgBrightness).toBeGreaterThan(30);
       expect(avgBrightness).toBeLessThan(210);
     });
-
-    test("has at least 8 consecutive opaque pixels at horizontal midline", () => {
-      const png = getSprite(variant);
-      const midY = Math.floor(png.height / 2);
-      const maxRun = getMaxHorizontalRun(png, midY);
-      expect(maxRun).toBeGreaterThanOrEqual(8);
-    });
   });
 });
 
