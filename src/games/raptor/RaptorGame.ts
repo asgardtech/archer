@@ -546,6 +546,7 @@ export class RaptorGame implements IGame {
     }
     this.updateBackground(dt);
     this.powerUpManager.update(dt);
+    this.player.armorActive = this.powerUpManager.hasUpgrade("armor");
 
     const config = this.currentLevelConfig;
 
@@ -850,6 +851,9 @@ export class RaptorGame implements IGame {
         case "rapid-fire":
           this.powerUpManager.activate(hit.powerUp.type);
           break;
+        case "armor":
+          this.powerUpManager.activate("armor");
+          break;
         case "shield-restore":
           this.player.shield = 100;
           break;
@@ -1018,6 +1022,9 @@ export class RaptorGame implements IGame {
     }
 
     const pu = new PowerUp(x, y, type);
+    if (pu.type === "armor" && config.level < 4) {
+      pu.type = "shield-restore";
+    }
     const spriteKey = POWERUP_SPRITE_KEYS[pu.type];
     const sprite = this.assets.getOptional(spriteKey);
     if (sprite) pu.setSprite(sprite);

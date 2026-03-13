@@ -30,6 +30,7 @@ export class Player {
   public dpr = 1;
   public dodgeTimer = 0;
   public dodgeCooldown = 0;
+  public armorActive = false;
 
   private flashTimer = 0;
   /** @deprecated Retained for backward compatibility; procedural rendering is used instead. */
@@ -164,6 +165,10 @@ export class Player {
     if (this.godMode) return false;
     if (this.isInvincible || !this.alive) return false;
 
+    if (this.armorActive) {
+      amount = Math.max(1, Math.floor(amount * 0.5));
+    }
+
     this.shieldRegenTimer = 0;
 
     if (this.shield > 0) {
@@ -192,6 +197,7 @@ export class Player {
     this.shieldRegenTimer = 0;
     this.dodgeTimer = 0;
     this.dodgeCooldown = 0;
+    this.armorActive = false;
     this.bankAngle = 0;
     this.runningLightPhase = 0;
     this.lastDx = 0;
@@ -224,6 +230,16 @@ export class Player {
       ctx.fillStyle = "#ffd700";
       ctx.beginPath();
       ctx.ellipse(this.pos.x, this.pos.y, this.width * 0.7, this.height * 0.7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if (this.armorActive) {
+      ctx.save();
+      ctx.globalAlpha = 0.12 + 0.06 * Math.sin(Date.now() / 400);
+      ctx.fillStyle = "#00bcd4";
+      ctx.beginPath();
+      ctx.ellipse(this.pos.x, this.pos.y, this.width * 0.65, this.height * 0.65, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }

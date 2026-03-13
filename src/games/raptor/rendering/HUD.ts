@@ -25,6 +25,7 @@ const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "weapon-laser": "#9b59b6",
   "weapon-plasma": "#8e44ad",
   "weapon-ion": "#00bcd4",
+  "armor": "#00bcd4",
 };
 
 const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
@@ -34,6 +35,7 @@ const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
   "weapon-laser": "LSR",
   "weapon-plasma": "PLS",
   "weapon-ion": "ION",
+  "armor": "ARM",
 };
 
 const WEAPON_LABELS: Record<WeaponType, string> = {
@@ -963,9 +965,12 @@ export class HUD {
       const color = EFFECT_COLORS[eff.type] ?? "#888";
       const label = EFFECT_LABELS[eff.type] ?? "?";
 
-      const sprite = this.assets?.getOptional(
-        eff.type === "spread-shot" ? "powerup_spread" : "powerup_rapid"
-      );
+      const spriteKeyMap: Partial<Record<RaptorPowerUpType, string>> = {
+        "spread-shot": "powerup_spread",
+        "rapid-fire": "powerup_rapid",
+        "armor": "powerup_armor",
+      };
+      const sprite = this.assets?.getOptional(spriteKeyMap[eff.type] ?? "");
 
       if (sprite) {
         ctx.drawImage(sprite, startX - 18, y, 14, 14);
