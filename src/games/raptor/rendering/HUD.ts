@@ -411,7 +411,8 @@ export class HUD {
     chargeLevel?: number,
     bombs?: number,
     weaponTier?: number,
-    isShieldRegenerating?: boolean
+    isShieldRegenerating?: boolean,
+    dodgeCooldownFraction?: number
   ): void {
     switch (state) {
       case "loading":
@@ -423,10 +424,10 @@ export class HUD {
       case "briefing":
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.completionLines,
           `Score: ${score}`,
@@ -627,7 +628,8 @@ export class HUD {
     chargeLevel?: number,
     bombs?: number,
     weaponTier?: number,
-    isShieldRegenerating?: boolean
+    isShieldRegenerating?: boolean,
+    dodgeCooldownFraction?: number
   ): void {
     ctx.save();
 
@@ -670,7 +672,9 @@ export class HUD {
     ctx.restore();
 
     this.renderShieldBar(ctx, shield, height, isShieldRegenerating);
+    this.renderDodgeCooldown(ctx, dodgeCooldownFraction ?? 0, 10, 52);
     this.renderTouchBombButton(ctx, bombs ?? 0, width, height);
+    this.renderTouchDodgeButton(ctx, dodgeCooldownFraction ?? 0, width, height);
   }
 
   private renderShieldBar(ctx: CanvasRenderingContext2D, shield: number, canvasHeight: number, isRegenerating?: boolean): void {
@@ -840,6 +844,90 @@ export class HUD {
 
     ctx.font = `8px ${RETRO_FONT}`;
     ctx.fillText(`${bombs}`, btn.x + btn.w / 2, btn.y + btn.h / 2 + 8);
+    ctx.restore();
+  }
+
+  private renderDodgeCooldown(
+    ctx: CanvasRenderingContext2D,
+    cooldownFraction: number,
+    startX: number,
+    y: number
+  ): void {
+    ctx.save();
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+
+    const ready = cooldownFraction <= 0;
+    ctx.fillStyle = ready ? "#2ecc71" : "#95a5a6";
+    ctx.fillText("DODGE", startX, y);
+
+    const labelW = ctx.measureText("DODGE").width;
+    const barX = startX + labelW + 6;
+    const barW = 40;
+    const barH = 5;
+    const barY = y - barH / 2;
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.fillRect(barX, barY, barW, barH);
+
+    const fillFrac = 1 - cooldownFraction;
+    if (fillFrac > 0) {
+      ctx.fillStyle = ready ? "#2ecc71" : "#3498db";
+      ctx.fillRect(barX, barY, barW * fillFrac, barH);
+    }
+
+    if (ready) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+      ctx.font = `5px ${RETRO_FONT}`;
+      ctx.fillText("[SHIFT]", barX + barW + 4, y);
+    }
+
+    ctx.restore();
+  }
+
+  private getDodgeButtonRect(width: number, height: number) {
+    const size = 44;
+    const bombBtn = this.getBombButtonRect(width, height);
+    return { x: bombBtn.x - size - 8, y: bombBtn.y, w: size, h: size };
+  }
+
+  isDodgeButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    if (!this.isTouchDevice) return false;
+    const btn = this.getDodgeButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w
+        && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  private renderTouchDodgeButton(
+    ctx: CanvasRenderingContext2D,
+    cooldownFraction: number,
+    width: number,
+    height: number
+  ): void {
+    if (!this.isTouchDevice) return;
+    const btn = this.getDodgeButtonRect(width, height);
+    const ready = cooldownFraction <= 0;
+
+    ctx.save();
+    ctx.globalAlpha = ready ? 0.7 : 0.3;
+    ctx.fillStyle = ready ? "#3498db" : "#555555";
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(btn.x, btn.y, btn.w, btn.h, 8);
+    ctx.stroke();
+
+    ctx.globalAlpha = 1;
+    ctx.font = `9px ${RETRO_FONT}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("DASH", btn.x + btn.w / 2, btn.y + btn.h / 2);
     ctx.restore();
   }
 

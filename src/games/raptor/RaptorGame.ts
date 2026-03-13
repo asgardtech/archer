@@ -555,6 +555,18 @@ export class RaptorGame implements IGame {
       this.storyRenderer.advance();
     }
 
+    if (this.input.wasClicked
+        && this.hud.isDodgeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+      this.input.wasDodgePressed = true;
+    }
+
+    if (this.input.wasDodgePressed) {
+      const dodged = this.player.dodge();
+      if (dodged) {
+        this.sound.play("dodge");
+      }
+    }
+
     if (this.input.wasBombPressed && this.player.bombs > 0) {
       this.player.bombs--;
       this.sound.play("mega_bomb_fire");
@@ -877,6 +889,7 @@ export class RaptorGame implements IGame {
     this.powerUps = this.powerUps.filter((p) => p.alive);
 
     this.player.updateShieldRegen(dt);
+    this.player.updateDodge(dt);
 
     if (!this.player.alive) {
       this.totalScore += this.score;
@@ -1378,7 +1391,8 @@ export class RaptorGame implements IGame {
       this.weaponSystem.chargeLevel,
       this.player.bombs,
       this.powerUpManager.weaponTier,
-      this.player.isShieldRegenerating
+      this.player.isShieldRegenerating,
+      this.player.dodgeCooldownFraction
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
