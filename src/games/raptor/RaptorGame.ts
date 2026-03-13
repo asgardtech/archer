@@ -25,6 +25,7 @@ import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
 import { AssetLoader } from "./rendering/AssetLoader";
 import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rendering/SpriteSheet";
+import { ShipRenderer } from "./rendering/ShipRenderer";
 import { VFXManager } from "./rendering/VFXManager";
 import { TerrainRenderer } from "./rendering/TerrainRenderer";
 import { StoryRenderer } from "./rendering/StoryRenderer";
@@ -541,7 +542,7 @@ export class RaptorGame implements IGame {
     this.input.updateFromKeyboard(dt, this.width, this.height);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.height);
     if (this.player.alive) {
-      this.vfx.addEngineTrail(this.player.pos.x, this.player.pos.y + this.player.height / 2, 24);
+      this.vfx.addEngineTrail(this.player.pos.x, this.player.pos.y + this.player.height / 2, ShipRenderer.getEngineSpacing(this.player.width));
     }
     this.updateBackground(dt);
     this.powerUpManager.update(dt);

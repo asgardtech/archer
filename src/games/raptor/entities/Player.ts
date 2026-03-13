@@ -9,6 +9,7 @@ const HITBOX_INSET_Y = 5;
 const MAX_BANK_ANGLE = 0.12;
 const BANK_LERP_SPEED = 8;
 const RUNNING_LIGHT_FREQ = 1.5;
+const PANEL_LIGHT_BASE_INTERVAL = 0.5;
 
 export class Player {
   public pos: Vec2;
@@ -35,6 +36,9 @@ export class Player {
   private bankAngle = 0;
   private runningLightPhase = 0;
   private lastDx = 0;
+  private panelLightTimer = 0;
+  private panelLightOn = true;
+  private panelLightNextToggle = PANEL_LIGHT_BASE_INTERVAL;
 
   constructor(canvasWidth: number, canvasHeight: number) {
     this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
@@ -90,6 +94,13 @@ export class Player {
     this.runningLightPhase += dt * RUNNING_LIGHT_FREQ;
     if (this.runningLightPhase > 1000) this.runningLightPhase -= 1000;
 
+    this.panelLightTimer += dt;
+    if (this.panelLightTimer >= this.panelLightNextToggle) {
+      this.panelLightTimer = 0;
+      this.panelLightOn = !this.panelLightOn;
+      this.panelLightNextToggle = PANEL_LIGHT_BASE_INTERVAL * (0.6 + Math.random() * 0.8);
+    }
+
     const padding = this.width / 2;
     this.pos.x = Math.max(padding, Math.min(canvasWidth - padding, this.pos.x));
 
@@ -128,6 +139,9 @@ export class Player {
     this.bankAngle = 0;
     this.runningLightPhase = 0;
     this.lastDx = 0;
+    this.panelLightTimer = 0;
+    this.panelLightOn = true;
+    this.panelLightNextToggle = PANEL_LIGHT_BASE_INTERVAL;
     if (fullReset) {
       this.lives = 3;
       this.bombs = 0;
@@ -156,7 +170,7 @@ export class Player {
       thrustLevel: 0.6 + (this.thrustFrame / 3) * 0.4,
       bankAngle: this.bankAngle,
       runningLightPhase: this.runningLightPhase,
-      panelLightFlicker: Math.random(),
+      panelLightFlicker: this.panelLightOn ? 0.3 : 0.8,
       heatShimmer: Math.sin(Date.now() * 0.01) * 0.5 + 0.5,
       damageLevel: 1 - this.shield / 100,
     };

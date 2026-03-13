@@ -20,8 +20,14 @@ const RUNNING_GREEN = "#33ff55";
 const PANEL_LIGHT = "#ffaa22";
 const HULL_NUMBER_COLOR = "#8899aa";
 
+export const ENGINE_SPACING_FACTOR = 0.42;
+
 export class ShipRenderer {
   private dpr = 1;
+
+  static getEngineSpacing(shipWidth: number): number {
+    return shipWidth * ENGINE_SPACING_FACTOR;
+  }
 
   render(
     ctx: CanvasRenderingContext2D,
@@ -110,7 +116,7 @@ export class ShipRenderer {
   ): void {
     if (thrustLevel <= 0) return;
     ctx.save();
-    const engineSpacing = hw * 0.42;
+    const engineSpacing = hw * ENGINE_SPACING_FACTOR;
     const baseY = y + hh;
     const intensity = 0.5 + thrustLevel * 0.5;
     const flameLen = hh * 0.45 * intensity;
@@ -376,7 +382,7 @@ export class ShipRenderer {
     hh: number
   ): void {
     ctx.save();
-    const engineSpacing = hw * 0.42;
+    const engineSpacing = hw * ENGINE_SPACING_FACTOR;
 
     for (const side of [-1, 1]) {
       const ex = x + side * engineSpacing;
@@ -655,7 +661,7 @@ export class ShipRenderer {
   ): void {
     if (shimmer <= 0) return;
     ctx.save();
-    const engineSpacing = hw * 0.42;
+    const engineSpacing = hw * ENGINE_SPACING_FACTOR;
     const baseY = y + hh;
     const displacement = shimmer * 1;
 
@@ -691,9 +697,10 @@ export class ShipRenderer {
       [x + hw * 0.1, y + hh * 0.15, hw * 0.1, hh * 0.06],
       [x - hw * 0.05, y + hh * 0.4, hw * 0.08, hh * 0.05],
     ];
-    for (const [sx, sy, sw, sh] of scorchPositions) {
+    for (let idx = 0; idx < scorchPositions.length; idx++) {
+      const [sx, sy, sw, sh] = scorchPositions[idx];
       ctx.beginPath();
-      ctx.ellipse(sx, sy, sw, sh, Math.random() * 0.5, 0, Math.PI * 2);
+      ctx.ellipse(sx, sy, sw, sh, 0.2 * idx, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
