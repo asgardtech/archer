@@ -186,15 +186,15 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile projectile homes toward nearest enemy", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     const enemy = makeEnemy(450, 200);
 
     missile.update(0.1, 800, 600, [enemy]);
     expect(missile.pos.x).toBeGreaterThan(400);
   });
 
-  test("Missile turn rate does not exceed homingStrength (1.3 rad/s)", () => {
-    const homingStrength = 1.3;
+  test("Missile turn rate does not exceed homingStrength (1.8 rad/s)", () => {
+    const homingStrength = 1.8;
     const missile = new Missile(400, 400, 0, homingStrength);
     const enemy = makeEnemy(100, 400);
 
@@ -205,14 +205,14 @@ describe("Missile Weapon", () => {
   });
 
   test("Missile flies straight when no enemies exist", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     missile.update(0.1, 800, 600, []);
     expect(missile.pos.x).toBeCloseTo(400, 1);
     expect(missile.pos.y).toBeLessThan(400);
   });
 
   test("Missile flies straight when enemies array is undefined", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     missile.update(0.1, 800, 600);
     expect(missile.pos.x).toBeCloseTo(400, 1);
     expect(missile.pos.y).toBeLessThan(400);
@@ -248,7 +248,7 @@ describe("Missile Weapon", () => {
     expect(cfg.projectileSpeed).toBe(350);
     expect(cfg.piercing).toBe(false);
     expect(cfg.homing).toBe(true);
-    expect(cfg.homingStrength).toBe(1.3);
+    expect(cfg.homingStrength).toBe(1.8);
     expect(cfg.splashRadius).toBe(30);
     expect(cfg.splashDamageRatio).toBe(0.4);
     expect(cfg.rapidFireBonus).toBe(1.3);
@@ -1434,8 +1434,8 @@ describe("Edge Cases", () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe("Weapon Balance Validation", () => {
-  test("Missile homingStrength is 1.3", () => {
-    expect(WEAPON_CONFIGS["missile"].homingStrength).toBe(1.3);
+  test("Missile homingStrength is 1.8", () => {
+    expect(WEAPON_CONFIGS["missile"].homingStrength).toBe(1.8);
   });
 
   test("Missile homingStrength is less than auto-gun homingStrength", () => {
@@ -1443,8 +1443,8 @@ describe("Weapon Balance Validation", () => {
       .toBeLessThan(WEAPON_CONFIGS["auto-gun"].homingStrength);
   });
 
-  test("Auto-gun homingStrength is 1.8", () => {
-    expect(WEAPON_CONFIGS["auto-gun"].homingStrength).toBe(1.8);
+  test("Auto-gun homingStrength is 2.0 (resolves spec contradiction: must be > missile 1.8)", () => {
+    expect(WEAPON_CONFIGS["auto-gun"].homingStrength).toBe(2.0);
   });
 
   test("Auto-gun homingStrength is greater than missile homingStrength", () => {
@@ -1557,7 +1557,7 @@ describe("Weapon Balance Validation", () => {
   });
 
   test("Missile with reduced homing can miss fast-moving enemies", () => {
-    const missile = new Missile(400, 400, 0, 1.3);
+    const missile = new Missile(400, 400, 0, 1.8);
     const enemy = makeEnemy(100, 200);
 
     missile.update(0.5, 800, 600, [enemy]);
