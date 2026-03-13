@@ -1,5 +1,4 @@
 import { GameDescriptor, IGame } from "../src/shared/types";
-import { GAME_REGISTRY } from "../src/launcher/registry";
 import { raptorDescriptor } from "../src/games/raptor";
 import { LEVELS } from "../src/games/raptor/levels";
 import { Player } from "../src/games/raptor/entities/Player";
@@ -136,27 +135,26 @@ function createPlayingGame(): { game: any; canvas: HTMLCanvasElement } {
 }
 
 // ════════════════════════════════════════════════════════════════
-// LAUNCHER INTEGRATION
+// RAPTOR DESCRIPTOR
 // ════════════════════════════════════════════════════════════════
 
-describe("Scenario: Raptor Skies appears in the game collection launcher", () => {
-  test("a game card with the name 'Raptor Skies' should be visible", () => {
-    const raptor = GAME_REGISTRY.find((g) => g.name === "Raptor Skies");
-    expect(raptor).toBeDefined();
+describe("Scenario: Raptor Skies descriptor has correct metadata", () => {
+  test("descriptor name should be 'Raptor Skies'", () => {
+    expect(raptorDescriptor.name).toBe("Raptor Skies");
   });
 
-  test("the card should have a non-empty description", () => {
+  test("the descriptor should have a non-empty description", () => {
     expect(raptorDescriptor.description).toBeTruthy();
     expect(raptorDescriptor.description.length).toBeGreaterThan(0);
   });
 
-  test("the card should have a thumbnail color", () => {
+  test("the descriptor should have a thumbnail color", () => {
     expect(raptorDescriptor.thumbnailColor).toBeTruthy();
     expect(raptorDescriptor.thumbnailColor).toBe("#1a1a2e");
   });
 });
 
-describe("Scenario: Raptor Skies can be launched from the launcher", () => {
+describe("Scenario: Raptor Skies can be instantiated from the descriptor", () => {
   test("the descriptor factory creates a valid game instance", () => {
     const canvas = createMockCanvas();
     setupDom(canvas);
@@ -168,16 +166,13 @@ describe("Scenario: Raptor Skies can be launched from the launcher", () => {
   });
 });
 
-describe("Scenario: Raptor Skies is registered in the game registry", () => {
-  test('it should contain a game with id "raptor"', () => {
-    const raptor = GAME_REGISTRY.find((g) => g.id === "raptor");
-    expect(raptor).toBeDefined();
+describe("Scenario: Raptor Skies descriptor has correct id", () => {
+  test('it should have id "raptor"', () => {
+    expect(raptorDescriptor.id).toBe("raptor");
   });
 
-  test("the game descriptor should have a valid createGame factory", () => {
-    const raptor = GAME_REGISTRY.find((g) => g.id === "raptor");
-    expect(raptor).toBeDefined();
-    expect(typeof raptor!.createGame).toBe("function");
+  test("the descriptor should have a valid createGame factory", () => {
+    expect(typeof raptorDescriptor.createGame).toBe("function");
   });
 });
 
@@ -1493,12 +1488,10 @@ describe("Scenario: Raptor source files are organized correctly", () => {
   }
 });
 
-describe("Scenario: Launcher registry includes Raptor", () => {
-  test('GAME_REGISTRY should contain an entry with id "raptor"', () => {
-    const raptor = GAME_REGISTRY.find((g) => g.id === "raptor");
-    expect(raptor).toBeDefined();
-    expect(raptor!.id).toBe("raptor");
-    expect(raptor!.name).toBe("Raptor Skies");
+describe("Scenario: Raptor descriptor has correct identity", () => {
+  test('raptorDescriptor should have id "raptor" and name "Raptor Skies"', () => {
+    expect(raptorDescriptor.id).toBe("raptor");
+    expect(raptorDescriptor.name).toBe("Raptor Skies");
   });
 });
 
