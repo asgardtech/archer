@@ -7,6 +7,7 @@ import { LaserBeam } from "../entities/LaserBeam";
 import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
 import { Enemy } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
+import { EnemyMissile } from "../entities/EnemyMissile";
 import { Player } from "../entities/Player";
 import { PowerUp } from "../entities/PowerUp";
 
@@ -33,6 +34,13 @@ export interface PowerUpPlayerHit {
 
 export interface EnemyBeamPlayerHit {
   beam: EnemyLaserBeam;
+  damage: number;
+}
+
+export interface ReflectedBulletHit {
+  bullet: EnemyBullet;
+  enemy: Enemy;
+  destroyed: boolean;
   damage: number;
 }
 
@@ -188,7 +196,7 @@ export class CollisionSystem {
       if (!bullet.alive || bullet.reflected) continue;
       if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
                     player.left, player.top, player.right, player.bottom)) {
-        if (player.deflectorActive && !bullet.isMine && !bullet.homing && Math.random() < 0.4) {
+        if (player.deflectorActive && !bullet.isMine && !(bullet instanceof EnemyMissile) && Math.random() < 0.4) {
           bullet.vel.x = -bullet.vel.x;
           bullet.vel.y = -bullet.vel.y;
           bullet.reflected = true;
@@ -203,8 +211,8 @@ export class CollisionSystem {
     return hits;
   }
 
-  checkReflectedBulletsEnemies(bullets: EnemyBullet[], enemies: Enemy[]): BulletEnemyHit[] {
-    const hits: BulletEnemyHit[] = [];
+  checkReflectedBulletsEnemies(bullets: EnemyBullet[], enemies: Enemy[]): ReflectedBulletHit[] {
+    const hits: ReflectedBulletHit[] = [];
     for (const bullet of bullets) {
       if (!bullet.alive || !bullet.reflected) continue;
       for (const enemy of enemies) {
@@ -213,7 +221,7 @@ export class CollisionSystem {
                       enemy.left, enemy.top, enemy.right, enemy.bottom)) {
           const destroyed = enemy.hit(bullet.damage);
           bullet.alive = false;
-          hits.push({ bullet: bullet as unknown as Projectile, enemy, destroyed, damage: bullet.damage });
+          hits.push({ bullet, enemy, destroyed, damage: bullet.damage });
           break;
         }
       }

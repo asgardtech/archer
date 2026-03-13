@@ -2035,7 +2035,10 @@ describe("Scenario: PowerUp entity", () => {
   });
 
   test("power-up gets random type when not specified", () => {
-    const validTypes: RaptorPowerUpType[] = ["spread-shot", "rapid-fire", "shield-restore", "bonus-life"];
+    const validTypes: RaptorPowerUpType[] = [
+      "spread-shot", "rapid-fire", "shield-restore", "bonus-life",
+      "mega-bomb", "armor", "shield-battery", "deflector",
+    ];
     const pu = new PowerUp(100, 100);
     expect(validTypes).toContain(pu.type);
   });
