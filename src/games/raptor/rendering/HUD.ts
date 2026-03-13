@@ -410,7 +410,8 @@ export class HUD {
     hasSave?: boolean,
     chargeLevel?: number,
     bombs?: number,
-    weaponTier?: number
+    weaponTier?: number,
+    isShieldRegenerating?: boolean
   ): void {
     switch (state) {
       case "loading":
@@ -422,10 +423,10 @@ export class HUD {
       case "briefing":
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier);
+        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.completionLines,
           `Score: ${score}`,
@@ -625,7 +626,8 @@ export class HUD {
     currentWeapon?: WeaponType,
     chargeLevel?: number,
     bombs?: number,
-    weaponTier?: number
+    weaponTier?: number,
+    isShieldRegenerating?: boolean
   ): void {
     ctx.save();
 
@@ -667,11 +669,11 @@ export class HUD {
 
     ctx.restore();
 
-    this.renderShieldBar(ctx, shield, height);
+    this.renderShieldBar(ctx, shield, height, isShieldRegenerating);
     this.renderTouchBombButton(ctx, bombs ?? 0, width, height);
   }
 
-  private renderShieldBar(ctx: CanvasRenderingContext2D, shield: number, canvasHeight: number): void {
+  private renderShieldBar(ctx: CanvasRenderingContext2D, shield: number, canvasHeight: number, isRegenerating?: boolean): void {
     ctx.save();
 
     const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
@@ -709,6 +711,14 @@ export class HUD {
       }
       ctx.fillStyle = shieldGrad;
       this.roundedRect(ctx, barX, fillY, SHIELD_BAR_W, fillH, 4);
+      ctx.fill();
+    }
+
+    if (isRegenerating && shieldFrac < 1) {
+      const regenAlpha = Math.sin(Date.now() / 200) * 0.15 + 0.15;
+      const emptyH = barH * (1 - shieldFrac);
+      ctx.fillStyle = `rgba(52, 152, 219, ${regenAlpha})`;
+      this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, emptyH, 4);
       ctx.fill();
     }
 
