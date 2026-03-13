@@ -61,7 +61,7 @@ export class WeaponSystem {
 
     if (this.currentWeapon === "laser") {
       this.laserBeam.active = player.alive;
-      this.laserBeam.setModifiers(rapidFire, spreadShot, tierConfig.visualScale, tierConfig.damageMultiplier);
+      this.laserBeam.setModifiers(rapidFire, spreadShot, tierConfig.visualScale, tierConfig.damageMultiplier, weaponConfig.rapidFireBonus);
       this.laserBeam.updatePosition(player.pos.x, player.top);
       return { newProjectiles: [], soundEvent: null };
     }

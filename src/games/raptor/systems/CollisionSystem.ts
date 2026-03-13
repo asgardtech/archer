@@ -108,39 +108,45 @@ export class CollisionSystem {
           hits.push({ bullet, enemy, destroyed, damage: bullet.damage });
 
           if (bullet instanceof Missile) {
-            const splashHits = this.applySplashDamage(enemy, enemies, WEAPON_CONFIGS["missile"].splashRadius);
+            const cfg = WEAPON_CONFIGS["missile"];
+            const splashDamage = Math.ceil(bullet.damage * cfg.splashDamageRatio);
+            const splashHits = this.applySplashDamage(enemy, enemies, cfg.splashRadius, splashDamage);
             for (const sh of splashHits) {
               hits.push({
                 bullet,
                 enemy: sh.enemy,
                 destroyed: sh.destroyed,
-                damage: 1,
+                damage: splashDamage,
                 splash: true,
               });
             }
           }
 
           if (bullet instanceof PlasmaBolt) {
-            const splashHits = this.applySplashDamage(enemy, enemies, WEAPON_CONFIGS["plasma"].splashRadius);
+            const cfg = WEAPON_CONFIGS["plasma"];
+            const splashDamage = Math.ceil(bullet.damage * cfg.splashDamageRatio);
+            const splashHits = this.applySplashDamage(enemy, enemies, cfg.splashRadius, splashDamage);
             for (const sh of splashHits) {
               hits.push({
                 bullet,
                 enemy: sh.enemy,
                 destroyed: sh.destroyed,
-                damage: 1,
+                damage: splashDamage,
                 splash: true,
               });
             }
           }
 
           if (bullet instanceof Rocket) {
-            const splashHits = this.applySplashDamage(enemy, enemies, WEAPON_CONFIGS["rocket"].splashRadius);
+            const cfg = WEAPON_CONFIGS["rocket"];
+            const splashDamage = Math.ceil(bullet.damage * cfg.splashDamageRatio);
+            const splashHits = this.applySplashDamage(enemy, enemies, cfg.splashRadius, splashDamage);
             for (const sh of splashHits) {
               hits.push({
                 bullet,
                 enemy: sh.enemy,
                 destroyed: sh.destroyed,
-                damage: 1,
+                damage: splashDamage,
                 splash: true,
               });
             }
@@ -154,7 +160,9 @@ export class CollisionSystem {
     return hits;
   }
 
-  private applySplashDamage(origin: Enemy, enemies: Enemy[], radius: number): SplashHit[] {
+  private applySplashDamage(origin: Enemy, enemies: Enemy[], radius: number, splashDamage: number): SplashHit[] {
+    if (splashDamage <= 0) return [];
+
     const splashHits: SplashHit[] = [];
     const r2 = radius * radius;
 
@@ -163,7 +171,7 @@ export class CollisionSystem {
       const dx = enemy.pos.x - origin.pos.x;
       const dy = enemy.pos.y - origin.pos.y;
       if (dx * dx + dy * dy <= r2) {
-        const destroyed = enemy.hit(1);
+        const destroyed = enemy.hit(splashDamage);
         splashHits.push({ enemy, destroyed });
       }
     }
