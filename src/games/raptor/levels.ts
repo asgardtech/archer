@@ -40,7 +40,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       briefing: "Vektran scouts have been spotted along the coastline. Fly a patrol sweep and eliminate all hostiles before they establish a foothold.",
       completionText: "Coastal sector secured. Recon data confirms Vektran forces are massing inland — Command is ordering you to press the attack.",
       inGameMessages: [
-        { triggerTime: 2, text: "HQ: Radar contact — multiple bogeys inbound." },
+        { triggerTime: 2, text: "HQ: Rennick here — radar contact, multiple bogeys inbound." },
         { triggerTime: 9, text: "HQ: Second wave approaching from the north." },
         { triggerTime: 16, text: "HQ: Keep pushing — clear the coast." },
       ],
@@ -249,7 +249,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       briefing: "Intelligence confirms the Vektran superweapon is housed in a fortress complex. Breach their final defensive line — nothing gets through after this.",
       completionText: "The fortress has fallen, but the superweapon was already moved. Vektran transport logs point to a shipyard beyond the front lines. You're going deep.",
       inGameMessages: [
-        { triggerTime: 2, text: "HQ: This is it — breach the perimeter." },
+        { triggerTime: 2, text: "HQ: Rennick to all wings — breach the perimeter." },
         { triggerTime: 13, text: "Sensor: Stealth contacts on approach." },
         { triggerTime: 23, text: "Wingman: Cruiser sighted — focus fire!" },
         { triggerTime: 35, text: "HQ: Fortress guns are failing. Push through!" },
@@ -606,7 +606,7 @@ export const LEVELS: RaptorLevelConfig[] = [
       briefing: "The Vektran Stronghold houses their central command core — destroy it and their entire network collapses. All wings, begin the final assault.",
       completionText: "The Vektran command core is destroyed. Their forces across the colonies are shutting down. Against all odds, you've done it — humanity is free.",
       inGameMessages: [
-        { triggerTime: 2, text: "HQ: All wings, commence attack!" },
+        { triggerTime: 2, text: "HQ: Admiral Rennick here — all wings, commence attack!" },
         { triggerTime: 12, text: "Sensor: Cruisers and juggernauts inbound." },
         { triggerTime: 28, text: "Wingman: Juggernaut down! Keep going!" },
         { triggerTime: 48, text: "HQ: Command core exposed — hit it now!" },

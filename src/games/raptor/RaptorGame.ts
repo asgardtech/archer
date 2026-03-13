@@ -232,6 +232,8 @@ export class RaptorGame implements IGame {
     if (playerSprite) this.player.setSprite(playerSprite);
     if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
 
+    this.storyRenderer.setAdmiralPortrait(this.assets.getOptional("portrait_admiral"));
+
     this.state = "menu";
   }
 

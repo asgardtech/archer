@@ -40,8 +40,8 @@ const SMALL_CANVAS_THRESHOLD = 500;
 const SPEAKER_LABELS: Record<SpeakerType, string> = {
   pilot: "RAPTOR-1",
   wingman: "WINGMAN",
-  hq: "HQ COMMAND",
-  sensor: "HQ COMMAND",
+  hq: "ADM. RENNICK",
+  sensor: "SENSOR OPS",
 };
 
 export function detectSpeaker(text: string): SpeakerType {
@@ -57,13 +57,16 @@ function renderPortraitForSpeaker(
   x: number,
   y: number,
   size: number,
-  elapsed: number
+  elapsed: number,
+  admiralPortrait?: HTMLImageElement | null
 ): void {
   switch (speaker) {
     case "wingman":
       WingmanPortrait.render(ctx, x, y, size, elapsed);
       break;
     case "hq":
+      HQPortrait.render(ctx, x, y, size, elapsed, admiralPortrait);
+      break;
     case "sensor":
       HQPortrait.render(ctx, x, y, size, elapsed);
       break;
@@ -91,12 +94,17 @@ export class StoryRenderer {
   private blinkTimer = 0;
   private elapsed = 0;
   private speaker: SpeakerType = "pilot";
+  private admiralPortrait: HTMLImageElement | null = null;
 
   private measureCtx: CanvasRenderingContext2D;
 
   constructor() {
     const canvas = document.createElement("canvas");
     this.measureCtx = canvas.getContext("2d")!;
+  }
+
+  setAdmiralPortrait(image: HTMLImageElement | null): void {
+    this.admiralPortrait = image;
   }
 
   show(messages: string[], position: StoryPosition = "center", speaker?: SpeakerType): void {
@@ -225,7 +233,7 @@ export class StoryRenderer {
     if (portraitVisible) {
       const portraitX = panelX + PORTRAIT_MARGIN;
       const portraitY = panelY + paddingY;
-      renderPortraitForSpeaker(ctx, this.speaker, portraitX, portraitY, portraitSize, this.elapsed);
+      renderPortraitForSpeaker(ctx, this.speaker, portraitX, portraitY, portraitSize, this.elapsed, this.admiralPortrait);
 
       if (!this.isQuickMessage) {
         const label = SPEAKER_LABELS[this.speaker] || "RAPTOR-1";

@@ -40,6 +40,7 @@ export const ASSET_MANIFEST: AssetManifest = {
   bullet_rocket:    `${BASE}bullet_rocket.svg`,
   powerup_rocket:   `${BASE}powerup_rocket.svg`,
   powerup_bomb:     `${BASE}powerup_bomb.svg`,
+  portrait_admiral: `${BASE}portrait_admiral.png`,
   bg_nebula:        `${BASE}bg_nebula.svg`,
   planet_01:        `${BASE}planet_01.svg`,
   planet_02:        `${BASE}planet_02.svg`,
