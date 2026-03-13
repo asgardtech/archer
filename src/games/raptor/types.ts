@@ -107,6 +107,7 @@ export type RaptorPowerUpType =
   | "rapid-fire"
   | "shield-restore"
   | "bonus-life"
+  | "armor"
   | "weapon-missile"
   | "weapon-laser"
   | "weapon-plasma"

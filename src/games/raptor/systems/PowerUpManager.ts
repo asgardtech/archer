@@ -8,6 +8,7 @@ export interface ActiveEffect {
 export const EFFECT_DURATIONS: Partial<Record<RaptorPowerUpType, number>> = {
   "spread-shot": 8,
   "rapid-fire": 6,
+  "armor": 10,
 };
 
 export type WeaponSetResult = "switched" | "upgraded" | "maxed";
