@@ -16,21 +16,11 @@ export type BalloonVariant = "standard" | "upgrade" | "boss";
 
 export type UpgradeType = "multi-shot" | "piercing" | "rapid-fire" | "bonus-arrows";
 
+export type WeaponType = "default" | "multi-shot" | "piercing" | "rapid-fire";
+
+export const WEAPON_SLOTS: WeaponType[] = ["default", "multi-shot", "piercing", "rapid-fire"];
+
 export type ObstacleType = "bird" | "airplane" | "ufo";
-
-export interface UpgradeState {
-  type: UpgradeType;
-  remainingTime: number;
-}
-
-export interface PersistentUpgradeState {
-  type: UpgradeType;
-  remainingTime: number;
-  cooldownRemaining: number;
-  isPermanent: boolean;
-}
-
-export type UpgradeCollectionMap = Record<UpgradeType, number>;
 
 export type SoundEvent =
   | "arrow_shoot"
@@ -46,7 +36,8 @@ export type SoundEvent =
   | "victory"
   | "menu_start"
   | "low_ammo"
-  | "landmark_liberated";
+  | "landmark_liberated"
+  | "weapon_switch";
 
 export type LandmarkType = "windmill" | "treehouse" | "watchtower" | "lighthouse" | "castle";
 

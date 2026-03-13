@@ -1,15 +1,15 @@
-import { GameState, ObstacleType, UpgradeType } from "./types";
+import { GameState, ObstacleType, UpgradeType, WEAPON_SLOTS } from "./types";
 import { InputManager } from "./systems/InputManager";
 import { Spawner } from "./systems/Spawner";
 import { CollisionSystem } from "./systems/CollisionSystem";
-import { UpgradeManager } from "./systems/UpgradeManager";
+import { WeaponManager } from "./systems/WeaponManager";
 import { SoundSystem } from "./systems/SoundSystem";
 import { Balloon } from "./entities/Balloon";
 import { Arrow } from "./entities/Arrow";
 import { Obstacle } from "./entities/Obstacle";
 import { Bow } from "./entities/Bow";
 import { Landmark } from "./entities/Landmark";
-import { HUD } from "./rendering/HUD";
+import { HUD, TOOLBAR_HEIGHT } from "./rendering/HUD";
 import { TerrainRenderer } from "./rendering/TerrainRenderer";
 import { StoryRenderer } from "./rendering/StoryRenderer";
 import { LEVELS, LevelConfig } from "./levels";
@@ -31,6 +31,12 @@ const UPGRADE_ICON_KEYS: Record<UpgradeType, string> = {
   "piercing": "powerup_piercing",
   "rapid-fire": "powerup_rapidfire",
   "bonus-arrows": "powerup_bonusarrows",
+};
+
+const WEAPON_LABELS: Record<string, string> = {
+  "multi-shot": "Multi-Shot",
+  "piercing": "Piercing",
+  "rapid-fire": "Rapid Fire",
 };
 
 const OBSTACLE_PENALTIES: Record<ObstacleType, { score: number; arrows: number }> = {
@@ -65,7 +71,7 @@ export class ArcherGame implements IGame {
   private input: InputManager;
   private spawner: Spawner;
   private collisions: CollisionSystem;
-  private upgradeManager: UpgradeManager;
+  private weaponManager: WeaponManager;
   private hud: HUD;
   private storyRenderer: StoryRenderer;
   private audio: AudioManager;
@@ -77,6 +83,10 @@ export class ArcherGame implements IGame {
   private resizeTimer: ReturnType<typeof setTimeout> | undefined;
 
   public onExit: (() => void) | null = null;
+
+  private get bowBottomOffset(): number {
+    return (this.input.isTouchDevice ? 60 : 30) + TOOLBAR_HEIGHT;
+  }
 
   constructor(canvasOrId: string | HTMLCanvasElement, private width = 800, private height = 600) {
     if (typeof canvasOrId === "string") {
@@ -98,10 +108,10 @@ export class ArcherGame implements IGame {
     this.input = new InputManager(this.canvas);
     this.spawner = new Spawner();
     this.collisions = new CollisionSystem();
-    this.upgradeManager = new UpgradeManager();
+    this.weaponManager = new WeaponManager();
     this.hud = new HUD(this.input.isTouchDevice);
     this.storyRenderer = new StoryRenderer(this.input.isTouchDevice);
-    this.bow = new Bow(width, height, this.input.isTouchDevice ? 60 : 30);
+    this.bow = new Bow(width, height, this.bowBottomOffset);
     this.audio = new AudioManager();
     this.sound = new SoundSystem(this.audio);
     this.assetLoader = new AssetLoader();
@@ -301,9 +311,39 @@ export class ArcherGame implements IGame {
     this.input.consume();
   }
 
+  private handleWeaponInput(): void {
+    if (this.input.weaponSlotPressed !== null) {
+      const slotIndex = this.input.weaponSlotPressed - 1;
+      if (slotIndex >= 0 && slotIndex < WEAPON_SLOTS.length) {
+        const weapon = WEAPON_SLOTS[slotIndex];
+        if (this.weaponManager.switchTo(weapon)) {
+          this.sound.play("weapon_switch");
+        }
+      }
+    }
+
+    if (this.input.wasClicked) {
+      const slot = this.hud.getWeaponSlotAtPoint(
+        this.input.mousePos.x,
+        this.input.mousePos.y,
+        this.width,
+        this.height
+      );
+      if (slot !== null) {
+        const slotIndex = slot - 1;
+        if (slotIndex >= 0 && slotIndex < WEAPON_SLOTS.length) {
+          const weapon = WEAPON_SLOTS[slotIndex];
+          if (this.weaponManager.switchTo(weapon)) {
+            this.sound.play("weapon_switch");
+          }
+        }
+        this.input.wasClicked = false;
+      }
+    }
+  }
+
   private updatePlaying(dt: number): void {
     this.bow.update(this.input.mousePos);
-    this.upgradeManager.update(dt);
     if (this.landmark) {
       this.landmark.update(dt);
       this.landmark.setSiegeProgress(
@@ -311,10 +351,13 @@ export class ArcherGame implements IGame {
       );
     }
 
+    this.handleWeaponInput();
+
     if (this.input.wasClicked && this.arrowsRemaining > 0) {
-      const multiShot = this.upgradeManager.hasUpgrade("multi-shot");
-      const isPiercing = this.upgradeManager.hasUpgrade("piercing");
-      const isRapidFire = this.upgradeManager.hasUpgrade("rapid-fire");
+      const weapon = this.weaponManager.currentWeapon;
+      const multiShot = weapon === "multi-shot";
+      const isPiercing = weapon === "piercing";
+      const isRapidFire = weapon === "rapid-fire";
       const angles = this.bow.getFireAngles(multiShot);
 
       for (const angle of angles) {
@@ -390,12 +433,17 @@ export class ArcherGame implements IGame {
       }
 
       if (hit.grantedUpgrade) {
-        this.upgradeManager.activate(hit.grantedUpgrade, (amount: number) => {
+        const result = this.weaponManager.collectUpgrade(hit.grantedUpgrade, (amount: number) => {
           this.arrowsRemaining += amount;
           this.hud.showAmmoGain(amount);
           this.sound.play("ammo_gain");
         });
-        this.sound.play("upgrade_activate");
+
+        if (result.isNewWeapon) {
+          this.sound.play("upgrade_activate");
+          const label = WEAPON_LABELS[hit.grantedUpgrade] ?? hit.grantedUpgrade;
+          this.hud.showWeaponNotification(label);
+        }
       }
     }
 
@@ -459,7 +507,7 @@ export class ArcherGame implements IGame {
     this.arrowsRemaining = 0;
     this.lowAmmoTriggered = false;
     this.sound.stopLowAmmoWarning();
-    this.upgradeManager.resetAll();
+    this.weaponManager.resetAll();
     this.startLevel(0);
   }
 
@@ -474,10 +522,10 @@ export class ArcherGame implements IGame {
     this.balloons = [];
     this.arrows = [];
     this.obstacles = [];
-    this.bow = new Bow(this.width, this.height, this.input.isTouchDevice ? 60 : 30);
+    this.bow = new Bow(this.width, this.height, this.bowBottomOffset);
     this.distributeSprites();
     this.spawner.configure(config);
-    this.upgradeManager.resetForNewLevel();
+    this.weaponManager.resetForNewLevel();
     this.hud.reset();
     this.landmark = new Landmark(config.landmark, this.width, this.height);
   }
@@ -512,7 +560,7 @@ export class ArcherGame implements IGame {
       for (const arrow of this.arrows) {
         arrow.render(this.ctx);
       }
-      this.bow.render(this.ctx, this.arrowsRemaining > 0, this.upgradeManager.getActive());
+      this.bow.render(this.ctx, this.arrowsRemaining > 0, this.weaponManager.currentWeapon);
     }
 
     this.hud.render(
@@ -522,13 +570,13 @@ export class ArcherGame implements IGame {
       this.arrowsRemaining,
       this.width,
       this.height,
-      this.upgradeManager.getActive(),
+      this.weaponManager.currentWeapon,
+      this.weaponManager.unlockedWeapons,
       this.dt,
       config.level,
       config.name,
       this.totalScore + (this.state === "playing" ? this.score : 0),
-      this.upgradeManager.getPermanentUpgrades(),
-      this.upgradeManager.getCollectionCounts(),
+      new Map(),
       config.landmark.label,
       config.landmark.description
     );

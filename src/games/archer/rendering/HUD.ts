@@ -1,10 +1,10 @@
-import { GameState, UpgradeState, UpgradeType } from "../types";
-import { PERMANENT_THRESHOLD } from "../systems/UpgradeManager";
+import { GameState, UpgradeType, WeaponType, WEAPON_SLOTS } from "../types";
 
-const UPGRADE_DISPLAY: Record<string, { icon: string; color: string; label: string }> = {
-  "multi-shot": { icon: "⫸", color: "#3498db", label: "Multi-Shot" },
-  "piercing": { icon: "➤", color: "#e67e22", label: "Piercing" },
-  "rapid-fire": { icon: "⚡", color: "#f1c40f", label: "Rapid Fire" },
+const WEAPON_DISPLAY: Record<WeaponType, { icon: string; color: string; label: string }> = {
+  "default":    { icon: "🏹", color: "#ecf0f1", label: "STD" },
+  "multi-shot": { icon: "⫸",  color: "#3498db", label: "MULTI" },
+  "piercing":   { icon: "➤",  color: "#e67e22", label: "PIERC" },
+  "rapid-fire": { icon: "⚡", color: "#f1c40f", label: "RAPID" },
 };
 
 interface AmmoGainText {
@@ -19,18 +19,30 @@ interface PenaltyText {
   offsetY: number;
 }
 
+interface WeaponNotification {
+  label: string;
+  age: number;
+}
+
 const AMMO_GAIN_DURATION = 1.5;
 const AMMO_GAIN_DRIFT = 30;
 const PENALTY_DURATION = 1.5;
 const PENALTY_DRIFT = 30;
+const WEAPON_NOTIFY_DURATION = 2.0;
 
 const MUTE_BTN_SIZE = 36;
 const MUTE_BTN_MARGIN = 12;
+
+export const TOOLBAR_HEIGHT = 64;
+const SLOT_SIZE = 56;
+const SLOT_GAP = 8;
+const SLOT_BORDER_RADIUS = 6;
 
 export class HUD {
   private ammoGainTexts: AmmoGainText[] = [];
   private penaltyTexts: PenaltyText[] = [];
   private upgradeIcons: Map<string, HTMLImageElement> = new Map();
+  private weaponNotification: WeaponNotification | null = null;
   public loadingProgress = 0;
 
   constructor(private isTouchDevice = false) {}
@@ -55,9 +67,14 @@ export class HUD {
     });
   }
 
+  showWeaponNotification(label: string): void {
+    this.weaponNotification = { label, age: 0 };
+  }
+
   reset(): void {
     this.ammoGainTexts = [];
     this.penaltyTexts = [];
+    this.weaponNotification = null;
   }
 
   render(
@@ -67,12 +84,12 @@ export class HUD {
     arrowsRemaining: number,
     canvasW: number,
     canvasH: number,
-    activeUpgrades: ReadonlyArray<UpgradeState> = [],
+    currentWeapon: WeaponType = "default",
+    unlockedWeapons: ReadonlySet<WeaponType> = new Set(["default"]),
     dt = 0,
     level = 1,
     levelName = "",
     totalScore = 0,
-    permanentUpgrades: ReadonlySet<UpgradeType> = new Set(),
     collectionCounts: ReadonlyMap<UpgradeType, number> = new Map(),
     landmarkLabel = "",
     landmarkDescription = ""
@@ -87,6 +104,13 @@ export class HUD {
     }
     this.penaltyTexts = this.penaltyTexts.filter((t) => t.age < PENALTY_DURATION);
 
+    if (this.weaponNotification) {
+      this.weaponNotification.age += dt;
+      if (this.weaponNotification.age >= WEAPON_NOTIFY_DURATION) {
+        this.weaponNotification = null;
+      }
+    }
+
     switch (state) {
       case "loading":
         this.renderLoading(ctx, canvasW, canvasH);
@@ -100,7 +124,7 @@ export class HUD {
         this.renderLevelIntro(ctx, level, levelName, landmarkLabel, landmarkDescription, canvasW, canvasH);
         break;
       case "playing":
-        this.renderPlaying(ctx, score, arrowsRemaining, canvasW, activeUpgrades, level, levelName, permanentUpgrades);
+        this.renderPlaying(ctx, score, arrowsRemaining, canvasW, canvasH, currentWeapon, unlockedWeapons, level, levelName);
         break;
       case "level_complete":
         this.renderLevelComplete(ctx, score, level, levelName, landmarkLabel, canvasW, canvasH, collectionCounts);
@@ -142,6 +166,20 @@ export class HUD {
       clickY >= y &&
       clickY <= y + MUTE_BTN_SIZE
     );
+  }
+
+  getWeaponSlotAtPoint(x: number, y: number, canvasW: number, canvasH: number): number | null {
+    const totalW = WEAPON_SLOTS.length * SLOT_SIZE + (WEAPON_SLOTS.length - 1) * SLOT_GAP;
+    const startX = (canvasW - totalW) / 2;
+    const slotY = canvasH - TOOLBAR_HEIGHT + (TOOLBAR_HEIGHT - SLOT_SIZE) / 2;
+
+    for (let i = 0; i < WEAPON_SLOTS.length; i++) {
+      const sx = startX + i * (SLOT_SIZE + SLOT_GAP);
+      if (x >= sx && x <= sx + SLOT_SIZE && y >= slotY && y <= slotY + SLOT_SIZE) {
+        return i + 1;
+      }
+    }
+    return null;
   }
 
   private renderLoading(ctx: CanvasRenderingContext2D, w: number, h: number): void {
@@ -199,10 +237,11 @@ export class HUD {
     score: number,
     arrowsRemaining: number,
     w: number,
-    activeUpgrades: ReadonlyArray<UpgradeState>,
+    h: number,
+    currentWeapon: WeaponType,
+    unlockedWeapons: ReadonlySet<WeaponType>,
     level: number,
-    levelName: string,
-    permanentUpgrades: ReadonlySet<UpgradeType> = new Set()
+    levelName: string
   ): void {
     ctx.save();
     ctx.font = "bold 20px sans-serif";
@@ -219,63 +258,6 @@ export class HUD {
     ctx.fillStyle = "rgba(255,255,255,0.85)";
     ctx.font = "bold 16px sans-serif";
     ctx.fillText(`Level ${level} \u2014 ${levelName}`, w / 2, 24);
-
-    ctx.textAlign = "left";
-    let yOffset = 55;
-    const iconSize = 28;
-    const rowHeight = 36;
-    for (const upgrade of activeUpgrades) {
-      const info = UPGRADE_DISPLAY[upgrade.type];
-      if (!info) continue;
-
-      const isPerm = permanentUpgrades.has(upgrade.type);
-      let xCursor = 16;
-
-      if (isPerm) {
-        ctx.font = "bold 18px sans-serif";
-        ctx.fillStyle = "#FFD700";
-        ctx.textBaseline = "middle";
-        ctx.fillText("★", xCursor, yOffset + iconSize / 2);
-        xCursor += 18;
-      }
-
-      const iconImg = this.upgradeIcons.get(upgrade.type);
-      if (iconImg) {
-        ctx.drawImage(iconImg, xCursor, yOffset, iconSize, iconSize);
-      } else {
-        ctx.font = "bold 20px sans-serif";
-        ctx.fillStyle = info.color;
-        ctx.textBaseline = "middle";
-        ctx.fillText(info.icon, xCursor, yOffset + iconSize / 2);
-      }
-      xCursor += iconSize + 6;
-
-      ctx.font = "bold 14px sans-serif";
-      ctx.fillStyle = info.color;
-      ctx.textBaseline = "middle";
-      ctx.fillText(`${info.label} ${upgrade.remainingTime.toFixed(1)}s`, xCursor, yOffset + iconSize / 2);
-
-      const barX = 16;
-      const barW = 140;
-      const barH = 4;
-      const barY = yOffset + iconSize + 2;
-
-      if (isPerm) {
-        ctx.strokeStyle = "#FFD700";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
-      }
-
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.fillRect(barX, barY, barW, barH);
-
-      const maxDuration = upgrade.type === "multi-shot" ? 8 : upgrade.type === "piercing" ? 6 : 5;
-      const fillRatio = Math.max(0, upgrade.remainingTime / maxDuration);
-      ctx.fillStyle = info.color;
-      ctx.fillRect(barX, barY, barW * fillRatio, barH);
-
-      yOffset += rowHeight;
-    }
 
     ctx.textAlign = "right";
     for (const t of this.ammoGainTexts) {
@@ -297,7 +279,121 @@ export class HUD {
       ctx.fillText(`\u2212${t.amount}`, 16, 50 + t.offsetY + drift);
     }
 
+    this.renderWeaponBar(ctx, w, h, currentWeapon, unlockedWeapons);
+
+    if (this.weaponNotification) {
+      const progress = this.weaponNotification.age / WEAPON_NOTIFY_DURATION;
+      const alpha = progress < 0.2 ? progress / 0.2 : progress > 0.7 ? (1 - progress) / 0.3 : 1;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "bold 22px sans-serif";
+      ctx.fillStyle = `rgba(241, 196, 15, ${alpha})`;
+      ctx.fillText(
+        `NEW WEAPON: ${this.weaponNotification.label}`,
+        w / 2,
+        h / 2 - 60
+      );
+    }
+
     ctx.restore();
+  }
+
+  private renderWeaponBar(
+    ctx: CanvasRenderingContext2D,
+    canvasW: number,
+    canvasH: number,
+    currentWeapon: WeaponType,
+    unlockedWeapons: ReadonlySet<WeaponType>
+  ): void {
+    const totalW = WEAPON_SLOTS.length * SLOT_SIZE + (WEAPON_SLOTS.length - 1) * SLOT_GAP;
+    const startX = (canvasW - totalW) / 2;
+    const barY = canvasH - TOOLBAR_HEIGHT;
+    const slotY = barY + (TOOLBAR_HEIGHT - SLOT_SIZE) / 2;
+
+    ctx.save();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.fillRect(0, barY, canvasW, TOOLBAR_HEIGHT);
+
+    for (let i = 0; i < WEAPON_SLOTS.length; i++) {
+      const weapon = WEAPON_SLOTS[i];
+      const isActive = weapon === currentWeapon;
+      const isUnlocked = unlockedWeapons.has(weapon);
+      const sx = startX + i * (SLOT_SIZE + SLOT_GAP);
+      const display = WEAPON_DISPLAY[weapon];
+
+      ctx.fillStyle = isActive
+        ? "rgba(255, 215, 0, 0.25)"
+        : isUnlocked
+          ? "rgba(255, 255, 255, 0.12)"
+          : "rgba(0, 0, 0, 0.3)";
+      ctx.beginPath();
+      ctx.roundRect(sx, slotY, SLOT_SIZE, SLOT_SIZE, SLOT_BORDER_RADIUS);
+      ctx.fill();
+
+      if (isActive) {
+        ctx.strokeStyle = "#FFD700";
+        ctx.lineWidth = 2.5;
+      } else if (isUnlocked) {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+        ctx.lineWidth = 1;
+      } else {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.lineWidth = 1;
+      }
+      ctx.beginPath();
+      ctx.roundRect(sx, slotY, SLOT_SIZE, SLOT_SIZE, SLOT_BORDER_RADIUS);
+      ctx.stroke();
+
+      ctx.font = "bold 10px sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = isActive ? "#FFD700" : "rgba(255,255,255,0.6)";
+      ctx.fillText(`${i + 1}`, sx + 4, slotY + 3);
+
+      const iconKey = this.getWeaponIconKey(weapon);
+      const iconImg = iconKey ? this.upgradeIcons.get(iconKey) : null;
+      const iconSize = 24;
+      const iconX = sx + (SLOT_SIZE - iconSize) / 2;
+      const iconY = slotY + 10;
+
+      if (isUnlocked) {
+        if (iconImg) {
+          if (!isActive) ctx.globalAlpha = 0.8;
+          ctx.drawImage(iconImg, iconX, iconY, iconSize, iconSize);
+          ctx.globalAlpha = 1;
+        } else {
+          ctx.font = "18px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = display.color;
+          ctx.fillText(display.icon, sx + SLOT_SIZE / 2, slotY + 22);
+        }
+
+        ctx.font = "bold 9px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillStyle = isActive ? display.color : "rgba(255,255,255,0.6)";
+        ctx.fillText(display.label, sx + SLOT_SIZE / 2, slotY + SLOT_SIZE - 3);
+      } else {
+        ctx.font = "18px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(255,255,255,0.25)";
+        ctx.fillText("🔒", sx + SLOT_SIZE / 2, slotY + SLOT_SIZE / 2);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  private getWeaponIconKey(weapon: WeaponType): string | null {
+    switch (weapon) {
+      case "multi-shot": return "multi-shot";
+      case "piercing":   return "piercing";
+      case "rapid-fire": return "rapid-fire";
+      default:           return null;
+    }
   }
 
   private renderLevelComplete(
@@ -336,50 +432,11 @@ export class HUD {
     ctx.fillStyle = "#f1c40f";
     ctx.fillText(`Score: ${levelScore}`, w / 2, h / 2 + 45);
 
-    const upgradeTypes: { type: UpgradeType; label: string }[] = [
-      { type: "multi-shot", label: "Multi-Shot" },
-      { type: "piercing", label: "Piercing" },
-      { type: "rapid-fire", label: "Rapid Fire" },
-      { type: "bonus-arrows", label: "Bonus Arrows" },
-    ];
-
-    let progressY = h / 2 + 80;
-    let hasProgress = false;
-    const lcIconSize = 20;
-    for (const { type, label } of upgradeTypes) {
-      const count = collectionCounts.get(type) ?? 0;
-      if (count === 0) continue;
-      hasProgress = true;
-
-      const dots = Array.from({ length: PERMANENT_THRESHOLD }, (_, i) =>
-        i < count ? "●" : "○"
-      ).join("");
-
-      const text = `${label} ${dots}`;
-      ctx.font = "16px sans-serif";
-      const textWidth = ctx.measureText(text).width;
-
-      const iconImg = this.upgradeIcons.get(type);
-      const totalWidth = iconImg ? lcIconSize + 6 + textWidth : textWidth;
-      const startX = w / 2 - totalWidth / 2;
-
-      if (iconImg) {
-        ctx.drawImage(iconImg, startX, progressY - lcIconSize / 2, lcIconSize, lcIconSize);
-      }
-
-      ctx.textAlign = "left";
-      ctx.fillStyle = "rgba(255,255,255,0.8)";
-      ctx.fillText(text, iconImg ? startX + lcIconSize + 6 : startX, progressY);
-      ctx.textAlign = "center";
-
-      progressY += 26;
-    }
-
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "20px sans-serif";
     ctx.fillText(
       this.isTouchDevice ? "Tap to Continue" : "Click to Continue",
-      w / 2, hasProgress ? progressY + 15 : h / 2 + 105
+      w / 2, h / 2 + 105
     );
 
     ctx.restore();
