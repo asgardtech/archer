@@ -1,4 +1,4 @@
-import { RaptorPowerUpType, WeaponType } from "../types";
+import { RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER } from "../types";
 
 export interface ActiveEffect {
   type: RaptorPowerUpType;
@@ -15,8 +15,8 @@ export type WeaponSetResult = "switched" | "upgraded" | "maxed";
 
 export class PowerUpManager {
   private effects: ActiveEffect[] = [];
+  private _inventory: Map<WeaponType, number> = new Map([["machine-gun", 1]]);
   private _currentWeapon: WeaponType = "machine-gun";
-  private _weaponTier: number = 1;
 
   activate(type: RaptorPowerUpType): void {
     const duration = EFFECT_DURATIONS[type];
@@ -31,14 +31,50 @@ export class PowerUpManager {
   }
 
   setWeapon(type: WeaponType): WeaponSetResult {
-    if (this._currentWeapon === type) {
-      if (this._weaponTier >= 3) return "maxed";
-      this._weaponTier++;
+    const existingTier = this._inventory.get(type);
+
+    if (existingTier === undefined) {
+      this._inventory.set(type, 1);
+      this._currentWeapon = type;
+      return "switched";
+    }
+
+    if (type === this._currentWeapon) {
+      if (existingTier >= 3) return "maxed";
+      this._inventory.set(type, existingTier + 1);
       return "upgraded";
     }
+
+    // Owned but not active: upgrade tier and switch to it
+    if (existingTier < 3) {
+      this._inventory.set(type, existingTier + 1);
+      this._currentWeapon = type;
+      return "upgraded";
+    }
+
     this._currentWeapon = type;
-    this._weaponTier = 1;
     return "switched";
+  }
+
+  switchWeapon(type: WeaponType): boolean {
+    if (!this._inventory.has(type)) return false;
+    if (this._currentWeapon === type) return false;
+    this._currentWeapon = type;
+    return true;
+  }
+
+  cycleWeapon(direction: 1 | -1): WeaponType {
+    const owned = WEAPON_SLOT_ORDER.filter((w) => this._inventory.has(w));
+    if (owned.length <= 1) return this._currentWeapon;
+
+    const currentIdx = owned.indexOf(this._currentWeapon);
+    const nextIdx = (currentIdx + direction + owned.length) % owned.length;
+    this._currentWeapon = owned[nextIdx];
+    return this._currentWeapon;
+  }
+
+  get inventory(): ReadonlyMap<WeaponType, number> {
+    return this._inventory;
   }
 
   get currentWeapon(): WeaponType {
@@ -46,11 +82,30 @@ export class PowerUpManager {
   }
 
   get weaponTier(): number {
-    return this._weaponTier;
+    return this._inventory.get(this._currentWeapon) ?? 1;
   }
 
   setTier(tier: number): void {
-    this._weaponTier = Math.max(1, Math.min(3, Math.floor(tier)));
+    const clamped = Math.max(1, Math.min(3, Math.floor(tier)));
+    this._inventory.set(this._currentWeapon, clamped);
+  }
+
+  setInventory(inventory: Map<WeaponType, number>): void {
+    this._inventory = new Map(inventory);
+    if (!this._inventory.has("machine-gun")) {
+      this._inventory.set("machine-gun", 1);
+    }
+  }
+
+  setActiveWeapon(type: WeaponType): void {
+    if (this._inventory.has(type)) {
+      this._currentWeapon = type;
+    }
+  }
+
+  addToInventory(type: WeaponType, tier: number = 1): void {
+    const clamped = Math.max(1, Math.min(3, Math.floor(tier)));
+    this._inventory.set(type, clamped);
   }
 
   update(dt: number): void {
@@ -74,7 +129,7 @@ export class PowerUpManager {
 
   reset(): void {
     this.effects = [];
+    this._inventory = new Map([["machine-gun", 1]]);
     this._currentWeapon = "machine-gun";
-    this._weaponTier = 1;
   }
 }

@@ -132,7 +132,7 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
     }
 
     if (args.length === 0) {
-      return "Usage: weapon <type|list>";
+      return "Usage: weapon <type|list|give>";
     }
 
     const sub = args[0].toLowerCase();
@@ -142,7 +142,7 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
       const names = Object.keys(WEAPON_CONFIGS) as WeaponType[];
       const maxLen = Math.max(...names.map((n) => n.length));
       const current = ctx.powerUpManager.currentWeapon;
-      const tier = ctx.powerUpManager.weaponTier;
+      const inventory = ctx.powerUpManager.inventory;
 
       for (const name of names) {
         const cfg = WEAPON_CONFIGS[name];
@@ -158,10 +158,36 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
         if (cfg.homing) parts.push("HOMING");
         if (cfg.piercing) parts.push("PIERCING");
 
-        const marker = name === current ? ` [ACTIVE T${tier}]` : "";
+        const invTier = inventory.get(name);
+        let marker = "";
+        if (name === current) {
+          marker = ` [ACTIVE T${invTier ?? 1}]`;
+        } else if (invTier !== undefined) {
+          marker = ` [OWNED T${invTier}]`;
+        }
         lines.push(`  ${paddedName} \u2014 ${parts.join(" ")}${marker}`);
       }
       return lines;
+    }
+
+    if (sub === "give") {
+      if (args.length < 2) {
+        return "Usage: weapon give <type> [tier]";
+      }
+      const resolved = WEAPON_ALIASES[args[1].toLowerCase()];
+      if (!resolved) {
+        return `Unknown weapon '${args[1]}'`;
+      }
+      let tier = 1;
+      if (args.length >= 3) {
+        const parsed = parseInt(args[2], 10);
+        if (isNaN(parsed) || parsed < 1 || parsed > 3) {
+          return "Tier must be between 1 and 3";
+        }
+        tier = parsed;
+      }
+      ctx.powerUpManager.addToInventory(resolved, tier);
+      return `Added ${resolved} at tier ${tier} to inventory`;
     }
 
     const resolved = WEAPON_ALIASES[sub];
@@ -169,9 +195,13 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
       return `Unknown weapon '${sub}'. Available: machine-gun (mg), missile (msl), laser (lsr), plasma (pls), ion-cannon (ion), auto-gun (atg), rocket (rkt)`;
     }
 
-    ctx.powerUpManager.setWeapon(resolved);
-    ctx.powerUpManager.setTier(1);
-    ctx.weaponSystem.setWeapon(resolved);
+    const inventory = ctx.powerUpManager.inventory;
+    if (!inventory.has(resolved)) {
+      ctx.powerUpManager.setWeapon(resolved);
+    } else {
+      ctx.powerUpManager.switchWeapon(resolved);
+    }
+    ctx.weaponSystem.setWeapon(ctx.powerUpManager.currentWeapon);
     return `Weapon switched to ${resolved}`;
   });
 
@@ -378,7 +408,7 @@ export function registerCombatCommands(registry: CommandRegistry): void {
       `Level: ${ctx.currentLevel + 1} - ${ctx.levels[ctx.currentLevel].name}`,
       `Score: ${ctx.score} (Total: ${ctx.totalScore})`,
       `Lives: ${ctx.player.lives} | Shield: ${ctx.player.shield}`,
-      `Weapon: ${ctx.weaponSystem.currentWeapon} (Tier ${ctx.powerUpManager.weaponTier})`,
+      `Weapon: ${ctx.weaponSystem.currentWeapon} (Tier ${ctx.powerUpManager.weaponTier}) | Inventory: ${Array.from(ctx.powerUpManager.inventory.entries()).map(([w, t]) => `${w}:T${t}`).join(", ")}`,
       `Enemies: ${ctx.enemies.length} | Bullets: ${ctx.enemyBullets.length}`,
     ];
 

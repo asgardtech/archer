@@ -151,6 +151,10 @@ export type RaptorSoundEvent =
 
 export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun" | "rocket";
 
+export const WEAPON_SLOT_ORDER: WeaponType[] = [
+  "machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun", "rocket"
+];
+
 export interface RaptorSaveData {
   version: 1;
   /** The highest level index the player has unlocked (0-based). */
@@ -165,8 +169,10 @@ export interface RaptorSaveData {
   savedAt: string;
   /** Mega bomb count at save point (0-5). */
   bombs?: number;
-  /** Weapon upgrade tier at save point (1-3, defaults to 1 if absent). */
+  /** @deprecated Kept for backward compat; use weaponInventory instead. */
   weaponTier?: number;
+  /** Full weapon inventory mapping weapon type to tier (1-3). */
+  weaponInventory?: Record<string, number>;
 }
 
 export interface WeaponTierConfig {

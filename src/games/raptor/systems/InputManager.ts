@@ -12,6 +12,10 @@ export class InputManager {
   public mouseY = 0;
   public readonly isTouchDevice: boolean;
 
+  public weaponSlotPressed: number | null = null;
+  public wasCyclePrevPressed = false;
+  public wasCycleNextPressed = false;
+
   private canvas: HTMLCanvasElement;
   private logicalWidth: number;
   private logicalHeight: number;
@@ -26,6 +30,7 @@ export class InputManager {
   private boundTouchEnd: (e: TouchEvent) => void;
   private boundKeyDown: (e: KeyboardEvent) => void;
   private boundKeyUp: (e: KeyboardEvent) => void;
+  private boundWheel: (e: WheelEvent) => void;
 
   constructor(canvas: HTMLCanvasElement, logicalWidth?: number, logicalHeight?: number) {
     this.canvas = canvas;
@@ -43,6 +48,7 @@ export class InputManager {
     this.boundTouchEnd = (e) => this.onTouchEnd(e);
     this.boundKeyDown = (e) => this.onKeyDown(e);
     this.boundKeyUp = (e) => this.onKeyUp(e);
+    this.boundWheel = (e) => this.onWheel(e);
 
     canvas.addEventListener("mousemove", this.boundMouseMove);
     canvas.addEventListener("mousedown", this.boundMouseDown);
@@ -52,6 +58,7 @@ export class InputManager {
     canvas.addEventListener("touchend", this.boundTouchEnd, { passive: false });
     window.addEventListener("keydown", this.boundKeyDown);
     window.addEventListener("keyup", this.boundKeyUp);
+    canvas.addEventListener("wheel", this.boundWheel, { passive: false });
   }
 
   updateFromKeyboard(dt: number, canvasWidth: number, canvasHeight: number): void {
@@ -73,6 +80,9 @@ export class InputManager {
     this.wasBombPressed = false;
     this.wasDodgePressed = false;
     this.wasConsoleToggled = false;
+    this.weaponSlotPressed = null;
+    this.wasCyclePrevPressed = false;
+    this.wasCycleNextPressed = false;
   }
 
   destroy(): void {
@@ -84,6 +94,7 @@ export class InputManager {
     this.canvas.removeEventListener("touchend", this.boundTouchEnd);
     window.removeEventListener("keydown", this.boundKeyDown);
     window.removeEventListener("keyup", this.boundKeyUp);
+    this.canvas.removeEventListener("wheel", this.boundWheel);
   }
 
   private toCanvasX(clientX: number): number {
@@ -170,6 +181,25 @@ export class InputManager {
     if (e.key === "`") {
       this.wasConsoleToggled = true;
       e.preventDefault();
+    }
+    if (e.key === "q") {
+      this.wasCyclePrevPressed = true;
+    }
+    if (e.key === "e") {
+      this.wasCycleNextPressed = true;
+    }
+    const slotNum = parseInt(e.key, 10);
+    if (slotNum >= 1 && slotNum <= 7) {
+      this.weaponSlotPressed = slotNum;
+    }
+  }
+
+  private onWheel(e: WheelEvent): void {
+    e.preventDefault();
+    if (e.deltaY > 0) {
+      this.wasCycleNextPressed = true;
+    } else if (e.deltaY < 0) {
+      this.wasCyclePrevPressed = true;
     }
   }
 

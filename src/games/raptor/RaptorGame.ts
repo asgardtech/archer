@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER } from "./types";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
@@ -566,7 +566,9 @@ export class RaptorGame implements IGame {
 
     const config = this.currentLevelConfig;
 
-    if (this.input.wasClicked && this.hud.isBombButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+    if (this.input.wasClicked && this.hud.isWeaponCycleButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+      this.input.wasCycleNextPressed = true;
+    } else if (this.input.wasClicked && this.hud.isBombButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
       this.input.wasBombPressed = true;
     } else if (this.input.wasClicked && this.storyRenderer.isActive) {
       this.storyRenderer.advance();
@@ -596,6 +598,30 @@ export class RaptorGame implements IGame {
             this.handleEnemyDestroyed(enemy, config);
           }
         }
+      }
+    }
+
+    if (this.input.weaponSlotPressed !== null) {
+      const type = WEAPON_SLOT_ORDER[this.input.weaponSlotPressed - 1];
+      if (type && this.powerUpManager.switchWeapon(type)) {
+        this.weaponSystem.setWeapon(this.powerUpManager.currentWeapon);
+        this.sound.play("weapon_switch");
+      }
+    }
+    if (this.input.wasCycleNextPressed) {
+      const prev = this.powerUpManager.currentWeapon;
+      this.powerUpManager.cycleWeapon(1);
+      if (this.powerUpManager.currentWeapon !== prev) {
+        this.weaponSystem.setWeapon(this.powerUpManager.currentWeapon);
+        this.sound.play("weapon_switch");
+      }
+    }
+    if (this.input.wasCyclePrevPressed) {
+      const prev = this.powerUpManager.currentWeapon;
+      this.powerUpManager.cycleWeapon(-1);
+      if (this.powerUpManager.currentWeapon !== prev) {
+        this.weaponSystem.setWeapon(this.powerUpManager.currentWeapon);
+        this.sound.play("weapon_switch");
       }
     }
 
@@ -939,6 +965,10 @@ export class RaptorGame implements IGame {
         this.state = "level_complete";
         this.sound.play("level_complete");
         this.hud.setCompletionText(this.currentLevelConfig.story?.completionText ?? null);
+        const inventoryRecord: Record<string, number> = {};
+        for (const [w, t] of this.powerUpManager.inventory) {
+          inventoryRecord[w] = t;
+        }
         SaveSystem.save({
           version: 1,
           levelReached: this.currentLevel + 1,
@@ -948,6 +978,7 @@ export class RaptorGame implements IGame {
           savedAt: new Date().toISOString(),
           bombs: this.player.bombs,
           weaponTier: this.powerUpManager.weaponTier,
+          weaponInventory: inventoryRecord,
         });
       }
     }
@@ -1094,11 +1125,29 @@ export class RaptorGame implements IGame {
     this.startLevel(data.levelReached, false);
     this.player.lives = data.lives;
     this.player.bombs = data.bombs ?? 0;
-    // Order matters: setWeapon() may transiently bump the tier (e.g. "upgraded"
-    // when restoring the default machine-gun), so setTier() must come second to
-    // overwrite with the saved value.
-    this.powerUpManager.setWeapon(data.weapon);
-    this.powerUpManager.setTier(data.weaponTier ?? 1);
+
+    if (data.weaponInventory) {
+      const inv = new Map<WeaponType, number>();
+      for (const [key, val] of Object.entries(data.weaponInventory)) {
+        inv.set(key as WeaponType, val);
+      }
+      if (!inv.has("machine-gun")) {
+        inv.set("machine-gun", 1);
+      }
+      this.powerUpManager.setInventory(inv);
+      this.powerUpManager.setActiveWeapon(data.weapon);
+    } else {
+      // Backward compat: construct inventory from single weapon + tier
+      const inv = new Map<WeaponType, number>([["machine-gun", 1]]);
+      const tier = data.weaponTier ?? 1;
+      if (data.weapon !== "machine-gun") {
+        inv.set(data.weapon, tier);
+      } else {
+        inv.set("machine-gun", tier);
+      }
+      this.powerUpManager.setInventory(inv);
+      this.powerUpManager.setActiveWeapon(data.weapon);
+    }
   }
 
   private enterBriefing(): void {
@@ -1415,7 +1464,8 @@ export class RaptorGame implements IGame {
       this.player.bombs,
       this.powerUpManager.weaponTier,
       this.player.isShieldRegenerating,
-      this.player.dodgeCooldownFraction
+      this.player.dodgeCooldownFraction,
+      this.powerUpManager.inventory
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
