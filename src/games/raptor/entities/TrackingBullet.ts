@@ -18,7 +18,7 @@ export class TrackingBullet implements Projectile {
   private sprite: HTMLImageElement | null = null;
   private time = 0;
 
-  constructor(x: number, y: number, angle = 0, homingStrength = 2.0) {
+  constructor(x: number, y: number, angle = 0, homingStrength = 1.8) {
     this.pos = { x, y };
     this.angle = angle;
     this.homingStrength = homingStrength;
