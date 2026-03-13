@@ -576,7 +576,6 @@ export class ArcherGame implements IGame {
       config.level,
       config.name,
       this.totalScore + (this.state === "playing" ? this.score : 0),
-      new Map(),
       config.landmark.label,
       config.landmark.description
     );

@@ -18,7 +18,7 @@ export type UpgradeType = "multi-shot" | "piercing" | "rapid-fire" | "bonus-arro
 
 export type WeaponType = "default" | "multi-shot" | "piercing" | "rapid-fire";
 
-export const WEAPON_SLOTS: WeaponType[] = ["default", "multi-shot", "piercing", "rapid-fire"];
+export const WEAPON_SLOTS: readonly WeaponType[] = ["default", "multi-shot", "piercing", "rapid-fire"];
 
 export type ObstacleType = "bird" | "airplane" | "ufo";
 

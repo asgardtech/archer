@@ -651,12 +651,12 @@ describe("Scenario: Archer source files live under src/games/archer/", () => {
     expect(fs.existsSync(path.join(entitiesPath, "Obstacle.ts"))).toBe(true);
   });
 
-  it("systems/ contains CollisionSystem.ts, InputManager.ts, Spawner.ts, UpgradeManager.ts", () => {
+  it("systems/ contains CollisionSystem.ts, InputManager.ts, Spawner.ts, WeaponManager.ts", () => {
     const systemsPath = path.join(basePath, "systems");
     expect(fs.existsSync(path.join(systemsPath, "CollisionSystem.ts"))).toBe(true);
     expect(fs.existsSync(path.join(systemsPath, "InputManager.ts"))).toBe(true);
     expect(fs.existsSync(path.join(systemsPath, "Spawner.ts"))).toBe(true);
-    expect(fs.existsSync(path.join(systemsPath, "UpgradeManager.ts"))).toBe(true);
+    expect(fs.existsSync(path.join(systemsPath, "WeaponManager.ts"))).toBe(true);
   });
 
   it("rendering/ contains HUD.ts", () => {

@@ -35,6 +35,7 @@ function createMockCanvas(): HTMLCanvasElement {
     translate: jest.fn(),
     rotate: jest.fn(),
     createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
+    roundRect: jest.fn(),
   };
 
   const canvas = {
@@ -711,7 +712,7 @@ describe("Feature: Progressive Ammo Replenishment", () => {
       const ctx = (canvas as any).__ctx;
       const fillTextCalls = (canvas as any).__fillTextCalls;
 
-      hud.render(ctx as any, "playing", 25, 105, 800, 600, [], 0.016);
+      hud.render(ctx as any, "playing", 25, 105, 800, 600, "default", new Set(["default"] as const), 0.016);
 
       const ammoGainCall = fillTextCalls.find(
         (c: { text: string }) => c.text.includes("+5")
@@ -727,7 +728,7 @@ describe("Feature: Progressive Ammo Replenishment", () => {
       const ctx = (canvas as any).__ctx;
       const fillTextCalls = (canvas as any).__fillTextCalls;
 
-      hud.render(ctx as any, "playing", 10, 65, 800, 600, [], 0.016);
+      hud.render(ctx as any, "playing", 10, 65, 800, 600, "default", new Set(["default"] as const), 0.016);
 
       const ammoGainCall = fillTextCalls.find(
         (c: { text: string }) => c.text.includes("+15")
@@ -744,7 +745,7 @@ describe("Feature: Progressive Ammo Replenishment", () => {
 
       // Simulate time passing by rendering with dt
       for (let i = 0; i < 20; i++) {
-        hud.render(ctx as any, "playing", 25, 105, 800, 600, [], 0.1);
+        hud.render(ctx as any, "playing", 25, 105, 800, 600, "default", new Set(["default"] as const), 0.1);
       }
 
       // After 2 seconds of rendering, the text should be gone
@@ -753,7 +754,7 @@ describe("Feature: Progressive Ammo Replenishment", () => {
       const freshCtx = (freshCanvas as any).__ctx;
       const freshFillTextCalls = (freshCanvas as any).__fillTextCalls;
 
-      hud.render(freshCtx as any, "playing", 25, 105, 800, 600, [], 0.016);
+      hud.render(freshCtx as any, "playing", 25, 105, 800, 600, "default", new Set(["default"] as const), 0.016);
 
       const ammoGainCall = freshFillTextCalls.find(
         (c: { text: string }) => c.text.includes("+5")

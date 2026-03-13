@@ -1,4 +1,4 @@
-import { GameState, UpgradeType, WeaponType, WEAPON_SLOTS } from "../types";
+import { GameState, WeaponType, WEAPON_SLOTS } from "../types";
 
 const WEAPON_DISPLAY: Record<WeaponType, { icon: string; color: string; label: string }> = {
   "default":    { icon: "🏹", color: "#ecf0f1", label: "STD" },
@@ -90,7 +90,6 @@ export class HUD {
     level = 1,
     levelName = "",
     totalScore = 0,
-    collectionCounts: ReadonlyMap<UpgradeType, number> = new Map(),
     landmarkLabel = "",
     landmarkDescription = ""
   ): void {
@@ -127,7 +126,7 @@ export class HUD {
         this.renderPlaying(ctx, score, arrowsRemaining, canvasW, canvasH, currentWeapon, unlockedWeapons, level, levelName);
         break;
       case "level_complete":
-        this.renderLevelComplete(ctx, score, level, levelName, landmarkLabel, canvasW, canvasH, collectionCounts);
+        this.renderLevelComplete(ctx, score, level, levelName, landmarkLabel, canvasW, canvasH);
         break;
       case "gameover":
         this.renderGameOver(ctx, totalScore, canvasW, canvasH, level, levelName);
@@ -403,8 +402,7 @@ export class HUD {
     levelName: string,
     landmarkLabel: string,
     w: number,
-    h: number,
-    collectionCounts: ReadonlyMap<UpgradeType, number> = new Map()
+    h: number
   ): void {
     ctx.save();
 

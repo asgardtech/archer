@@ -632,8 +632,8 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
       ctx.fillText = jest.fn((text: string) => { fillTextCalls.push({ text }); });
 
       hud.render(
-        ctx, "level_complete", 20, 50, 800, 600, [], 0, 1, "Meadow", 20,
-        new Set(), new Map(), "Ancient Windmill", ""
+        ctx, "level_complete", 20, 50, 800, 600, "default", new Set(["default"] as const), 0, 1, "Meadow", 20,
+        "Ancient Windmill", ""
       );
 
       const liberationText = fillTextCalls.find(
@@ -662,8 +662,8 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
       });
 
       hud.render(
-        ctx, "level_complete", 20, 50, 800, 600, [], 0, 1, "Meadow", 20,
-        new Set(), new Map(), "Ancient Windmill", ""
+        ctx, "level_complete", 20, 50, 800, 600, "default", new Set(["default"] as const), 0, 1, "Meadow", 20,
+        "Ancient Windmill", ""
       );
 
       const liberationCall = textCalls.find(
@@ -693,8 +693,8 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
         ctx.fillText = jest.fn((text: string) => { fillTextCalls.push({ text }); });
 
         hud.render(
-          ctx, "level_complete", 50, 50, 800, 600, [], 0, level,
-          LEVELS[level - 1].name, 50, new Set(), new Map(), label, ""
+          ctx, "level_complete", 50, 50, 800, 600, "default", new Set(["default"] as const), 0, level,
+          LEVELS[level - 1].name, 50, label, ""
         );
 
         const liberationText = fillTextCalls.find(
@@ -941,7 +941,7 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
   // Scenario: TypeScript compilation succeeds
   // -------------------------------------------------------------------------
   describe("Scenario: TypeScript compilation succeeds", () => {
-    test("all 14 SoundEvent types (including landmark_liberated) are handled", () => {
+    test("all 15 SoundEvent types (including landmark_liberated and weapon_switch) are handled", () => {
       setupGlobalAudio();
       const { sound } = createAudioPair();
       const allEvents: SoundEvent[] = [
@@ -950,6 +950,7 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
         "upgrade_activate", "ammo_gain",
         "level_complete", "game_over", "victory",
         "menu_start", "low_ammo", "landmark_liberated",
+        "weapon_switch",
       ];
       for (const event of allEvents) {
         expect(() => sound.play(event)).not.toThrow();
@@ -977,8 +978,8 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
       ctx.fillText = jest.fn((text: string) => { fillTextCalls.push({ text }); });
 
       hud.render(
-        ctx, "level_complete", 20, 50, 800, 600, [], 0, 1, "Meadow", 20,
-        new Set(), new Map(), "", ""
+        ctx, "level_complete", 20, 50, 800, 600, "default", new Set(["default"] as const), 0, 1, "Meadow", 20,
+        "", ""
       );
 
       const liberationText = fillTextCalls.find(
@@ -995,8 +996,8 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
 
       expect(() => {
         hud.render(
-          ctx, "level_complete", 20, 50, 800, 600, [], 0, 1, "Meadow", 20,
-          new Set(), new Map(), "", ""
+          ctx, "level_complete", 20, 50, 800, 600, "default", new Set(["default"] as const), 0, 1, "Meadow", 20,
+          "", ""
         );
       }).not.toThrow();
 
@@ -1074,8 +1075,8 @@ describe("Feature: Landmark liberation celebration on level complete", () => {
       ctx.fillText = jest.fn((text: string) => { fillTextCalls.push({ text }); });
 
       hud.render(
-        ctx, "level_complete", 35, 50, 800, 600, [], 0, 2, "Forest", 55,
-        new Set(), new Map(), "Great Treehouse", ""
+        ctx, "level_complete", 35, 50, 800, 600, "default", new Set(["default"] as const), 0, 2, "Forest", 55,
+        "Great Treehouse", ""
       );
 
       const liberationText = fillTextCalls.find(

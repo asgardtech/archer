@@ -26,7 +26,7 @@ export class WeaponManager {
     return this._unlockedWeapons.has(type);
   }
 
-  getOrderedInventory(): WeaponType[] {
+  getOrderedInventory(): readonly WeaponType[] {
     return WEAPON_SLOTS;
   }
 
