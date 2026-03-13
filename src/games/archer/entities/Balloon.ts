@@ -28,14 +28,20 @@ export class Balloon {
   private flashTimer = 0;
   private upgradeIcon: HTMLImageElement | null = null;
 
-  constructor(x: number, y: number, speed: number, upgrade?: UpgradeType | "boss", bossHitPoints = 5) {
+  constructor(x: number, y: number, speed: number, upgrade?: UpgradeType | "boss" | "siege", bossHitPoints = 5) {
     this.radius = 20 + Math.random() * 15;
     this.pos = { x, y };
     this.vel = { x: 0, y: -speed };
     this.baseX = x;
     this.wobbleOffset = Math.random() * Math.PI * 2;
 
-    if (upgrade === "boss") {
+    if (upgrade === "siege") {
+      this.variant = "siege";
+      this.color = "#4A0E0E";
+      this.radius *= 0.85;
+      this.vel = { x: 0, y: speed };
+      this.wobbleAmplitude = 15;
+    } else if (upgrade === "boss") {
       this.variant = "boss";
       this.color = "#8B0000";
       this.radius *= 2.0;
@@ -74,7 +80,7 @@ export class Balloon {
     this.pos.y += this.vel.y * dt;
     this.pos.x = this.baseX + Math.sin(this.time * 1.5 + this.wobbleOffset) * this.wobbleAmplitude;
 
-    if (this.pos.y + this.radius < 0) {
+    if (this.variant !== "siege" && this.pos.y + this.radius < 0) {
       this.alive = false;
     }
   }
@@ -85,7 +91,9 @@ export class Balloon {
     ctx.save();
     ctx.translate(this.pos.x, this.pos.y);
 
-    if (this.variant === "boss") {
+    if (this.variant === "siege") {
+      this.renderSiegeBalloon(ctx);
+    } else if (this.variant === "boss") {
       this.renderBossBalloon(ctx);
     } else if (this.variant === "upgrade") {
       this.renderUpgradeBalloon(ctx);
@@ -110,6 +118,29 @@ export class Balloon {
     ctx.stroke();
 
     ctx.restore();
+  }
+
+  private renderSiegeBalloon(ctx: CanvasRenderingContext2D): void {
+    const r = this.radius;
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 0.8, r, 0, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(-r * 0.25, -r * 0.35, r * 0.15, r * 0.25, -0.4, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255,80,50,0.9)";
+    ctx.font = `bold ${r * 0.5}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("\u{1F4A3}", 0, r * 0.1);
   }
 
   private renderStandardBalloon(ctx: CanvasRenderingContext2D): void {
