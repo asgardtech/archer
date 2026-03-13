@@ -158,6 +158,13 @@ export class ArcherGame implements IGame {
       if (img) bowSprites.set(key, img);
     }
     this.bow.setSprites(bowSprites);
+
+    const upgradeIcons = new Map<string, HTMLImageElement>();
+    for (const [upgradeType, assetKey] of Object.entries(UPGRADE_ICON_KEYS)) {
+      const img = this.assetLoader.getOptional(assetKey);
+      if (img) upgradeIcons.set(upgradeType, img);
+    }
+    this.hud.setUpgradeIcons(upgradeIcons);
   }
 
   private getArrowSprite(piercing: boolean): HTMLImageElement | null {

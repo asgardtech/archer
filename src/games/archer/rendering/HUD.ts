@@ -30,9 +30,14 @@ const MUTE_BTN_MARGIN = 12;
 export class HUD {
   private ammoGainTexts: AmmoGainText[] = [];
   private penaltyTexts: PenaltyText[] = [];
+  private upgradeIcons: Map<string, HTMLImageElement> = new Map();
   public loadingProgress = 0;
 
   constructor(private isTouchDevice = false) {}
+
+  setUpgradeIcons(icons: Map<string, HTMLImageElement>): void {
+    this.upgradeIcons = icons;
+  }
 
   showAmmoGain(amount: number): void {
     this.ammoGainTexts.push({
@@ -217,21 +222,43 @@ export class HUD {
 
     ctx.textAlign = "left";
     let yOffset = 55;
+    const iconSize = 28;
+    const rowHeight = 36;
     for (const upgrade of activeUpgrades) {
       const info = UPGRADE_DISPLAY[upgrade.type];
       if (!info) continue;
 
       const isPerm = permanentUpgrades.has(upgrade.type);
-      const prefix = isPerm ? "★ " : "";
+      let xCursor = 16;
 
-      ctx.font = "bold 15px sans-serif";
+      if (isPerm) {
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillStyle = "#FFD700";
+        ctx.textBaseline = "middle";
+        ctx.fillText("★", xCursor, yOffset + iconSize / 2);
+        xCursor += 18;
+      }
+
+      const iconImg = this.upgradeIcons.get(upgrade.type);
+      if (iconImg) {
+        ctx.drawImage(iconImg, xCursor, yOffset, iconSize, iconSize);
+      } else {
+        ctx.font = "bold 20px sans-serif";
+        ctx.fillStyle = info.color;
+        ctx.textBaseline = "middle";
+        ctx.fillText(info.icon, xCursor, yOffset + iconSize / 2);
+      }
+      xCursor += iconSize + 6;
+
+      ctx.font = "bold 14px sans-serif";
       ctx.fillStyle = info.color;
-      ctx.fillText(`${prefix}${info.icon} ${info.label} ${upgrade.remainingTime.toFixed(1)}s`, 16, yOffset);
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${info.label} ${upgrade.remainingTime.toFixed(1)}s`, xCursor, yOffset + iconSize / 2);
 
       const barX = 16;
-      const barW = 120;
+      const barW = 140;
       const barH = 4;
-      const barY = yOffset + 5;
+      const barY = yOffset + iconSize + 2;
 
       if (isPerm) {
         ctx.strokeStyle = "#FFD700";
@@ -247,7 +274,7 @@ export class HUD {
       ctx.fillStyle = info.color;
       ctx.fillRect(barX, barY, barW * fillRatio, barH);
 
-      yOffset += 26;
+      yOffset += rowHeight;
     }
 
     ctx.textAlign = "right";
@@ -318,6 +345,7 @@ export class HUD {
 
     let progressY = h / 2 + 80;
     let hasProgress = false;
+    const lcIconSize = 20;
     for (const { type, label } of upgradeTypes) {
       const count = collectionCounts.get(type) ?? 0;
       if (count === 0) continue;
@@ -327,10 +355,24 @@ export class HUD {
         i < count ? "●" : "○"
       ).join("");
 
+      const text = `${label} ${dots}`;
       ctx.font = "16px sans-serif";
+      const textWidth = ctx.measureText(text).width;
+
+      const iconImg = this.upgradeIcons.get(type);
+      const totalWidth = iconImg ? lcIconSize + 6 + textWidth : textWidth;
+      const startX = w / 2 - totalWidth / 2;
+
+      if (iconImg) {
+        ctx.drawImage(iconImg, startX, progressY - lcIconSize / 2, lcIconSize, lcIconSize);
+      }
+
+      ctx.textAlign = "left";
       ctx.fillStyle = "rgba(255,255,255,0.8)";
-      ctx.fillText(`${label} ${dots}`, w / 2, progressY);
-      progressY += 22;
+      ctx.fillText(text, iconImg ? startX + lcIconSize + 6 : startX, progressY);
+      ctx.textAlign = "center";
+
+      progressY += 26;
     }
 
     ctx.fillStyle = "rgba(255,255,255,0.7)";
