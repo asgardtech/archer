@@ -1,6 +1,7 @@
 import { RaptorGameState, RaptorPowerUpType, WeaponType } from "../types";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
+import { ShipRenderer } from "./ShipRenderer";
 
 const MUTE_BTN_SIZE = 36;
 const MUTE_BTN_MARGIN = 12;
@@ -73,6 +74,7 @@ export class HUD {
   private completionLines: string[] = [];
   private _victoryStoryActive = false;
   private measureCtx: CanvasRenderingContext2D;
+  private shipRenderer = new ShipRenderer();
 
   constructor(isTouchDevice: boolean) {
     this.isTouchDevice = isTouchDevice;
@@ -780,21 +782,13 @@ export class HUD {
   }
 
   private renderLivesIcons(ctx: CanvasRenderingContext2D, lives: number, startX: number, y: number): void {
-    const playerSprite = this.assets?.getOptional("player");
-    const iconSize = 12;
+    const iconW = 14;
+    const iconH = 16;
     const gap = 3;
 
     for (let i = 0; i < lives; i++) {
-      const ix = startX + i * (iconSize + gap);
-      if (playerSprite) {
-        ctx.drawImage(playerSprite, ix, y - iconSize / 2, iconSize, iconSize);
-      } else {
-        ctx.fillStyle = "#FF6B6B";
-        ctx.font = `10px ${RETRO_FONT}`;
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText("\u2665", ix, y);
-      }
+      const ix = startX + i * (iconW + gap);
+      this.shipRenderer.renderMiniSilhouette(ctx, ix, y - iconH / 2, iconW, iconH);
     }
   }
 

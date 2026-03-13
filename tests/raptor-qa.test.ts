@@ -60,8 +60,10 @@ function createMockCanvas(): HTMLCanvasElement {
     quadraticCurveTo: jest.fn(),
     translate: jest.fn(),
     rotate: jest.fn(),
+    transform: jest.fn(),
     roundRect: jest.fn(),
     createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
+    createRadialGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
     measureText: jest.fn(() => ({ width: 50 })),
   };
 

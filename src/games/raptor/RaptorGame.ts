@@ -25,6 +25,7 @@ import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
 import { AssetLoader } from "./rendering/AssetLoader";
 import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rendering/SpriteSheet";
+import { ShipRenderer } from "./rendering/ShipRenderer";
 import { VFXManager } from "./rendering/VFXManager";
 import { TerrainRenderer } from "./rendering/TerrainRenderer";
 import { StoryRenderer } from "./rendering/StoryRenderer";
@@ -186,6 +187,7 @@ export class RaptorGame implements IGame {
       this.canvas.width = Math.round(this.width * this.dpr);
       this.canvas.height = Math.round(this.height * this.dpr);
 
+      this.player.dpr = this.dpr;
       if (oldDpr !== this.dpr) {
         this.generateProceduralAssets();
         if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
@@ -539,6 +541,9 @@ export class RaptorGame implements IGame {
     this.levelElapsed += dt;
     this.input.updateFromKeyboard(dt, this.width, this.height);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.height);
+    if (this.player.alive) {
+      this.vfx.addEngineTrail(this.player.pos.x, this.player.pos.y + this.player.height / 2, ShipRenderer.getEngineSpacing(this.player.width));
+    }
     this.updateBackground(dt);
     this.powerUpManager.update(dt);
 
