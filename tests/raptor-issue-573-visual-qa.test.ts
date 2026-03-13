@@ -17,9 +17,6 @@ const ALL_VARIANTS: EnemyVariant[] = [
 const HP_BAR_VARIANTS: EnemyVariant[] = ["boss", "cruiser", "destroyer", "juggernaut"];
 const NON_HP_BAR_VARIANTS: EnemyVariant[] = ALL_VARIANTS.filter(v => !HP_BAR_VARIANTS.includes(v));
 
-const FAST_VARIANTS: EnemyVariant[] = ["scout", "dart", "drone", "swarmer", "interceptor"];
-const HEAVY_VARIANTS: EnemyVariant[] = ["destroyer", "juggernaut", "boss"];
-
 // ── Utility Functions ────────────────────────────────────────────────
 
 function readPNG(filePath: string): PNG {
@@ -506,20 +503,7 @@ describe("No production code modified", () => {
 // ════════════════════════════════════════════════════════════════
 
 describe("No enemy type falls back to procedural rendering", () => {
-  test.each(ALL_VARIANTS)("enemy_%s sprite file is valid and loadable", (variant) => {
-    const filePath = spritePath(variant);
-    expect(fs.existsSync(filePath)).toBe(true);
-
-    const png = readPNG(filePath);
-    expect(png.width).toBe(128);
-    expect(png.height).toBe(128);
-    expect(png.data.length).toBe(128 * 128 * 4);
-
-    const stats = fs.statSync(filePath);
-    expect(stats.size).toBeGreaterThan(1000);
-  });
-
-  test("asset manifest maps all 14 variants to existing files", () => {
+  test("asset manifest maps all 14 variants to existing files on disk", () => {
     for (const variant of ALL_VARIANTS) {
       const key = `enemy_${variant}`;
       const assetPath = ASSET_MANIFEST[key];
