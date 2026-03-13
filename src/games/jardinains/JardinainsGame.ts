@@ -20,6 +20,7 @@ const SCORE_BRICK_STANDARD = 1;
 const SCORE_BRICK_TOUGH = 3;
 const SCORE_GNOME_CATCH = 5;
 const SCORE_LEVEL_CLEAR = 10;
+const SCORE_DEFLECT_GNOME = 10;
 const POWER_UP_TYPES: PowerUpType[] = ["wide-paddle", "multi-ball", "sticky", "extra-life", "shield"];
 
 export class JardinainsGame implements IGame {
@@ -211,6 +212,11 @@ export class JardinainsGame implements IGame {
     const config = this.currentLevelConfig;
 
     this.paddle.update(dt, this.input.mouseX, this.width);
+
+    if (this.input.deflectPressed) {
+      this.paddle.deflect();
+    }
+
     this.powerUpManager.update(dt);
 
     if (this.powerUpManager.isWidePaddleActive() && this.paddle.wideTimer <= 0) {
@@ -306,13 +312,31 @@ export class JardinainsGame implements IGame {
 
     for (const pot of this.flowerPots) {
       pot.update(dt, this.height);
-      if (pot.alive && this.collisions.checkPotPaddle(pot, this.paddle)) {
-        pot.alive = false;
-        const blocked = this.paddle.applyShrink();
-        if (blocked) {
-          this.sound.play("shield_block");
+
+      if (pot.alive && !pot.deflected && this.collisions.checkPotPaddle(pot, this.paddle)) {
+        if (this.paddle.isDeflecting) {
+          pot.deflect();
+          this.sound.play("pot_deflect");
         } else {
-          this.sound.play("pot_hit");
+          pot.alive = false;
+          const blocked = this.paddle.applyShrink();
+          if (blocked) {
+            this.sound.play("shield_block");
+          } else {
+            this.sound.play("pot_hit");
+          }
+        }
+      }
+
+      if (pot.alive && pot.deflected) {
+        for (const gnome of this.gnomes) {
+          if (this.collisions.checkPotGnome(pot, gnome)) {
+            pot.alive = false;
+            gnome.startFalling();
+            this.score += SCORE_DEFLECT_GNOME;
+            this.sound.play("pot_hit_gnome");
+            break;
+          }
         }
       }
     }
@@ -459,7 +483,10 @@ export class JardinainsGame implements IGame {
     this.hud.render(
       this.ctx, this.state, this.score, this.lives,
       config.level, config.name,
-      this.width, this.height
+      this.width, this.height,
+      this.paddle.canDeflect,
+      this.paddle.deflectCooldownFraction,
+      this.paddle.isDeflecting
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
   }

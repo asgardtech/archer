@@ -77,6 +77,17 @@ export class CollisionSystem {
     );
   }
 
+  checkPotGnome(pot: FlowerPot, gnome: Gnome): boolean {
+    if (!pot.alive || !pot.deflected) return false;
+    if (gnome.state !== "sitting" && gnome.state !== "ducking") return false;
+    return (
+      pot.right > gnome.left &&
+      pot.left < gnome.right &&
+      pot.bottom > gnome.top &&
+      pot.top < gnome.bottom
+    );
+  }
+
   checkPowerUpPaddle(powerUp: PowerUp, paddle: Paddle): boolean {
     if (!powerUp.alive) return false;
     return (

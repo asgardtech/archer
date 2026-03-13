@@ -69,6 +69,12 @@ export class SoundSystem {
       case "shield_block":
         this.playShieldBlock();
         break;
+      case "pot_deflect":
+        this.playPotDeflect();
+        break;
+      case "pot_hit_gnome":
+        this.playPotHitGnome();
+        break;
     }
   }
 
@@ -234,6 +240,33 @@ export class SoundSystem {
       release: 0.03,
     });
     this.audio.playNoise(0.06, 4000);
+  }
+
+  private playPotDeflect(): void {
+    this.audio.playToneSwept(800, 1400, 0.12, "sine", {
+      attack: 0.005,
+      decay: 0.02,
+      sustain: 0.4,
+      release: 0.04,
+    });
+    this.audio.playNoise(0.06, 5000);
+  }
+
+  private playPotHitGnome(): void {
+    this.audio.playTone(200, 0.08, "triangle", {
+      attack: 0.005,
+      decay: 0.02,
+      sustain: 0.4,
+      release: 0.03,
+    });
+    this.audio.playSequence(
+      [
+        { frequency: 660, duration: 0.15, type: "sine" },
+        { frequency: 880, duration: 0.15, type: "sine" },
+        { frequency: 1100, duration: 0.2, type: "sine" },
+      ],
+      280
+    );
   }
 
   private playMenuStart(): void {

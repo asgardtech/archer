@@ -2,6 +2,7 @@ export class InputManager {
   public mouseX = 400;
   public mouseY = 0;
   public wasClicked = false;
+  public deflectPressed = false;
   public readonly isTouchDevice: boolean;
 
   private canvas: HTMLCanvasElement;
@@ -12,6 +13,8 @@ export class InputManager {
   private boundTouchStart: (e: TouchEvent) => void;
   private boundTouchMove: (e: TouchEvent) => void;
   private boundTouchEnd: (e: TouchEvent) => void;
+  private boundKeyDown: (e: KeyboardEvent) => void;
+  private boundContextMenu: (e: Event) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -25,16 +28,21 @@ export class InputManager {
     this.boundTouchStart = (e) => this.onTouchStart(e);
     this.boundTouchMove = (e) => this.onTouchMove(e);
     this.boundTouchEnd = (e) => this.onTouchEnd(e);
+    this.boundKeyDown = (e) => this.onKeyDown(e);
+    this.boundContextMenu = (e) => e.preventDefault();
 
     canvas.addEventListener("mousemove", this.boundMouseMove);
     canvas.addEventListener("mousedown", this.boundMouseDown);
     canvas.addEventListener("touchstart", this.boundTouchStart, { passive: false });
     canvas.addEventListener("touchmove", this.boundTouchMove, { passive: false });
     canvas.addEventListener("touchend", this.boundTouchEnd, { passive: false });
+    document.addEventListener("keydown", this.boundKeyDown);
+    canvas.addEventListener("contextmenu", this.boundContextMenu);
   }
 
   consume(): void {
     this.wasClicked = false;
+    this.deflectPressed = false;
   }
 
   destroy(): void {
@@ -43,6 +51,8 @@ export class InputManager {
     this.canvas.removeEventListener("touchstart", this.boundTouchStart);
     this.canvas.removeEventListener("touchmove", this.boundTouchMove);
     this.canvas.removeEventListener("touchend", this.boundTouchEnd);
+    document.removeEventListener("keydown", this.boundKeyDown);
+    this.canvas.removeEventListener("contextmenu", this.boundContextMenu);
   }
 
   private toCanvasX(clientX: number): number {
@@ -63,14 +73,23 @@ export class InputManager {
   }
 
   private onMouseDown(e: MouseEvent): void {
-    this.wasClicked = true;
-    this.mouseX = this.toCanvasX(e.clientX);
-    this.mouseY = this.toCanvasY(e.clientY);
+    if (e.button === 0) {
+      this.wasClicked = true;
+      this.mouseX = this.toCanvasX(e.clientX);
+      this.mouseY = this.toCanvasY(e.clientY);
+    } else if (e.button === 2) {
+      this.deflectPressed = true;
+    }
   }
 
   private onTouchStart(e: TouchEvent): void {
     e.preventDefault();
-    if (this.activeTouchId !== null) return;
+    if (this.activeTouchId !== null) {
+      if (e.touches.length >= 2) {
+        this.deflectPressed = true;
+      }
+      return;
+    }
     const touch = e.changedTouches[0];
     this.activeTouchId = touch.identifier;
     this.mouseX = this.toCanvasX(touch.clientX);
@@ -91,6 +110,13 @@ export class InputManager {
     const touch = this.getActiveTouch(e.changedTouches);
     if (!touch) return;
     this.activeTouchId = null;
+  }
+
+  private onKeyDown(e: KeyboardEvent): void {
+    if (e.code === "Space" || e.key === " ") {
+      e.preventDefault();
+      this.deflectPressed = true;
+    }
   }
 
   private getActiveTouch(touches: TouchList): Touch | null {
