@@ -63,6 +63,12 @@ export class SoundSystem {
       case "menu_start":
         this.playMenuStart();
         break;
+      case "shield_activate":
+        this.playShieldActivate();
+        break;
+      case "shield_block":
+        this.playShieldBlock();
+        break;
     }
   }
 
@@ -203,6 +209,31 @@ export class SoundSystem {
       ],
       240
     );
+  }
+
+  private playShieldActivate(): void {
+    this.audio.playToneSwept(400, 1200, 0.2, "sine", {
+      attack: 0.01,
+      decay: 0.03,
+      sustain: 0.5,
+      release: 0.06,
+    });
+    this.audio.playTone(800, 0.15, "triangle", {
+      attack: 0.01,
+      decay: 0.02,
+      sustain: 0.3,
+      release: 0.04,
+    });
+  }
+
+  private playShieldBlock(): void {
+    this.audio.playTone(1800, 0.08, "square", {
+      attack: 0.002,
+      decay: 0.01,
+      sustain: 0.2,
+      release: 0.03,
+    });
+    this.audio.playNoise(0.06, 4000);
   }
 
   private playMenuStart(): void {

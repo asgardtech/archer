@@ -7,6 +7,7 @@ const POWERUP_COLORS: Record<PowerUpType, string> = {
   "multi-ball": "#9C27B0",
   "sticky": "#FF9800",
   "extra-life": "#F44336",
+  "shield": "#00BCD4",
 };
 
 const POWERUP_LABELS: Record<PowerUpType, string> = {
@@ -14,6 +15,7 @@ const POWERUP_LABELS: Record<PowerUpType, string> = {
   "multi-ball": "M",
   "sticky": "S",
   "extra-life": "\u2665",
+  "shield": "D",
 };
 
 export class PowerUp {

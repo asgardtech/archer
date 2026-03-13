@@ -10,7 +10,7 @@ export type JardinainsGameState =
   | "gameover"
   | "victory";
 
-export type PowerUpType = "wide-paddle" | "multi-ball" | "sticky" | "extra-life";
+export type PowerUpType = "wide-paddle" | "multi-ball" | "sticky" | "extra-life" | "shield";
 
 export type GnomeState = "sitting" | "ducking" | "falling" | "caught" | "gone";
 
@@ -21,6 +21,8 @@ export interface PaddleState {
   height: number;
   baseWidth: number;
   shrinkTimer: number;
+  shieldActive: boolean;
+  shieldTimer: number;
 }
 
 export interface BallState {
@@ -84,7 +86,9 @@ export type JardinainsSoundEvent =
   | "level_complete"
   | "game_over"
   | "victory"
-  | "menu_start";
+  | "menu_start"
+  | "shield_activate"
+  | "shield_block";
 
 export interface JardinainsLevelConfig {
   level: number;

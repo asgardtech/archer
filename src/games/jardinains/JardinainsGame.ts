@@ -20,7 +20,7 @@ const SCORE_BRICK_STANDARD = 1;
 const SCORE_BRICK_TOUGH = 3;
 const SCORE_GNOME_CATCH = 5;
 const SCORE_LEVEL_CLEAR = 10;
-const POWER_UP_TYPES: PowerUpType[] = ["wide-paddle", "multi-ball", "sticky", "extra-life"];
+const POWER_UP_TYPES: PowerUpType[] = ["wide-paddle", "multi-ball", "sticky", "extra-life", "shield"];
 
 export class JardinainsGame implements IGame {
   private canvas: HTMLCanvasElement;
@@ -308,8 +308,12 @@ export class JardinainsGame implements IGame {
       pot.update(dt, this.height);
       if (pot.alive && this.collisions.checkPotPaddle(pot, this.paddle)) {
         pot.alive = false;
-        this.paddle.applyShrink();
-        this.sound.play("pot_hit");
+        const blocked = this.paddle.applyShrink();
+        if (blocked) {
+          this.sound.play("shield_block");
+        } else {
+          this.sound.play("pot_hit");
+        }
       }
     }
     this.flowerPots = this.flowerPots.filter((p) => p.alive);
@@ -328,6 +332,10 @@ export class JardinainsGame implements IGame {
         }
         if (pu.type === "wide-paddle") {
           this.paddle.applyWide();
+        }
+        if (pu.type === "shield") {
+          this.paddle.activateShield();
+          this.sound.play("shield_activate");
         }
       }
     }

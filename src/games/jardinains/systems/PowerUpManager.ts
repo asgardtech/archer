@@ -27,6 +27,8 @@ export class PowerUpManager {
       case "extra-life":
         result.extraLife = true;
         break;
+      case "shield":
+        break;
     }
 
     return result;
