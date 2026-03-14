@@ -1,5 +1,9 @@
 import { Vec2, EnemyVariant, EnemyConfig, EnemyWeaponType, ENEMY_CONFIGS } from "../types";
 
+export function isBossVariant(variant: EnemyVariant): boolean {
+  return variant === "boss";
+}
+
 export class Enemy {
   public pos: Vec2;
   public vel: Vec2;
@@ -33,7 +37,7 @@ export class Enemy {
   constructor(x: number, y: number, variant: EnemyVariant, speed?: number, overrideConfig?: Partial<EnemyConfig>) {
     const config = { ...ENEMY_CONFIGS[variant], ...overrideConfig };
     this.variant = variant;
-    this.hitPoints = Math.max(config.hitPoints, variant === "boss" ? 25 : 1);
+    this.hitPoints = Math.max(config.hitPoints, isBossVariant(variant) ? 25 : 1);
     this.maxHitPoints = this.hitPoints;
     this.scoreValue = config.scoreValue;
     this.fireRate = config.fireRate;
@@ -62,7 +66,7 @@ export class Enemy {
 
     if (this.flashTimer > 0) this.flashTimer -= dt;
 
-    if (this.variant === "boss") {
+    if (isBossVariant(this.variant)) {
       this.pos.x += Math.sin(this.time * 1.5) * 60 * dt;
       const bossTargetY = canvasHeight * 0.15;
       if (this.pos.y < bossTargetY) {
@@ -153,7 +157,7 @@ export class Enemy {
     }
 
     if (
-      this.variant !== "boss" && this.variant !== "destroyer" &&
+      !isBossVariant(this.variant) && this.variant !== "destroyer" &&
       this.variant !== "juggernaut" && this.variant !== "minelayer" &&
       this.pos.y > canvasHeight + 50
     ) {
@@ -266,7 +270,7 @@ export class Enemy {
   }
 
   private renderSpriteVariant(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
-    if (this.variant === "boss") {
+    if (isBossVariant(this.variant)) {
       ctx.fillStyle = "rgba(255, 50, 50, 0.15)";
       ctx.beginPath();
       ctx.arc(x, y, this.width * 0.7, 0, Math.PI * 2);
@@ -310,7 +314,7 @@ export class Enemy {
       }
     }
 
-    if (this.variant === "boss" || this.variant === "cruiser" || this.variant === "destroyer" || this.variant === "juggernaut") {
+    if (isBossVariant(this.variant) || this.variant === "cruiser" || this.variant === "destroyer" || this.variant === "juggernaut") {
       this.renderHPBar(ctx, x, y);
     }
   }

@@ -377,7 +377,11 @@ describe("10. HP bar eligibility", () => {
   });
 
   test.each(HP_BAR_VARIANTS)("renderSpriteVariant calls renderHPBar for %s", (variant) => {
-    expect(hpBarBlock).toContain(`"${variant}"`);
+    if (variant === "boss") {
+      expect(hpBarBlock).toMatch(/isBossVariant|"boss"/);
+    } else {
+      expect(hpBarBlock).toContain(`"${variant}"`);
+    }
   });
 
   test.each(NON_HP_BAR_VARIANTS)("renderSpriteVariant does NOT call renderHPBar for %s", (variant) => {
