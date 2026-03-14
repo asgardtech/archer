@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { loadWindowState, saveWindowState } from './windowState';
@@ -163,7 +163,76 @@ function createWindow(): void {
   });
 }
 
-app.whenReady().then(createWindow);
+const VALID_KEY = /^[a-z0-9_-]+$/;
+
+function getSavesDir(): string {
+  return path.join(app.getPath('userData'), 'saves');
+}
+
+function registerSaveHandlers(): void {
+  ipcMain.handle('save-game', async (_event, key: string, value: string) => {
+    if (!VALID_KEY.test(key)) return { success: false, error: 'Invalid key' };
+    try {
+      const dir = getSavesDir();
+      fs.mkdirSync(dir, { recursive: true });
+      const filePath = path.join(dir, `${key}.json`);
+      const tmpPath = `${filePath}.tmp`;
+      let formatted = value;
+      try {
+        formatted = JSON.stringify(JSON.parse(value), null, 2);
+      } catch {
+        // use value as-is if not valid JSON
+      }
+      fs.writeFileSync(tmpPath, formatted, 'utf-8');
+      fs.renameSync(tmpPath, filePath);
+      return { success: true };
+    } catch (e) {
+      console.error(`Failed to save ${key}:`, e);
+      return { success: false, error: String(e) };
+    }
+  });
+
+  ipcMain.handle('load-game', async (_event, key: string) => {
+    if (!VALID_KEY.test(key)) return null;
+    try {
+      const filePath = path.join(getSavesDir(), `${key}.json`);
+      return fs.readFileSync(filePath, 'utf-8');
+    } catch {
+      return null;
+    }
+  });
+
+  ipcMain.handle('delete-game', async (_event, key: string) => {
+    if (!VALID_KEY.test(key)) return { success: false, error: 'Invalid key' };
+    try {
+      const filePath = path.join(getSavesDir(), `${key}.json`);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      return { success: true };
+    } catch (e) {
+      console.error(`Failed to delete ${key}:`, e);
+      return { success: false, error: String(e) };
+    }
+  });
+
+  ipcMain.handle('list-games', async () => {
+    try {
+      const dir = getSavesDir();
+      if (!fs.existsSync(dir)) return [];
+      const files = fs.readdirSync(dir);
+      return files
+        .filter(f => f.endsWith('.json') && !f.endsWith('.tmp'))
+        .map(f => f.replace(/\.json$/, ''));
+    } catch {
+      return [];
+    }
+  });
+}
+
+app.whenReady().then(() => {
+  fs.mkdirSync(getSavesDir(), { recursive: true });
+  registerSaveHandlers();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   app.quit();
