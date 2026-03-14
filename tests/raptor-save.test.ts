@@ -1,5 +1,5 @@
 import { SaveSystem } from "../src/games/raptor/systems/SaveSystem";
-import { RaptorSaveData, WeaponType } from "../src/games/raptor/types";
+import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration } from "../src/games/raptor/types";
 import { LEVELS } from "../src/games/raptor/levels";
 import { raptorDescriptor } from "../src/games/raptor";
 
@@ -116,7 +116,7 @@ function createPlayingGame(): { game: any; canvas: HTMLCanvasElement } {
 
 function validSaveData(overrides?: Partial<RaptorSaveData>): RaptorSaveData {
   return {
-    version: 1,
+    version: SAVE_FORMAT_VERSION,
     levelReached: 2,
     totalScore: 500,
     lives: 2,
@@ -170,11 +170,11 @@ describe("Scenario: SaveSystem.hasSave() returns false when no save exists", () 
 });
 
 describe("Scenario: Save data includes a version number for forward compatibility", () => {
-  test("saved data has version field set to 1", () => {
+  test("saved data has version field set to SAVE_FORMAT_VERSION", () => {
     const data = validSaveData();
     SaveSystem.save(data);
     const loaded = SaveSystem.load();
-    expect(loaded!.version).toBe(1);
+    expect(loaded!.version).toBe(SAVE_FORMAT_VERSION);
   });
 });
 
@@ -260,7 +260,7 @@ describe("Scenario: Save data with missing version field is rejected", () => {
   });
 
   test("wrong version number returns null", () => {
-    const data = { ...validSaveData(), version: 2 } as any;
+    const data = { ...validSaveData(), version: 99 } as any;
     mockStorage["raptor_save"] = JSON.stringify(data);
     expect(SaveSystem.load()).toBeNull();
   });
@@ -390,7 +390,7 @@ describe("Scenario: Progress is saved automatically when a level is completed", 
     expect(saved!.totalScore).toBe(300);
     expect(saved!.lives).toBe(2);
     expect(saved!.weapon).toBe("missile");
-    expect(saved!.version).toBe(1);
+    expect(saved!.version).toBe(SAVE_FORMAT_VERSION);
     expect(saved!.savedAt).toBeDefined();
   });
 });
@@ -661,5 +661,207 @@ describe("Scenario: RaptorGame exposes hasSaveData getter", () => {
     SaveSystem.save(validSaveData());
     const { game } = createPlayingGame();
     expect(game.hasSaveData).toBe(true);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// SAVE FORMAT VERSIONING & MIGRATION TESTS
+// ════════════════════════════════════════════════════════════════
+
+describe("Scenario: SAVE_FORMAT_VERSION constant is exported from types", () => {
+  test("SAVE_FORMAT_VERSION is a number equal to 2", () => {
+    expect(typeof SAVE_FORMAT_VERSION).toBe("number");
+    expect(SAVE_FORMAT_VERSION).toBe(2);
+  });
+});
+
+describe("Scenario: SaveMigration interface is exported from types", () => {
+  test("SaveMigration has the expected shape", () => {
+    const migration: SaveMigration = {
+      fromVersion: 1,
+      toVersion: 2,
+      migrate(data) {
+        data.version = 2;
+        return data;
+      },
+    };
+    expect(migration.fromVersion).toBe(1);
+    expect(migration.toVersion).toBe(2);
+    expect(typeof migration.migrate).toBe("function");
+  });
+});
+
+describe("Scenario: Loading a v1 save runs the v1→v2 migration", () => {
+  test("v1 save is migrated to current version with all fields preserved", () => {
+    const v1Save = {
+      version: 1,
+      levelReached: 3,
+      totalScore: 1200,
+      lives: 2,
+      weapon: "laser",
+      savedAt: "2026-03-10T12:00:00.000Z",
+      bombs: 3,
+      shieldBattery: 50,
+      armor: 80,
+      energy: 60,
+      weaponTier: 2,
+      weaponInventory: { "machine-gun": 1, "laser": 2 },
+    };
+    mockStorage["raptor_save"] = JSON.stringify(v1Save);
+
+    const loaded = SaveSystem.load();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.version).toBe(SAVE_FORMAT_VERSION);
+    expect(loaded!.levelReached).toBe(3);
+    expect(loaded!.totalScore).toBe(1200);
+    expect(loaded!.lives).toBe(2);
+    expect(loaded!.weapon).toBe("laser");
+    expect(loaded!.bombs).toBe(3);
+    expect(loaded!.shieldBattery).toBe(50);
+    expect(loaded!.armor).toBe(80);
+    expect(loaded!.energy).toBe(60);
+    expect(loaded!.weaponTier).toBe(2);
+    expect(loaded!.weaponInventory).toEqual({ "machine-gun": 1, "laser": 2 });
+  });
+});
+
+describe("Scenario: A save at current version skips migrations", () => {
+  test("current-version save loads without migration", () => {
+    const data = validSaveData();
+    mockStorage["raptor_save"] = JSON.stringify(data);
+
+    const loaded = SaveSystem.load();
+    expect(loaded).not.toBeNull();
+    expect(loaded).toEqual(data);
+  });
+});
+
+describe("Scenario: Loading an unknown future version returns null", () => {
+  test("version 99 returns null", () => {
+    const data = { ...validSaveData(), version: 99 };
+    mockStorage["raptor_save"] = JSON.stringify(data);
+    expect(SaveSystem.load()).toBeNull();
+  });
+});
+
+describe("Scenario: Loading a save with missing version returns null", () => {
+  test("missing version field returns null", () => {
+    const data = { ...validSaveData() } as any;
+    delete data.version;
+    mockStorage["raptor_save"] = JSON.stringify(data);
+    expect(SaveSystem.load()).toBeNull();
+  });
+});
+
+describe("Scenario: Loading a save with a non-integer version returns null", () => {
+  test("version 1.5 returns null", () => {
+    const data = { ...validSaveData(), version: 1.5 };
+    mockStorage["raptor_save"] = JSON.stringify(data);
+    expect(SaveSystem.load()).toBeNull();
+  });
+});
+
+describe("Scenario: Loading a save with zero or negative version returns null", () => {
+  test("version 0 returns null", () => {
+    const data = { ...validSaveData(), version: 0 };
+    mockStorage["raptor_save"] = JSON.stringify(data);
+    expect(SaveSystem.load()).toBeNull();
+  });
+
+  test("version -1 returns null", () => {
+    const data = { ...validSaveData(), version: -1 };
+    mockStorage["raptor_save"] = JSON.stringify(data);
+    expect(SaveSystem.load()).toBeNull();
+  });
+});
+
+describe("Scenario: Migration that throws is handled gracefully", () => {
+  test("exception in migration pipeline returns null from load", () => {
+    const corruptData = { version: 1, levelReached: "not-a-number" };
+    mockStorage["raptor_save"] = JSON.stringify(corruptData);
+    expect(() => SaveSystem.load()).not.toThrow();
+    expect(SaveSystem.load()).toBeNull();
+  });
+});
+
+describe("Scenario: Saving always writes the current SAVE_FORMAT_VERSION", () => {
+  test("saved data in localStorage has version equal to SAVE_FORMAT_VERSION", () => {
+    const data = validSaveData();
+    SaveSystem.save(data);
+    const raw = JSON.parse(mockStorage["raptor_save"]);
+    expect(raw.version).toBe(SAVE_FORMAT_VERSION);
+  });
+});
+
+describe("Scenario: hasSave with old and future versions", () => {
+  test("hasSave returns true for a migratable v1 save", () => {
+    const v1Save = {
+      version: 1,
+      levelReached: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+    };
+    mockStorage["raptor_save"] = JSON.stringify(v1Save);
+    expect(SaveSystem.hasSave()).toBe(true);
+  });
+
+  test("hasSave returns false for a future-version save", () => {
+    const data = { ...validSaveData(), version: 99 };
+    mockStorage["raptor_save"] = JSON.stringify(data);
+    expect(SaveSystem.hasSave()).toBe(false);
+  });
+});
+
+describe("Scenario: v1 saves with and without optional fields migrate correctly", () => {
+  test("v1 save with optional fields preserves them after migration", () => {
+    const v1Save = {
+      version: 1,
+      levelReached: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+      bombs: 2,
+      shieldBattery: 75,
+      armor: 90,
+      energy: 50,
+      weaponTier: 3,
+      weaponInventory: { "machine-gun": 1, "missile": 2 },
+    };
+    mockStorage["raptor_save"] = JSON.stringify(v1Save);
+
+    const loaded = SaveSystem.load();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.version).toBe(SAVE_FORMAT_VERSION);
+    expect(loaded!.bombs).toBe(2);
+    expect(loaded!.shieldBattery).toBe(75);
+    expect(loaded!.armor).toBe(90);
+    expect(loaded!.energy).toBe(50);
+    expect(loaded!.weaponTier).toBe(3);
+    expect(loaded!.weaponInventory).toEqual({ "machine-gun": 1, "missile": 2 });
+  });
+
+  test("v1 save without optional fields migrates correctly", () => {
+    const v1Save = {
+      version: 1,
+      levelReached: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+    };
+    mockStorage["raptor_save"] = JSON.stringify(v1Save);
+
+    const loaded = SaveSystem.load();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.version).toBe(SAVE_FORMAT_VERSION);
+    expect(loaded!.bombs).toBeUndefined();
+    expect(loaded!.shieldBattery).toBeUndefined();
+    expect(loaded!.armor).toBeUndefined();
+    expect(loaded!.energy).toBeUndefined();
+    expect(loaded!.weaponTier).toBeUndefined();
+    expect(loaded!.weaponInventory).toBeUndefined();
   });
 });
