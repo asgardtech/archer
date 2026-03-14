@@ -8,6 +8,24 @@ let mainWindow: BrowserWindow | null = null;
 const MAX_DEV_RETRIES = 10;
 const DEV_RETRY_INTERVAL_MS = 1000;
 
+function isSteamEnvironment(): boolean {
+  if (process.env.SteamAppId) {
+    return true;
+  }
+
+  const appDir = app.isPackaged
+    ? process.platform === 'darwin'
+      ? path.join(path.dirname(process.execPath), '..')
+      : path.dirname(process.execPath)
+    : process.cwd();
+
+  return fs.existsSync(path.join(appDir, 'steam_appid.txt'));
+}
+
+if (isSteamEnvironment()) {
+  app.commandLine.appendSwitch('in-process-gpu');
+}
+
 function buildMenu(): void {
   const isDev = !app.isPackaged;
 

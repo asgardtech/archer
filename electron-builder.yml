@@ -46,6 +46,10 @@ linux:
   icon: build/icons
   category: Game
 
+extraFiles:
+  - from: steam_appid.txt
+    to: steam_appid.txt
+
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
