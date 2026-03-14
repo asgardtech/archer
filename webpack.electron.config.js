@@ -28,6 +28,13 @@ module.exports = {
           filename: "assets/[name][ext]",
         },
       },
+      {
+        test: /\.(woff2?|ttf|eot)$/i,
+        type: "asset/resource",
+        generator: {
+          filename: "fonts/[name][ext]",
+        },
+      },
     ],
   },
   plugins: [
@@ -40,6 +47,11 @@ module.exports = {
         {
           from: "public/assets",
           to: "assets",
+          noErrorOnMissing: false,
+        },
+        {
+          from: "public/fonts",
+          to: "fonts",
           noErrorOnMissing: false,
         },
       ],
