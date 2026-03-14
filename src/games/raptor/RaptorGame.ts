@@ -564,7 +564,6 @@ export class RaptorGame implements IGame {
     }
     this.updateBackground(dt);
     this.powerUpManager.update(dt);
-    this.player.armorActive = this.powerUpManager.hasUpgrade("armor");
     this.player.deflectorActive = this.powerUpManager.hasUpgrade("deflector");
 
     const config = this.currentLevelConfig;
@@ -930,11 +929,15 @@ export class RaptorGame implements IGame {
         case "rapid-fire":
           this.powerUpManager.activate(hit.powerUp.type);
           break;
-        case "armor":
-          this.powerUpManager.activate("armor");
+        case "repair-kit":
+          if (this.player.armor >= this.player.maxArmor) {
+            this.player.lives++;
+          } else {
+            this.player.armor = Math.min(this.player.maxArmor, this.player.armor + 50);
+          }
           break;
         case "shield-restore":
-          this.player.shield = 100;
+          this.player.energy = this.player.maxEnergy;
           break;
         case "bonus-life":
           this.player.lives++;
@@ -964,7 +967,7 @@ export class RaptorGame implements IGame {
           break;
         case "shield-battery":
           if (this.player.shieldBattery >= this.player.maxShieldBattery) {
-            this.player.shield = 100;
+            this.player.energy = this.player.maxEnergy;
           } else {
             this.player.shieldBattery = Math.min(
               this.player.maxShieldBattery,
@@ -984,7 +987,7 @@ export class RaptorGame implements IGame {
     this.explosions = this.explosions.filter((e) => e.alive);
     this.powerUps = this.powerUps.filter((p) => p.alive);
 
-    this.player.updateShieldRegen(dt);
+    this.player.updateEnergyRegen(dt);
     this.player.updateDodge(dt);
     this.player.updateEmp(dt);
 
@@ -1029,6 +1032,8 @@ export class RaptorGame implements IGame {
           savedAt: new Date().toISOString(),
           bombs: this.player.bombs,
           shieldBattery: this.player.shieldBattery,
+          armor: this.player.armor,
+          energy: this.player.energy,
           weaponTier: this.powerUpManager.weaponTier,
           weaponInventory: inventoryRecord,
         });
@@ -1121,9 +1126,6 @@ export class RaptorGame implements IGame {
     }
 
     const pu = new PowerUp(x, y, type);
-    if (pu.type === "armor" && config.level < 4) {
-      pu.type = "shield-restore";
-    }
     if (pu.type === "shield-battery" && config.level < 2) {
       pu.type = "shield-restore";
     }
@@ -1184,6 +1186,8 @@ export class RaptorGame implements IGame {
     this.player.lives = data.lives;
     this.player.bombs = data.bombs ?? 0;
     this.player.shieldBattery = data.shieldBattery ?? 0;
+    this.player.armor = data.armor ?? 100;
+    this.player.energy = data.energy ?? 100;
 
     if (data.weaponInventory) {
       const inv = new Map<WeaponType, number>();
@@ -1511,7 +1515,7 @@ export class RaptorGame implements IGame {
       this.state,
       displayScore,
       this.player.lives,
-      this.player.shield,
+      this.player.armor,
       config.level,
       config.name,
       this.width,
@@ -1522,11 +1526,12 @@ export class RaptorGame implements IGame {
       this.weaponSystem.chargeLevel,
       this.player.bombs,
       this.powerUpManager.weaponTier,
-      this.player.isShieldRegenerating,
+      this.player.isEnergyRegenerating,
       this.player.dodgeCooldownFraction,
       this.powerUpManager.inventory,
       this.player.shieldBattery,
-      this.player.empCooldownFraction
+      this.player.empCooldownFraction,
+      this.player.energy
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);

@@ -90,6 +90,18 @@ export class SaveSystem {
       }
     }
 
+    if (d.armor !== undefined) {
+      if (typeof d.armor !== "number" || d.armor < 0 || d.armor > 100) {
+        d.armor = 100;
+      }
+    }
+
+    if (d.energy !== undefined) {
+      if (typeof d.energy !== "number" || d.energy < 0 || d.energy > 100) {
+        d.energy = 100;
+      }
+    }
+
     if (d.weaponInventory !== undefined) {
       if (typeof d.weaponInventory !== "object" || d.weaponInventory === null || Array.isArray(d.weaponInventory)) {
         return false;
