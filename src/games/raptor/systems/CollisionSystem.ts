@@ -10,6 +10,7 @@ import { EnemyBullet } from "../entities/EnemyBullet";
 import { EnemyMissile } from "../entities/EnemyMissile";
 import { Player } from "../entities/Player";
 import { PowerUp } from "../entities/PowerUp";
+import { SpatialGrid } from "./SpatialGrid";
 
 export interface BulletEnemyHit {
   bullet: Projectile;
@@ -53,6 +54,12 @@ const BOSS_HIT_FLASH_COOLDOWN = 0.15;
 
 export class CollisionSystem {
   private hitFlashTimers: Map<Enemy, number> = new Map();
+  private enemyGrid: SpatialGrid<Enemy>;
+  private queryBuffer: Enemy[] = [];
+
+  constructor(width = 800, height = 600) {
+    this.enemyGrid = new SpatialGrid<Enemy>(width, height, 8, 6);
+  }
 
   checkBeamEnemies(beam: LaserBeam, enemies: Enemy[], dt: number): Enemy[] {
     for (const [enemy, timer] of this.hitFlashTimers.entries()) {
@@ -102,11 +109,20 @@ export class CollisionSystem {
   }
 
   checkBulletsEnemies(bullets: Projectile[], enemies: Enemy[]): BulletEnemyHit[] {
+    this.enemyGrid.clear();
+    for (const enemy of enemies) {
+      this.enemyGrid.insert(enemy);
+    }
+
     const hits: BulletEnemyHit[] = [];
 
     for (const bullet of bullets) {
       if (!bullet.alive) continue;
-      for (const enemy of enemies) {
+
+      this.enemyGrid.beginQuery();
+      this.enemyGrid.query(bullet.left, bullet.top, bullet.right, bullet.bottom, this.queryBuffer);
+
+      for (const enemy of this.queryBuffer) {
         if (!enemy.alive) continue;
         if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
                       enemy.left, enemy.top, enemy.right, enemy.bottom)) {
@@ -212,10 +228,19 @@ export class CollisionSystem {
   }
 
   checkReflectedBulletsEnemies(bullets: EnemyBullet[], enemies: Enemy[]): ReflectedBulletHit[] {
+    this.enemyGrid.clear();
+    for (const enemy of enemies) {
+      this.enemyGrid.insert(enemy);
+    }
+
     const hits: ReflectedBulletHit[] = [];
     for (const bullet of bullets) {
       if (!bullet.alive || !bullet.reflected) continue;
-      for (const enemy of enemies) {
+
+      this.enemyGrid.beginQuery();
+      this.enemyGrid.query(bullet.left, bullet.top, bullet.right, bullet.bottom, this.queryBuffer);
+
+      for (const enemy of this.queryBuffer) {
         if (!enemy.alive) continue;
         if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
                       enemy.left, enemy.top, enemy.right, enemy.bottom)) {

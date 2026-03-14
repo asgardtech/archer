@@ -341,7 +341,7 @@ export class Player {
       bankAngle: this.bankAngle,
       runningLightPhase: this.runningLightPhase,
       panelLightFlicker: this.panelLightOn ? 0.3 : 0.8,
-      heatShimmer: Math.sin(Date.now() * 0.01) * 0.5 + 0.5,
+      heatShimmer: Math.sin(ShipRenderer.frameTime * 0.01) * 0.5 + 0.5,
       damageLevel: 1 - this.armor / this.maxArmor,
     };
 
