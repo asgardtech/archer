@@ -159,6 +159,8 @@ export const WEAPON_SLOT_ORDER: WeaponType[] = [
   "machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun", "rocket"
 ];
 
+export const HUD_BAR_HEIGHT = 48;
+
 export interface RaptorSaveData {
   version: 1;
   /** The highest level index the player has unlocked (0-based). */

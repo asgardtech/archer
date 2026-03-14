@@ -1,4 +1,4 @@
-import { SpeakerType } from "../types";
+import { SpeakerType, HUD_BAR_HEIGHT } from "../types";
 import { PilotPortrait } from "./PilotPortrait";
 import { WingmanPortrait } from "./WingmanPortrait";
 import { HQPortrait } from "./HQPortrait";
@@ -331,7 +331,7 @@ export class StoryRenderer {
       case "top":
         return TOP_POSITION_Y;
       case "bottom":
-        return canvasHeight - panelH - BOTTOM_POSITION_MARGIN;
+        return canvasHeight - HUD_BAR_HEIGHT - panelH - BOTTOM_POSITION_MARGIN;
       case "center":
       default:
         return (canvasHeight - panelH) / 2;
