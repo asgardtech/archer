@@ -14,7 +14,7 @@ export type RaptorGameState =
   | "victory";
 
 export type EnemyVariant =
-  | "scout" | "fighter" | "bomber" | "boss"
+  | "scout" | "fighter" | "bomber" | "boss" | "boss_gunship"
   | "interceptor" | "dart" | "drone" | "swarmer"
   | "gunship" | "cruiser"
   | "destroyer" | "juggernaut"
@@ -506,6 +506,16 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     width: 64,
     height: 56,
     weaponType: "standard",
+  },
+  boss_gunship: {
+    variant: "boss_gunship",
+    hitPoints: 50,
+    speed: 50,
+    scoreValue: 500,
+    fireRate: 1.5,
+    width: 72,
+    height: 60,
+    weaponType: "spread",
   },
   interceptor: {
     variant: "interceptor",

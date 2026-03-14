@@ -732,7 +732,7 @@ export class RaptorGame implements IGame {
     this.storyRenderer.update(dt);
 
     for (const enemy of this.enemies) {
-      enemy.update(dt, this.gameAreaHeight, this.player.pos.x);
+      enemy.update(dt, this.gameAreaHeight, this.player.pos.x, this.width);
 
       if (enemy.canFire()) {
         const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
@@ -1195,6 +1195,7 @@ export class RaptorGame implements IGame {
       fighter: "enemy_fighter",
       bomber: "enemy_bomber",
       boss: "enemy_boss",
+      boss_gunship: "enemy_boss_gunship",
       interceptor: "enemy_interceptor",
       dart: "enemy_dart",
       drone: "enemy_drone",
