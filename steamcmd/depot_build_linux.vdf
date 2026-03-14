@@ -1,0 +1,12 @@
+"DepotBuild"
+{
+  // Replace 1003 with your actual Linux depot ID from Steamworks
+  "DepotID" "1003"
+  "ContentRoot" "../release/linux-unpacked"
+  "FileMapping"
+  {
+    "LocalPath" "*"
+    "DepotPath" "."
+    "Recursive" "1"
+  }
+}
