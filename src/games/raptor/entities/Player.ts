@@ -10,9 +10,10 @@ const MAX_BANK_ANGLE = 0.12;
 const BANK_LERP_SPEED = 8;
 const RUNNING_LIGHT_FREQ = 1.5;
 const PANEL_LIGHT_BASE_INTERVAL = 0.5;
-const SHIELD_REGEN_RATE = 2.5;
-const SHIELD_REGEN_DELAY = 4.0;
-const MAX_SHIELD = 100;
+const ENERGY_REGEN_RATE = 2.5;
+const ENERGY_REGEN_DELAY = 4.0;
+const MAX_ARMOR = 100;
+const MAX_ENERGY = 100;
 const DODGE_DURATION = 0.3;
 const DODGE_COOLDOWN = 3.0;
 const EMP_COOLDOWN = 15.0;
@@ -22,7 +23,10 @@ export class Player {
   public pos: Vec2;
   public width = 56;
   public height = 64;
-  public shield = 100;
+  public armor = 100;
+  public readonly maxArmor = MAX_ARMOR;
+  public energy = 100;
+  public readonly maxEnergy = MAX_ENERGY;
   public lives = 3;
   public bombs = 0;
   public readonly maxBombs = 5;
@@ -32,7 +36,6 @@ export class Player {
   public dpr = 1;
   public dodgeTimer = 0;
   public dodgeCooldown = 0;
-  public armorActive = false;
   public shieldBattery = 0;
   public readonly maxShieldBattery = 100;
   public empTimer = 0;
@@ -47,7 +50,7 @@ export class Player {
   private thrustFrame = 0;
   private thrustTimer = 0;
 
-  private shieldRegenTimer = 0;
+  private energyRegenTimer = 0;
 
   private shipRenderer = new ShipRenderer();
   private bankAngle = 0;
@@ -86,11 +89,11 @@ export class Player {
     return this.empCooldown / EMP_COOLDOWN;
   }
 
-  get isShieldRegenerating(): boolean {
+  get isEnergyRegenerating(): boolean {
     return this.alive
       && !this.isInvincible
-      && this.shield < MAX_SHIELD
-      && this.shieldRegenTimer >= SHIELD_REGEN_DELAY;
+      && this.energy < MAX_ENERGY
+      && this.energyRegenTimer >= ENERGY_REGEN_DELAY;
   }
 
   update(dt: number, targetX: number, targetY: number, canvasWidth: number, canvasHeight: number): void {
@@ -142,13 +145,13 @@ export class Player {
     this.pos.y = Math.max(minY, Math.min(maxY, this.pos.y));
   }
 
-  updateShieldRegen(dt: number): void {
-    if (!this.alive || this.isInvincible || this.shield >= MAX_SHIELD) {
+  updateEnergyRegen(dt: number): void {
+    if (!this.alive || this.isInvincible || this.energy >= MAX_ENERGY) {
       return;
     }
-    this.shieldRegenTimer += dt;
-    if (this.shieldRegenTimer >= SHIELD_REGEN_DELAY) {
-      this.shield = Math.min(MAX_SHIELD, this.shield + SHIELD_REGEN_RATE * dt);
+    this.energyRegenTimer += dt;
+    if (this.energyRegenTimer >= ENERGY_REGEN_DELAY) {
+      this.energy = Math.min(MAX_ENERGY, this.energy + ENERGY_REGEN_RATE * dt);
     }
   }
 
@@ -193,49 +196,58 @@ export class Player {
     if (this.godMode) return false;
     if (this.isInvincible || !this.alive) return false;
 
+    // 1. Shield battery absorbs first
     if (this.shieldBattery > 0) {
-      if (this.shieldBattery >= amount) {
-        this.shieldBattery -= amount;
-        this.shieldRegenTimer = 0;
+      const absorbed = Math.min(this.shieldBattery, amount);
+      this.shieldBattery -= absorbed;
+      amount -= absorbed;
+      if (amount <= 0) {
+        this.energyRegenTimer = 0;
         return false;
       }
-      amount -= this.shieldBattery;
-      this.shieldBattery = 0;
     }
 
-    if (this.armorActive) {
-      amount = Math.max(1, Math.floor(amount * 0.5));
+    // 2. Energy shield absorbs proportionally to current energy level
+    if (this.energy > 0) {
+      const shieldPower = this.energy / this.maxEnergy;
+      const shieldAbsorb = amount * shieldPower;
+      const actualAbsorb = Math.min(shieldAbsorb, this.energy);
+      this.energy -= actualAbsorb;
+      amount -= actualAbsorb;
+      if (amount <= 0) {
+        this.energyRegenTimer = 0;
+        return false;
+      }
     }
 
-    this.shieldRegenTimer = 0;
-
-    if (this.shield > 0) {
-      this.shield = Math.max(0, this.shield - amount);
-      return false;
-    }
-
-    this.lives--;
-    this.shield = 100;
-    this.invincibilityTimer = INVINCIBILITY_DURATION;
-    this.flashTimer = 0;
-
-    if (this.lives <= 0) {
-      this.alive = false;
-      return true;
+    // 3. Remaining damage hits armor (hull HP)
+    this.energyRegenTimer = 0;
+    this.armor -= amount;
+    if (this.armor <= 0) {
+      this.armor = 0;
+      this.lives--;
+      if (this.lives <= 0) {
+        this.alive = false;
+        return true;
+      }
+      this.armor = this.maxArmor;
+      this.energy = this.maxEnergy;
+      this.invincibilityTimer = INVINCIBILITY_DURATION;
+      this.flashTimer = 0;
     }
     return false;
   }
 
   reset(canvasWidth: number, canvasHeight: number, fullReset = true): void {
     this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
-    this.shield = 100;
+    this.armor = this.maxArmor;
+    this.energy = this.maxEnergy;
     this.alive = true;
     this.invincibilityTimer = 0;
     this.flashTimer = 0;
-    this.shieldRegenTimer = 0;
+    this.energyRegenTimer = 0;
     this.dodgeTimer = 0;
     this.dodgeCooldown = 0;
-    this.armorActive = false;
     this.empTimer = 0;
     this.empCooldown = 0;
     this.deflectorActive = false;
@@ -276,12 +288,14 @@ export class Player {
       ctx.restore();
     }
 
-    if (this.armorActive) {
+    if (this.energy > 0) {
+      const energyFrac = this.energy / this.maxEnergy;
       ctx.save();
-      ctx.globalAlpha = 0.12 + 0.06 * Math.sin(Date.now() / 400);
-      ctx.fillStyle = "#00bcd4";
+      ctx.globalAlpha = (0.08 + 0.10 * energyFrac) + 0.04 * Math.sin(Date.now() / 400);
+      ctx.fillStyle = "#3498db";
+      const shieldScale = 0.55 + 0.15 * energyFrac;
       ctx.beginPath();
-      ctx.ellipse(this.pos.x, this.pos.y, this.width * 0.65, this.height * 0.65, 0, 0, Math.PI * 2);
+      ctx.ellipse(this.pos.x, this.pos.y, this.width * shieldScale, this.height * shieldScale, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
@@ -324,7 +338,7 @@ export class Player {
       runningLightPhase: this.runningLightPhase,
       panelLightFlicker: this.panelLightOn ? 0.3 : 0.8,
       heatShimmer: Math.sin(Date.now() * 0.01) * 0.5 + 0.5,
-      damageLevel: 1 - this.shield / 100,
+      damageLevel: 1 - this.armor / this.maxArmor,
     };
 
     this.shipRenderer.render(

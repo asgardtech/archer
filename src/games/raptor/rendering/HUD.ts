@@ -25,7 +25,6 @@ const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "weapon-laser": "#9b59b6",
   "weapon-plasma": "#8e44ad",
   "weapon-ion": "#00bcd4",
-  "armor": "#00bcd4",
   "deflector": "#e91e63",
 };
 
@@ -36,7 +35,6 @@ const EFFECT_LABELS: Partial<Record<RaptorPowerUpType, string>> = {
   "weapon-laser": "LSR",
   "weapon-plasma": "PLS",
   "weapon-ion": "ION",
-  "armor": "ARM",
   "deflector": "DEF",
 };
 
@@ -438,7 +436,7 @@ export class HUD {
     state: RaptorGameState,
     score: number,
     lives: number,
-    shield: number,
+    armor: number,
     level: number,
     levelName: string,
     width: number,
@@ -449,11 +447,12 @@ export class HUD {
     chargeLevel?: number,
     bombs?: number,
     weaponTier?: number,
-    isShieldRegenerating?: boolean,
+    isEnergyRegenerating?: boolean,
     dodgeCooldownFraction?: number,
     inventory?: ReadonlyMap<WeaponType, number>,
     shieldBattery?: number,
-    empCooldownFraction?: number
+    empCooldownFraction?: number,
+    energy?: number
   ): void {
     switch (state) {
       case "loading":
@@ -465,11 +464,11 @@ export class HUD {
       case "briefing":
         break;
       case "playing":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction);
+        this.renderPlayingHUD(ctx, score, lives, armor, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isEnergyRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction, energy);
         this.renderBottomBar(ctx, width, height, currentWeapon ?? "machine-gun", inventory, bombs ?? 0, weaponTier ?? 1, chargeLevel ?? 0);
         break;
       case "level_complete":
-        this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction);
+        this.renderPlayingHUD(ctx, score, lives, armor, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isEnergyRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction, energy);
         this.renderBottomBar(ctx, width, height, currentWeapon ?? "machine-gun", inventory, bombs ?? 0, weaponTier ?? 1, chargeLevel ?? 0);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.completionLines,
@@ -661,7 +660,7 @@ export class HUD {
     ctx: CanvasRenderingContext2D,
     score: number,
     lives: number,
-    shield: number,
+    armor: number,
     level: number,
     levelName: string,
     width: number,
@@ -671,11 +670,12 @@ export class HUD {
     chargeLevel?: number,
     bombs?: number,
     weaponTier?: number,
-    isShieldRegenerating?: boolean,
+    isEnergyRegenerating?: boolean,
     dodgeCooldownFraction?: number,
     inventory?: ReadonlyMap<WeaponType, number>,
     shieldBattery?: number,
-    empCooldownFraction?: number
+    empCooldownFraction?: number,
+    energy?: number
   ): void {
     ctx.save();
 
@@ -712,7 +712,8 @@ export class HUD {
 
     ctx.restore();
 
-    this.renderShieldBar(ctx, shield, height, isShieldRegenerating);
+    this.renderArmorBar(ctx, armor, height);
+    this.renderEnergyBar(ctx, energy ?? 100, height, isEnergyRegenerating);
     this.renderBatteryBar(ctx, shieldBattery ?? 0, height);
     this.renderDodgeCooldown(ctx, dodgeCooldownFraction ?? 0, 10, 52);
     this.renderEmpCooldown(ctx, empCooldownFraction ?? 0, 10, 64);
@@ -723,7 +724,7 @@ export class HUD {
     this.renderTouchWeaponCycleButton(ctx, width, height, inventory);
   }
 
-  private renderShieldBar(ctx: CanvasRenderingContext2D, shield: number, canvasHeight: number, isRegenerating?: boolean): void {
+  private renderArmorBar(ctx: CanvasRenderingContext2D, armor: number, canvasHeight: number): void {
     ctx.save();
 
     const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
@@ -743,30 +744,76 @@ export class HUD {
     this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
     ctx.fill();
 
-    const shieldFrac = Math.min(1, Math.max(0, shield / 100));
-    if (shieldFrac > 0) {
-      const fillH = barH * shieldFrac;
+    const armorFrac = Math.min(1, Math.max(0, armor / 100));
+    if (armorFrac > 0) {
+      const fillH = barH * armorFrac;
       const fillY = barY + barH - fillH;
 
-      const shieldGrad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
-      if (shieldFrac > 0.5) {
-        shieldGrad.addColorStop(0, "#2980b9");
-        shieldGrad.addColorStop(1, "#3498db");
-      } else if (shieldFrac > 0.25) {
-        shieldGrad.addColorStop(0, "#d4ac0d");
-        shieldGrad.addColorStop(1, "#f1c40f");
+      const armorGrad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
+      if (armorFrac > 0.5) {
+        armorGrad.addColorStop(0, "#2e7d32");
+        armorGrad.addColorStop(1, "#4caf50");
+      } else if (armorFrac > 0.25) {
+        armorGrad.addColorStop(0, "#d4ac0d");
+        armorGrad.addColorStop(1, "#f1c40f");
       } else {
-        shieldGrad.addColorStop(0, "#c0392b");
-        shieldGrad.addColorStop(1, "#e74c3c");
+        armorGrad.addColorStop(0, "#c0392b");
+        armorGrad.addColorStop(1, "#e74c3c");
       }
-      ctx.fillStyle = shieldGrad;
+      ctx.fillStyle = armorGrad;
       this.roundedRect(ctx, barX, fillY, SHIELD_BAR_W, fillH, 4);
       ctx.fill();
     }
 
-    if (isRegenerating && shieldFrac < 1) {
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.lineWidth = 0.5;
+    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.font = `6px ${RETRO_FONT}`;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.translate(barX + SHIELD_BAR_W + 10, barY + barH / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("ARMOR", 0, 0);
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  private renderEnergyBar(ctx: CanvasRenderingContext2D, energy: number, canvasHeight: number, isRegenerating?: boolean): void {
+    ctx.save();
+
+    const barX = SHIELD_BAR_X + SHIELD_BAR_W + 16;
+    const barY = SHIELD_BAR_TOP;
+    const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
+    if (barH <= 0) { ctx.restore(); return; }
+
+    ctx.fillStyle = "rgba(0, 10, 30, 0.6)";
+    this.roundedRect(ctx, barX - 3, barY - 3, SHIELD_BAR_W + 6, barH + 6, 6);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
+    ctx.fill();
+
+    const energyFrac = Math.min(1, Math.max(0, energy / 100));
+    if (energyFrac > 0) {
+      const fillH = barH * energyFrac;
+      const fillY = barY + barH - fillH;
+      const grad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
+      grad.addColorStop(0, "#2980b9");
+      grad.addColorStop(1, "#3498db");
+      ctx.fillStyle = grad;
+      this.roundedRect(ctx, barX, fillY, SHIELD_BAR_W, fillH, 4);
+      ctx.fill();
+    }
+
+    if (isRegenerating && energyFrac < 1) {
       const regenAlpha = Math.sin(Date.now() / 200) * 0.15 + 0.15;
-      const emptyH = barH * (1 - shieldFrac);
+      const emptyH = barH * (1 - energyFrac);
       ctx.fillStyle = `rgba(52, 152, 219, ${regenAlpha})`;
       this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, emptyH, 4);
       ctx.fill();
@@ -784,7 +831,7 @@ export class HUD {
     ctx.textBaseline = "middle";
     ctx.translate(barX + SHIELD_BAR_W + 10, barY + barH / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText("SHIELD", 0, 0);
+    ctx.fillText("ENERGY", 0, 0);
     ctx.restore();
 
     ctx.restore();
@@ -795,7 +842,7 @@ export class HUD {
 
     ctx.save();
 
-    const barX = SHIELD_BAR_X + SHIELD_BAR_W + 16;
+    const barX = SHIELD_BAR_X + (SHIELD_BAR_W + 16) * 2;
     const barY = SHIELD_BAR_TOP;
     const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
     if (barH <= 0) { ctx.restore(); return; }
@@ -1250,7 +1297,6 @@ export class HUD {
       const spriteKeyMap: Partial<Record<RaptorPowerUpType, string>> = {
         "spread-shot": "powerup_spread",
         "rapid-fire": "powerup_rapid",
-        "armor": "powerup_armor",
         "deflector": "powerup_deflector",
       };
       const sprite = this.assets?.getOptional(spriteKeyMap[eff.type] ?? "");

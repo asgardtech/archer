@@ -1,7 +1,7 @@
 import { Vec2, RaptorPowerUpType } from "../types";
 
 const FALL_SPEED = 100;
-const POWER_UP_TYPES: RaptorPowerUpType[] = ["spread-shot", "rapid-fire", "shield-restore", "bonus-life", "mega-bomb", "armor", "shield-battery", "deflector"];
+const POWER_UP_TYPES: RaptorPowerUpType[] = ["spread-shot", "rapid-fire", "shield-restore", "bonus-life", "mega-bomb", "repair-kit", "shield-battery", "deflector"];
 
 const POWER_UP_WEIGHTS: [RaptorPowerUpType, number][] = [
   ["spread-shot", 1],
@@ -9,7 +9,7 @@ const POWER_UP_WEIGHTS: [RaptorPowerUpType, number][] = [
   ["shield-restore", 1],
   ["bonus-life", 1],
   ["mega-bomb", 1],
-  ["armor", 1],
+  ["repair-kit", 1],
   ["shield-battery", 1],
   ["deflector", 0.6],
 ];
@@ -36,7 +36,7 @@ const COLORS: Record<RaptorPowerUpType, string> = {
   "weapon-autogun": "#27ae60",
   "weapon-rocket": "#2c3e50",
   "mega-bomb": "#e74c3c",
-  "armor": "#00bcd4",
+  "repair-kit": "#4caf50",
   "shield-battery": "#ff9800",
   "deflector": "#e91e63",
 };
@@ -53,7 +53,7 @@ const ICONS: Record<RaptorPowerUpType, string> = {
   "weapon-autogun": "A",
   "weapon-rocket": "R",
   "mega-bomb": "B",
-  "armor": "A",
+  "repair-kit": "R",
   "shield-battery": "B",
   "deflector": "D",
 };
@@ -70,7 +70,7 @@ const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
   "weapon-autogun": "powerup_autogun",
   "weapon-rocket": "powerup_rocket",
   "mega-bomb": "powerup_bomb",
-  "armor": "powerup_armor",
+  "repair-kit": "powerup_repair",
   "shield-battery": "powerup_battery",
   "deflector": "powerup_deflector",
 };

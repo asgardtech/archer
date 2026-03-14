@@ -123,6 +123,7 @@ const POWERUP_ALIASES: Record<string, RaptorPowerUpType> = {
   rapid: "rapid-fire",
   shield: "shield-restore",
   life: "bonus-life",
+  repair: "repair-kit",
 };
 
 export function registerWeaponCommands(registry: CommandRegistry): void {
@@ -240,7 +241,7 @@ export function registerPowerUpCommands(registry: CommandRegistry): void {
 
     const resolved = POWERUP_ALIASES[sub];
     if (!resolved) {
-      return `Unknown power-up '${sub}'. Available: spread, rapid, shield, life`;
+      return `Unknown power-up '${sub}'. Available: spread, rapid, shield, life, repair`;
     }
 
     switch (resolved) {
@@ -249,10 +250,17 @@ export function registerPowerUpCommands(registry: CommandRegistry): void {
         ctx.powerUpManager.activate(resolved);
         break;
       case "shield-restore":
-        ctx.player.shield = 100;
+        ctx.player.energy = ctx.player.maxEnergy;
         break;
       case "bonus-life":
         ctx.player.lives++;
+        break;
+      case "repair-kit":
+        if (ctx.player.armor >= ctx.player.maxArmor) {
+          ctx.player.lives++;
+        } else {
+          ctx.player.armor = Math.min(ctx.player.maxArmor, ctx.player.armor + 50);
+        }
         break;
     }
 
@@ -289,28 +297,51 @@ export function registerPlayerCommands(registry: CommandRegistry): void {
     return `Lives set to ${n}`;
   });
 
-  registry.register("shield", (args, ctx) => {
+  registry.register("armor", (args, ctx) => {
     if (ctx.gameState !== "playing") {
       return "Command only available while playing";
     }
     if (args.length === 0) {
-      return `Shield: ${ctx.player.shield}`;
+      return `Armor: ${Math.round(ctx.player.armor)}`;
     }
     const n = parseInt(args[0], 10);
     if (isNaN(n) || n < 0 || n > 100) {
-      return "Shield must be between 0 and 100";
+      return "Armor must be between 0 and 100";
     }
-    ctx.player.shield = n;
-    return `Shield set to ${n}`;
+    ctx.player.armor = n;
+    return `Armor set to ${n}`;
+  });
+
+  registry.register("energy", (args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+    if (args.length === 0) {
+      return `Energy: ${Math.round(ctx.player.energy)}`;
+    }
+    const n = parseInt(args[0], 10);
+    if (isNaN(n) || n < 0 || n > 100) {
+      return "Energy must be between 0 and 100";
+    }
+    ctx.player.energy = n;
+    return `Energy set to ${n}`;
+  });
+
+  registry.register("repair", (_args, ctx) => {
+    if (ctx.gameState !== "playing") {
+      return "Command only available while playing";
+    }
+    ctx.player.armor = ctx.player.maxArmor;
+    return `Armor fully restored to ${ctx.player.maxArmor}`;
   });
 
   registry.register("heal", (_args, ctx) => {
     if (ctx.gameState !== "playing") {
       return "Command only available while playing";
     }
-    ctx.player.shield = 100;
-    ctx.player.lives++;
-    return "Player fully healed (shield: 100, +1 life)";
+    ctx.player.armor = ctx.player.maxArmor;
+    ctx.player.energy = ctx.player.maxEnergy;
+    return `Player fully healed (armor: ${ctx.player.maxArmor}, energy: ${ctx.player.maxEnergy})`;
   });
 
   registry.register("kill", (_args, ctx) => {
@@ -407,7 +438,7 @@ export function registerCombatCommands(registry: CommandRegistry): void {
       `Game State: ${ctx.gameState}`,
       `Level: ${ctx.currentLevel + 1} - ${ctx.levels[ctx.currentLevel].name}`,
       `Score: ${ctx.score} (Total: ${ctx.totalScore})`,
-      `Lives: ${ctx.player.lives} | Shield: ${ctx.player.shield}`,
+      `Lives: ${ctx.player.lives} | Armor: ${Math.round(ctx.player.armor)} | Energy: ${Math.round(ctx.player.energy)}`,
       `Weapon: ${ctx.weaponSystem.currentWeapon} (Tier ${ctx.powerUpManager.weaponTier}) | Inventory: ${Array.from(ctx.powerUpManager.inventory.entries()).map(([w, t]) => `${w}:T${t}`).join(", ")}`,
       `Enemies: ${ctx.enemies.length} | Bullets: ${ctx.enemyBullets.length}`,
     ];

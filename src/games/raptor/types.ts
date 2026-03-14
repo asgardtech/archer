@@ -107,7 +107,7 @@ export type RaptorPowerUpType =
   | "rapid-fire"
   | "shield-restore"
   | "bonus-life"
-  | "armor"
+  | "repair-kit"
   | "weapon-missile"
   | "weapon-laser"
   | "weapon-plasma"
@@ -177,6 +177,10 @@ export interface RaptorSaveData {
   bombs?: number;
   /** Shield battery HP at save point (0-100). */
   shieldBattery?: number;
+  /** Hull armor HP at save point (0-100). */
+  armor?: number;
+  /** Energy level at save point (0-100). */
+  energy?: number;
   /** @deprecated Kept for backward compat; use weaponInventory instead. */
   weaponTier?: number;
   /** Full weapon inventory mapping weapon type to tier (1-3). */
