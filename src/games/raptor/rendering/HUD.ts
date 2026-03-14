@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER } from "../types";
+import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SpeakerType } from "../types";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
 import { ShipRenderer } from "./ShipRenderer";
@@ -60,6 +60,20 @@ const WEAPON_COLORS: Record<WeaponType, string> = {
   "rocket": "#2c3e50",
 };
 
+const SPEAKER_HUD_LABELS: Record<SpeakerType, string> = {
+  pilot: "RAPTOR-1",
+  wingman: "WINGMAN",
+  hq: "HQ",
+  sensor: "SENSOR",
+};
+
+const SPEAKER_HUD_COLORS: Record<SpeakerType, string> = {
+  pilot: "#5082dc",
+  wingman: "#50b464",
+  hq: "#dcb43c",
+  sensor: "#dcb43c",
+};
+
 interface SliderLayout {
   trackX: number;
   trackY: number;
@@ -79,6 +93,10 @@ export class HUD {
   private _victoryStoryActive = false;
   private measureCtx: CanvasRenderingContext2D;
   private shipRenderer = new ShipRenderer();
+
+  private wingmanText = "";
+  private wingmanTimer = 0;
+  private wingmanSpeaker: SpeakerType = "pilot";
 
   constructor(isTouchDevice: boolean) {
     this.isTouchDevice = isTouchDevice;
@@ -130,6 +148,22 @@ export class HUD {
 
   setAssets(assets: AssetLoader): void {
     this.assets = assets;
+  }
+
+  setWingmanMessage(speaker: SpeakerType, text: string, duration: number): void {
+    this.wingmanSpeaker = speaker;
+    let cleanText = text;
+    if (cleanText.startsWith("Wingman:")) cleanText = cleanText.substring(8).trim();
+    else if (cleanText.startsWith("HQ:")) cleanText = cleanText.substring(3).trim();
+    else if (cleanText.startsWith("Sensor:")) cleanText = cleanText.substring(7).trim();
+    this.wingmanText = cleanText;
+    this.wingmanTimer = duration;
+  }
+
+  updateWingmanTimer(dt: number): void {
+    if (this.wingmanTimer > 0) {
+      this.wingmanTimer = Math.max(0, this.wingmanTimer - dt);
+    }
   }
 
   renderMuteButton(ctx: CanvasRenderingContext2D, muted: boolean, canvasW: number): void {
@@ -432,9 +466,11 @@ export class HUD {
         break;
       case "playing":
         this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction);
+        this.renderBottomBar(ctx, width, height, currentWeapon ?? "machine-gun", inventory, bombs ?? 0, weaponTier ?? 1, chargeLevel ?? 0);
         break;
       case "level_complete":
         this.renderPlayingHUD(ctx, score, lives, shield, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isShieldRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction);
+        this.renderBottomBar(ctx, width, height, currentWeapon ?? "machine-gun", inventory, bombs ?? 0, weaponTier ?? 1, chargeLevel ?? 0);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.completionLines,
           `Score: ${score}`,
@@ -664,7 +700,6 @@ export class HUD {
     ctx.fillText(`Score: ${score}`, 10, 14);
 
     this.renderLivesIcons(ctx, lives, 10, 28);
-    this.renderBombCount(ctx, bombs ?? 0, 10, 40);
 
     ctx.font = `9px ${RETRO_FONT}`;
     ctx.textAlign = "center";
@@ -673,10 +708,6 @@ export class HUD {
 
     if (activeEffects && activeEffects.length > 0) {
       this.renderActiveEffects(ctx, activeEffects, width);
-    }
-
-    if (currentWeapon) {
-      this.renderWeaponIndicator(ctx, currentWeapon, width, chargeLevel, weaponTier);
     }
 
     ctx.restore();
@@ -689,9 +720,6 @@ export class HUD {
     this.renderTouchDodgeButton(ctx, dodgeCooldownFraction ?? 0, width, height);
     this.renderTouchEmpButton(ctx, empCooldownFraction ?? 0, width, height);
 
-    if (inventory && inventory.size > 1) {
-      this.renderWeaponTray(ctx, inventory, currentWeapon ?? "machine-gun", width);
-    }
     this.renderTouchWeaponCycleButton(ctx, width, height, inventory);
   }
 
@@ -959,7 +987,7 @@ export class HUD {
   private getBombButtonRect(width: number, height: number) {
     const size = 44;
     const margin = 14;
-    return { x: width - size - margin, y: height - size - margin, w: size, h: size };
+    return { x: width - size - margin, y: height - HUD_BAR_HEIGHT - size - margin, w: size, h: size };
   }
 
   isBombButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -1306,6 +1334,216 @@ export class HUD {
     const linesStartY = py + 100 + storyBlockH;
     for (let i = 0; i < lines.length; i++) {
       ctx.fillText(lines[i], width / 2, linesStartY + i * 30);
+    }
+
+    ctx.restore();
+  }
+
+  private renderBottomBar(
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number,
+    currentWeapon: WeaponType,
+    inventory: ReadonlyMap<WeaponType, number> | undefined,
+    bombs: number,
+    weaponTier: number,
+    chargeLevel: number
+  ): void {
+    const barY = height - HUD_BAR_HEIGHT;
+
+    ctx.save();
+
+    const bgGrad = ctx.createLinearGradient(0, barY, 0, height);
+    bgGrad.addColorStop(0, "rgba(0, 10, 30, 1.0)");
+    bgGrad.addColorStop(1, "rgba(0, 5, 15, 1.0)");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, barY, width, HUD_BAR_HEIGHT);
+
+    ctx.strokeStyle = "rgba(100, 160, 255, 0.2)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, barY);
+    ctx.lineTo(width, barY);
+    ctx.stroke();
+
+    this.renderWingmanSection(ctx, barY);
+    this.renderBottomWeaponTray(ctx, width, barY, currentWeapon, inventory, weaponTier, chargeLevel);
+    this.renderBottomBombCount(ctx, width, barY, bombs);
+
+    ctx.restore();
+  }
+
+  private renderWingmanSection(
+    ctx: CanvasRenderingContext2D,
+    barY: number
+  ): void {
+    const msgX = 8;
+    const centerY = barY + HUD_BAR_HEIGHT / 2;
+
+    if (this.wingmanTimer <= 0 || !this.wingmanText) {
+      ctx.save();
+      ctx.font = `6px ${RETRO_FONT}`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+      ctx.fillText("Standing by...", msgX, centerY);
+      ctx.restore();
+      return;
+    }
+
+    ctx.save();
+    const fadeAlpha = Math.min(1, this.wingmanTimer / 0.5);
+    ctx.globalAlpha = fadeAlpha;
+
+    const speakerColor = SPEAKER_HUD_COLORS[this.wingmanSpeaker] ?? "#5082dc";
+    const label = SPEAKER_HUD_LABELS[this.wingmanSpeaker] ?? "RAPTOR-1";
+
+    ctx.font = `6px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+
+    ctx.fillStyle = speakerColor;
+    ctx.fillText(label + ":", msgX, centerY - 7);
+
+    ctx.fillStyle = "#D0D8E8";
+    let displayText = this.wingmanText;
+    if (displayText.length > 35) {
+      displayText = displayText.substring(0, 32) + "...";
+    }
+    ctx.fillText(displayText, msgX, centerY + 7);
+
+    ctx.restore();
+  }
+
+  private renderBottomWeaponTray(
+    ctx: CanvasRenderingContext2D,
+    canvasWidth: number,
+    barY: number,
+    activeWeapon: WeaponType,
+    inventory: ReadonlyMap<WeaponType, number> | undefined,
+    weaponTier: number,
+    chargeLevel: number
+  ): void {
+    const TIER_PIPS = ["I", "II", "III"];
+    const slotW = 38;
+    const slotH = 28;
+    const gap = 3;
+    const trayY = barY + (HUD_BAR_HEIGHT - slotH) / 2;
+
+    let ownedWeapons: WeaponType[];
+    if (inventory && inventory.size > 0) {
+      ownedWeapons = WEAPON_SLOT_ORDER.filter((w) => inventory.has(w));
+    } else {
+      ownedWeapons = [activeWeapon];
+    }
+
+    const totalW = ownedWeapons.length * slotW + (ownedWeapons.length - 1) * gap;
+    const startX = (canvasWidth - totalW) / 2;
+
+    ctx.save();
+
+    for (let i = 0; i < ownedWeapons.length; i++) {
+      const weapon = ownedWeapons[i];
+      const tier = inventory?.get(weapon) ?? 1;
+      const isActive = weapon === activeWeapon;
+      const x = startX + i * (slotW + gap);
+
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = isActive
+        ? "rgba(255, 255, 255, 0.15)"
+        : "rgba(0, 0, 0, 0.3)";
+      this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
+      ctx.fill();
+
+      if (isActive) {
+        ctx.strokeStyle = WEAPON_COLORS[weapon];
+        ctx.lineWidth = 1.5;
+        this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = isActive ? 1.0 : 0.5;
+
+      ctx.font = `6px ${RETRO_FONT}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = WEAPON_COLORS[weapon];
+      ctx.fillText(WEAPON_LABELS[weapon], x + slotW / 2, trayY + 10);
+
+      ctx.font = `5px ${RETRO_FONT}`;
+      ctx.fillStyle = isActive ? "#ffffff" : "#aaaaaa";
+      ctx.fillText(TIER_PIPS[tier - 1], x + slotW / 2, trayY + 20);
+
+      ctx.globalAlpha = 1.0;
+
+      if (isActive && this.tierFlashTimer > 0) {
+        ctx.save();
+        ctx.globalAlpha = this.tierFlashTimer / 0.5;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
+        ctx.fill();
+        ctx.restore();
+        this.tierFlashTimer = Math.max(0, this.tierFlashTimer - 1 / 60);
+      }
+
+      if (isActive && weapon === "ion-cannon" && chargeLevel > 0) {
+        const cBarW = slotW - 6;
+        const cBarH = 3;
+        const cBarX = x + 3;
+        const cBarY = trayY + slotH - 5;
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.fillRect(cBarX, cBarY, cBarW, cBarH);
+
+        const grad = ctx.createLinearGradient(cBarX, 0, cBarX + cBarW, 0);
+        grad.addColorStop(0, "#00bcd4");
+        grad.addColorStop(1, "#00e5ff");
+        ctx.fillStyle = grad;
+        ctx.fillRect(cBarX, cBarY, cBarW * chargeLevel, cBarH);
+      }
+    }
+
+    if (!this.isTouchDevice && ownedWeapons.length > 1) {
+      for (let i = 0; i < ownedWeapons.length; i++) {
+        const weapon = ownedWeapons[i];
+        const x = startX + i * (slotW + gap);
+        const slotIndex = WEAPON_SLOT_ORDER.indexOf(weapon) + 1;
+        ctx.font = `5px ${RETRO_FONT}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fillText(`${slotIndex}`, x + slotW / 2, trayY + slotH + 6);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  private renderBottomBombCount(
+    ctx: CanvasRenderingContext2D,
+    canvasWidth: number,
+    barY: number,
+    bombs: number
+  ): void {
+    ctx.save();
+
+    const centerY = barY + HUD_BAR_HEIGHT / 2;
+    const maxBombs = 5;
+    const dotSpacing = 10;
+
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = bombs > 0 ? "#e74c3c" : "#666666";
+    const labelX = canvasWidth - 78;
+    ctx.fillText("BOMB", labelX, centerY - 8);
+
+    for (let i = 0; i < maxBombs; i++) {
+      const dotX = labelX + i * dotSpacing + 5;
+      ctx.beginPath();
+      ctx.arc(dotX, centerY + 6, 3, 0, Math.PI * 2);
+      ctx.fillStyle = i < bombs ? "#e74c3c" : "rgba(255, 255, 255, 0.15)";
+      ctx.fill();
     }
 
     ctx.restore();

@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT } from "./types";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
@@ -152,7 +152,7 @@ export class RaptorGame implements IGame {
     this.hud = new HUD(this.input.isTouchDevice);
     this.audio = new AudioManager();
     this.sound = new SoundSystem(this.audio);
-    this.player = new Player(width, height);
+    this.player = new Player(width, height - HUD_BAR_HEIGHT);
     this.assets = new AssetLoader();
     this.vfx = new VFXManager();
     this.terrainRenderer = new TerrainRenderer(width, height, this.assets);
@@ -163,6 +163,10 @@ export class RaptorGame implements IGame {
 
   private get currentLevelConfig(): RaptorLevelConfig {
     return LEVELS[this.currentLevel];
+  }
+
+  private get gameAreaHeight(): number {
+    return this.height - HUD_BAR_HEIGHT;
   }
 
   private setupResize(): void {
@@ -555,8 +559,9 @@ export class RaptorGame implements IGame {
 
   private updatePlaying(dt: number): void {
     this.levelElapsed += dt;
-    this.input.updateFromKeyboard(dt, this.width, this.height);
-    this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.height);
+    this.hud.updateWingmanTimer(dt);
+    this.input.updateFromKeyboard(dt, this.width, this.gameAreaHeight);
+    this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.gameAreaHeight);
     if (this.player.alive) {
       this.vfx.addEngineTrail(this.player.pos.x, this.player.pos.y + this.player.height / 2, ShipRenderer.getEngineSpacing(this.player.width));
     }
@@ -693,7 +698,9 @@ export class RaptorGame implements IGame {
       const msg = storyMessages[this.nextStoryMessageIndex];
       if (this.levelElapsed >= msg.triggerTime) {
         const speaker: SpeakerType = msg.speaker ?? detectSpeaker(msg.text);
-        this.storyRenderer.showQuick(msg.text, msg.duration, "bottom", speaker);
+        const duration = msg.duration ?? 3;
+        this.storyRenderer.showQuick(msg.text, duration, "bottom", speaker);
+        this.hud.setWingmanMessage(speaker, msg.text, duration);
         this.nextStoryMessageIndex++;
       }
     }
@@ -701,7 +708,7 @@ export class RaptorGame implements IGame {
     this.storyRenderer.update(dt);
 
     for (const enemy of this.enemies) {
-      enemy.update(dt, this.height, this.player.pos.x);
+      enemy.update(dt, this.gameAreaHeight, this.player.pos.x);
 
       if (enemy.canFire()) {
         const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
@@ -779,7 +786,7 @@ export class RaptorGame implements IGame {
       }
     }
     for (const eb of this.enemyBullets) {
-      eb.update(dt, this.width, this.height, this.player.pos);
+      eb.update(dt, this.width, this.gameAreaHeight, this.player.pos);
       if (eb instanceof EnemyMissile) {
         this.vfx.addMissileTrail(eb.pos.x, eb.pos.y, eb.heading);
       }
@@ -788,7 +795,7 @@ export class RaptorGame implements IGame {
       exp.update(dt);
     }
     for (const pu of this.powerUps) {
-      pu.update(dt, this.height);
+      pu.update(dt, this.gameAreaHeight);
     }
 
     const enemyHits = this.collisions.checkBulletsEnemies(this.projectiles, this.enemies);
@@ -1300,7 +1307,7 @@ export class RaptorGame implements IGame {
     this.enemyBullets = [];
     this.explosions = [];
     this.powerUps = [];
-    this.player.reset(this.width, this.height, fullReset);
+    this.player.reset(this.width, this.gameAreaHeight, fullReset);
 
     this.enemyWeaponSystem.resetLasers();
 
