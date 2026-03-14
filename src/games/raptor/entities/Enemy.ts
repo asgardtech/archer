@@ -1,7 +1,7 @@
 import { Vec2, EnemyVariant, EnemyConfig, EnemyWeaponType, ENEMY_CONFIGS } from "../types";
 
 export function isBossVariant(variant: EnemyVariant): boolean {
-  return variant === "boss" || variant === "boss_gunship";
+  return variant === "boss" || variant === "boss_gunship" || variant === "boss_dreadnought";
 }
 
 export class Enemy {
@@ -38,6 +38,19 @@ export class Enemy {
   private gunshipStrafeTarget = 0;
   private gunshipPauseTimer = 0;
   private gunshipStrafeDirection: 1 | -1 = 1;
+
+  private dreadnoughtPhase: "entering" | "drifting" | "locking" = "entering";
+  private dreadnoughtDriftTimer = 0;
+  private dreadnoughtLockTimer = 0;
+  private readonly DREADNOUGHT_DRIFT_DURATION_MIN = 3.0;
+  private readonly DREADNOUGHT_DRIFT_DURATION_MAX = 5.0;
+  private readonly DREADNOUGHT_LOCK_DURATION = 1.5;
+
+  private burstRemaining = 0;
+  private burstTimer = 0;
+  private burstSpreadIndex = 0;
+  private readonly BURST_COUNT = 4;
+  private readonly BURST_INTERVAL = 0.15;
 
   constructor(x: number, y: number, variant: EnemyVariant, speed?: number, overrideConfig?: Partial<EnemyConfig>) {
     const config = { ...ENEMY_CONFIGS[variant], ...overrideConfig };
@@ -111,6 +124,43 @@ export class Enemy {
       }
 
       this.pos.x = Math.max(margin, Math.min(cw - margin, this.pos.x));
+    } else if (this.variant === "boss_dreadnought") {
+      const dCw = canvasWidth ?? 800;
+      const dMargin = 50;
+      const parkY = canvasHeight * 0.25;
+
+      if (this.dreadnoughtPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= parkY) {
+          this.pos.y = parkY;
+          this.dreadnoughtPhase = "drifting";
+          this.dreadnoughtDriftTimer = this.DREADNOUGHT_DRIFT_DURATION_MIN
+            + Math.random() * (this.DREADNOUGHT_DRIFT_DURATION_MAX - this.DREADNOUGHT_DRIFT_DURATION_MIN);
+        }
+      } else if (this.dreadnoughtPhase === "drifting") {
+        this.pos.x += Math.sin(this.time * 0.5) * 35 * dt;
+        this.pos.y = parkY + Math.sin(this.time * 0.3) * 4;
+        this.pos.x = Math.max(dMargin, Math.min(dCw - dMargin, this.pos.x));
+
+        this.dreadnoughtDriftTimer -= dt;
+        if (this.dreadnoughtDriftTimer <= 0) {
+          this.dreadnoughtPhase = "locking";
+          this.dreadnoughtLockTimer = this.DREADNOUGHT_LOCK_DURATION;
+        }
+      } else if (this.dreadnoughtPhase === "locking") {
+        this.pos.x += Math.sin(this.time * 20) * 0.5;
+        this.dreadnoughtLockTimer -= dt;
+        if (this.dreadnoughtLockTimer <= 0) {
+          this.initiateBurst();
+          this.dreadnoughtPhase = "drifting";
+          this.dreadnoughtDriftTimer = this.DREADNOUGHT_DRIFT_DURATION_MIN
+            + Math.random() * (this.DREADNOUGHT_DRIFT_DURATION_MAX - this.DREADNOUGHT_DRIFT_DURATION_MIN);
+        }
+      }
+
+      if (this.burstRemaining > 0) {
+        this.burstTimer -= dt;
+      }
     } else if (isBossVariant(this.variant)) {
       this.pos.x += Math.sin(this.time * 1.5) * 60 * dt;
       const bossTargetY = canvasHeight * 0.15;
@@ -228,6 +278,25 @@ export class Enemy {
     this.fireCooldown = (1 / this.fireRate) * multiplier;
   }
 
+  private initiateBurst(): void {
+    this.burstRemaining = this.BURST_COUNT;
+    this.burstTimer = 0;
+    this.burstSpreadIndex = 0;
+  }
+
+  public hasPendingBurst(): boolean {
+    return this.burstRemaining > 0 && this.burstTimer <= 0;
+  }
+
+  public consumeBurstTick(): { offsetX: number; offsetY: number } {
+    this.burstRemaining--;
+    this.burstTimer = this.BURST_INTERVAL;
+    const spreadOffsets = [-24, -8, 8, 24];
+    const offsetX = spreadOffsets[this.burstSpreadIndex % spreadOffsets.length];
+    this.burstSpreadIndex++;
+    return { offsetX, offsetY: this.height * 0.3 };
+  }
+
   hit(damage = 1): boolean {
     if (!this.alive) return false;
     this.hitPoints -= damage;
@@ -267,6 +336,9 @@ export class Enemy {
           break;
         case "boss_gunship":
           this.renderBossGunship(ctx, x, y, isFlashing);
+          break;
+        case "boss_dreadnought":
+          this.renderBossDreadnought(ctx, x, y, isFlashing);
           break;
         case "interceptor":
           this.renderInterceptor(ctx, x, y, isFlashing);
@@ -802,6 +874,61 @@ export class Enemy {
     ctx.fillStyle = flash ? "#cccccc" : "#5577cc";
     ctx.beginPath();
     ctx.arc(x, y - hh * 0.15, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderBossDreadnought(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = "rgba(136, 34, 68, 0.15)";
+    ctx.beginPath();
+    ctx.arc(x, y, hw * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#ffffff" : "#882244";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.35, y + hh * 0.6);
+    ctx.lineTo(x - hw, y + hh * 0.1);
+    ctx.lineTo(x - hw, y - hh * 0.3);
+    ctx.lineTo(x - hw * 0.5, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.3);
+    ctx.lineTo(x + hw, y + hh * 0.1);
+    ctx.lineTo(x + hw * 0.35, y + hh * 0.6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#aa3366";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#773355";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.7, y - hh * 0.1);
+    ctx.lineTo(x + hw * 0.7, y - hh * 0.1);
+    ctx.moveTo(x - hw * 0.6, y + hh * 0.3);
+    ctx.lineTo(x + hw * 0.6, y + hh * 0.3);
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#663344";
+    ctx.fillRect(x - hw * 0.95 - 4, y - hh * 0.15, 8, 14);
+    ctx.fillRect(x + hw * 0.95 - 4, y - hh * 0.15, 8, 14);
+
+    ctx.fillStyle = flash ? "#999999" : "#441122";
+    for (let i = 0; i < 3; i++) {
+      const ty = y - hh * 0.1 + i * 4;
+      ctx.fillRect(x - hw * 0.95 - 1, ty, 2, 2);
+      ctx.fillRect(x + hw * 0.95 - 1, ty, 2, 2);
+    }
+
+    ctx.fillStyle = flash ? "#cccccc" : "#aa4466";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.15, 7, 0, Math.PI * 2);
     ctx.fill();
 
     this.renderHPBar(ctx, x, y);
