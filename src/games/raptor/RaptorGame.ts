@@ -1126,9 +1126,6 @@ export class RaptorGame implements IGame {
     }
 
     const pu = new PowerUp(x, y, type);
-    if (pu.type === "repair-kit" && config.level < 4) {
-      pu.type = "shield-restore";
-    }
     if (pu.type === "shield-battery" && config.level < 2) {
       pu.type = "shield-restore";
     }
