@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <radialGradient id="defl_glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#F48FB1" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#E91E63" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="defl_core" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#F8BBD0"/>
+      <stop offset="50%" stop-color="#E91E63"/>
+      <stop offset="100%" stop-color="#880E4F"/>
+    </radialGradient>
+    <linearGradient id="defl_hex" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F48FB1"/>
+      <stop offset="100%" stop-color="#AD1457"/>
+    </linearGradient>
+  </defs>
+  <circle cx="12" cy="12" r="11" fill="url(#defl_glow)"/>
+  <!-- Outer hexagon -->
+  <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" fill="none" stroke="url(#defl_hex)" stroke-width="1.2" stroke-opacity="0.6"/>
+  <!-- Inner hexagon -->
+  <polygon points="12,5 18,8.5 18,15.5 12,19 6,15.5 6,8.5" fill="none" stroke="#E91E63" stroke-width="0.8" stroke-opacity="0.8"/>
+  <!-- Core circle -->
+  <circle cx="12" cy="12" r="4" fill="url(#defl_core)"/>
+  <!-- Reflection arrows -->
+  <path d="M4,9 L7,11 L4,13" fill="none" stroke="#F48FB1" stroke-width="0.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <path d="M20,9 L17,11 L20,13" fill="none" stroke="#F48FB1" stroke-width="0.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <!-- Core highlight -->
+  <circle cx="11" cy="11" r="1.2" fill="#FCE4EC" opacity="0.6"/>
+  <!-- Energy nodes at hex vertices -->
+  <circle cx="12" cy="2.5" r="0.5" fill="#F48FB1" opacity="0.8"/>
+  <circle cx="12" cy="21.5" r="0.5" fill="#F48FB1" opacity="0.8"/>
+  <circle cx="3.5" cy="7.5" r="0.5" fill="#F48FB1" opacity="0.6"/>
+  <circle cx="20.5" cy="7.5" r="0.5" fill="#F48FB1" opacity="0.6"/>
+  <circle cx="3.5" cy="16.5" r="0.5" fill="#F48FB1" opacity="0.6"/>
+  <circle cx="20.5" cy="16.5" r="0.5" fill="#F48FB1" opacity="0.6"/>
+</svg>

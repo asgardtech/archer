@@ -7,6 +7,7 @@ import { LaserBeam } from "../entities/LaserBeam";
 import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
 import { Enemy } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
+import { EnemyMissile } from "../entities/EnemyMissile";
 import { Player } from "../entities/Player";
 import { PowerUp } from "../entities/PowerUp";
 
@@ -20,6 +21,7 @@ export interface BulletEnemyHit {
 
 export interface EnemyBulletPlayerHit {
   bullet: EnemyBullet;
+  reflected?: boolean;
 }
 
 export interface EnemyPlayerHit {
@@ -32,6 +34,13 @@ export interface PowerUpPlayerHit {
 
 export interface EnemyBeamPlayerHit {
   beam: EnemyLaserBeam;
+  damage: number;
+}
+
+export interface ReflectedBulletHit {
+  bullet: EnemyBullet;
+  enemy: Enemy;
+  destroyed: boolean;
   damage: number;
 }
 
@@ -184,11 +193,37 @@ export class CollisionSystem {
 
     const hits: EnemyBulletPlayerHit[] = [];
     for (const bullet of bullets) {
-      if (!bullet.alive) continue;
+      if (!bullet.alive || bullet.reflected) continue;
       if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
                     player.left, player.top, player.right, player.bottom)) {
-        bullet.alive = false;
-        hits.push({ bullet });
+        if (player.deflectorActive && !bullet.isMine && !(bullet instanceof EnemyMissile) && Math.random() < 0.4) {
+          bullet.vel.x = -bullet.vel.x;
+          bullet.vel.y = -bullet.vel.y;
+          bullet.reflected = true;
+          bullet.homing = false;
+          hits.push({ bullet, reflected: true });
+        } else {
+          bullet.alive = false;
+          hits.push({ bullet });
+        }
+      }
+    }
+    return hits;
+  }
+
+  checkReflectedBulletsEnemies(bullets: EnemyBullet[], enemies: Enemy[]): ReflectedBulletHit[] {
+    const hits: ReflectedBulletHit[] = [];
+    for (const bullet of bullets) {
+      if (!bullet.alive || !bullet.reflected) continue;
+      for (const enemy of enemies) {
+        if (!enemy.alive) continue;
+        if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
+                      enemy.left, enemy.top, enemy.right, enemy.bottom)) {
+          const destroyed = enemy.hit(bullet.damage);
+          bullet.alive = false;
+          hits.push({ bullet, enemy, destroyed, damage: bullet.damage });
+          break;
+        }
       }
     }
     return hits;

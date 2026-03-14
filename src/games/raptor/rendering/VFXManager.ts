@@ -41,6 +41,16 @@ interface MegaBombRing {
   elapsed: number;
 }
 
+interface EmpPulse {
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  alpha: number;
+  duration: number;
+  elapsed: number;
+}
+
 export class VFXManager {
   private shake: ShakeState | null = null;
   private shakeOffsetX = 0;
@@ -49,6 +59,7 @@ export class VFXManager {
   private muzzleFlashes: MuzzleFlash[] = [];
   private megaBombFlash: MegaBombFlash | null = null;
   private megaBombRing: MegaBombRing | null = null;
+  private empPulse: EmpPulse | null = null;
 
   triggerMegaBombFlash(width: number, height: number): void {
     this.megaBombFlash = { alpha: 1, duration: 0.5, elapsed: 0, width, height };
@@ -56,6 +67,17 @@ export class VFXManager {
       x: width / 2, y: height / 2,
       radius: 0, maxRadius: Math.max(width, height),
       alpha: 1, duration: 0.6, elapsed: 0,
+    };
+  }
+
+  triggerEmpPulse(x: number, y: number, maxRadius: number): void {
+    this.empPulse = {
+      x, y,
+      radius: 0,
+      maxRadius,
+      alpha: 1,
+      duration: 0.3,
+      elapsed: 0,
     };
   }
 
@@ -117,6 +139,16 @@ export class VFXManager {
         this.megaBombRing = null;
       }
     }
+
+    if (this.empPulse) {
+      this.empPulse.elapsed += dt;
+      const progress = this.empPulse.elapsed / this.empPulse.duration;
+      this.empPulse.radius = this.empPulse.maxRadius * progress;
+      this.empPulse.alpha = Math.max(0, 1 - progress);
+      if (this.empPulse.elapsed >= this.empPulse.duration) {
+        this.empPulse = null;
+      }
+    }
   }
 
   applyPreRender(ctx: CanvasRenderingContext2D): void {
@@ -143,6 +175,23 @@ export class VFXManager {
       ctx.beginPath();
       ctx.arc(this.megaBombRing.x, this.megaBombRing.y, this.megaBombRing.radius, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.restore();
+    }
+
+    if (this.empPulse && this.empPulse.alpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = this.empPulse.alpha * 0.5;
+      ctx.strokeStyle = "#90caf9";
+      ctx.lineWidth = 3 + (1 - this.empPulse.alpha) * 6;
+      ctx.beginPath();
+      ctx.arc(this.empPulse.x, this.empPulse.y, this.empPulse.radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.globalAlpha = this.empPulse.alpha * 0.15;
+      ctx.fillStyle = "#bbdefb";
+      ctx.beginPath();
+      ctx.arc(this.empPulse.x, this.empPulse.y, this.empPulse.radius, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
@@ -273,5 +322,6 @@ export class VFXManager {
     this.muzzleFlashes = [];
     this.megaBombFlash = null;
     this.megaBombRing = null;
+    this.empPulse = null;
   }
 }

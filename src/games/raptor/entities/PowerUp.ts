@@ -1,7 +1,28 @@
 import { Vec2, RaptorPowerUpType } from "../types";
 
 const FALL_SPEED = 100;
-const POWER_UP_TYPES: RaptorPowerUpType[] = ["spread-shot", "rapid-fire", "shield-restore", "bonus-life", "mega-bomb", "armor"];
+const POWER_UP_TYPES: RaptorPowerUpType[] = ["spread-shot", "rapid-fire", "shield-restore", "bonus-life", "mega-bomb", "armor", "shield-battery", "deflector"];
+
+const POWER_UP_WEIGHTS: [RaptorPowerUpType, number][] = [
+  ["spread-shot", 1],
+  ["rapid-fire", 1],
+  ["shield-restore", 1],
+  ["bonus-life", 1],
+  ["mega-bomb", 1],
+  ["armor", 1],
+  ["shield-battery", 1],
+  ["deflector", 0.6],
+];
+const TOTAL_WEIGHT = POWER_UP_WEIGHTS.reduce((sum, [, w]) => sum + w, 0);
+
+function weightedRandomType(): RaptorPowerUpType {
+  let r = Math.random() * TOTAL_WEIGHT;
+  for (const [type, weight] of POWER_UP_WEIGHTS) {
+    r -= weight;
+    if (r <= 0) return type;
+  }
+  return POWER_UP_WEIGHTS[0][0];
+}
 
 const COLORS: Record<RaptorPowerUpType, string> = {
   "spread-shot": "#3498db",
@@ -16,6 +37,8 @@ const COLORS: Record<RaptorPowerUpType, string> = {
   "weapon-rocket": "#2c3e50",
   "mega-bomb": "#e74c3c",
   "armor": "#00bcd4",
+  "shield-battery": "#ff9800",
+  "deflector": "#e91e63",
 };
 
 const ICONS: Record<RaptorPowerUpType, string> = {
@@ -31,6 +54,8 @@ const ICONS: Record<RaptorPowerUpType, string> = {
   "weapon-rocket": "R",
   "mega-bomb": "B",
   "armor": "A",
+  "shield-battery": "B",
+  "deflector": "D",
 };
 
 const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
@@ -46,6 +71,8 @@ const SPRITE_KEYS: Record<RaptorPowerUpType, string> = {
   "weapon-rocket": "powerup_rocket",
   "mega-bomb": "powerup_bomb",
   "armor": "powerup_armor",
+  "shield-battery": "powerup_battery",
+  "deflector": "powerup_deflector",
 };
 
 export { SPRITE_KEYS as POWERUP_SPRITE_KEYS };
@@ -62,7 +89,7 @@ export class PowerUp {
 
   constructor(x: number, y: number, type?: RaptorPowerUpType) {
     this.pos = { x, y };
-    this.type = type ?? POWER_UP_TYPES[Math.floor(Math.random() * POWER_UP_TYPES.length)];
+    this.type = type ?? weightedRandomType();
   }
 
   setSprite(sprite: HTMLImageElement): void {

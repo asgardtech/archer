@@ -563,6 +563,7 @@ export class RaptorGame implements IGame {
     this.updateBackground(dt);
     this.powerUpManager.update(dt);
     this.player.armorActive = this.powerUpManager.hasUpgrade("armor");
+    this.player.deflectorActive = this.powerUpManager.hasUpgrade("deflector");
 
     const config = this.currentLevelConfig;
 
@@ -579,10 +580,25 @@ export class RaptorGame implements IGame {
       this.input.wasDodgePressed = true;
     }
 
+    if (this.input.wasClicked
+        && this.hud.isEmpButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+      this.input.wasEmpPressed = true;
+    }
+
     if (this.input.wasDodgePressed) {
       const dodged = this.player.dodge();
       if (dodged) {
         this.sound.play("dodge");
+      }
+    }
+
+    if (this.input.wasEmpPressed) {
+      const fired = this.player.emp();
+      if (fired) {
+        this.enemyBullets.length = 0;
+        this.enemyWeaponSystem.resetLasers();
+        this.vfx.triggerEmpPulse(this.player.pos.x, this.player.pos.y, Math.max(this.width, this.height));
+        this.sound.play("emp_burst");
       }
     }
 
@@ -822,6 +838,10 @@ export class RaptorGame implements IGame {
 
     const bulletPlayerHits = this.collisions.checkEnemyBulletsPlayer(this.enemyBullets, this.player);
     for (const hit of bulletPlayerHits) {
+      if (hit.reflected) {
+        this.sound.play("deflect");
+        continue;
+      }
       const dead = this.player.takeDamage(hit.bullet.damage);
       if (dead) {
         this.sound.play("player_destroy");
@@ -834,6 +854,19 @@ export class RaptorGame implements IGame {
         if (hit.bullet instanceof EnemyMissile) {
           this.sound.play("enemy_missile_hit");
           this.vfx.triggerExplosionFlash(hit.bullet.pos.x, hit.bullet.pos.y, 15);
+        }
+      }
+    }
+
+    const reflectedHits = this.collisions.checkReflectedBulletsEnemies(this.enemyBullets, this.enemies);
+    for (const hit of reflectedHits) {
+      if (hit.destroyed) {
+        this.handleEnemyDestroyed(hit.enemy, config);
+      } else {
+        if (hit.enemy.variant === "boss") {
+          this.sound.play("boss_hit");
+        } else {
+          this.sound.play("enemy_hit");
         }
       }
     }
@@ -925,6 +958,19 @@ export class RaptorGame implements IGame {
             this.player.bombs++;
           }
           break;
+        case "shield-battery":
+          if (this.player.shieldBattery >= this.player.maxShieldBattery) {
+            this.player.shield = 100;
+          } else {
+            this.player.shieldBattery = Math.min(
+              this.player.maxShieldBattery,
+              this.player.shieldBattery + 50
+            );
+          }
+          break;
+        case "deflector":
+          this.powerUpManager.activate("deflector");
+          break;
       }
     }
 
@@ -936,6 +982,7 @@ export class RaptorGame implements IGame {
 
     this.player.updateShieldRegen(dt);
     this.player.updateDodge(dt);
+    this.player.updateEmp(dt);
 
     if (!this.player.alive) {
       this.totalScore += this.score;
@@ -977,6 +1024,7 @@ export class RaptorGame implements IGame {
           weapon: this.powerUpManager.currentWeapon,
           savedAt: new Date().toISOString(),
           bombs: this.player.bombs,
+          shieldBattery: this.player.shieldBattery,
           weaponTier: this.powerUpManager.weaponTier,
           weaponInventory: inventoryRecord,
         });
@@ -1072,6 +1120,12 @@ export class RaptorGame implements IGame {
     if (pu.type === "armor" && config.level < 4) {
       pu.type = "shield-restore";
     }
+    if (pu.type === "shield-battery" && config.level < 2) {
+      pu.type = "shield-restore";
+    }
+    if (pu.type === "deflector" && config.level < 5) {
+      pu.type = "shield-restore";
+    }
     const spriteKey = POWERUP_SPRITE_KEYS[pu.type];
     const sprite = this.assets.getOptional(spriteKey);
     if (sprite) pu.setSprite(sprite);
@@ -1125,6 +1179,7 @@ export class RaptorGame implements IGame {
     this.startLevel(data.levelReached, false);
     this.player.lives = data.lives;
     this.player.bombs = data.bombs ?? 0;
+    this.player.shieldBattery = data.shieldBattery ?? 0;
 
     if (data.weaponInventory) {
       const inv = new Map<WeaponType, number>();
@@ -1465,7 +1520,9 @@ export class RaptorGame implements IGame {
       this.powerUpManager.weaponTier,
       this.player.isShieldRegenerating,
       this.player.dodgeCooldownFraction,
-      this.powerUpManager.inventory
+      this.powerUpManager.inventory,
+      this.player.shieldBattery,
+      this.player.empCooldownFraction
     );
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);

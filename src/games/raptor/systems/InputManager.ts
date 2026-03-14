@@ -6,6 +6,7 @@ export class InputManager {
   public wasEscPressed = false;
   public wasBombPressed = false;
   public wasDodgePressed = false;
+  public wasEmpPressed = false;
   public wasConsoleToggled = false;
   public isMouseDown = false;
   public mouseX = 0;
@@ -79,6 +80,7 @@ export class InputManager {
     this.wasEscPressed = false;
     this.wasBombPressed = false;
     this.wasDodgePressed = false;
+    this.wasEmpPressed = false;
     this.wasConsoleToggled = false;
     this.weaponSlotPressed = null;
     this.wasCyclePrevPressed = false;
@@ -177,6 +179,9 @@ export class InputManager {
     if (e.key === "Shift") {
       this.wasDodgePressed = true;
       e.preventDefault();
+    }
+    if (e.key === "v" || e.key === "V") {
+      this.wasEmpPressed = true;
     }
     if (e.key === "`") {
       this.wasConsoleToggled = true;

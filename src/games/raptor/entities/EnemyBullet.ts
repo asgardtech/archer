@@ -27,6 +27,7 @@ export class EnemyBullet {
   public fallbackColor: string;
   public ttl: number | null;
   public isMine: boolean;
+  public reflected = false;
 
   protected angle: number;
   protected sprite: HTMLImageElement | null = null;
