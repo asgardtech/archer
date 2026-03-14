@@ -26,6 +26,51 @@ Open **http://localhost:3000** in your browser to play. The dev server does not 
 | `npm run build` | Create a production build in the `dist/` directory |
 | `npm run typecheck` | Run the TypeScript compiler to check for type errors (no output emitted) |
 | `npm test` | Run the test suite with Jest |
+| `npm run electron:dev` | Compile Electron main process and launch the app with hot reload (runs webpack-dev-server and Electron concurrently) |
+| `npm run electron:build` | Full production build: compile Electron TS + webpack production build for Electron renderer |
+| `npm run electron:start` | Launch Electron using an existing production build (does not rebuild) |
+| `npm run electron:compile` | Compile Electron main process TypeScript to `electron/dist/` |
+| `npm run electron:package` | Build and package the app into platform-specific distributables |
+| `npm run electron:package:win` | Package for Windows (NSIS installer + portable) |
+| `npm run electron:package:mac` | Package for macOS (DMG + ZIP) |
+| `npm run electron:package:linux` | Package for Linux (AppImage + deb) |
+
+## Electron Development
+
+### Quick Start
+
+To run the game in an Electron window with hot reload:
+
+```bash
+npm run electron:dev
+```
+
+This command:
+1. Compiles the Electron main process TypeScript (`electron/*.ts` → `electron/dist/`)
+2. Starts webpack-dev-server on port 3000
+3. Launches Electron, which loads the game from `http://localhost:3000`
+
+Both processes run concurrently. Closing the Electron window terminates the dev server automatically. If the dev server hasn't finished starting when Electron launches, the main process retries up to 10 times (1-second intervals).
+
+Editing files in `src/` triggers hot reload in the Electron window. Changes to `electron/main.ts` or other main process files require restarting `electron:dev`.
+
+### Building for Production
+
+```bash
+npm run electron:build    # compile Electron TS + webpack production build
+npm run electron:start    # launch Electron from the production build
+```
+
+### Packaging for Distribution
+
+```bash
+npm run electron:package          # build + package for current platform
+npm run electron:package:win      # Windows (NSIS + portable)
+npm run electron:package:mac      # macOS (DMG + ZIP)
+npm run electron:package:linux    # Linux (AppImage + deb)
+```
+
+Distributables are output to the `release/` directory. Icons are auto-generated from `assets/icon.png` during packaging.
 
 ## Project Structure
 
@@ -47,6 +92,12 @@ src/
         ├── entities/           # Game entities (Player, Enemy, Bullet, etc.)
         ├── systems/            # Game systems (Input, Collision, Weapons, Save, etc.)
         └── rendering/          # Renderers (HUD, Terrain, VFX, Sprites, etc.)
+electron/
+├── main.ts                     # Electron main process (dev/prod window management)
+├── preload.ts                  # Preload script (contextBridge stub)
+├── windowState.ts              # Window bounds/position persistence
+├── tsconfig.json               # TypeScript config for main process (CommonJS, ES2020)
+└── dist/                       # Compiled JS output (gitignored)
 ```
 
 ## Tech Stack
