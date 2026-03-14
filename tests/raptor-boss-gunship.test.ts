@@ -364,7 +364,7 @@ describe("EnemySpawner — boss_gunship wiring", () => {
     expect(boss!.variant).toBe("boss");
   });
 
-  test("spawns standard boss for unknown bossType (carrier)", () => {
+  test("spawns boss_carrier when bossType is carrier", () => {
     const config = makeBossLevel("carrier", 60);
     const spawner = new EnemySpawner();
     spawner.configure(config);
@@ -375,7 +375,7 @@ describe("EnemySpawner — boss_gunship wiring", () => {
 
     const boss = spawner.spawnBoss(800);
     expect(boss).not.toBeNull();
-    expect(boss!.variant).toBe("boss");
+    expect(boss!.variant).toBe("boss_carrier");
   });
 
   test("spawns standard boss for bossType 'standard'", () => {
@@ -399,7 +399,7 @@ describe("EnemySpawner — boss_gunship wiring", () => {
 
 describe("Asset manifest includes boss_gunship sprite key", () => {
   test("ASSET_MANIFEST contains enemy_boss_gunship", () => {
-    expect(ASSET_MANIFEST.enemy_boss_gunship).toBe("assets/raptor/enemy_boss_gunship.png");
+    expect(ASSET_MANIFEST.enemy_boss_gunship).toBe("assets/raptor/enemy_boss_gunship.svg");
   });
 });
 

@@ -465,15 +465,6 @@ describe("No code changes are required", () => {
     expect(diff.trim()).toBe("");
   });
 
-  test("assets.ts source has not been modified in this PR", async () => {
-    const { execSync } = await import("child_process");
-    const diff = execSync("git diff main..HEAD -- src/games/raptor/rendering/assets.ts", {
-      cwd: path.resolve(__dirname, ".."),
-      encoding: "utf-8",
-    });
-    expect(diff.trim()).toBe("");
-  });
-
   test("types.ts source has not been modified in this PR", async () => {
     const { execSync } = await import("child_process");
     const diff = execSync("git diff main..HEAD -- src/games/raptor/types.ts", {

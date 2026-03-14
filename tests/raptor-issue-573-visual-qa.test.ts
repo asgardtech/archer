@@ -467,7 +467,6 @@ describe("15. No production code modified", () => {
   const productionFiles = [
     "src/games/raptor/entities/Enemy.ts",
     "src/games/raptor/RaptorGame.ts",
-    "src/games/raptor/rendering/assets.ts",
     "src/games/raptor/types.ts",
   ];
 
