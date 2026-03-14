@@ -82,6 +82,7 @@ export class EnemySpawner {
     gunship_commander: "boss_gunship",
     missile_dreadnought: "boss_dreadnought",
     laser_fortress: "boss_fortress",
+    carrier: "boss_carrier",
   };
 
   spawnBoss(canvasWidth: number): Enemy | null {
