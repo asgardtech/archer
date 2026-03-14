@@ -95,6 +95,7 @@ export class HUD {
   private wingmanText = "";
   private wingmanTimer = 0;
   private wingmanSpeaker: SpeakerType = "pilot";
+  private wingmanFlashTimer = 0;
 
   constructor(isTouchDevice: boolean) {
     this.isTouchDevice = isTouchDevice;
@@ -156,11 +157,15 @@ export class HUD {
     else if (cleanText.startsWith("Sensor:")) cleanText = cleanText.substring(7).trim();
     this.wingmanText = cleanText;
     this.wingmanTimer = duration;
+    this.wingmanFlashTimer = 0.3;
   }
 
   updateWingmanTimer(dt: number): void {
     if (this.wingmanTimer > 0) {
       this.wingmanTimer = Math.max(0, this.wingmanTimer - dt);
+    }
+    if (this.wingmanFlashTimer > 0) {
+      this.wingmanFlashTimer = Math.max(0, this.wingmanFlashTimer - dt);
     }
   }
 
@@ -1419,6 +1424,30 @@ export class HUD {
     ctx.restore();
   }
 
+  private wrapWingmanText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let currentLine = "";
+
+    for (const word of words) {
+      if (currentLine === "") {
+        currentLine = word;
+        continue;
+      }
+      const testLine = currentLine + " " + word;
+      if (ctx.measureText(testLine).width > maxWidth) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine !== "") {
+      lines.push(currentLine);
+    }
+    return lines;
+  }
+
   private renderWingmanSection(
     ctx: CanvasRenderingContext2D,
     barY: number
@@ -1448,15 +1477,36 @@ export class HUD {
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
 
+    if (this.wingmanFlashTimer > 0) {
+      const flashIntensity = this.wingmanFlashTimer / 0.3;
+      const highlightAlpha = 0.15 * flashIntensity;
+      ctx.fillStyle = `rgba(255, 255, 255, ${highlightAlpha})`;
+      const labelWidth = ctx.measureText(label + ": " + this.wingmanText).width;
+      ctx.fillRect(msgX - 4, barY + 2, Math.min(labelWidth + 12, ctx.canvas.width * 0.45), HUD_BAR_HEIGHT - 4);
+    }
+
     ctx.fillStyle = speakerColor;
-    ctx.fillText(label + ":", msgX, centerY - 7);
+    ctx.fillText(label + ":", msgX, barY + 12);
+
+    const maxTextWidth = Math.max(80, ctx.canvas.width * 0.4 - msgX);
+    const wrapped = this.wrapWingmanText(ctx, this.wingmanText, maxTextWidth);
 
     ctx.fillStyle = "#D0D8E8";
-    let displayText = this.wingmanText;
-    if (displayText.length > 35) {
-      displayText = displayText.substring(0, 32) + "...";
+    if (wrapped.length <= 1) {
+      ctx.fillText(wrapped[0] ?? "", msgX, barY + 28);
+    } else {
+      let line1 = wrapped[0];
+      let line2 = wrapped.slice(1).join(" ");
+      if (ctx.measureText(line2).width > maxTextWidth) {
+        const truncated = this.wrapWingmanText(ctx, line2, maxTextWidth);
+        line2 = truncated[0];
+        if (truncated.length > 1) {
+          line2 = line2.replace(/\s+\S*$/, "") + "...";
+        }
+      }
+      ctx.fillText(line1, msgX, barY + 22);
+      ctx.fillText(line2, msgX, barY + 36);
     }
-    ctx.fillText(displayText, msgX, centerY + 7);
 
     ctx.restore();
   }

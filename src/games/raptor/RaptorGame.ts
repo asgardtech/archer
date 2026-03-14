@@ -695,7 +695,6 @@ export class RaptorGame implements IGame {
       if (this.levelElapsed >= msg.triggerTime) {
         const speaker: SpeakerType = msg.speaker ?? detectSpeaker(msg.text);
         const duration = msg.duration ?? 3;
-        this.storyRenderer.showQuick(msg.text, duration, "bottom", speaker);
         this.hud.setWingmanMessage(speaker, msg.text, duration);
         this.nextStoryMessageIndex++;
       }
