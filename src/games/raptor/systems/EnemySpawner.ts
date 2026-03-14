@@ -81,6 +81,7 @@ export class EnemySpawner {
   private static readonly BOSS_TYPE_TO_VARIANT: Partial<Record<BossType, EnemyVariant>> = {
     gunship_commander: "boss_gunship",
     missile_dreadnought: "boss_dreadnought",
+    laser_fortress: "boss_fortress",
   };
 
   spawnBoss(canvasWidth: number): Enemy | null {
