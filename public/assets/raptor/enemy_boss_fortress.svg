@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 64">
+  <defs>
+    <linearGradient id="fHull" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#667788"/>
+      <stop offset="50%" stop-color="#556677"/>
+      <stop offset="100%" stop-color="#445566"/>
+    </linearGradient>
+    <radialGradient id="fAura" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="60%" stop-color="#00ccff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00ccff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fCockpit" cx="0.5" cy="0.4" r="0.5">
+      <stop offset="0%" stop-color="#66eeff"/>
+      <stop offset="60%" stop-color="#00ccff"/>
+      <stop offset="100%" stop-color="#0088aa"/>
+    </radialGradient>
+    <radialGradient id="fTurretGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#00ccff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#00ccff" stop-opacity="0.3"/>
+    </radialGradient>
+    <filter id="fGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="fTurretBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Aura glow  cyan tint -->
+  <ellipse cx="38" cy="32" rx="49" ry="42" fill="url(#fAura)"/>
+  <!-- Main hull  octagonal fortress shape -->
+  <polygon
+    points="19,0 57,0 76,19.2 76,44.8 57,64 19,64 0,44.8 0,19.2"
+    fill="url(#fHull)" stroke="#6688aa" stroke-width="2"/>
+  <!-- Armor panel lines -->
+  <line x1="11.4" y1="25.6" x2="64.6" y2="25.6" stroke="#445566" stroke-width="1" opacity="0.7"/>
+  <line x1="15.2" y1="38.4" x2="60.8" y2="38.4" stroke="#445566" stroke-width="1" opacity="0.7"/>
+  <!-- Inner octagonal detail ring -->
+  <polygon
+    points="26,8 50,8 64,19.2 64,44.8 50,56 26,56 12,44.8 12,19.2"
+    fill="none" stroke="#4a5e70" stroke-width="0.7" opacity="0.5"/>
+  <!-- Left turret pod -->
+  <rect x="1.7" y="27.2" width="8" height="14" rx="1" fill="#445566"/>
+  <rect x="3.7" y="28.8" width="4" height="4" rx="1" fill="url(#fTurretGlow)" filter="url(#fTurretBlur)"/>
+  <!-- Right turret pod -->
+  <rect x="66.3" y="27.2" width="8" height="14" rx="1" fill="#445566"/>
+  <rect x="68.3" y="28.8" width="4" height="4" rx="1" fill="url(#fTurretGlow)" filter="url(#fTurretBlur)"/>
+  <!-- Corner turret accents -->
+  <circle cx="19" cy="4" r="2" fill="#00ccff" opacity="0.4"/>
+  <circle cx="57" cy="4" r="2" fill="#00ccff" opacity="0.4"/>
+  <circle cx="19" cy="60" r="2" fill="#00ccff" opacity="0.4"/>
+  <circle cx="57" cy="60" r="2" fill="#00ccff" opacity="0.4"/>
+  <!-- Central cockpit  cyan glow -->
+  <circle cx="38" cy="27.2" r="7" fill="url(#fCockpit)" filter="url(#fGlow)"/>
+  <circle cx="38" cy="25.5" r="3" fill="#aaeeff" opacity="0.7"/>
+</svg>
