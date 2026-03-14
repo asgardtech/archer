@@ -1,7 +1,7 @@
 import { Vec2, EnemyVariant, EnemyConfig, EnemyWeaponType, ENEMY_CONFIGS } from "../types";
 
 export function isBossVariant(variant: EnemyVariant): boolean {
-  return variant === "boss";
+  return variant === "boss" || variant === "boss_gunship";
 }
 
 export class Enemy {
@@ -34,6 +34,11 @@ export class Enemy {
   private minelayerDirection = 0;
   private minelayerInitialized = false;
 
+  private gunshipPhase: "entering" | "pausing" | "strafing" = "entering";
+  private gunshipStrafeTarget = 0;
+  private gunshipPauseTimer = 0;
+  private gunshipStrafeDirection: 1 | -1 = 1;
+
   constructor(x: number, y: number, variant: EnemyVariant, speed?: number, overrideConfig?: Partial<EnemyConfig>) {
     const config = { ...ENEMY_CONFIGS[variant], ...overrideConfig };
     this.variant = variant;
@@ -60,13 +65,53 @@ export class Enemy {
   get top(): number { return this.pos.y - this.height / 2; }
   get bottom(): number { return this.pos.y + this.height / 2; }
 
-  update(dt: number, canvasHeight: number, targetX?: number): void {
+  update(dt: number, canvasHeight: number, targetX?: number, canvasWidth?: number): void {
     if (!this.alive) return;
     this.time += dt;
 
     if (this.flashTimer > 0) this.flashTimer -= dt;
 
-    if (isBossVariant(this.variant)) {
+    if (this.variant === "boss_gunship") {
+      const cw = canvasWidth ?? 800;
+      const margin = 40;
+      const parkY = canvasHeight * 0.18;
+
+      if (this.gunshipPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= parkY) {
+          this.pos.y = parkY;
+          this.gunshipPhase = "pausing";
+          this.gunshipPauseTimer = 0.4 + Math.random() * 0.2;
+          this.gunshipStrafeDirection = this.pos.x > cw / 2 ? -1 : 1;
+        }
+      } else if (this.gunshipPhase === "pausing") {
+        this.gunshipPauseTimer -= dt;
+        if (this.gunshipPauseTimer <= 0) {
+          this.gunshipStrafeTarget = this.gunshipStrafeDirection > 0
+            ? Math.max(margin, cw - margin)
+            : Math.min(margin, cw - margin);
+          this.gunshipPhase = "strafing";
+        }
+      } else if (this.gunshipPhase === "strafing") {
+        const strafeSpeed = this.vel.y * 2.5;
+        const dx = this.gunshipStrafeTarget - this.pos.x;
+        if (Math.abs(dx) <= 5) {
+          this.pos.x = this.gunshipStrafeTarget;
+          this.gunshipStrafeDirection *= -1;
+          this.gunshipPhase = "pausing";
+          this.gunshipPauseTimer = 0.4 + Math.random() * 0.2;
+        } else {
+          const step = Math.sign(dx) * strafeSpeed * dt;
+          if (Math.abs(step) > Math.abs(dx)) {
+            this.pos.x = this.gunshipStrafeTarget;
+          } else {
+            this.pos.x += step;
+          }
+        }
+      }
+
+      this.pos.x = Math.max(margin, Math.min(cw - margin, this.pos.x));
+    } else if (isBossVariant(this.variant)) {
       this.pos.x += Math.sin(this.time * 1.5) * 60 * dt;
       const bossTargetY = canvasHeight * 0.15;
       if (this.pos.y < bossTargetY) {
@@ -219,6 +264,9 @@ export class Enemy {
           break;
         case "boss":
           this.renderBoss(ctx, x, y, isFlashing);
+          break;
+        case "boss_gunship":
+          this.renderBossGunship(ctx, x, y, isFlashing);
           break;
         case "interceptor":
           this.renderInterceptor(ctx, x, y, isFlashing);
@@ -715,6 +763,45 @@ export class Enemy {
     ctx.fillStyle = "#ff6666";
     ctx.beginPath();
     ctx.arc(x, y - hh * 0.1, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderBossGunship(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = "rgba(51, 85, 170, 0.15)";
+    ctx.beginPath();
+    ctx.arc(x, y, hw * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#ffffff" : "#3355aa";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh * 0.7);
+    ctx.lineTo(x - hw * 0.5, y + hh * 0.4);
+    ctx.lineTo(x - hw, y);
+    ctx.lineTo(x - hw * 0.9, y - hh * 0.5);
+    ctx.lineTo(x - hw * 0.4, y - hh);
+    ctx.lineTo(x + hw * 0.4, y - hh);
+    ctx.lineTo(x + hw * 0.9, y - hh * 0.5);
+    ctx.lineTo(x + hw, y);
+    ctx.lineTo(x + hw * 0.5, y + hh * 0.4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#5577cc";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#445566";
+    ctx.fillRect(x - hw * 0.9 - 4, y - hh * 0.15, 8, 10);
+    ctx.fillRect(x + hw * 0.9 - 4, y - hh * 0.15, 8, 10);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#5577cc";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.15, 6, 0, Math.PI * 2);
     ctx.fill();
 
     this.renderHPBar(ctx, x, y);

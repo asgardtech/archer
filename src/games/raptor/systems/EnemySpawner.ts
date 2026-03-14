@@ -1,4 +1,4 @@
-import { RaptorLevelConfig, WaveConfig, EnemyVariant, EnemyConfig } from "../types";
+import { RaptorLevelConfig, WaveConfig, EnemyVariant, EnemyConfig, BossType } from "../types";
 import { Enemy } from "../entities/Enemy";
 
 interface WaveState {
@@ -78,10 +78,15 @@ export class EnemySpawner {
     return completedCount >= requiredWaves;
   }
 
+  private static readonly BOSS_TYPE_TO_VARIANT: Partial<Record<BossType, EnemyVariant>> = {
+    gunship_commander: "boss_gunship",
+  };
+
   spawnBoss(canvasWidth: number): Enemy | null {
     if (!this.bossConfig) return null;
     this.bossSpawned = true;
-    const _bossType = this.bossConfig.bossType ?? "standard";
+    const bossType = this.bossConfig.bossType ?? "standard";
+    const variant: EnemyVariant = EnemySpawner.BOSS_TYPE_TO_VARIANT[bossType] ?? "boss";
     const overrides: Partial<EnemyConfig> = {
       hitPoints: Math.max(25, this.bossConfig.hitPoints),
       scoreValue: this.bossConfig.scoreValue,
@@ -93,7 +98,7 @@ export class EnemySpawner {
     return new Enemy(
       canvasWidth / 2,
       -40,
-      "boss",
+      variant,
       this.bossConfig.speed,
       overrides
     );
