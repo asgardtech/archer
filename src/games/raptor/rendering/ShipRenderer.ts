@@ -23,6 +23,7 @@ const HULL_NUMBER_COLOR = "#8899aa";
 export const ENGINE_SPACING_FACTOR = 0.42;
 
 export class ShipRenderer {
+  static frameTime = 0;
   private dpr = 1;
 
   static getEngineSpacing(shipWidth: number): number {
@@ -120,7 +121,7 @@ export class ShipRenderer {
     const baseY = y + hh;
     const intensity = 0.5 + thrustLevel * 0.5;
     const flameLen = hh * 0.45 * intensity;
-    const pulse = 1 + Math.sin(Date.now() * 0.025) * 0.15;
+    const pulse = 1 + Math.sin(ShipRenderer.frameTime * 0.025) * 0.15;
 
     for (const side of [-1, 1]) {
       const ex = x + side * engineSpacing;
@@ -672,7 +673,7 @@ export class ShipRenderer {
       const ex = x + side * engineSpacing;
       for (let line = 0; line < 2; line++) {
         const ly = baseY + 2 + line * 3;
-        const offset = Math.sin(Date.now() * 0.015 + line * 2 + side) * displacement;
+        const offset = Math.sin(ShipRenderer.frameTime * 0.015 + line * 2 + side) * displacement;
         ctx.fillRect(ex - hw * 0.12, ly + offset, hw * 0.24, 1);
       }
     }

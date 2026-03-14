@@ -1,4 +1,5 @@
 const MAX_SHAKE_OFFSET = 8;
+const TRAIL_CAPACITY = 300;
 
 interface ShakeState {
   intensity: number;
@@ -51,15 +52,51 @@ interface EmpPulse {
   elapsed: number;
 }
 
+const MISSILE_TRAIL_COLORS: string[] = [];
+const ROCKET_TRAIL_COLORS: string[] = [];
+const PLASMA_TRAIL_COLORS: string[] = [];
+const TIER_UP_COLORS: string[] = [];
+for (let i = 0; i < 8; i++) {
+  const v = 180 + i * 5;
+  MISSILE_TRAIL_COLORS.push(`rgba(${v}, ${v}, ${v}, 0.6)`);
+  ROCKET_TRAIL_COLORS.push(`rgba(${140 + i * 5}, ${130 + i * 4}, ${100 + i * 4}, 0.7)`);
+  PLASMA_TRAIL_COLORS.push(`rgba(${140 + i * 4}, ${60 + i * 5}, ${200 + i * 7}, 0.7)`);
+  TIER_UP_COLORS.push(`rgba(255, ${200 + i * 7}, ${100 + i * 12}, 0.9)`);
+}
+
+let trailColorIdx = 0;
+
 export class VFXManager {
   private shake: ShakeState | null = null;
   private shakeOffsetX = 0;
   private shakeOffsetY = 0;
-  private trails: Trail[] = [];
+  private trailPool: Trail[];
+  private trailHead = 0;
   private muzzleFlashes: MuzzleFlash[] = [];
   private megaBombFlash: MegaBombFlash | null = null;
   private megaBombRing: MegaBombRing | null = null;
   private empPulse: EmpPulse | null = null;
+
+  constructor() {
+    this.trailPool = new Array(TRAIL_CAPACITY);
+    for (let i = 0; i < TRAIL_CAPACITY; i++) {
+      this.trailPool[i] = { x: 0, y: 0, alpha: 0, size: 0, color: "" };
+    }
+  }
+
+  get trails(): Trail[] {
+    return this.trailPool;
+  }
+
+  private writeTrail(x: number, y: number, alpha: number, size: number, color: string): void {
+    const trail = this.trailPool[this.trailHead];
+    trail.x = x;
+    trail.y = y;
+    trail.alpha = alpha;
+    trail.size = size;
+    trail.color = color;
+    this.trailHead = (this.trailHead + 1) % TRAIL_CAPACITY;
+  }
 
   triggerMegaBombFlash(width: number, height: number): void {
     this.megaBombFlash = { alpha: 1, duration: 0.5, elapsed: 0, width, height };
@@ -91,8 +128,7 @@ export class VFXManager {
   }
 
   addTrail(x: number, y: number, color: string, size = 2): void {
-    if (this.trails.length > 200) return;
-    this.trails.push({ x, y, alpha: 0.6, size, color });
+    this.writeTrail(x, y, 0.6, size, color);
   }
 
   update(dt: number): void {
@@ -110,17 +146,26 @@ export class VFXManager {
       }
     }
 
-    for (const t of this.trails) {
-      t.alpha -= dt * 3;
-      t.size *= 1 - dt * 2;
+    for (let i = 0; i < TRAIL_CAPACITY; i++) {
+      const t = this.trailPool[i];
+      if (t.alpha > 0) {
+        t.alpha -= dt * 3;
+        t.size *= 1 - dt * 2;
+        if (t.alpha < 0.01) t.alpha = 0;
+      }
     }
-    this.trails = this.trails.filter((t) => t.alpha > 0.01);
 
-    for (const flash of this.muzzleFlashes) {
+    let writeIdx = 0;
+    for (let i = 0; i < this.muzzleFlashes.length; i++) {
+      const flash = this.muzzleFlashes[i];
       flash.elapsed += dt;
       flash.alpha = Math.max(0, 1 - flash.elapsed / flash.duration);
+      if (flash.elapsed < flash.duration) {
+        if (writeIdx !== i) this.muzzleFlashes[writeIdx] = flash;
+        writeIdx++;
+      }
     }
-    this.muzzleFlashes = this.muzzleFlashes.filter((f) => f.elapsed < f.duration);
+    this.muzzleFlashes.length = writeIdx;
 
     if (this.megaBombFlash) {
       this.megaBombFlash.elapsed += dt;
@@ -201,9 +246,19 @@ export class VFXManager {
   }
 
   renderTrails(ctx: CanvasRenderingContext2D): void {
-    if (this.trails.length === 0) return;
+    let hasActive = false;
+    for (let i = 0; i < TRAIL_CAPACITY; i++) {
+      if (this.trailPool[i].alpha > 0.01) {
+        hasActive = true;
+        break;
+      }
+    }
+    if (!hasActive) return;
+
     ctx.save();
-    for (const t of this.trails) {
+    for (let i = 0; i < TRAIL_CAPACITY; i++) {
+      const t = this.trailPool[i];
+      if (t.alpha <= 0.01) continue;
       ctx.globalAlpha = t.alpha;
       ctx.fillStyle = t.color;
       ctx.beginPath();
@@ -231,67 +286,54 @@ export class VFXManager {
   }
 
   addEngineTrail(x: number, y: number, spacing: number): void {
-    if (this.trails.length > 300) return;
+    const color = "rgba(120, 110, 100, 0.3)";
     for (const side of [-1, 1]) {
       const ex = x + side * spacing / 2;
-      this.trails.push({
-        x: ex + (Math.random() - 0.5) * 3,
-        y: y + Math.random() * 2,
-        alpha: 0.3,
-        size: 1.5 + Math.random() * 1.5,
-        color: `rgba(120, 110, 100, 0.3)`,
-      });
+      this.writeTrail(
+        ex + (Math.random() - 0.5) * 3,
+        y + Math.random() * 2,
+        0.3,
+        1.5 + Math.random() * 1.5,
+        color
+      );
     }
   }
 
   addMissileTrail(x: number, y: number, angle = 0): void {
-    if (this.trails.length > 300) return;
     const perpX = Math.cos(angle);
     const perpY = Math.sin(angle);
     const spread = (Math.random() - 0.5) * 4;
-    this.trails.push({
-      x: x + perpX * spread,
-      y: y + perpY * spread,
-      alpha: 0.5,
-      size: 1.5 + Math.random() * 1.5,
-      color: `rgba(${180 + Math.random() * 40}, ${180 + Math.random() * 40}, ${180 + Math.random() * 40}, 0.6)`,
-    });
+    const color = MISSILE_TRAIL_COLORS[(trailColorIdx++) & 7];
+    this.writeTrail(x + perpX * spread, y + perpY * spread, 0.5, 1.5 + Math.random() * 1.5, color);
   }
 
   addRocketTrail(x: number, y: number, angle = 0): void {
-    if (this.trails.length > 300) return;
     const perpX = Math.cos(angle);
     const perpY = Math.sin(angle);
     const spread = (Math.random() - 0.5) * 6;
-    this.trails.push({
-      x: x + perpX * spread,
-      y: y + perpY * spread,
-      alpha: 0.6,
-      size: 2.0 + Math.random() * 2.0,
-      color: `rgba(${140 + Math.random() * 40}, ${130 + Math.random() * 30}, ${100 + Math.random() * 30}, 0.7)`,
-    });
+    const color = ROCKET_TRAIL_COLORS[(trailColorIdx++) & 7];
+    this.writeTrail(x + perpX * spread, y + perpY * spread, 0.6, 2.0 + Math.random() * 2.0, color);
   }
 
   addPlasmaTrail(x: number, y: number): void {
-    if (this.trails.length > 300) return;
-    this.trails.push({
-      x: x + (Math.random() - 0.5) * 3,
-      y: y + (Math.random() - 0.5) * 2,
-      alpha: 0.6,
-      size: 1.5 + Math.random() * 1.5,
-      color: `rgba(${140 + Math.random() * 30}, ${60 + Math.random() * 40}, ${200 + Math.random() * 55}, 0.7)`,
-    });
+    const color = PLASMA_TRAIL_COLORS[(trailColorIdx++) & 7];
+    this.writeTrail(
+      x + (Math.random() - 0.5) * 3,
+      y + (Math.random() - 0.5) * 2,
+      0.6,
+      1.5 + Math.random() * 1.5,
+      color
+    );
   }
 
   addLaserSpark(x: number, y: number): void {
-    if (this.trails.length > 300) return;
-    this.trails.push({
-      x: x + (Math.random() - 0.5) * 8,
+    this.writeTrail(
+      x + (Math.random() - 0.5) * 8,
       y,
-      alpha: 0.8,
-      size: 1 + Math.random() * 2,
-      color: `rgba(100, 200, 255, 0.8)`,
-    });
+      0.8,
+      1 + Math.random() * 2,
+      "rgba(100, 200, 255, 0.8)"
+    );
   }
 
   triggerExplosionFlash(x: number, y: number, radius = 20): void {
@@ -303,13 +345,14 @@ export class VFXManager {
     for (let i = 0; i < particleCount; i++) {
       const angle = (i / particleCount) * Math.PI * 2;
       const dist = 8 + Math.random() * 6;
-      this.trails.push({
-        x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist,
-        alpha: 1.0,
-        size: 2 + Math.random() * 2,
-        color: `rgba(255, ${200 + Math.floor(Math.random() * 55)}, ${100 + Math.floor(Math.random() * 100)}, 0.9)`,
-      });
+      const color = TIER_UP_COLORS[i & 7];
+      this.writeTrail(
+        x + Math.cos(angle) * dist,
+        y + Math.sin(angle) * dist,
+        1.0,
+        2 + Math.random() * 2,
+        color
+      );
     }
     this.muzzleFlashes.push({ x, y, radius: 16, alpha: 1, duration: 0.2, elapsed: 0 });
   }
@@ -318,7 +361,10 @@ export class VFXManager {
     this.shake = null;
     this.shakeOffsetX = 0;
     this.shakeOffsetY = 0;
-    this.trails = [];
+    for (let i = 0; i < TRAIL_CAPACITY; i++) {
+      this.trailPool[i].alpha = 0;
+    }
+    this.trailHead = 0;
     this.muzzleFlashes = [];
     this.megaBombFlash = null;
     this.megaBombRing = null;

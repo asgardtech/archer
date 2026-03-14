@@ -9,6 +9,7 @@ import { SoundSystem } from "./systems/SoundSystem";
 import { WeaponSystem } from "./systems/WeaponSystem";
 import { EnemyWeaponSystem } from "./systems/EnemyWeaponSystem";
 import { SaveSystem } from "./systems/SaveSystem";
+import { PerformanceManager } from "./systems/PerformanceManager";
 import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponCommands, registerPowerUpCommands, registerPlayerCommands, registerCombatCommands } from "./systems/CommandRegistry";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
@@ -119,6 +120,9 @@ export class RaptorGame implements IGame {
   private enemyLaserHitSoundCooldown = 0;
   private levelElapsed = 0;
   private nextStoryMessageIndex = 0;
+  private perfManager: PerformanceManager;
+  private skyGradientCanvas: HTMLCanvasElement | null = null;
+  private cachedSkyGradient: [string, string] | null = null;
 
   public onExit: (() => void) | null = null;
 
@@ -144,7 +148,7 @@ export class RaptorGame implements IGame {
         this.devConsole.log(line);
       }
     };
-    this.collisions = new CollisionSystem();
+    this.collisions = new CollisionSystem(width, height);
     this.spawner = new EnemySpawner();
     this.powerUpManager = new PowerUpManager();
     this.weaponSystem = new WeaponSystem();
@@ -157,6 +161,7 @@ export class RaptorGame implements IGame {
     this.vfx = new VFXManager();
     this.terrainRenderer = new TerrainRenderer(width, height, this.assets);
 
+    this.perfManager = new PerformanceManager();
     this.initStars(60);
     this.setupResize();
   }
@@ -211,6 +216,18 @@ export class RaptorGame implements IGame {
     this.state = "loading";
     this.lastTime = performance.now();
     this.loadAssets();
+
+    this.perfManager.onVisibilityChange((hidden) => {
+      if (hidden) {
+        cancelAnimationFrame(this.rafId);
+        this.audio.suspendContext();
+      } else if (this.running) {
+        this.lastTime = performance.now();
+        this.audio.resumeContext();
+        this.rafId = requestAnimationFrame((t) => this.loop(t));
+      }
+    });
+
     this.rafId = requestAnimationFrame((t) => this.loop(t));
   }
 
@@ -266,6 +283,7 @@ export class RaptorGame implements IGame {
     this.devConsole.destroy();
     this.sound.destroy();
     this.audio.destroy();
+    this.perfManager.destroy();
 
     this.canvas.style.cursor = "";
 
@@ -277,14 +295,23 @@ export class RaptorGame implements IGame {
   }
 
   private loop(time: number): void {
-    if (!this.running) return;
+    if (!this.running || this.perfManager.isHidden) return;
+
+    if (!this.perfManager.shouldRenderFrame(time)) {
+      this.rafId = requestAnimationFrame((t) => this.loop(t));
+      return;
+    }
 
     const elapsed = time - this.lastTime;
     const dt = Math.min(elapsed / 1000, DT_CAP);
     this.lastTime = time;
 
+    ShipRenderer.frameTime = time;
+
     this.frameTimes[this.frameTimeIndex] = elapsed;
     this.frameTimeIndex = (this.frameTimeIndex + 1) % this.frameTimes.length;
+
+    this.perfManager.trackFrameTime(elapsed);
 
     this.update(dt);
     this.render();
@@ -980,11 +1007,11 @@ export class RaptorGame implements IGame {
       }
     }
 
-    this.projectiles = this.projectiles.filter((p) => p.alive);
-    this.enemies = this.enemies.filter((e) => e.alive);
-    this.enemyBullets = this.enemyBullets.filter((eb) => eb.alive);
-    this.explosions = this.explosions.filter((e) => e.alive);
-    this.powerUps = this.powerUps.filter((p) => p.alive);
+    RaptorGame.compactAlive(this.projectiles);
+    RaptorGame.compactAlive(this.enemies);
+    RaptorGame.compactAlive(this.enemyBullets);
+    RaptorGame.compactAlive(this.explosions);
+    RaptorGame.compactAlive(this.powerUps);
 
     this.player.updateEnergyRegen(dt);
     this.player.updateDodge(dt);
@@ -1327,6 +1354,7 @@ export class RaptorGame implements IGame {
     this.hud.setCompletionText(null);
     this.hud.setVictoryStoryActive(false);
 
+    this.cachedSkyGradient = null;
     this.spawner.configure(this.currentLevelConfig);
     this.vfx.reset();
 
@@ -1558,14 +1586,49 @@ export class RaptorGame implements IGame {
     this.devConsole.render(this.ctx, this.width, this.height);
   }
 
+  private static compactAlive<T extends { alive: boolean }>(arr: T[]): void {
+    let writeIdx = 0;
+    for (let readIdx = 0; readIdx < arr.length; readIdx++) {
+      if (arr[readIdx].alive) {
+        if (writeIdx !== readIdx) {
+          arr[writeIdx] = arr[readIdx];
+        }
+        writeIdx++;
+      }
+    }
+    arr.length = writeIdx;
+  }
+
+  private ensureSkyGradientCache(config: RaptorLevelConfig): void {
+    if (
+      this.cachedSkyGradient &&
+      this.cachedSkyGradient[0] === config.skyGradient[0] &&
+      this.cachedSkyGradient[1] === config.skyGradient[1]
+    ) {
+      return;
+    }
+    if (!this.skyGradientCanvas) {
+      this.skyGradientCanvas = document.createElement("canvas");
+    }
+    this.skyGradientCanvas.width = 1;
+    this.skyGradientCanvas.height = this.height;
+    const offCtx = this.skyGradientCanvas.getContext("2d");
+    if (!offCtx) return;
+    const grad = offCtx.createLinearGradient(0, 0, 0, this.height);
+    grad.addColorStop(0, config.skyGradient[0]);
+    grad.addColorStop(1, config.skyGradient[1]);
+    offCtx.fillStyle = grad;
+    offCtx.fillRect(0, 0, 1, this.height);
+    this.cachedSkyGradient = [config.skyGradient[0], config.skyGradient[1]];
+  }
+
   private renderBackground(): void {
     const config = this.currentLevelConfig;
 
-    const grad = this.ctx.createLinearGradient(0, 0, 0, this.height);
-    grad.addColorStop(0, config.skyGradient[0]);
-    grad.addColorStop(1, config.skyGradient[1]);
-    this.ctx.fillStyle = grad;
-    this.ctx.fillRect(0, 0, this.width, this.height);
+    this.ensureSkyGradientCache(config);
+    if (this.skyGradientCanvas) {
+      this.ctx.drawImage(this.skyGradientCanvas, 0, 0, this.width, this.height);
+    }
 
     if (this.terrainActive) {
       this.terrainRenderer.render(this.ctx);

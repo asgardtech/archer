@@ -56,6 +56,8 @@ export class TerrainRenderer {
   private secondaryParticles: AmbientParticle[] = [];
   private litStructureSet: Set<string> = new Set();
   private scrollOffset = 0;
+  private scanlineCanvas: HTMLCanvasElement | null = null;
+  private scanlinesCached = false;
 
   constructor(width: number, height: number, assets: AssetLoader) {
     this.width = width;
@@ -75,6 +77,7 @@ export class TerrainRenderer {
   resize(width: number, height: number): void {
     this.width = width;
     this.height = height;
+    this.scanlinesCached = false;
     if (this.config) {
       this.reset();
       this.initSegments();
@@ -90,6 +93,7 @@ export class TerrainRenderer {
     this.secondaryParticles = [];
     this.litStructureSet = new Set();
     this.scrollOffset = 0;
+    this.scanlinesCached = false;
   }
 
   private initSegments(): void {
@@ -477,18 +481,32 @@ export class TerrainRenderer {
     ctx.restore();
   }
 
+  private ensureScanlineCache(): void {
+    if (this.scanlinesCached) return;
+    if (!this.scanlineCanvas) {
+      this.scanlineCanvas = document.createElement("canvas");
+    }
+    this.scanlineCanvas.width = this.width;
+    this.scanlineCanvas.height = this.height;
+    const offCtx = this.scanlineCanvas.getContext("2d");
+    if (!offCtx) return;
+    offCtx.clearRect(0, 0, this.width, this.height);
+    offCtx.strokeStyle = "rgba(0, 0, 0, 0.08)";
+    offCtx.lineWidth = 1;
+    offCtx.beginPath();
+    for (let y = 0; y < this.height; y += 3) {
+      offCtx.moveTo(0, y + 0.5);
+      offCtx.lineTo(this.width, y + 0.5);
+    }
+    offCtx.stroke();
+    this.scanlinesCached = true;
+  }
+
   private renderScanlines(ctx: CanvasRenderingContext2D): void {
     if (!this.config?.scanlines) return;
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let y = 0; y < this.height; y += 3) {
-      ctx.moveTo(0, y + 0.5);
-      ctx.lineTo(this.width, y + 0.5);
+    this.ensureScanlineCache();
+    if (this.scanlineCanvas) {
+      ctx.drawImage(this.scanlineCanvas, 0, 0);
     }
-    ctx.stroke();
-    ctx.restore();
   }
 }

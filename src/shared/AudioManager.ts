@@ -27,6 +27,9 @@ interface BufferEntry {
   activeSource: AudioBufferSourceNode | null;
 }
 
+const MAX_CONCURRENT_NODES = 32;
+const NOISE_DURATIONS = [0.05, 0.1, 0.2, 0.5];
+
 export class AudioManager {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
@@ -37,8 +40,9 @@ export class AudioManager {
   private _musicVolume: number;
   private _sfxVolume: number;
   private _disabled = false;
-  private scheduledNodes: AudioScheduledSourceNode[] = [];
+  private scheduledNodes: Set<AudioScheduledSourceNode> = new Set();
   private buffers: Map<string, BufferEntry> = new Map();
+  private noiseBuffers: Map<number, AudioBuffer> = new Map();
 
   constructor() {
     this._muted = tryGetStorage("audio_muted", "false") === "true";
@@ -87,11 +91,39 @@ export class AudioManager {
       if (this.ctx.state === "suspended") {
         this.ctx.resume().catch(() => {});
       }
+
+      this.initNoiseBuffers();
     } catch {
       this._disabled = true;
     }
 
     return this.ctx!;
+  }
+
+  private initNoiseBuffers(): void {
+    if (!this.ctx) return;
+    for (const duration of NOISE_DURATIONS) {
+      const bufferSize = Math.ceil(this.ctx.sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      this.noiseBuffers.set(duration, buffer);
+    }
+  }
+
+  private getNoiseBuffer(duration: number): AudioBuffer | null {
+    let bestDuration = -1;
+    for (const d of NOISE_DURATIONS) {
+      if (d >= duration && (bestDuration === -1 || d < bestDuration)) {
+        bestDuration = d;
+      }
+    }
+    if (bestDuration === -1) {
+      bestDuration = NOISE_DURATIONS[NOISE_DURATIONS.length - 1];
+    }
+    return this.noiseBuffers.get(bestDuration) ?? null;
   }
 
   get musicGain(): GainNode | null {
@@ -160,6 +192,27 @@ export class AudioManager {
     }
   }
 
+  suspendContext(): void {
+    if (this.ctx && this.ctx.state === "running") {
+      this.ctx.suspend().catch(() => {});
+    }
+  }
+
+  resumeContext(): void {
+    if (this.ctx && this.ctx.state === "suspended") {
+      this.ctx.resume().catch(() => {});
+    }
+  }
+
+  private evictOldestIfNeeded(): void {
+    if (this.scheduledNodes.size < MAX_CONCURRENT_NODES) return;
+    const oldest = this.scheduledNodes.values().next().value;
+    if (oldest) {
+      try { oldest.stop(); oldest.disconnect(); } catch { /* already stopped */ }
+      this.scheduledNodes.delete(oldest);
+    }
+  }
+
   playTone(
     frequency: number,
     duration: number,
@@ -168,6 +221,7 @@ export class AudioManager {
     routeNode?: AudioNode
   ): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
+    this.evictOldestIfNeeded();
     const ctx = this.ctx;
     const now = ctx.currentTime;
 
@@ -191,10 +245,9 @@ export class AudioManager {
     osc.onended = () => {
       osc.disconnect();
       gain.disconnect();
-      const idx = this.scheduledNodes.indexOf(osc);
-      if (idx !== -1) this.scheduledNodes.splice(idx, 1);
+      this.scheduledNodes.delete(osc);
     };
-    this.scheduledNodes.push(osc);
+    this.scheduledNodes.add(osc);
   }
 
   playToneSwept(
@@ -206,6 +259,7 @@ export class AudioManager {
     routeNode?: AudioNode
   ): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
+    this.evictOldestIfNeeded();
     const ctx = this.ctx;
     const now = ctx.currentTime;
 
@@ -230,23 +284,19 @@ export class AudioManager {
     osc.onended = () => {
       osc.disconnect();
       gain.disconnect();
-      const idx = this.scheduledNodes.indexOf(osc);
-      if (idx !== -1) this.scheduledNodes.splice(idx, 1);
+      this.scheduledNodes.delete(osc);
     };
-    this.scheduledNodes.push(osc);
+    this.scheduledNodes.add(osc);
   }
 
   playNoise(duration: number, filterFreq = 3000, routeNode?: AudioNode): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
+    this.evictOldestIfNeeded();
     const ctx = this.ctx;
     const now = ctx.currentTime;
 
-    const bufferSize = Math.ceil(ctx.sampleRate * duration);
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
-    }
+    const buffer = this.getNoiseBuffer(duration);
+    if (!buffer) return;
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
@@ -269,10 +319,9 @@ export class AudioManager {
       source.disconnect();
       filter.disconnect();
       gain.disconnect();
-      const idx = this.scheduledNodes.indexOf(source);
-      if (idx !== -1) this.scheduledNodes.splice(idx, 1);
+      this.scheduledNodes.delete(source);
     };
-    this.scheduledNodes.push(source);
+    this.scheduledNodes.add(source);
   }
 
   playSequence(notes: NoteSpec[], bpm: number, routeNode?: AudioNode): void {
@@ -294,6 +343,7 @@ export class AudioManager {
     routeNode?: AudioNode
   ): void {
     if (this._disabled || !this.ctx || !this.masterGain) return;
+    this.evictOldestIfNeeded();
     const ctx = this.ctx;
     const now = ctx.currentTime + delay;
 
@@ -315,10 +365,9 @@ export class AudioManager {
     osc.onended = () => {
       osc.disconnect();
       gain.disconnect();
-      const idx = this.scheduledNodes.indexOf(osc);
-      if (idx !== -1) this.scheduledNodes.splice(idx, 1);
+      this.scheduledNodes.delete(osc);
     };
-    this.scheduledNodes.push(osc);
+    this.scheduledNodes.add(osc);
   }
 
   async loadAudioBuffer(key: string, url: string): Promise<void> {
@@ -415,7 +464,8 @@ export class AudioManager {
         // already stopped
       }
     }
-    this.scheduledNodes = [];
+    this.scheduledNodes.clear();
+    this.noiseBuffers.clear();
     if (this.ctx) {
       this.ctx.close().catch(() => {});
       this.ctx = null;
