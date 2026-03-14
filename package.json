@@ -18,7 +18,10 @@
     "electron:package:mac": "npm run icons:generate && npm run electron:build && electron-builder --mac --publish never",
     "electron:package:linux": "npm run icons:generate && npm run electron:build && electron-builder --linux --publish never",
     "icons:placeholder": "ts-node --project scripts/tsconfig.json scripts/generate-placeholder-icon.ts",
-    "icons:generate": "ts-node --project scripts/tsconfig.json scripts/generate-icons.ts"
+    "icons:generate": "ts-node --project scripts/tsconfig.json scripts/generate-icons.ts",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version"
   },
   "keywords": [
     "game",

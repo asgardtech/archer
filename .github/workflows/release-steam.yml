@@ -3,6 +3,14 @@ name: Release to Steam
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: >
+          Semver version to release (e.g., "1.2.3").
+          If provided, bumps package.json, commits, and creates a git tag v{version}.
+          If omitted, builds with the current package.json version.
+        required: false
+        default: ""
+        type: string
       steam_branch:
         description: >
           Steam branch to set the build live on after upload
@@ -23,7 +31,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  version-bump:
+    if: inputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate version format
+        run: |
+          if ! echo "${{ inputs.version }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Invalid version format '${{ inputs.version }}'. Must be MAJOR.MINOR.PATCH (e.g., 1.2.3)"
+            exit 1
+          fi
+
+      - name: Check tag does not already exist
+        run: |
+          if git rev-parse "v${{ inputs.version }}" >/dev/null 2>&1; then
+            echo "::error::Tag v${{ inputs.version }} already exists"
+            exit 1
+          fi
+
+      - name: Bump version in package.json
+        run: npm version "${{ inputs.version }}" --no-git-tag-version
+
+      - name: Commit and tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ inputs.version }}"
+          git tag "v${{ inputs.version }}"
+          git push origin HEAD --tags
+
   build:
+    needs: version-bump
+    if: always() && (needs.version-bump.result == 'success' || needs.version-bump.result == 'skipped')
     uses: ./.github/workflows/build.yml
 
   upload-to-steam:
@@ -64,9 +110,15 @@ jobs:
 
       - name: Configure app_build.vdf
         run: |
-          if [ -n "${{ inputs.description }}" ]; then
-            sed -i 's|"Desc".*|"Desc" "${{ inputs.description }}"|' steamcmd/app_build.vdf
+          VERSION="${{ inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION=$(node -p "require('./package.json').version")
           fi
+          DESC="${{ inputs.description }}"
+          if [ -z "$DESC" ]; then
+            DESC="v${VERSION}"
+          fi
+          sed -i "s|\"Desc\".*|\"Desc\" \"${DESC}\"|" steamcmd/app_build.vdf
           if [ -n "${{ inputs.steam_branch }}" ]; then
             sed -i '/"Desc"/a\  "SetLive" "${{ inputs.steam_branch }}"' steamcmd/app_build.vdf
           fi

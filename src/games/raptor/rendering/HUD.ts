@@ -670,6 +670,12 @@ export class HUD {
       py + 180
     );
 
+    ctx.font = `6px ${RETRO_FONT}`;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(`v${__APP_VERSION__}`, width - 8, height - 4);
+
     ctx.restore();
   }
 
