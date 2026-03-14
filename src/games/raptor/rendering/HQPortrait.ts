@@ -43,19 +43,70 @@ export class HQPortrait {
   ): void {
     const s = size / 100;
     const cx = x + size / 2;
+    const faceY = y + 42 * s;
+    const shoulderY = y + 85 * s;
 
     ctx.fillStyle = "#0f1a2e";
     ctx.fillRect(x, y, size, size * 1.2);
 
-    // Shoulders / dress uniform
-    const shoulderY = y + 85 * s;
-    ctx.fillStyle = "#0e1a30";
+    // Shoulders / dress uniform — distinct navy visible against background
+    ctx.fillStyle = "#1a2844";
     ctx.beginPath();
     ctx.ellipse(cx, shoulderY + 20 * s, 45 * s, 25 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Collar
-    ctx.fillStyle = "#f0f0f0";
+    // Shoulder seam lines
+    ctx.strokeStyle = "#243258";
+    ctx.lineWidth = Math.max(0.5, 1 * s);
+    ctx.beginPath();
+    ctx.moveTo(cx - 20 * s, shoulderY + 4 * s);
+    ctx.quadraticCurveTo(cx - 36 * s, shoulderY + 12 * s, cx - 44 * s, shoulderY + 22 * s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 20 * s, shoulderY + 4 * s);
+    ctx.quadraticCurveTo(cx + 36 * s, shoulderY + 12 * s, cx + 44 * s, shoulderY + 22 * s);
+    ctx.stroke();
+
+    // Lapel lines
+    ctx.beginPath();
+    ctx.moveTo(cx - 6 * s, shoulderY + 2 * s);
+    ctx.lineTo(cx - 10 * s, shoulderY + 24 * s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 6 * s, shoulderY + 2 * s);
+    ctx.lineTo(cx + 10 * s, shoulderY + 24 * s);
+    ctx.stroke();
+
+    // Medal ribbons on left chest
+    const ribbonY = shoulderY + 6 * s;
+    const ribbonX = cx - 26 * s;
+    const rw = Math.max(1, 4 * s);
+    const rh = Math.max(1, 2.5 * s);
+    const ribbonGap = Math.max(0.5, 1 * s);
+    ctx.fillStyle = "#c83030";
+    ctx.fillRect(ribbonX, ribbonY, rw, rh);
+    ctx.fillStyle = "#3060c8";
+    ctx.fillRect(ribbonX + rw, ribbonY, rw, rh);
+    ctx.fillStyle = "#c8a832";
+    ctx.fillRect(ribbonX + rw * 2, ribbonY, rw, rh);
+    ctx.fillStyle = "#30a040";
+    ctx.fillRect(ribbonX, ribbonY + rh + ribbonGap, rw, rh);
+    ctx.fillStyle = "#f0e0a0";
+    ctx.fillRect(ribbonX + rw, ribbonY + rh + ribbonGap, rw, rh);
+    ctx.fillStyle = "#8040a0";
+    ctx.fillRect(ribbonX + rw * 2, ribbonY + rh + ribbonGap, rw, rh);
+
+    // Button row down center
+    ctx.fillStyle = "#c8a832";
+    for (let i = 0; i < 3; i++) {
+      const btnY = shoulderY + 14 * s + i * 6 * s;
+      ctx.beginPath();
+      ctx.arc(cx, btnY, Math.max(0.5, 1.5 * s), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Collar — toned-down off-white
+    ctx.fillStyle = "#d8d8d0";
     ctx.beginPath();
     ctx.moveTo(cx - 12 * s, shoulderY - 2 * s);
     ctx.lineTo(cx + 12 * s, shoulderY - 2 * s);
@@ -64,13 +115,29 @@ export class HQPortrait {
     ctx.closePath();
     ctx.fill();
 
+    ctx.strokeStyle = "#b8b8b0";
+    ctx.lineWidth = Math.max(0.5, 0.8 * s);
+    ctx.beginPath();
+    ctx.moveTo(cx - 8 * s, shoulderY + 10 * s);
+    ctx.lineTo(cx + 8 * s, shoulderY + 10 * s);
+    ctx.stroke();
+
     // Gold epaulettes
     ctx.fillStyle = "#c8a832";
     ctx.beginPath();
-    ctx.roundRect(x + 3 * s, shoulderY + 0 * s, 16 * s, 8 * s, 2);
+    ctx.roundRect(x + 3 * s, shoulderY, 16 * s, 8 * s, 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.roundRect(x + 81 * s, shoulderY + 0 * s, 16 * s, 8 * s, 2);
+    ctx.roundRect(x + 81 * s, shoulderY, 16 * s, 8 * s, 2);
+    ctx.fill();
+
+    // Epaulette shadows
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    ctx.beginPath();
+    ctx.roundRect(x + 3 * s, shoulderY + 7 * s, 16 * s, 3 * s, 1);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(x + 81 * s, shoulderY + 7 * s, 16 * s, 3 * s, 1);
     ctx.fill();
 
     // Gold bars on epaulettes
@@ -86,19 +153,36 @@ export class HQPortrait {
     ctx.ellipse(cx, shoulderY - 4 * s, 10 * s, 12 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Face (older, broader jaw)
-    const faceY = y + 42 * s;
+    // Ears — positioned further out to avoid hair overlap
+    ctx.fillStyle = "#c08a64";
+    ctx.beginPath();
+    ctx.ellipse(cx - 33 * s, faceY + 4 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + 33 * s, faceY + 4 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#a87a54";
+    ctx.lineWidth = Math.max(0.5, 0.7 * s);
+    ctx.beginPath();
+    ctx.arc(cx - 33 * s, faceY + 4 * s, 2 * s, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cx + 33 * s, faceY + 4 * s, 2 * s, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Face
     ctx.fillStyle = "#c89a70";
     ctx.beginPath();
     ctx.ellipse(cx, faceY, 30 * s, 33 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Jaw (broader than pilot)
-    ctx.fillStyle = "#b88a60";
+    // Jaw — smoothed with curves, color close to face tone
+    ctx.fillStyle = "#c09268";
     ctx.beginPath();
     ctx.moveTo(cx - 26 * s, faceY + 8 * s);
-    ctx.lineTo(cx, faceY + 33 * s);
-    ctx.lineTo(cx + 26 * s, faceY + 8 * s);
+    ctx.quadraticCurveTo(cx - 13 * s, faceY + 32 * s, cx, faceY + 33 * s);
+    ctx.quadraticCurveTo(cx + 13 * s, faceY + 32 * s, cx + 26 * s, faceY + 8 * s);
     ctx.closePath();
     ctx.fill();
 
@@ -107,34 +191,36 @@ export class HQPortrait {
     ctx.ellipse(cx, faceY + 5 * s, 28 * s, 23 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Short gray hair
-    ctx.fillStyle = "#8a8a8a";
+    // Short gray hair — unified base color
+    ctx.fillStyle = "#888888";
     ctx.beginPath();
     ctx.ellipse(cx, faceY - 18 * s, 32 * s, 20 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = "#9a9a9a";
+    ctx.fillStyle = "#8c8c8c";
     ctx.beginPath();
     ctx.arc(cx, faceY - 22 * s, 24 * s, Math.PI, 0);
     ctx.fill();
 
-    // Hair sides (short, neat)
-    ctx.fillStyle = "#7a7a7a";
+    // Temple sides — subtle darkening, close to base color
+    ctx.fillStyle = "#828282";
     ctx.beginPath();
-    ctx.ellipse(cx - 28 * s, faceY - 6 * s, 6 * s, 14 * s, 0.15, 0, Math.PI * 2);
+    ctx.ellipse(cx - 29 * s, faceY - 8 * s, 5 * s, 12 * s, 0.15, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(cx + 28 * s, faceY - 6 * s, 6 * s, 14 * s, -0.15, 0, Math.PI * 2);
+    ctx.ellipse(cx + 29 * s, faceY - 8 * s, 5 * s, 12 * s, -0.15, 0, Math.PI * 2);
     ctx.fill();
 
-    // Ears
-    ctx.fillStyle = "#b88a60";
-    ctx.beginPath();
-    ctx.ellipse(cx - 30 * s, faceY + 2 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(cx + 30 * s, faceY + 2 * s, 4 * s, 6 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // Forehead lines (age detail)
+    ctx.strokeStyle = "rgba(160, 128, 96, 0.4)";
+    ctx.lineWidth = Math.max(0.5, 0.7 * s);
+    for (let i = 0; i < 3; i++) {
+      const lineY = faceY - 14 * s + i * 3 * s;
+      ctx.beginPath();
+      ctx.moveTo(cx - 14 * s, lineY);
+      ctx.quadraticCurveTo(cx, lineY - 1 * s, cx + 14 * s, lineY);
+      ctx.stroke();
+    }
 
     // Eyes with blinking
     const blinkCycle = elapsed % 4;
@@ -170,6 +256,29 @@ export class HQPortrait {
       ctx.beginPath();
       ctx.arc(cx + eyeSpacing + 1 * s, eyeY, 2.5 * s, 0, Math.PI * 2);
       ctx.fill();
+
+      ctx.fillStyle = "#1a1a2a";
+      ctx.beginPath();
+      ctx.arc(cx - eyeSpacing + 1 * s, eyeY, Math.max(0.5, 1.2 * s), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + eyeSpacing + 1 * s, eyeY, Math.max(0.5, 1.2 * s), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Crow's feet near eyes (age detail)
+    ctx.strokeStyle = "rgba(160, 128, 96, 0.45)";
+    ctx.lineWidth = Math.max(0.5, 0.7 * s);
+    for (let i = 0; i < 3; i++) {
+      const dy = (i - 1) * 2 * s;
+      ctx.beginPath();
+      ctx.moveTo(cx - eyeSpacing - 6 * s, eyeY + dy);
+      ctx.lineTo(cx - eyeSpacing - 10 * s, eyeY + dy + (i - 1) * 1.5 * s);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx + eyeSpacing + 6 * s, eyeY + dy);
+      ctx.lineTo(cx + eyeSpacing + 10 * s, eyeY + dy + (i - 1) * 1.5 * s);
+      ctx.stroke();
     }
 
     // Stern eyebrows (angled down)
@@ -182,6 +291,18 @@ export class HQPortrait {
     ctx.beginPath();
     ctx.moveTo(cx + eyeSpacing + 7 * s, eyeY - 8 * s);
     ctx.lineTo(cx + eyeSpacing - 4 * s, eyeY - 5 * s);
+    ctx.stroke();
+
+    // Nasolabial creases (age detail)
+    ctx.strokeStyle = "rgba(160, 120, 80, 0.35)";
+    ctx.lineWidth = Math.max(0.5, 0.8 * s);
+    ctx.beginPath();
+    ctx.moveTo(cx - 8 * s, eyeY + 8 * s);
+    ctx.quadraticCurveTo(cx - 10 * s, faceY + 14 * s, cx - 11 * s, faceY + 20 * s);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx + 8 * s, eyeY + 8 * s);
+    ctx.quadraticCurveTo(cx + 10 * s, faceY + 14 * s, cx + 11 * s, faceY + 20 * s);
     ctx.stroke();
 
     // Nose (slightly broader)
@@ -215,7 +336,7 @@ export class HQPortrait {
     ctx.beginPath();
     ctx.roundRect(cx - 10 * s, badgeY, 20 * s, 10 * s, 2);
     ctx.fill();
-    ctx.fillStyle = "#0e1a30";
+    ctx.fillStyle = "#1a2844";
     ctx.font = `bold ${6 * s}px sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
