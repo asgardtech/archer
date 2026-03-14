@@ -496,9 +496,9 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
   },
   boss: {
     variant: "boss",
-    hitPoints: 20,
+    hitPoints: 50,
     speed: 40,
-    scoreValue: 200,
+    scoreValue: 400,
     fireRate: 1.5,
     width: 64,
     height: 56,
