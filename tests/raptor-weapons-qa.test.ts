@@ -895,11 +895,12 @@ describe("Power-Up Drop Configuration (Levels)", () => {
     expect(level1.weaponDrops).toBeUndefined();
   });
 
-  test("Level 2 has missile in weaponDrops", () => {
+  test("Level 2 has rocket in weaponDrops", () => {
     const level2 = LEVELS[1];
     expect(level2.level).toBe(2);
     expect(level2.weaponDrops).toBeDefined();
-    expect(level2.weaponDrops).toContain("missile");
+    expect(level2.weaponDrops).toContain("rocket");
+    expect(level2.weaponDrops).not.toContain("missile");
   });
 
   test("Level 2 does not have laser in weaponDrops", () => {
@@ -907,55 +908,57 @@ describe("Power-Up Drop Configuration (Levels)", () => {
     expect(level2.weaponDrops).not.toContain("laser");
   });
 
-  test("Level 3 drops missile and laser only", () => {
+  test("Level 3 drops rocket and laser only", () => {
     const level3 = LEVELS[2];
     expect(level3.level).toBe(3);
-    expect(level3.weaponDrops).toContain("missile");
+    expect(level3.weaponDrops).toContain("rocket");
     expect(level3.weaponDrops).toContain("laser");
     expect(level3.weaponDrops).not.toContain("auto-gun");
     expect(level3.weaponDrops).not.toContain("plasma");
     expect(level3.weaponDrops).not.toContain("ion-cannon");
-    expect(level3.weaponDrops).not.toContain("rocket");
+    expect(level3.weaponDrops).not.toContain("missile");
   });
 
   test("Level 4 introduces auto-gun", () => {
     const level4 = LEVELS[3];
     expect(level4.level).toBe(4);
-    expect(level4.weaponDrops).toContain("missile");
+    expect(level4.weaponDrops).toContain("rocket");
     expect(level4.weaponDrops).toContain("laser");
     expect(level4.weaponDrops).toContain("auto-gun");
     expect(level4.weaponDrops).not.toContain("plasma");
     expect(level4.weaponDrops).not.toContain("ion-cannon");
-    expect(level4.weaponDrops).not.toContain("rocket");
+    expect(level4.weaponDrops).not.toContain("missile");
   });
 
   test("Level 5 introduces plasma", () => {
     const level5 = LEVELS[4];
     expect(level5.level).toBe(5);
-    expect(level5.weaponDrops).toContain("missile");
+    expect(level5.weaponDrops).toContain("rocket");
     expect(level5.weaponDrops).toContain("laser");
     expect(level5.weaponDrops).toContain("auto-gun");
     expect(level5.weaponDrops).toContain("plasma");
+    expect(level5.weaponDrops).not.toContain("missile");
   });
 
-  test("Level 6 replaces auto-gun with ion-cannon", () => {
+  test("Level 6 introduces missile and ion-cannon, replaces auto-gun", () => {
     const level6 = LEVELS[5];
     expect(level6.level).toBe(6);
-    expect(level6.weaponDrops).toContain("missile");
+    expect(level6.weaponDrops).toContain("rocket");
     expect(level6.weaponDrops).toContain("laser");
     expect(level6.weaponDrops).toContain("plasma");
     expect(level6.weaponDrops).toContain("ion-cannon");
+    expect(level6.weaponDrops).toContain("missile");
     expect(level6.weaponDrops).not.toContain("auto-gun");
   });
 
   test("Levels 7-10 have full late-game arsenal without auto-gun", () => {
     for (let i = 6; i < LEVELS.length; i++) {
       const level = LEVELS[i];
-      expect(level.weaponDrops).toContain("missile");
+      expect(level.weaponDrops).toContain("rocket");
       expect(level.weaponDrops).toContain("laser");
       expect(level.weaponDrops).toContain("plasma");
       expect(level.weaponDrops).toContain("ion-cannon");
-      expect(level.weaponDrops).toContain("rocket");
+      expect(level.weaponDrops).toContain("missile");
       expect(level.weaponDrops).not.toContain("auto-gun");
     }
   });

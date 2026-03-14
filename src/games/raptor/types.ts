@@ -156,7 +156,7 @@ export type RaptorSoundEvent =
 export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun" | "rocket";
 
 export const WEAPON_SLOT_ORDER: WeaponType[] = [
-  "machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun", "rocket"
+  "machine-gun", "rocket", "laser", "plasma", "ion-cannon", "auto-gun", "missile"
 ];
 
 export const HUD_BAR_HEIGHT = 48;
