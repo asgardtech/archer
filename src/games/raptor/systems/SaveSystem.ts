@@ -1,6 +1,6 @@
 import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration, MAX_SAVE_SLOTS } from "../types";
 import { LEVELS } from "../levels";
-import { tryGetStorage, trySetStorage, tryRemoveStorage } from "../../../shared/storage";
+import { getStorageBackend } from "../../../shared/storage";
 
 const VALID_WEAPONS: WeaponType[] = ["machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun", "rocket"];
 
@@ -27,31 +27,34 @@ export class SaveSystem {
     return Number.isInteger(slot) && slot >= 0 && slot < MAX_SAVE_SLOTS;
   }
 
-  private static runLegacyMigration(): void {
+  private static async runLegacyMigration(): Promise<void> {
     if (this.migrationDone) return;
     this.migrationDone = true;
 
-    const legacy = tryGetStorage(this.LEGACY_STORAGE_KEY, "");
+    const backend = getStorageBackend();
+    const legacy = await backend.get(this.LEGACY_STORAGE_KEY);
     if (!legacy) return;
 
-    const slot0 = tryGetStorage(this.storageKey(0), "");
+    const slot0 = await backend.get(this.storageKey(0));
     if (slot0) return;
 
-    trySetStorage(this.storageKey(0), legacy);
-    tryRemoveStorage(this.LEGACY_STORAGE_KEY);
+    await backend.set(this.storageKey(0), legacy);
+    await backend.remove(this.LEGACY_STORAGE_KEY);
   }
 
-  static save(data: RaptorSaveData, slot: number): void {
+  static async save(data: RaptorSaveData, slot: number): Promise<void> {
     if (!this.isValidSlot(slot)) return;
     data.slotIndex = slot;
-    trySetStorage(this.storageKey(slot), JSON.stringify(data));
+    const backend = getStorageBackend();
+    await backend.set(this.storageKey(slot), JSON.stringify(data));
   }
 
-  static load(slot: number): RaptorSaveData | null {
-    this.runLegacyMigration();
+  static async load(slot: number): Promise<RaptorSaveData | null> {
+    await this.runLegacyMigration();
     if (!this.isValidSlot(slot)) return null;
 
-    const raw = tryGetStorage(this.storageKey(slot), "");
+    const backend = getStorageBackend();
+    const raw = await backend.get(this.storageKey(slot));
     if (!raw) return null;
 
     try {
@@ -65,16 +68,18 @@ export class SaveSystem {
     }
   }
 
-  static clear(slot: number): void {
+  static async clear(slot: number): Promise<void> {
     if (!this.isValidSlot(slot)) return;
-    tryRemoveStorage(this.storageKey(slot));
+    const backend = getStorageBackend();
+    await backend.remove(this.storageKey(slot));
   }
 
-  static hasSave(slot: number): boolean {
-    this.runLegacyMigration();
+  static async hasSave(slot: number): Promise<boolean> {
+    await this.runLegacyMigration();
     if (!this.isValidSlot(slot)) return false;
 
-    const raw = tryGetStorage(this.storageKey(slot), "");
+    const backend = getStorageBackend();
+    const raw = await backend.get(this.storageKey(slot));
     if (!raw) return false;
 
     try {
@@ -87,11 +92,11 @@ export class SaveSystem {
     }
   }
 
-  static listSlots(): (RaptorSaveData | null)[] {
-    this.runLegacyMigration();
+  static async listSlots(): Promise<(RaptorSaveData | null)[]> {
+    await this.runLegacyMigration();
     const result: (RaptorSaveData | null)[] = [];
     for (let i = 0; i < MAX_SAVE_SLOTS; i++) {
-      result.push(this.load(i));
+      result.push(await this.load(i));
     }
     return result;
   }

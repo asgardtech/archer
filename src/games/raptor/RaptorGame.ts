@@ -126,6 +126,7 @@ export class RaptorGame implements IGame {
 
   public onExit: (() => void) | null = null;
   private activeSlot = 0;
+  private _hasSaveData = false;
 
   get saveSlot(): number {
     return this.activeSlot;
@@ -263,6 +264,7 @@ export class RaptorGame implements IGame {
     if (playerSprite) this.player.setSprite(playerSprite);
     if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
 
+    await this.refreshSaveStatus();
     this.state = "menu";
   }
 
@@ -402,7 +404,10 @@ export class RaptorGame implements IGame {
     }
 
     if (this.hud.isClearSaveButtonHit(mx, my, this.width, this.height)) {
-      SaveSystem.clear(this.activeSlot);
+      SaveSystem.clear(this.activeSlot)
+        .then(() => this.refreshSaveStatus())
+        .catch(console.error);
+      this._hasSaveData = false;
       this.input.consume();
       return true;
     }
@@ -452,6 +457,7 @@ export class RaptorGame implements IGame {
       this.weaponSystem.laserBeam.active = false;
       this.sound.stopMusic();
       this.state = "menu";
+      this.refreshSaveStatus().catch(console.error);
       this.input.consume();
       return;
     }
@@ -467,13 +473,15 @@ export class RaptorGame implements IGame {
             if (this.hud.isContinueButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
               this.audio.ensureContext();
               this.sound.play("menu_start");
-              this.continueGame();
-              this.state = "playing";
-              this.sound.startMusic("playing", this.currentLevel);
+              this.continueGame().then(() => {
+                this.state = "playing";
+                this.sound.startMusic("playing", this.currentLevel);
+              }).catch(console.error);
             } else if (this.hud.isNewGameButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
               this.audio.ensureContext();
               this.sound.play("menu_start");
-              SaveSystem.clear(this.activeSlot);
+              SaveSystem.clear(this.activeSlot).catch(console.error);
+              this._hasSaveData = false;
               this.resetGame();
               const act = getActForLevel(0);
               this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
@@ -1104,7 +1112,8 @@ export class RaptorGame implements IGame {
         this.state = "victory";
         this.sound.play("victory");
         if (act.isFinal) {
-          SaveSystem.clear(this.activeSlot);
+          SaveSystem.clear(this.activeSlot).catch(console.error);
+          this._hasSaveData = false;
         } else {
           const inventoryRecord: Record<string, number> = {};
           for (const [w, t] of this.powerUpManager.inventory) {
@@ -1123,7 +1132,8 @@ export class RaptorGame implements IGame {
             energy: this.player.energy,
             weaponTier: this.powerUpManager.weaponTier,
             weaponInventory: inventoryRecord,
-          }, this.activeSlot);
+          }, this.activeSlot).catch(console.error);
+          this._hasSaveData = true;
         }
         this.storyRenderer.show([act.ending.join(" ")], "center", "pilot");
         this.hud.setVictoryStoryActive(true);
@@ -1149,7 +1159,8 @@ export class RaptorGame implements IGame {
           energy: this.player.energy,
           weaponTier: this.powerUpManager.weaponTier,
           weaponInventory: inventoryRecord,
-        }, this.activeSlot);
+        }, this.activeSlot).catch(console.error);
+        this._hasSaveData = true;
       }
     }
   }
@@ -1280,7 +1291,11 @@ export class RaptorGame implements IGame {
   }
 
   get hasSaveData(): boolean {
-    return SaveSystem.hasSave(this.activeSlot);
+    return this._hasSaveData;
+  }
+
+  private async refreshSaveStatus(): Promise<void> {
+    this._hasSaveData = await SaveSystem.hasSave(this.activeSlot);
   }
 
   private resetGame(): void {
@@ -1291,8 +1306,8 @@ export class RaptorGame implements IGame {
     this.startLevel(0, true);
   }
 
-  private continueGame(): void {
-    const data = SaveSystem.load(this.activeSlot);
+  private async continueGame(): Promise<void> {
+    const data = await SaveSystem.load(this.activeSlot);
     if (!data) {
       this.resetGame();
       return;
