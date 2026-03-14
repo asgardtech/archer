@@ -165,6 +165,8 @@ export const HUD_BAR_HEIGHT = 48;
 
 export const SAVE_FORMAT_VERSION = 2;
 
+export const MAX_SAVE_SLOTS = 3;
+
 export interface SaveMigration {
   readonly fromVersion: number;
   readonly toVersion: number;
@@ -195,6 +197,8 @@ export interface RaptorSaveData {
   weaponTier?: number;
   /** Full weapon inventory mapping weapon type to tier (1-3). */
   weaponInventory?: Record<string, number>;
+  /** Which save slot this data was written to (0-based). */
+  slotIndex?: number;
 }
 
 export interface WeaponTierConfig {

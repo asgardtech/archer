@@ -1,4 +1,4 @@
-import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration } from "../types";
+import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration, MAX_SAVE_SLOTS } from "../types";
 import { LEVELS } from "../levels";
 import { tryGetStorage, trySetStorage, tryRemoveStorage } from "../../../shared/storage";
 
@@ -16,14 +16,42 @@ const MIGRATIONS: readonly SaveMigration[] = [
 ];
 
 export class SaveSystem {
-  private static readonly STORAGE_KEY = "raptor_save";
+  private static readonly LEGACY_STORAGE_KEY = "raptor_save";
+  private static migrationDone = false;
 
-  static save(data: RaptorSaveData): void {
-    trySetStorage(this.STORAGE_KEY, JSON.stringify(data));
+  private static storageKey(slot: number): string {
+    return `raptor_save_${slot}`;
   }
 
-  static load(): RaptorSaveData | null {
-    const raw = tryGetStorage(this.STORAGE_KEY, "");
+  private static isValidSlot(slot: number): boolean {
+    return Number.isInteger(slot) && slot >= 0 && slot < MAX_SAVE_SLOTS;
+  }
+
+  private static runLegacyMigration(): void {
+    if (this.migrationDone) return;
+    this.migrationDone = true;
+
+    const legacy = tryGetStorage(this.LEGACY_STORAGE_KEY, "");
+    if (!legacy) return;
+
+    const slot0 = tryGetStorage(this.storageKey(0), "");
+    if (slot0) return;
+
+    trySetStorage(this.storageKey(0), legacy);
+    tryRemoveStorage(this.LEGACY_STORAGE_KEY);
+  }
+
+  static save(data: RaptorSaveData, slot: number): void {
+    if (!this.isValidSlot(slot)) return;
+    data.slotIndex = slot;
+    trySetStorage(this.storageKey(slot), JSON.stringify(data));
+  }
+
+  static load(slot: number): RaptorSaveData | null {
+    this.runLegacyMigration();
+    if (!this.isValidSlot(slot)) return null;
+
+    const raw = tryGetStorage(this.storageKey(slot), "");
     if (!raw) return null;
 
     try {
@@ -37,12 +65,16 @@ export class SaveSystem {
     }
   }
 
-  static clear(): void {
-    tryRemoveStorage(this.STORAGE_KEY);
+  static clear(slot: number): void {
+    if (!this.isValidSlot(slot)) return;
+    tryRemoveStorage(this.storageKey(slot));
   }
 
-  static hasSave(): boolean {
-    const raw = tryGetStorage(this.STORAGE_KEY, "");
+  static hasSave(slot: number): boolean {
+    this.runLegacyMigration();
+    if (!this.isValidSlot(slot)) return false;
+
+    const raw = tryGetStorage(this.storageKey(slot), "");
     if (!raw) return false;
 
     try {
@@ -53,6 +85,20 @@ export class SaveSystem {
     } catch {
       return false;
     }
+  }
+
+  static listSlots(): (RaptorSaveData | null)[] {
+    this.runLegacyMigration();
+    const result: (RaptorSaveData | null)[] = [];
+    for (let i = 0; i < MAX_SAVE_SLOTS; i++) {
+      result.push(this.load(i));
+    }
+    return result;
+  }
+
+  /** @internal Exposed for testing only. */
+  static resetMigrationFlag(): void {
+    this.migrationDone = false;
   }
 
   private static runMigrations(data: Record<string, unknown>): Record<string, unknown> | null {

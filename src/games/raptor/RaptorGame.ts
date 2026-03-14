@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SAVE_FORMAT_VERSION } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS } from "./types";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
@@ -125,6 +125,16 @@ export class RaptorGame implements IGame {
   private cachedSkyGradient: [string, string] | null = null;
 
   public onExit: (() => void) | null = null;
+  private activeSlot = 0;
+
+  get saveSlot(): number {
+    return this.activeSlot;
+  }
+
+  set saveSlot(slot: number) {
+    if (!Number.isInteger(slot) || slot < 0 || slot >= MAX_SAVE_SLOTS) return;
+    this.activeSlot = slot;
+  }
 
   constructor(canvas: HTMLCanvasElement, private width = 800, private height = 600) {
     this.canvas = canvas;
@@ -392,7 +402,7 @@ export class RaptorGame implements IGame {
     }
 
     if (this.hud.isClearSaveButtonHit(mx, my, this.width, this.height)) {
-      SaveSystem.clear();
+      SaveSystem.clear(this.activeSlot);
       this.input.consume();
       return true;
     }
@@ -463,7 +473,7 @@ export class RaptorGame implements IGame {
             } else if (this.hud.isNewGameButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
               this.audio.ensureContext();
               this.sound.play("menu_start");
-              SaveSystem.clear();
+              SaveSystem.clear(this.activeSlot);
               this.resetGame();
               const act = getActForLevel(0);
               this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
@@ -1094,7 +1104,7 @@ export class RaptorGame implements IGame {
         this.state = "victory";
         this.sound.play("victory");
         if (act.isFinal) {
-          SaveSystem.clear();
+          SaveSystem.clear(this.activeSlot);
         } else {
           const inventoryRecord: Record<string, number> = {};
           for (const [w, t] of this.powerUpManager.inventory) {
@@ -1113,7 +1123,7 @@ export class RaptorGame implements IGame {
             energy: this.player.energy,
             weaponTier: this.powerUpManager.weaponTier,
             weaponInventory: inventoryRecord,
-          });
+          }, this.activeSlot);
         }
         this.storyRenderer.show([act.ending.join(" ")], "center", "pilot");
         this.hud.setVictoryStoryActive(true);
@@ -1139,7 +1149,7 @@ export class RaptorGame implements IGame {
           energy: this.player.energy,
           weaponTier: this.powerUpManager.weaponTier,
           weaponInventory: inventoryRecord,
-        });
+        }, this.activeSlot);
       }
     }
   }
@@ -1270,7 +1280,7 @@ export class RaptorGame implements IGame {
   }
 
   get hasSaveData(): boolean {
-    return SaveSystem.hasSave();
+    return SaveSystem.hasSave(this.activeSlot);
   }
 
   private resetGame(): void {
@@ -1282,7 +1292,7 @@ export class RaptorGame implements IGame {
   }
 
   private continueGame(): void {
-    const data = SaveSystem.load();
+    const data = SaveSystem.load(this.activeSlot);
     if (!data) {
       this.resetGame();
       return;
