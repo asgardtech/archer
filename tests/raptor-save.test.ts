@@ -531,8 +531,8 @@ describe("Scenario: Saved weapon type is restored on continue", () => {
 // MENU HUD RENDERING
 // ════════════════════════════════════════════════════════════════
 
-describe("Scenario: Menu shows a Continue option when a save exists", () => {
-  test("menu renders Continue and New Game buttons when save exists", () => {
+describe("Scenario: Menu shows a PLAY button", () => {
+  test("menu renders PLAY button when save exists", () => {
     const { HUD } = require("../src/games/raptor/rendering/HUD");
     const hud = new HUD(false);
     const canvas = createMockCanvas();
@@ -541,15 +541,13 @@ describe("Scenario: Menu shows a Continue option when a save exists", () => {
     hud.render(ctx, "menu", 0, 3, 100, 1, "Coastal Patrol", 800, 600, undefined, undefined, true);
 
     const fillTextCalls = (canvas as any).__fillTextCalls as Array<{ text: string }>;
-    const hasContinue = fillTextCalls.some((c: any) => c.text === "Continue");
-    const hasNewGame = fillTextCalls.some((c: any) => c.text === "New Game");
-    expect(hasContinue).toBe(true);
-    expect(hasNewGame).toBe(true);
+    const hasPlay = fillTextCalls.some((c: any) => c.text === "PLAY");
+    expect(hasPlay).toBe(true);
   });
 });
 
-describe("Scenario: Menu shows only Start when no save exists", () => {
-  test("menu renders Click to Start when no save exists", () => {
+describe("Scenario: Menu shows PLAY button when no save exists", () => {
+  test("menu renders PLAY button when no save exists", () => {
     const { HUD } = require("../src/games/raptor/rendering/HUD");
     const hud = new HUD(false);
     const canvas = createMockCanvas();
@@ -558,13 +556,11 @@ describe("Scenario: Menu shows only Start when no save exists", () => {
     hud.render(ctx, "menu", 0, 3, 100, 1, "Coastal Patrol", 800, 600, undefined, undefined, false);
 
     const fillTextCalls = (canvas as any).__fillTextCalls as Array<{ text: string }>;
-    const hasClick = fillTextCalls.some((c: any) => c.text.includes("Click to Start"));
-    const hasContinue = fillTextCalls.some((c: any) => c.text === "Continue");
-    expect(hasClick).toBe(true);
-    expect(hasContinue).toBe(false);
+    const hasPlay = fillTextCalls.some((c: any) => c.text === "PLAY");
+    expect(hasPlay).toBe(true);
   });
 
-  test("menu renders Tap to Start on touch devices when no save exists", () => {
+  test("menu renders PLAY button on touch devices when no save exists", () => {
     const { HUD } = require("../src/games/raptor/rendering/HUD");
     const hud = new HUD(true);
     const canvas = createMockCanvas();
@@ -573,8 +569,8 @@ describe("Scenario: Menu shows only Start when no save exists", () => {
     hud.render(ctx, "menu", 0, 3, 100, 1, "Coastal Patrol", 800, 600, undefined, undefined, false);
 
     const fillTextCalls = (canvas as any).__fillTextCalls as Array<{ text: string }>;
-    const hasTap = fillTextCalls.some((c: any) => c.text.includes("Tap to Start"));
-    expect(hasTap).toBe(true);
+    const hasPlay = fillTextCalls.some((c: any) => c.text === "PLAY");
+    expect(hasPlay).toBe(true);
   });
 });
 
