@@ -18,7 +18,7 @@ const WEAPON_SOUND_MAP: Record<EnemyWeaponType, RaptorSoundEvent> = {
 };
 
 export class EnemyWeaponSystem {
-  private laserBeams: Map<Enemy, EnemyLaserBeam> = new Map();
+  private laserBeams: Map<Enemy, EnemyLaserBeam[]> = new Map();
 
   fire(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
     const weaponType = enemy.weaponType;
@@ -45,9 +45,9 @@ export class EnemyWeaponSystem {
   }
 
   fireLaser(enemy: Enemy, playerX: number): EnemyFireResult {
-    let beam = this.laserBeams.get(enemy);
+    let beams = this.laserBeams.get(enemy);
 
-    if (!beam) {
+    if (!beams) {
       const config = ENEMY_WEAPON_CONFIGS["laser"];
       const beamConfig: EnemyLaserBeamConfig = {
         warmupDuration: config.beamWarmupDuration ?? 0.5,
@@ -57,10 +57,11 @@ export class EnemyWeaponSystem {
         trackingSpeed: config.beamTrackingSpeed ?? 40,
         damage: config.damage,
       };
-      beam = new EnemyLaserBeam(beamConfig);
-      this.laserBeams.set(enemy, beam);
+      beams = [new EnemyLaserBeam(beamConfig)];
+      this.laserBeams.set(enemy, beams);
     }
 
+    const beam = beams[0];
     if (beam.canFire) {
       beam.activate(enemy.pos.x, enemy.bottom, playerX);
       return { bullets: [], soundEvent: null, laserActivated: true };
@@ -69,20 +70,74 @@ export class EnemyWeaponSystem {
     return { bullets: [], soundEvent: null };
   }
 
+  fireFortressLaser(enemy: Enemy, playerX: number, canvasWidth: number): EnemyFireResult {
+    const phase = enemy.fortressAttackPhase;
+
+    if (phase === "A") {
+      let beams = this.laserBeams.get(enemy);
+      if (!beams || beams.length !== 1) {
+        const beamConfig: EnemyLaserBeamConfig = {
+          warmupDuration: 0.7,
+          activeDuration: 3.0,
+          cooldownDuration: 2.5,
+          beamWidth: 10,
+          trackingSpeed: 25,
+          damage: 10,
+        };
+        beams = [new EnemyLaserBeam(beamConfig)];
+        this.laserBeams.set(enemy, beams);
+      }
+
+      const beam = beams[0];
+      if (beam.canFire) {
+        beam.activate(enemy.pos.x, enemy.bottom, playerX);
+        enemy.toggleFortressPhase();
+        return { bullets: [], soundEvent: null, laserActivated: true };
+      }
+    } else {
+      let beams = this.laserBeams.get(enemy);
+      if (!beams || beams.length !== 2) {
+        const makeConfig = (): EnemyLaserBeamConfig => ({
+          warmupDuration: 0.5,
+          activeDuration: 2.0,
+          cooldownDuration: 2.5,
+          beamWidth: 7,
+          trackingSpeed: 60,
+          damage: 8,
+        });
+        beams = [new EnemyLaserBeam(makeConfig()), new EnemyLaserBeam(makeConfig())];
+        this.laserBeams.set(enemy, beams);
+      }
+
+      if (beams[0].canFire && beams[1].canFire) {
+        const leftOriginX = enemy.pos.x - enemy.width * 0.4;
+        const rightOriginX = enemy.pos.x + enemy.width * 0.4;
+        beams[0].activate(leftOriginX, enemy.bottom, canvasWidth * 0.9, true);
+        beams[1].activate(rightOriginX, enemy.bottom, canvasWidth * 0.1, true);
+        enemy.toggleFortressPhase();
+        return { bullets: [], soundEvent: null, laserActivated: true };
+      }
+    }
+
+    return { bullets: [], soundEvent: null };
+  }
+
   updateLasers(dt: number, playerX: number): RaptorSoundEvent[] {
     const soundEvents: RaptorSoundEvent[] = [];
 
-    for (const [enemy, beam] of this.laserBeams.entries()) {
+    for (const [enemy, beams] of this.laserBeams.entries()) {
       if (!enemy.alive) {
-        beam.reset();
+        for (const beam of beams) beam.reset();
         this.laserBeams.delete(enemy);
         continue;
       }
 
-      beam.update(dt, enemy.pos.x, enemy.bottom, playerX);
+      for (const beam of beams) {
+        beam.update(dt, enemy.pos.x, enemy.bottom, playerX);
 
-      if (beam.didJustActivate) {
-        soundEvents.push("enemy_laser_fire");
+        if (beam.didJustActivate) {
+          soundEvents.push("enemy_laser_fire");
+        }
       }
     }
 
@@ -91,17 +146,19 @@ export class EnemyWeaponSystem {
 
   getActiveLasers(): EnemyLaserBeam[] {
     const active: EnemyLaserBeam[] = [];
-    for (const beam of this.laserBeams.values()) {
-      if (beam.isFiring) {
-        active.push(beam);
+    for (const beams of this.laserBeams.values()) {
+      for (const beam of beams) {
+        if (beam.isFiring) {
+          active.push(beam);
+        }
       }
     }
     return active;
   }
 
   resetLasers(): void {
-    for (const beam of this.laserBeams.values()) {
-      beam.reset();
+    for (const beams of this.laserBeams.values()) {
+      for (const beam of beams) beam.reset();
     }
     this.laserBeams.clear();
   }

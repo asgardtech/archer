@@ -1,7 +1,7 @@
 import { Vec2, EnemyVariant, EnemyConfig, EnemyWeaponType, ENEMY_CONFIGS } from "../types";
 
 export function isBossVariant(variant: EnemyVariant): boolean {
-  return variant === "boss" || variant === "boss_gunship" || variant === "boss_dreadnought";
+  return variant === "boss" || variant === "boss_gunship" || variant === "boss_dreadnought" || variant === "boss_fortress";
 }
 
 export class Enemy {
@@ -45,6 +45,9 @@ export class Enemy {
   private readonly DREADNOUGHT_DRIFT_DURATION_MIN = 3.0;
   private readonly DREADNOUGHT_DRIFT_DURATION_MAX = 5.0;
   private readonly DREADNOUGHT_LOCK_DURATION = 1.5;
+
+  private fortressPhase: "entering" | "hovering" = "entering";
+  public fortressAttackPhase: "A" | "B" = "A";
 
   private burstRemaining = 0;
   private burstTimer = 0;
@@ -160,6 +163,22 @@ export class Enemy {
 
       if (this.burstRemaining > 0) {
         this.burstTimer -= dt;
+      }
+    } else if (this.variant === "boss_fortress") {
+      const fCw = canvasWidth ?? 800;
+      const fMargin = 50;
+      const parkY = canvasHeight * 0.12;
+
+      if (this.fortressPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= parkY) {
+          this.pos.y = parkY;
+          this.fortressPhase = "hovering";
+        }
+      } else {
+        this.pos.x += Math.sin(this.time * 0.3) * 8 * dt;
+        this.pos.y = parkY + Math.sin(this.time * 0.2) * 3;
+        this.pos.x = Math.max(fMargin, Math.min(fCw - fMargin, this.pos.x));
       }
     } else if (isBossVariant(this.variant)) {
       this.pos.x += Math.sin(this.time * 1.5) * 60 * dt;
@@ -297,6 +316,10 @@ export class Enemy {
     return { offsetX, offsetY: this.height * 0.3 };
   }
 
+  public toggleFortressPhase(): void {
+    this.fortressAttackPhase = this.fortressAttackPhase === "A" ? "B" : "A";
+  }
+
   hit(damage = 1): boolean {
     if (!this.alive) return false;
     this.hitPoints -= damage;
@@ -339,6 +362,9 @@ export class Enemy {
           break;
         case "boss_dreadnought":
           this.renderBossDreadnought(ctx, x, y, isFlashing);
+          break;
+        case "boss_fortress":
+          this.renderBossFortress(ctx, x, y, isFlashing);
           break;
         case "interceptor":
           this.renderInterceptor(ctx, x, y, isFlashing);
@@ -927,6 +953,60 @@ export class Enemy {
     }
 
     ctx.fillStyle = flash ? "#cccccc" : "#aa4466";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.15, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderBossFortress(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = "rgba(0, 204, 255, 0.12)";
+    ctx.beginPath();
+    ctx.arc(x, y, hw * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#ffffff" : "#556677";
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.5, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.4);
+    ctx.lineTo(x + hw, y + hh * 0.4);
+    ctx.lineTo(x + hw * 0.5, y + hh);
+    ctx.lineTo(x - hw * 0.5, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.4);
+    ctx.lineTo(x - hw, y - hh * 0.4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#6688aa";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#445566";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.7, y - hh * 0.2);
+    ctx.lineTo(x + hw * 0.7, y - hh * 0.2);
+    ctx.moveTo(x - hw * 0.6, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.6, y + hh * 0.2);
+    ctx.stroke();
+
+    const pulse = 0.5 + Math.sin(this.time * 3) * 0.5;
+    const turretGlow = `rgba(0, 204, 255, ${0.4 + pulse * 0.6})`;
+
+    ctx.fillStyle = flash ? "#cccccc" : "#445566";
+    ctx.fillRect(x - hw * 0.85 - 4, y - hh * 0.15, 8, 14);
+    ctx.fillRect(x + hw * 0.85 - 4, y - hh * 0.15, 8, 14);
+
+    ctx.fillStyle = flash ? "#aaaaaa" : turretGlow;
+    ctx.fillRect(x - hw * 0.85 - 2, y - hh * 0.1, 4, 4);
+    ctx.fillRect(x + hw * 0.85 - 2, y - hh * 0.1, 4, 4);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#00ccff";
     ctx.beginPath();
     ctx.arc(x, y - hh * 0.15, 7, 0, Math.PI * 2);
     ctx.fill();

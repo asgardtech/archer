@@ -738,11 +738,25 @@ export class RaptorGame implements IGame {
         const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
 
         if (enemy.weaponType === "laser") {
-          const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
+          let result;
+          let firedPhase: "A" | "B" | null = null;
+          if (enemy.variant === "boss_fortress") {
+            firedPhase = enemy.fortressAttackPhase;
+            result = this.enemyWeaponSystem.fireFortressLaser(enemy, this.player.pos.x, this.width);
+          } else {
+            result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
+          }
           if (result.laserActivated) {
-            const totalCycle = (weaponConfig.beamWarmupDuration ?? 0.5)
-              + (weaponConfig.beamActiveDuration ?? 2.5)
-              + (weaponConfig.beamCooldownDuration ?? 3.0);
+            let totalCycle: number;
+            if (enemy.variant === "boss_fortress" && firedPhase) {
+              totalCycle = firedPhase === "A"
+                ? (0.7 + 3.0 + 2.5)
+                : (0.5 + 2.0 + 2.5);
+            } else {
+              totalCycle = (weaponConfig.beamWarmupDuration ?? 0.5)
+                + (weaponConfig.beamActiveDuration ?? 2.5)
+                + (weaponConfig.beamCooldownDuration ?? 3.0);
+            }
             enemy.resetFireCooldown(totalCycle * enemy.fireRate);
           }
         } else if (this.enemyBullets.length + weaponConfig.projectileCount <= MAX_ENEMY_BULLETS) {
@@ -1214,6 +1228,7 @@ export class RaptorGame implements IGame {
       boss: "enemy_boss",
       boss_gunship: "enemy_boss_gunship",
       boss_dreadnought: "enemy_boss_dreadnought",
+      boss_fortress: "enemy_boss_fortress",
       interceptor: "enemy_interceptor",
       dart: "enemy_dart",
       drone: "enemy_drone",
