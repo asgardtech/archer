@@ -434,6 +434,14 @@ export interface LevelStoryConfig {
   inGameMessages?: InGameStoryMessage[];
 }
 
+export interface ActStory {
+  act: number;
+  name: string;
+  opening: string[];
+  ending: string[];
+  isFinal: boolean;
+}
+
 export interface RaptorLevelConfig {
   level: number;
   name: string;
@@ -450,6 +458,7 @@ export interface RaptorLevelConfig {
   weaponDrops?: WeaponType[];
   terrain?: TerrainLayerConfig;
   story?: LevelStoryConfig;
+  act?: number;
 }
 
 export type AssetManifest = Record<string, string>;

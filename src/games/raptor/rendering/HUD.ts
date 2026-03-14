@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SpeakerType } from "../types";
+import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SpeakerType, ActStory } from "../types";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
 import { ShipRenderer } from "./ShipRenderer";
@@ -89,6 +89,7 @@ export class HUD {
   private tierFlashTimer = 0;
   private completionLines: string[] = [];
   private _victoryStoryActive = false;
+  private actEnd: ActStory | null = null;
   private measureCtx: CanvasRenderingContext2D;
   private shipRenderer = new ShipRenderer();
 
@@ -117,6 +118,10 @@ export class HUD {
 
   setVictoryStoryActive(active: boolean): void {
     this._victoryStoryActive = active;
+  }
+
+  setActEnd(act: ActStory | null): void {
+    this.actEnd = act;
   }
 
   private wrapText(text: string, maxWidth: number): string[] {
@@ -487,9 +492,16 @@ export class HUD {
         break;
       case "victory":
         if (!this._victoryStoryActive) {
-          this.renderOverlay(ctx, width, height, "Victory!",
-            [],
-            `Final Score: ${score}`, this.actionText("to return"));
+          if (this.actEnd) {
+            this.renderOverlay(ctx, width, height,
+              `END OF ACT ${this.actEnd.act}`,
+              [`"${this.actEnd.name}"`, "", "TO BE CONTINUED..."],
+              `Score: ${score}`, this.actionText("to return"));
+          } else {
+            this.renderOverlay(ctx, width, height, "Victory!",
+              [],
+              `Final Score: ${score}`, this.actionText("to return"));
+          }
         }
         break;
     }
