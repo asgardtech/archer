@@ -1,0 +1,98 @@
+name: Release to Steam
+
+on:
+  workflow_dispatch:
+    inputs:
+      steam_branch:
+        description: >
+          Steam branch to set the build live on after upload
+          (e.g., "staging", "beta", "default" for production)
+        required: true
+        default: staging
+        type: string
+      description:
+        description: >
+          Build description shown in the Steamworks dashboard
+          (leave empty for default)
+        required: false
+        default: ""
+        type: string
+
+concurrency:
+  group: steam-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  upload-to-steam:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-windows
+          path: release/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-macos
+          path: release/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-linux
+          path: release/
+
+      - name: Validate artifact directories
+        run: |
+          missing=0
+          for dir in release/win-unpacked release/mac-arm64 release/linux-unpacked; do
+            if [ ! -d "$dir" ]; then
+              echo "::error::Required directory $dir is missing"
+              missing=1
+            else
+              echo "✓ $dir exists ($(find "$dir" -type f | wc -l) files)"
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            exit 1
+          fi
+
+      - name: Configure app_build.vdf
+        run: |
+          if [ -n "${{ inputs.description }}" ]; then
+            sed -i 's|"Desc".*|"Desc" "${{ inputs.description }}"|' steamcmd/app_build.vdf
+          fi
+          if [ -n "${{ inputs.steam_branch }}" ]; then
+            sed -i '/"Desc"/a\  "SetLive" "${{ inputs.steam_branch }}"' steamcmd/app_build.vdf
+          fi
+          echo "--- Final app_build.vdf ---"
+          cat steamcmd/app_build.vdf
+
+      - name: Install SteamCMD
+        uses: CyberAndrii/setup-steamcmd@v1
+
+      - name: Write Steam config.vdf
+        run: |
+          mkdir -p ~/Steam/config
+          echo "${{ secrets.STEAM_CONFIG_VDF }}" | base64 -d > ~/Steam/config/config.vdf
+          echo "::add-mask::$(cat ~/Steam/config/config.vdf)"
+
+      - name: Upload to Steam via SteamCMD
+        run: |
+          steamcmd +login ${{ secrets.STEAM_USERNAME }} \
+                   +run_app_build "${{ github.workspace }}/steamcmd/app_build.vdf" \
+                   +quit
+
+      - name: Upload SteamCMD build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: steam-build-logs
+          path: steam_build_output/
+          retention-days: 14
+          if-no-files-found: warn
