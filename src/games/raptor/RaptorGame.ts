@@ -236,8 +236,6 @@ export class RaptorGame implements IGame {
     if (playerSprite) this.player.setSprite(playerSprite);
     if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
 
-    this.storyRenderer.setAdmiralPortrait(this.assets.getOptional("portrait_admiral"));
-
     this.state = "menu";
   }
 
@@ -515,7 +513,6 @@ export class RaptorGame implements IGame {
         if (this.storyRenderer.isActive) {
           if (this.input.wasEscPressed) {
             this.storyRenderer = new StoryRenderer();
-            this.storyRenderer.setAdmiralPortrait(this.assets.getOptional("portrait_admiral"));
             this.hud.setVictoryStoryActive(false);
           } else if (this.input.wasClicked) {
             this.storyRenderer.advance();

@@ -57,18 +57,17 @@ function renderPortraitForSpeaker(
   x: number,
   y: number,
   size: number,
-  elapsed: number,
-  admiralPortrait?: HTMLImageElement | null
+  elapsed: number
 ): void {
   switch (speaker) {
     case "wingman":
       WingmanPortrait.render(ctx, x, y, size, elapsed);
       break;
     case "hq":
-      HQPortrait.render(ctx, x, y, size, elapsed, admiralPortrait);
+      HQPortrait.render(ctx, x, y, size, elapsed);
       break;
     case "sensor":
-      HQPortrait.render(ctx, x, y, size, elapsed);
+      HQPortrait.renderSensor(ctx, x, y, size, elapsed);
       break;
     case "pilot":
     default:
@@ -94,17 +93,12 @@ export class StoryRenderer {
   private blinkTimer = 0;
   private elapsed = 0;
   private speaker: SpeakerType = "pilot";
-  private admiralPortrait: HTMLImageElement | null = null;
 
   private measureCtx: CanvasRenderingContext2D;
 
   constructor() {
     const canvas = document.createElement("canvas");
     this.measureCtx = canvas.getContext("2d")!;
-  }
-
-  setAdmiralPortrait(image: HTMLImageElement | null): void {
-    this.admiralPortrait = image;
   }
 
   show(messages: string[], position: StoryPosition = "center", speaker?: SpeakerType): void {
@@ -233,7 +227,7 @@ export class StoryRenderer {
     if (portraitVisible) {
       const portraitX = panelX + PORTRAIT_MARGIN;
       const portraitY = panelY + paddingY;
-      renderPortraitForSpeaker(ctx, this.speaker, portraitX, portraitY, portraitSize, this.elapsed, this.admiralPortrait);
+      renderPortraitForSpeaker(ctx, this.speaker, portraitX, portraitY, portraitSize, this.elapsed);
 
       if (!this.isQuickMessage) {
         const label = SPEAKER_LABELS[this.speaker] || "RAPTOR-1";
