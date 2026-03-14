@@ -6,3 +6,5 @@ electron/dist/
 .DS_Store
 .prompt.txt
 .cursor/
+release/
+build/
