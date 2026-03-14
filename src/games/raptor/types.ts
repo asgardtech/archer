@@ -22,6 +22,8 @@ export type EnemyVariant =
 
 export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser";
 
+export type BossType = "standard" | "gunship_commander" | "missile_dreadnought" | "laser_fortress" | "carrier";
+
 export interface EnemyWeaponConfig {
   type: EnemyWeaponType;
   damage: number;
@@ -367,6 +369,7 @@ export interface WaveConfig {
 }
 
 export interface BossConfig {
+  bossType?: BossType;
   hitPoints: number;
   speed: number;
   fireRate: number;

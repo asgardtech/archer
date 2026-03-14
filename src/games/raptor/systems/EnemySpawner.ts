@@ -81,6 +81,7 @@ export class EnemySpawner {
   spawnBoss(canvasWidth: number): Enemy | null {
     if (!this.bossConfig) return null;
     this.bossSpawned = true;
+    const _bossType = this.bossConfig.bossType ?? "standard";
     const overrides: Partial<EnemyConfig> = {
       hitPoints: Math.max(25, this.bossConfig.hitPoints),
       scoreValue: this.bossConfig.scoreValue,
@@ -92,7 +93,7 @@ export class EnemySpawner {
     return new Enemy(
       canvasWidth / 2,
       -40,
-      "boss" as EnemyVariant,
+      "boss",
       this.bossConfig.speed,
       overrides
     );

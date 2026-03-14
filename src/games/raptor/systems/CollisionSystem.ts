@@ -5,7 +5,7 @@ import { PlasmaBolt } from "../entities/PlasmaBolt";
 import { Rocket } from "../entities/Rocket";
 import { LaserBeam } from "../entities/LaserBeam";
 import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
-import { Enemy } from "../entities/Enemy";
+import { Enemy, isBossVariant } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { EnemyMissile } from "../entities/EnemyMissile";
 import { Player } from "../entities/Player";
@@ -88,7 +88,7 @@ export class CollisionSystem {
         const canFlash = !this.hitFlashTimers.has(enemy) ||
           this.hitFlashTimers.get(enemy)! <= 0;
 
-        if (enemy.variant === "boss" && !canFlash) {
+        if (isBossVariant(enemy.variant) && !canFlash) {
           enemy.hitPoints -= beam.damage;
           if (enemy.hitPoints <= 0) {
             enemy.hitPoints = 0;
@@ -99,7 +99,7 @@ export class CollisionSystem {
         }
         hitEnemies.push(enemy);
 
-        if (enemy.variant === "boss" && canFlash) {
+        if (isBossVariant(enemy.variant) && canFlash) {
           this.hitFlashTimers.set(enemy, BOSS_HIT_FLASH_COOLDOWN);
         }
       }

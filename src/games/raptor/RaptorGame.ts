@@ -18,7 +18,7 @@ import { TrackingBullet } from "./entities/TrackingBullet";
 import { PlasmaBolt } from "./entities/PlasmaBolt";
 import { IonBolt } from "./entities/IonBolt";
 import { Rocket } from "./entities/Rocket";
-import { Enemy } from "./entities/Enemy";
+import { Enemy, isBossVariant } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
 import { EnemyMissile } from "./entities/EnemyMissile";
 import { Explosion } from "./entities/Explosion";
@@ -859,7 +859,7 @@ export class RaptorGame implements IGame {
         } else if (hit.bullet instanceof Rocket) {
           this.sound.play("missile_hit");
           this.vfx.triggerExplosionFlash(hit.enemy.pos.x, hit.enemy.pos.y, 20);
-        } else if (hit.enemy.variant === "boss") {
+        } else if (isBossVariant(hit.enemy.variant)) {
           this.sound.play("boss_hit");
         } else {
           this.sound.play("enemy_hit");
@@ -894,7 +894,7 @@ export class RaptorGame implements IGame {
       if (hit.destroyed) {
         this.handleEnemyDestroyed(hit.enemy, config);
       } else {
-        if (hit.enemy.variant === "boss") {
+        if (isBossVariant(hit.enemy.variant)) {
           this.sound.play("boss_hit");
         } else {
           this.sound.play("enemy_hit");
@@ -922,12 +922,12 @@ export class RaptorGame implements IGame {
 
     const enemyPlayerHits = this.collisions.checkPlayerEnemies(this.player, this.enemies);
     for (const hit of enemyPlayerHits) {
-      const explosionSize = (hit.enemy.variant === "boss" || hit.enemy.variant === "juggernaut") ? 3
+      const explosionSize = (isBossVariant(hit.enemy.variant) || hit.enemy.variant === "juggernaut") ? 3
         : (hit.enemy.variant === "bomber" || hit.enemy.variant === "gunship" || hit.enemy.variant === "cruiser" || hit.enemy.variant === "destroyer" || hit.enemy.variant === "minelayer") ? 2
         : 1;
       this.addExplosion(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
       this.score += hit.enemy.scoreValue;
-      if (hit.enemy.variant === "boss") {
+      if (isBossVariant(hit.enemy.variant)) {
         this.sound.play("boss_destroy");
         this.spawner.markBossDefeated();
         this.vfx.triggerScreenShake(10, 0.5);
@@ -1094,12 +1094,12 @@ export class RaptorGame implements IGame {
 
   private handleEnemyDestroyed(enemy: Enemy, config: RaptorLevelConfig): void {
     this.score += enemy.scoreValue;
-    const explosionSize = (enemy.variant === "boss" || enemy.variant === "juggernaut") ? 3
+    const explosionSize = (isBossVariant(enemy.variant) || enemy.variant === "juggernaut") ? 3
       : (enemy.variant === "bomber" || enemy.variant === "gunship" || enemy.variant === "cruiser" || enemy.variant === "destroyer" || enemy.variant === "minelayer") ? 2
       : 1;
     this.addExplosion(new Explosion(enemy.pos.x, enemy.pos.y, explosionSize));
 
-    if (enemy.variant === "boss") {
+    if (isBossVariant(enemy.variant)) {
       this.sound.play("boss_destroy");
       this.spawner.markBossDefeated();
       this.vfx.triggerScreenShake(10, 0.5);
