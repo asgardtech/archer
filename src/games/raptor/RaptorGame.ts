@@ -739,18 +739,19 @@ export class RaptorGame implements IGame {
 
         if (enemy.weaponType === "laser") {
           let result;
+          let firedPhase: "A" | "B" | null = null;
           if (enemy.variant === "boss_fortress") {
+            firedPhase = enemy.fortressAttackPhase;
             result = this.enemyWeaponSystem.fireFortressLaser(enemy, this.player.pos.x, this.width);
           } else {
             result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
           }
           if (result.laserActivated) {
             let totalCycle: number;
-            if (enemy.variant === "boss_fortress") {
-              const phase = enemy.fortressAttackPhase;
-              totalCycle = phase === "A"
-                ? (0.5 + 2.0 + 2.5)
-                : (0.7 + 3.0 + 2.5);
+            if (enemy.variant === "boss_fortress" && firedPhase) {
+              totalCycle = firedPhase === "A"
+                ? (0.7 + 3.0 + 2.5)
+                : (0.5 + 2.0 + 2.5);
             } else {
               totalCycle = (weaponConfig.beamWarmupDuration ?? 0.5)
                 + (weaponConfig.beamActiveDuration ?? 2.5)

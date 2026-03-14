@@ -112,8 +112,8 @@ export class EnemyWeaponSystem {
       if (beams[0].canFire && beams[1].canFire) {
         const leftOriginX = enemy.pos.x - enemy.width * 0.4;
         const rightOriginX = enemy.pos.x + enemy.width * 0.4;
-        beams[0].activate(leftOriginX, enemy.bottom, canvasWidth * 0.9);
-        beams[1].activate(rightOriginX, enemy.bottom, canvasWidth * 0.1);
+        beams[0].activate(leftOriginX, enemy.bottom, canvasWidth * 0.9, true);
+        beams[1].activate(rightOriginX, enemy.bottom, canvasWidth * 0.1, true);
         enemy.toggleFortressPhase();
         return { bullets: [], soundEvent: null, laserActivated: true };
       }

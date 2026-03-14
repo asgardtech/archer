@@ -16,6 +16,7 @@ export class EnemyLaserBeam {
   originY = 0;
   beamWidth: number;
   damage: number;
+  fixedTarget = false;
 
   private phaseTimer = 0;
   private config: EnemyLaserBeamConfig;
@@ -29,14 +30,15 @@ export class EnemyLaserBeam {
     this.damage = config.damage;
   }
 
-  activate(enemyX: number, enemyBottomY: number, playerX: number): void {
+  activate(enemyX: number, enemyBottomY: number, targetX: number, fixedTarget = false): void {
     if (this.phase !== "idle") return;
     this.phase = "warmup";
     this.phaseTimer = this.config.warmupDuration;
     this.beamX = enemyX;
     this.originX = enemyX;
     this.originY = enemyBottomY;
-    this.targetX = playerX;
+    this.targetX = targetX;
+    this.fixedTarget = fixedTarget;
     this.time = 0;
     this.justActivated = false;
   }
@@ -47,12 +49,16 @@ export class EnemyLaserBeam {
     if (this.phase === "idle") return;
 
     this.time += dt;
-    this.originX = enemyX;
+    if (!this.fixedTarget) {
+      this.originX = enemyX;
+    }
     this.originY = enemyBottomY;
     this.phaseTimer -= dt;
 
     if (this.phase === "warmup") {
-      this.beamX = enemyX;
+      if (!this.fixedTarget) {
+        this.beamX = enemyX;
+      }
       if (this.phaseTimer <= 0) {
         this.phase = "active";
         this.phaseTimer = this.config.activeDuration;
@@ -62,7 +68,9 @@ export class EnemyLaserBeam {
     }
 
     if (this.phase === "active") {
-      this.targetX = playerX;
+      if (!this.fixedTarget) {
+        this.targetX = playerX;
+      }
       const dx = this.targetX - this.beamX;
       const maxMove = this.config.trackingSpeed * dt;
       if (Math.abs(dx) <= maxMove) {
@@ -165,6 +173,7 @@ export class EnemyLaserBeam {
     this.beamX = 0;
     this.originX = 0;
     this.originY = 0;
+    this.fixedTarget = false;
     this.justActivated = false;
   }
 }

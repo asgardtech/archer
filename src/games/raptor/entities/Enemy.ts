@@ -971,16 +971,14 @@ export class Enemy {
 
     ctx.fillStyle = flash ? "#ffffff" : "#556677";
     ctx.beginPath();
-    ctx.moveTo(x - hw * 0.4, y - hh);
-    ctx.lineTo(x + hw * 0.4, y - hh);
-    ctx.lineTo(x + hw * 0.8, y - hh * 0.6);
-    ctx.lineTo(x + hw, y - hh * 0.2);
-    ctx.lineTo(x + hw, y + hh * 0.3);
-    ctx.lineTo(x + hw * 0.7, y + hh);
-    ctx.lineTo(x - hw * 0.7, y + hh);
-    ctx.lineTo(x - hw, y + hh * 0.3);
-    ctx.lineTo(x - hw, y - hh * 0.2);
-    ctx.lineTo(x - hw * 0.8, y - hh * 0.6);
+    ctx.moveTo(x - hw * 0.5, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.4);
+    ctx.lineTo(x + hw, y + hh * 0.4);
+    ctx.lineTo(x + hw * 0.5, y + hh);
+    ctx.lineTo(x - hw * 0.5, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.4);
+    ctx.lineTo(x - hw, y - hh * 0.4);
     ctx.closePath();
     ctx.fill();
 
