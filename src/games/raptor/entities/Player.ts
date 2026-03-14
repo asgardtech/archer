@@ -18,6 +18,7 @@ const DODGE_DURATION = 0.3;
 const DODGE_COOLDOWN = 3.0;
 const EMP_COOLDOWN = 15.0;
 const EMP_DURATION = 0.15;
+const EMP_ENERGY_COST = 25;
 
 export class Player {
   public pos: Vec2;
@@ -178,6 +179,9 @@ export class Player {
   emp(): boolean {
     if (!this.alive) return false;
     if (this.empCooldown > 0) return false;
+    if (this.energy <= 0) return false;
+    this.energy = Math.max(0, this.energy - EMP_ENERGY_COST);
+    this.energyRegenTimer = 0;
     this.empTimer = EMP_DURATION;
     this.empCooldown = EMP_COOLDOWN;
     return true;
