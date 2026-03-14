@@ -401,6 +401,8 @@ describe("Scenario: Progress is saved automatically when a level is completed", 
     for (let t = 0; t < 100; t += 0.1) {
       game.spawner.update(0.1, 800);
     }
+    game.spawner.spawnBoss(800);
+    game.spawner.markBossDefeated();
     game.enemies = [];
 
     (game as any).updatePlaying(0.001);
@@ -1096,6 +1098,8 @@ describe("Scenario: RaptorGame passes activeSlot to SaveSystem on level complete
     for (let t = 0; t < 100; t += 0.1) {
       game.spawner.update(0.1, 800);
     }
+    game.spawner.spawnBoss(800);
+    game.spawner.markBossDefeated();
     game.enemies = [];
 
     (game as any).updatePlaying(0.001);
