@@ -18,8 +18,8 @@ describe("Scenario: Level 1 has a boss enabled", () => {
     expect(level1.bossConfig).toBeDefined();
   });
 
-  test("bossConfig should have hitPoints of 10", () => {
-    expect(level1.bossConfig!.hitPoints).toBe(10);
+  test("bossConfig should have hitPoints of 25", () => {
+    expect(level1.bossConfig!.hitPoints).toBe(25);
   });
 
   test("bossConfig should have speed of 50", () => {
@@ -30,8 +30,8 @@ describe("Scenario: Level 1 has a boss enabled", () => {
     expect(level1.bossConfig!.fireRate).toBeCloseTo(0.8);
   });
 
-  test("bossConfig should have scoreValue of 100", () => {
-    expect(level1.bossConfig!.scoreValue).toBe(100);
+  test("bossConfig should have scoreValue of 200", () => {
+    expect(level1.bossConfig!.scoreValue).toBe(200);
   });
 
   test("bossConfig should have appearsAfterWave of 3", () => {
@@ -54,8 +54,8 @@ describe("Scenario: Level 2 has a boss enabled", () => {
     expect(level2.bossConfig).toBeDefined();
   });
 
-  test("bossConfig should have hitPoints of 15", () => {
-    expect(level2.bossConfig!.hitPoints).toBe(15);
+  test("bossConfig should have hitPoints of 40", () => {
+    expect(level2.bossConfig!.hitPoints).toBe(40);
   });
 
   test("bossConfig should have speed of 45", () => {
@@ -66,8 +66,8 @@ describe("Scenario: Level 2 has a boss enabled", () => {
     expect(level2.bossConfig!.fireRate).toBeCloseTo(1.0);
   });
 
-  test("bossConfig should have scoreValue of 150", () => {
-    expect(level2.bossConfig!.scoreValue).toBe(150);
+  test("bossConfig should have scoreValue of 300", () => {
+    expect(level2.bossConfig!.scoreValue).toBe(300);
   });
 
   test("bossConfig should have appearsAfterWave of 4", () => {
@@ -90,8 +90,8 @@ describe("Scenario: Level 3 boss is unchanged", () => {
     expect(level3.bossConfig).toBeDefined();
   });
 
-  test("bossConfig should have hitPoints of 20", () => {
-    expect(level3.bossConfig!.hitPoints).toBe(20);
+  test("bossConfig should have hitPoints of 55", () => {
+    expect(level3.bossConfig!.hitPoints).toBe(55);
   });
 
   test("bossConfig should have speed of 40", () => {
@@ -102,8 +102,8 @@ describe("Scenario: Level 3 boss is unchanged", () => {
     expect(level3.bossConfig!.fireRate).toBeCloseTo(1.2);
   });
 
-  test("bossConfig should have scoreValue of 200", () => {
-    expect(level3.bossConfig!.scoreValue).toBe(200);
+  test("bossConfig should have scoreValue of 400", () => {
+    expect(level3.bossConfig!.scoreValue).toBe(400);
   });
 
   test("bossConfig should have appearsAfterWave of 5", () => {
@@ -140,7 +140,7 @@ describe("Scenario: Level 1 boss spawns after the correct wave", () => {
     expect(boss!.variant).toBe("boss");
   });
 
-  test("spawned boss should have at least 10 hitPoints", () => {
+  test("spawned boss should have at least 25 hitPoints", () => {
     const spawner = new EnemySpawner();
     spawner.configure(LEVELS[0]);
 
@@ -150,7 +150,7 @@ describe("Scenario: Level 1 boss spawns after the correct wave", () => {
 
     const boss = spawner.spawnBoss(800);
     expect(boss).not.toBeNull();
-    expect(boss!.hitPoints).toBeGreaterThanOrEqual(10);
+    expect(boss!.hitPoints).toBeGreaterThanOrEqual(25);
   });
 });
 
@@ -179,7 +179,7 @@ describe("Scenario: Level 2 boss spawns after the correct wave", () => {
     expect(boss!.variant).toBe("boss");
   });
 
-  test("spawned boss should have at least 15 hitPoints", () => {
+  test("spawned boss should have at least 40 hitPoints", () => {
     const spawner = new EnemySpawner();
     spawner.configure(LEVELS[1]);
 
@@ -189,7 +189,7 @@ describe("Scenario: Level 2 boss spawns after the correct wave", () => {
 
     const boss = spawner.spawnBoss(800);
     expect(boss).not.toBeNull();
-    expect(boss!.hitPoints).toBeGreaterThanOrEqual(15);
+    expect(boss!.hitPoints).toBeGreaterThanOrEqual(40);
   });
 });
 

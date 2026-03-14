@@ -33,7 +33,7 @@ export class Enemy {
   constructor(x: number, y: number, variant: EnemyVariant, speed?: number, overrideConfig?: Partial<EnemyConfig>) {
     const config = { ...ENEMY_CONFIGS[variant], ...overrideConfig };
     this.variant = variant;
-    this.hitPoints = Math.max(config.hitPoints, variant === "boss" ? 10 : 1);
+    this.hitPoints = Math.max(config.hitPoints, variant === "boss" ? 25 : 1);
     this.maxHitPoints = this.hitPoints;
     this.scoreValue = config.scoreValue;
     this.fireRate = config.fireRate;

@@ -82,7 +82,7 @@ export class EnemySpawner {
     if (!this.bossConfig) return null;
     this.bossSpawned = true;
     const overrides: Partial<EnemyConfig> = {
-      hitPoints: Math.max(10, this.bossConfig.hitPoints),
+      hitPoints: Math.max(25, this.bossConfig.hitPoints),
       scoreValue: this.bossConfig.scoreValue,
       fireRate: this.bossConfig.fireRate,
     };
