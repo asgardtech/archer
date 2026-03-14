@@ -1,7 +1,7 @@
 import { Vec2, EnemyVariant, EnemyConfig, EnemyWeaponType, ENEMY_CONFIGS } from "../types";
 
 export function isBossVariant(variant: EnemyVariant): boolean {
-  return variant === "boss" || variant === "boss_gunship" || variant === "boss_dreadnought" || variant === "boss_fortress";
+  return variant === "boss" || variant === "boss_gunship" || variant === "boss_dreadnought" || variant === "boss_fortress" || variant === "boss_carrier";
 }
 
 export class Enemy {
@@ -48,6 +48,14 @@ export class Enemy {
 
   private fortressPhase: "entering" | "hovering" = "entering";
   public fortressAttackPhase: "A" | "B" = "A";
+
+  private carrierPhase: "entering" | "patrolling" | "deploying" = "entering";
+  private droneSpawnTimer = 0;
+  private carrierDeployPauseTimer = 0;
+  private droneSpawnReady = false;
+  private droneWaveVariantToggle = false;
+  private readonly DRONE_SPAWN_INTERVAL = 5.5;
+  private readonly CARRIER_DEPLOY_PAUSE = 0.8;
 
   private burstRemaining = 0;
   private burstTimer = 0;
@@ -179,6 +187,38 @@ export class Enemy {
         this.pos.x += Math.sin(this.time * 0.3) * 8 * dt;
         this.pos.y = parkY + Math.sin(this.time * 0.2) * 3;
         this.pos.x = Math.max(fMargin, Math.min(fCw - fMargin, this.pos.x));
+      }
+    } else if (this.variant === "boss_carrier") {
+      const cCw = canvasWidth ?? 800;
+      const cMargin = 50;
+      const cParkY = canvasHeight * 0.2;
+
+      if (this.carrierPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= cParkY) {
+          this.pos.y = cParkY;
+          this.carrierPhase = "patrolling";
+        }
+      } else if (this.carrierPhase === "patrolling") {
+        this.pos.x += Math.sin(this.time * 0.4) * 45 * dt;
+        this.pos.y = cParkY + Math.sin(this.time * 0.25) * 5;
+        this.pos.x = Math.max(cMargin, Math.min(cCw - cMargin, this.pos.x));
+
+        if (this.hitPoints / this.maxHitPoints >= 0.25) {
+          this.droneSpawnTimer += dt;
+          if (this.droneSpawnTimer >= this.DRONE_SPAWN_INTERVAL) {
+            this.droneSpawnTimer = 0;
+            this.carrierPhase = "deploying";
+            this.carrierDeployPauseTimer = this.CARRIER_DEPLOY_PAUSE;
+            this.droneSpawnReady = true;
+          }
+        }
+      } else if (this.carrierPhase === "deploying") {
+        this.pos.y = cParkY + Math.sin(this.time * 0.25) * 5;
+        this.carrierDeployPauseTimer -= dt;
+        if (this.carrierDeployPauseTimer <= 0) {
+          this.carrierPhase = "patrolling";
+        }
       }
     } else if (isBossVariant(this.variant)) {
       this.pos.x += Math.sin(this.time * 1.5) * 60 * dt;
@@ -320,6 +360,30 @@ export class Enemy {
     this.fortressAttackPhase = this.fortressAttackPhase === "A" ? "B" : "A";
   }
 
+  public shouldSpawnDrones(): boolean {
+    if (this.variant !== "boss_carrier") return false;
+    if (!this.droneSpawnReady) return false;
+    this.droneSpawnReady = false;
+    return true;
+  }
+
+  public getDroneSpawnVariant(): EnemyVariant {
+    this.droneWaveVariantToggle = !this.droneWaveVariantToggle;
+    return this.droneWaveVariantToggle ? "swarmer" : "drone";
+  }
+
+  public getDroneSpawnPositions(): Vec2[] {
+    const offsetX = this.width * 0.4;
+    return [
+      { x: this.pos.x - offsetX, y: this.pos.y + this.height * 0.3 },
+      { x: this.pos.x + offsetX, y: this.pos.y + this.height * 0.3 },
+    ];
+  }
+
+  public get isDeploying(): boolean {
+    return this.variant === "boss_carrier" && this.carrierPhase === "deploying";
+  }
+
   hit(damage = 1): boolean {
     if (!this.alive) return false;
     this.hitPoints -= damage;
@@ -365,6 +429,9 @@ export class Enemy {
           break;
         case "boss_fortress":
           this.renderBossFortress(ctx, x, y, isFlashing);
+          break;
+        case "boss_carrier":
+          this.renderBossCarrier(ctx, x, y, isFlashing);
           break;
         case "interceptor":
           this.renderInterceptor(ctx, x, y, isFlashing);
@@ -1009,6 +1076,62 @@ export class Enemy {
     ctx.fillStyle = flash ? "#cccccc" : "#00ccff";
     ctx.beginPath();
     ctx.arc(x, y - hh * 0.15, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderBossCarrier(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = "rgba(85, 102, 68, 0.15)";
+    ctx.beginPath();
+    ctx.arc(x, y, hw * 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#ffffff" : "#556644";
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.4, y - hh);
+    ctx.lineTo(x + hw * 0.4, y - hh);
+    ctx.lineTo(x + hw * 0.8, y - hh * 0.5);
+    ctx.lineTo(x + hw, y - hh * 0.1);
+    ctx.lineTo(x + hw, y + hh * 0.5);
+    ctx.lineTo(x + hw * 0.6, y + hh);
+    ctx.lineTo(x - hw * 0.6, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.5);
+    ctx.lineTo(x - hw, y - hh * 0.1);
+    ctx.lineTo(x - hw * 0.8, y - hh * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#6b7a55";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#4a5a3a";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.7, y - hh * 0.2);
+    ctx.lineTo(x + hw * 0.7, y - hh * 0.2);
+    ctx.moveTo(x - hw * 0.6, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.6, y + hh * 0.2);
+    ctx.stroke();
+
+    const bayGlow = this.carrierPhase === "deploying"
+      || (this.droneSpawnTimer > this.DRONE_SPAWN_INTERVAL - 1.0
+          && this.hitPoints / this.maxHitPoints >= 0.25);
+    const bayPulse = 0.5 + Math.sin(this.time * 6) * 0.5;
+    const bayColor = flash ? "#cccccc"
+      : bayGlow ? `rgba(204, 170, 34, ${0.5 + bayPulse * 0.5})` : "#445533";
+
+    ctx.fillStyle = bayColor;
+    ctx.fillRect(x - hw * 0.9 - 2, y + hh * 0.05, 8, 12);
+    ctx.fillRect(x + hw * 0.9 - 6, y + hh * 0.05, 8, 12);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#667755";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.2, 6, 0, Math.PI * 2);
     ctx.fill();
 
     this.renderHPBar(ctx, x, y);

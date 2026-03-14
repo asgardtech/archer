@@ -809,6 +809,27 @@ export class RaptorGame implements IGame {
           }
         }
       }
+
+      if (enemy.variant === "boss_carrier" && enemy.shouldSpawnDrones()) {
+        const MAX_ACTIVE_DRONES = 8;
+        const activeDrones = this.enemies.filter(
+          e => e.alive && (e.variant === "drone" || e.variant === "swarmer")
+        ).length;
+        if (activeDrones < MAX_ACTIVE_DRONES) {
+          const spawnVariant = enemy.getDroneSpawnVariant();
+          const spawnPositions = enemy.getDroneSpawnPositions();
+          const spawnCount = Math.min(
+            2 + Math.floor(Math.random() * 2),
+            MAX_ACTIVE_DRONES - activeDrones
+          );
+          for (let i = 0; i < spawnCount; i++) {
+            const spawnPos = spawnPositions[i % spawnPositions.length];
+            const drone = new Enemy(spawnPos.x, spawnPos.y, spawnVariant);
+            this.assignEnemySprite(drone);
+            this.enemies.push(drone);
+          }
+        }
+      }
     }
 
     const laserSoundEvents = this.enemyWeaponSystem.updateLasers(dt, this.player.pos.x);
@@ -1229,6 +1250,7 @@ export class RaptorGame implements IGame {
       boss_gunship: "enemy_boss_gunship",
       boss_dreadnought: "enemy_boss_dreadnought",
       boss_fortress: "enemy_boss_fortress",
+      boss_carrier: "enemy_boss_carrier",
       interceptor: "enemy_interceptor",
       dart: "enemy_dart",
       drone: "enemy_drone",
