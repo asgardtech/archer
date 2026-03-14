@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SAVE_FORMAT_VERSION } from "./types";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
@@ -1101,7 +1101,7 @@ export class RaptorGame implements IGame {
             inventoryRecord[w] = t;
           }
           SaveSystem.save({
-            version: 1,
+            version: SAVE_FORMAT_VERSION,
             levelReached: this.currentLevel + 1,
             totalScore: this.totalScore,
             lives: this.player.lives,
@@ -1127,7 +1127,7 @@ export class RaptorGame implements IGame {
           inventoryRecord[w] = t;
         }
         SaveSystem.save({
-          version: 1,
+          version: SAVE_FORMAT_VERSION,
           levelReached: this.currentLevel + 1,
           totalScore: this.totalScore,
           lives: this.player.lives,

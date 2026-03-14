@@ -1,8 +1,19 @@
-import { RaptorSaveData, WeaponType } from "../types";
+import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration } from "../types";
 import { LEVELS } from "../levels";
 import { tryGetStorage, trySetStorage, tryRemoveStorage } from "../../../shared/storage";
 
 const VALID_WEAPONS: WeaponType[] = ["machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun", "rocket"];
+
+const MIGRATIONS: readonly SaveMigration[] = [
+  {
+    fromVersion: 1,
+    toVersion: 2,
+    migrate(data) {
+      data.version = 2;
+      return data;
+    },
+  },
+];
 
 export class SaveSystem {
   private static readonly STORAGE_KEY = "raptor_save";
@@ -17,8 +28,10 @@ export class SaveSystem {
 
     try {
       const parsed = JSON.parse(raw);
-      if (!this.validate(parsed)) return null;
-      return parsed as RaptorSaveData;
+      const migrated = this.runMigrations(parsed);
+      if (!migrated) return null;
+      if (!this.validate(migrated)) return null;
+      return migrated as RaptorSaveData;
     } catch {
       return null;
     }
@@ -34,10 +47,35 @@ export class SaveSystem {
 
     try {
       const parsed = JSON.parse(raw);
-      return this.validate(parsed);
+      const migrated = this.runMigrations(parsed);
+      if (!migrated) return false;
+      return this.validate(migrated);
     } catch {
       return false;
     }
+  }
+
+  private static runMigrations(data: Record<string, unknown>): Record<string, unknown> | null {
+    if (typeof data !== "object" || data === null) return null;
+
+    let version = data.version;
+    if (typeof version !== "number" || !Number.isInteger(version) || version < 1) {
+      return null;
+    }
+    if (version > SAVE_FORMAT_VERSION) {
+      return null;
+    }
+    for (const migration of MIGRATIONS) {
+      if (version === SAVE_FORMAT_VERSION) break;
+      if (migration.fromVersion === version) {
+        data = migration.migrate(data);
+        version = data.version;
+      }
+    }
+    if (version !== SAVE_FORMAT_VERSION) {
+      return null;
+    }
+    return data;
   }
 
   private static validate(data: unknown): data is RaptorSaveData {
@@ -45,7 +83,7 @@ export class SaveSystem {
 
     const d = data as Record<string, unknown>;
 
-    if (d.version !== 1) return false;
+    if (d.version !== SAVE_FORMAT_VERSION) return false;
 
     if (
       typeof d.levelReached !== "number" ||

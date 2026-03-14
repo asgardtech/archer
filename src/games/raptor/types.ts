@@ -163,8 +163,16 @@ export const WEAPON_SLOT_ORDER: WeaponType[] = [
 
 export const HUD_BAR_HEIGHT = 48;
 
+export const SAVE_FORMAT_VERSION = 2;
+
+export interface SaveMigration {
+  readonly fromVersion: number;
+  readonly toVersion: number;
+  migrate(data: Record<string, unknown>): Record<string, unknown>;
+}
+
 export interface RaptorSaveData {
-  version: 1;
+  version: number;
   /** The highest level index the player has unlocked (0-based). */
   levelReached: number;
   /** Cumulative score at the time of save. */
