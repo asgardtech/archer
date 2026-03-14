@@ -164,4 +164,25 @@ export class EnemyWeaponSystem {
       soundEvent: WEAPON_SOUND_MAP["missile"],
     };
   }
+
+  fireMissileFrom(enemy: Enemy, targetX: number, targetY: number, offsetX: number, offsetY: number): EnemyFireResult {
+    const config = ENEMY_WEAPON_CONFIGS["missile"];
+    const bullet = new EnemyMissile(
+      enemy.pos.x + offsetX,
+      enemy.bottom + offsetY,
+      targetX, targetY,
+      {
+        damage: config.damage,
+        speed: config.projectileSpeed,
+        homing: config.homing,
+        homingStrength: config.homingStrength,
+        spriteKey: config.spriteKey,
+        radius: 7,
+      }
+    );
+    return {
+      bullets: [bullet],
+      soundEvent: WEAPON_SOUND_MAP["missile"],
+    };
+  }
 }

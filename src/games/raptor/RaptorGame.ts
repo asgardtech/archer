@@ -778,6 +778,23 @@ export class RaptorGame implements IGame {
         );
         this.enemyBullets.push(mine);
       }
+
+      if (enemy.variant === "boss_dreadnought" && enemy.hasPendingBurst()) {
+        if (this.enemyBullets.length < MAX_ENEMY_BULLETS) {
+          const { offsetX, offsetY } = enemy.consumeBurstTick();
+          const result = this.enemyWeaponSystem.fireMissileFrom(
+            enemy, this.player.pos.x, this.player.pos.y, offsetX, offsetY
+          );
+          for (const eb of result.bullets) {
+            const sprite = this.assets.getOptional(eb.spriteKey);
+            if (sprite) eb.setSprite(sprite);
+            this.enemyBullets.push(eb);
+          }
+          if (result.soundEvent) {
+            this.sound.play(result.soundEvent);
+          }
+        }
+      }
     }
 
     const laserSoundEvents = this.enemyWeaponSystem.updateLasers(dt, this.player.pos.x);
@@ -1196,6 +1213,7 @@ export class RaptorGame implements IGame {
       bomber: "enemy_bomber",
       boss: "enemy_boss",
       boss_gunship: "enemy_boss_gunship",
+      boss_dreadnought: "enemy_boss_dreadnought",
       interceptor: "enemy_interceptor",
       dart: "enemy_dart",
       drone: "enemy_drone",
