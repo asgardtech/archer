@@ -33,7 +33,7 @@ import { StoryRenderer } from "./rendering/StoryRenderer";
 import { ASSET_MANIFEST } from "./rendering/assets";
 import { AUDIO_MANIFEST } from "./rendering/audioAssets";
 import { LEVELS } from "./levels";
-import { GAME_STORY } from "./story";
+import { GAME_STORY, getActForLevel } from "./story";
 import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
 
@@ -465,7 +465,8 @@ export class RaptorGame implements IGame {
               this.sound.play("menu_start");
               SaveSystem.clear();
               this.resetGame();
-              this.storyRenderer.show([GAME_STORY.opening.join(" ")], "center", "pilot");
+              const act = getActForLevel(0);
+              this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
               this.state = "story_intro";
               this.sound.startMusic("playing", 0);
             }
@@ -473,7 +474,8 @@ export class RaptorGame implements IGame {
             this.audio.ensureContext();
             this.sound.play("menu_start");
             this.resetGame();
-            this.storyRenderer.show([GAME_STORY.opening.join(" ")], "center", "pilot");
+            const act = getActForLevel(0);
+            this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
             this.state = "story_intro";
             this.sound.startMusic("playing", 0);
           }
@@ -1036,11 +1038,34 @@ export class RaptorGame implements IGame {
       this.sound.stopMusic();
 
       if (this.currentLevel >= LEVELS.length - 1) {
+        const act = getActForLevel(this.currentLevel);
         this.state = "victory";
         this.sound.play("victory");
-        SaveSystem.clear();
-        this.storyRenderer.show([GAME_STORY.ending.join(" ")], "center", "pilot");
+        if (act.isFinal) {
+          SaveSystem.clear();
+        } else {
+          const inventoryRecord: Record<string, number> = {};
+          for (const [w, t] of this.powerUpManager.inventory) {
+            inventoryRecord[w] = t;
+          }
+          SaveSystem.save({
+            version: 1,
+            levelReached: this.currentLevel + 1,
+            totalScore: this.totalScore,
+            lives: this.player.lives,
+            weapon: this.powerUpManager.currentWeapon,
+            savedAt: new Date().toISOString(),
+            bombs: this.player.bombs,
+            shieldBattery: this.player.shieldBattery,
+            armor: this.player.armor,
+            energy: this.player.energy,
+            weaponTier: this.powerUpManager.weaponTier,
+            weaponInventory: inventoryRecord,
+          });
+        }
+        this.storyRenderer.show([act.ending.join(" ")], "center", "pilot");
         this.hud.setVictoryStoryActive(true);
+        this.hud.setActEnd(act.isFinal ? null : act);
       } else {
         this.state = "level_complete";
         this.sound.play("level_complete");

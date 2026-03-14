@@ -23,7 +23,7 @@ import {
   Vec2,
 } from "../src/games/raptor/types";
 import { AUDIO_MANIFEST } from "../src/games/raptor/rendering/audioAssets";
-import { GAME_STORY } from "../src/games/raptor/story";
+import { GAME_STORY, getActForLevel } from "../src/games/raptor/story";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -349,14 +349,16 @@ describe("Scenario: Opening story displays all text in one panel", () => {
     expect(showSpy).toHaveBeenCalledTimes(1);
     const messages = showSpy.mock.calls[0][0] as string[];
     expect(messages).toHaveLength(1);
-    expect(messages[0]).toBe(GAME_STORY.opening.join(" "));
+    const act = getActForLevel(0);
+    expect(messages[0]).toBe(act.opening.join(" "));
     showSpy.mockRestore();
   });
 
   test("opening story is a single message, not one per sentence", () => {
-    const joined = GAME_STORY.opening.join(" ");
-    expect(GAME_STORY.opening.length).toBeGreaterThan(1);
-    for (const sentence of GAME_STORY.opening) {
+    const act = getActForLevel(0);
+    const joined = act.opening.join(" ");
+    expect(act.opening.length).toBeGreaterThan(1);
+    for (const sentence of act.opening) {
       expect(joined).toContain(sentence);
     }
   });
@@ -383,7 +385,8 @@ describe("Scenario: Ending story displays all text in one panel", () => {
     const lastCall = showSpy.mock.calls[showSpy.mock.calls.length - 1];
     const messages = lastCall[0] as string[];
     expect(messages).toHaveLength(1);
-    expect(messages[0]).toBe(GAME_STORY.ending.join(" "));
+    const act = getActForLevel(LEVELS.length - 1);
+    expect(messages[0]).toBe(act.ending.join(" "));
     showSpy.mockRestore();
   });
 });
