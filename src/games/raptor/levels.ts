@@ -67,7 +67,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#F4A460", "#87CEEB"],
     starDensity: 0,
     enemyFireRateMultiplier: 1.0,
-    weaponDrops: ["missile"] as WeaponType[],
+    weaponDrops: ["rocket"] as WeaponType[],
     terrain: {
       theme: "desert",
       horizonAssets: ["horizon_desert"],
@@ -119,7 +119,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#4A6670", "#8BA8B7"],
     starDensity: 0,
     enemyFireRateMultiplier: 1.2,
-    weaponDrops: ["missile", "laser"] as WeaponType[],
+    weaponDrops: ["rocket", "laser"] as WeaponType[],
     terrain: {
       theme: "mountain",
       horizonAssets: ["horizon_mountain"],
@@ -171,7 +171,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#B0C4DE", "#D3D3D3"],
     starDensity: 0,
     enemyFireRateMultiplier: 1.4,
-    weaponDrops: ["missile", "laser", "auto-gun"] as WeaponType[],
+    weaponDrops: ["rocket", "laser", "auto-gun"] as WeaponType[],
     terrain: {
       theme: "arctic",
       horizonAssets: ["horizon_arctic"],
@@ -226,7 +226,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#2F1B14", "#1a1a1a"],
     starDensity: 0,
     enemyFireRateMultiplier: 1.6,
-    weaponDrops: ["missile", "laser", "auto-gun", "plasma"] as WeaponType[],
+    weaponDrops: ["rocket", "laser", "auto-gun", "plasma"] as WeaponType[],
     terrain: {
       theme: "fortress",
       horizonAssets: ["horizon_fortress"],
@@ -285,7 +285,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#2b1d1d", "#4a3333"],
     starDensity: 0,
     enemyFireRateMultiplier: 1.8,
-    weaponDrops: ["missile", "laser", "plasma", "ion-cannon"] as WeaponType[],
+    weaponDrops: ["rocket", "laser", "plasma", "ion-cannon", "missile"] as WeaponType[],
     terrain: {
       theme: "shipyard",
       horizonAssets: ["horizon_shipyard"],
@@ -356,7 +356,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#1a1a0e", "#3d3520"],
     starDensity: 0,
     enemyFireRateMultiplier: 2.0,
-    weaponDrops: ["missile", "laser", "plasma", "ion-cannon", "rocket"] as WeaponType[],
+    weaponDrops: ["rocket", "laser", "plasma", "ion-cannon", "missile"] as WeaponType[],
     terrain: {
       theme: "wasteland",
       horizonAssets: ["horizon_wasteland"],
@@ -427,7 +427,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#1c1c1c", "#333030"],
     starDensity: 0,
     enemyFireRateMultiplier: 2.2,
-    weaponDrops: ["missile", "laser", "plasma", "ion-cannon", "rocket"] as WeaponType[],
+    weaponDrops: ["rocket", "laser", "plasma", "ion-cannon", "missile"] as WeaponType[],
     terrain: {
       theme: "industrial",
       horizonAssets: ["horizon_industrial"],
@@ -501,7 +501,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#050510", "#0a0a20"],
     starDensity: 40,
     enemyFireRateMultiplier: 2.4,
-    weaponDrops: ["missile", "laser", "plasma", "ion-cannon", "rocket"] as WeaponType[],
+    weaponDrops: ["rocket", "laser", "plasma", "ion-cannon", "missile"] as WeaponType[],
     terrain: {
       theme: "orbital",
       horizonAssets: ["horizon_orbital"],
@@ -575,7 +575,7 @@ export const LEVELS: RaptorLevelConfig[] = [
     skyGradient: ["#0a0000", "#1a0505"],
     starDensity: 50,
     enemyFireRateMultiplier: 2.5,
-    weaponDrops: ["missile", "laser", "plasma", "ion-cannon", "rocket"] as WeaponType[],
+    weaponDrops: ["rocket", "laser", "plasma", "ion-cannon", "missile"] as WeaponType[],
     terrain: {
       theme: "stronghold",
       horizonAssets: ["horizon_stronghold"],
