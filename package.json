@@ -29,6 +29,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/pngjs": "^6.0.5",
     "@types/sharp": "^0.31.1",
     "concurrently": "^9.2.1",
