@@ -72,6 +72,10 @@ npm run electron:package:linux    # Linux (AppImage + deb)
 
 Distributables are output to the `release/` directory. Icons are auto-generated from `assets/icon.png` during packaging.
 
+## Steam Release
+
+For instructions on setting up and using the Steam release pipeline — including Steamworks portal configuration, GitHub Secrets, and performing releases — see [docs/steam-release.md](docs/steam-release.md).
+
 ## Project Structure
 
 ```
