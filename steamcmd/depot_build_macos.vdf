@@ -1,0 +1,13 @@
+"DepotBuild"
+{
+  // Replace 1002 with your actual macOS depot ID from Steamworks
+  "DepotID" "1002"
+  // Uses ARM64 (Apple Silicon) build. For Intel, change to "../release/mac"
+  "ContentRoot" "../release/mac-arm64"
+  "FileMapping"
+  {
+    "LocalPath" "*"
+    "DepotPath" "."
+    "Recursive" "1"
+  }
+}

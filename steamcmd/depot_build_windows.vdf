@@ -1,0 +1,12 @@
+"DepotBuild"
+{
+  // Replace 1001 with your actual Windows depot ID from Steamworks
+  "DepotID" "1001"
+  "ContentRoot" "../release/win-unpacked"
+  "FileMapping"
+  {
+    "LocalPath" "*"
+    "DepotPath" "."
+    "Recursive" "1"
+  }
+}

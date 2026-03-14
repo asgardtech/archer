@@ -1,0 +1,15 @@
+"AppBuild"
+{
+  // Replace 1000 with your actual App ID from the Steamworks partner portal
+  "AppID" "1000"
+  "Desc" "Raptor Skies build"
+  "ContentRoot" "../release"
+  "BuildOutput" "../steam_build_output"
+  "Depots"
+  {
+    // Replace depot IDs with actual values from the Steamworks partner portal
+    "1001" "depot_build_windows.vdf"
+    "1002" "depot_build_macos.vdf"
+    "1003" "depot_build_linux.vdf"
+  }
+}
