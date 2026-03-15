@@ -123,6 +123,9 @@ export class RaptorGame implements IGame {
   private perfManager: PerformanceManager;
   private skyGradientCanvas: HTMLCanvasElement | null = null;
   private cachedSkyGradient: [string, string] | null = null;
+  private playTimeSeconds = 0;
+  private lastAutoSaveTime = 0;
+  private lastCompletedWaveCount = 0;
 
   public onExit: (() => void) | null = null;
   private activeSlot = 0;
@@ -656,6 +659,7 @@ export class RaptorGame implements IGame {
 
   private updatePlaying(dt: number): void {
     this.levelElapsed += dt;
+    this.playTimeSeconds += dt;
     this.hud.updateWingmanTimer(dt);
     this.input.updateFromKeyboard(dt, this.width, this.gameAreaHeight);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.gameAreaHeight);
@@ -786,6 +790,19 @@ export class RaptorGame implements IGame {
       if (boss) {
         this.assignEnemySprite(boss);
         this.enemies.push(boss);
+      }
+    }
+
+    const currentCompletedWaves = this.spawner.completedWaveCount;
+    if (currentCompletedWaves > this.lastCompletedWaveCount) {
+      this.lastCompletedWaveCount = currentCompletedWaves;
+      const AUTO_SAVE_INTERVAL = 30;
+      if (this.levelElapsed - this.lastAutoSaveTime >= AUTO_SAVE_INTERVAL) {
+        this.lastAutoSaveTime = this.levelElapsed;
+        SaveSystem.autoSave(
+          this.activeSlot,
+          this.buildSaveData({ waveIndex: currentCompletedWaves })
+        ).catch(console.error);
       }
     }
 
@@ -1168,24 +1185,10 @@ export class RaptorGame implements IGame {
           SaveSystem.clear(this.activeSlot).catch(console.error);
           this._hasSaveData = false;
         } else {
-          const inventoryRecord: Record<string, number> = {};
-          for (const [w, t] of this.powerUpManager.inventory) {
-            inventoryRecord[w] = t;
-          }
-          SaveSystem.save({
-            version: SAVE_FORMAT_VERSION,
-            levelReached: this.currentLevel + 1,
-            totalScore: this.totalScore,
-            lives: this.player.lives,
-            weapon: this.powerUpManager.currentWeapon,
-            savedAt: new Date().toISOString(),
-            bombs: this.player.bombs,
-            shieldBattery: this.player.shieldBattery,
-            armor: this.player.armor,
-            energy: this.player.energy,
-            weaponTier: this.powerUpManager.weaponTier,
-            weaponInventory: inventoryRecord,
-          }, this.activeSlot).catch(console.error);
+          SaveSystem.save(
+            this.buildSaveData({ levelReached: this.currentLevel + 1 }),
+            this.activeSlot
+          ).catch(console.error);
           this._hasSaveData = true;
         }
         this.storyRenderer.show([act.ending.join(" ")], "center", "pilot");
@@ -1195,24 +1198,10 @@ export class RaptorGame implements IGame {
         this.state = "level_complete";
         this.sound.play("level_complete");
         this.hud.setCompletionText(this.currentLevelConfig.story?.completionText ?? null);
-        const inventoryRecord: Record<string, number> = {};
-        for (const [w, t] of this.powerUpManager.inventory) {
-          inventoryRecord[w] = t;
-        }
-        SaveSystem.save({
-          version: SAVE_FORMAT_VERSION,
-          levelReached: this.currentLevel + 1,
-          totalScore: this.totalScore,
-          lives: this.player.lives,
-          weapon: this.powerUpManager.currentWeapon,
-          savedAt: new Date().toISOString(),
-          bombs: this.player.bombs,
-          shieldBattery: this.player.shieldBattery,
-          armor: this.player.armor,
-          energy: this.player.energy,
-          weaponTier: this.powerUpManager.weaponTier,
-          weaponInventory: inventoryRecord,
-        }, this.activeSlot).catch(console.error);
+        SaveSystem.save(
+          this.buildSaveData({ levelReached: this.currentLevel + 1 }),
+          this.activeSlot
+        ).catch(console.error);
         this._hasSaveData = true;
       }
     }
@@ -1353,6 +1342,7 @@ export class RaptorGame implements IGame {
 
   private resetGame(): void {
     this.totalScore = 0;
+    this.playTimeSeconds = 0;
     this.vfx.reset();
     this.hud.setCompletionText(null);
     this.hud.setVictoryStoryActive(false);
@@ -1366,6 +1356,7 @@ export class RaptorGame implements IGame {
       return;
     }
     this.totalScore = data.totalScore;
+    this.playTimeSeconds = data.playTimeSeconds ?? 0;
     this.vfx.reset();
     this.startLevel(data.levelReached, false);
     this.player.lives = data.lives;
@@ -1485,6 +1476,29 @@ export class RaptorGame implements IGame {
     };
   }
 
+  private buildSaveData(overrides?: Partial<RaptorSaveData>): RaptorSaveData {
+    const inventoryRecord: Record<string, number> = {};
+    for (const [w, t] of this.powerUpManager.inventory) {
+      inventoryRecord[w] = t;
+    }
+    return {
+      version: SAVE_FORMAT_VERSION,
+      levelReached: this.currentLevel,
+      totalScore: this.totalScore,
+      lives: this.player.lives,
+      weapon: this.powerUpManager.currentWeapon,
+      savedAt: new Date().toISOString(),
+      bombs: this.player.bombs,
+      shieldBattery: this.player.shieldBattery,
+      armor: this.player.armor,
+      energy: this.player.energy,
+      weaponTier: this.powerUpManager.weaponTier,
+      weaponInventory: inventoryRecord,
+      playTimeSeconds: this.playTimeSeconds,
+      ...overrides,
+    };
+  }
+
   private startLevel(levelIndex: number, fullReset = false): void {
     this.currentLevel = levelIndex;
     this.score = 0;
@@ -1532,6 +1546,13 @@ export class RaptorGame implements IGame {
       this.initBackgroundLayers();
       this.initPlanetAccents();
     }
+
+    this.lastAutoSaveTime = 0;
+    this.lastCompletedWaveCount = 0;
+    SaveSystem.autoSave(
+      this.activeSlot,
+      this.buildSaveData({ waveIndex: 0 })
+    ).catch(console.error);
   }
 
   private addExplosion(explosion: Explosion): void {

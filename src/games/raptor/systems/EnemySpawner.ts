@@ -67,15 +67,17 @@ export class EnemySpawner {
     return spawned;
   }
 
+  get completedWaveCount(): number {
+    let count = 0;
+    for (const wave of this.waves) {
+      if (wave.complete) count++;
+    }
+    return count;
+  }
+
   shouldSpawnBoss(): boolean {
     if (!this.bossEnabled || this.bossSpawned || !this.bossConfig) return false;
-
-    const requiredWaves = this.bossConfig.appearsAfterWave;
-    let completedCount = 0;
-    for (const wave of this.waves) {
-      if (wave.complete) completedCount++;
-    }
-    return completedCount >= requiredWaves;
+    return this.completedWaveCount >= this.bossConfig.appearsAfterWave;
   }
 
   private static readonly BOSS_TYPE_TO_VARIANT: Partial<Record<BossType, EnemyVariant>> = {
