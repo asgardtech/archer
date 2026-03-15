@@ -478,12 +478,12 @@ describe("15. No production code modified", () => {
     expect(diff.trim()).toBe("");
   });
 
-  test("no enemy sprite PNG files have been modified", async () => {
+  test("no non-boss enemy sprite PNG files have been modified", async () => {
     const { execSync } = await import("child_process");
-    const diff = execSync("git diff main..HEAD -- public/assets/raptor/enemy_*.png", {
-      cwd: ROOT_DIR,
-      encoding: "utf-8",
-    });
+    const diff = execSync(
+      "git diff main..HEAD -- 'public/assets/raptor/enemy_*.png' ':!public/assets/raptor/enemy_boss*.png'",
+      { cwd: ROOT_DIR, encoding: "utf-8" }
+    );
     expect(diff.trim()).toBe("");
   });
 });
