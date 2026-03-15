@@ -102,34 +102,34 @@ export const ASSET_MANIFEST: AssetManifest = {
   ground_dark_metal:     `${TERRAIN}ground_dark_metal.png`,
 
   // Level 6 Structures (Shipyard)
-  struct_crane:          `${TERRAIN}struct_crane.svg`,
-  struct_drydock:        `${TERRAIN}struct_drydock.svg`,
-  struct_ship_hull:      `${TERRAIN}struct_ship_hull.svg`,
-  struct_cargo_container: `${TERRAIN}struct_cargo_container.svg`,
+  struct_crane:          `${TERRAIN}struct_crane.png`,
+  struct_drydock:        `${TERRAIN}struct_drydock.png`,
+  struct_ship_hull:      `${TERRAIN}struct_ship_hull.png`,
+  struct_cargo_container: `${TERRAIN}struct_cargo_container.png`,
 
   // Level 7 Structures (Wasteland)
-  struct_ruin:           `${TERRAIN}struct_ruin.svg`,
-  struct_dead_tree:      `${TERRAIN}struct_dead_tree.svg`,
-  struct_wrecked_tank:   `${TERRAIN}struct_wrecked_tank.svg`,
+  struct_ruin:           `${TERRAIN}struct_ruin.png`,
+  struct_dead_tree:      `${TERRAIN}struct_dead_tree.png`,
+  struct_wrecked_tank:   `${TERRAIN}struct_wrecked_tank.png`,
 
   // Level 8 Structures (Industrial)
-  struct_smokestack:     `${TERRAIN}struct_smokestack.svg`,
-  struct_factory:        `${TERRAIN}struct_factory.svg`,
-  struct_conveyor:       `${TERRAIN}struct_conveyor.svg`,
-  struct_cooling_tower:  `${TERRAIN}struct_cooling_tower.svg`,
-  struct_pipe_cluster:   `${TERRAIN}struct_pipe_cluster.svg`,
+  struct_smokestack:     `${TERRAIN}struct_smokestack.png`,
+  struct_factory:        `${TERRAIN}struct_factory.png`,
+  struct_conveyor:       `${TERRAIN}struct_conveyor.png`,
+  struct_cooling_tower:  `${TERRAIN}struct_cooling_tower.png`,
+  struct_pipe_cluster:   `${TERRAIN}struct_pipe_cluster.png`,
 
   // Level 9 Structures (Orbital)
-  struct_satellite_dish: `${TERRAIN}struct_satellite_dish.svg`,
-  struct_solar_panel:    `${TERRAIN}struct_solar_panel.svg`,
-  struct_station_module: `${TERRAIN}struct_station_module.svg`,
-  struct_antenna_array:  `${TERRAIN}struct_antenna_array.svg`,
+  struct_satellite_dish: `${TERRAIN}struct_satellite_dish.png`,
+  struct_solar_panel:    `${TERRAIN}struct_solar_panel.png`,
+  struct_station_module: `${TERRAIN}struct_station_module.png`,
+  struct_antenna_array:  `${TERRAIN}struct_antenna_array.png`,
 
   // Level 10 Structures (Stronghold)
-  struct_vektran_tower:    `${TERRAIN}struct_vektran_tower.svg`,
-  struct_turret_base:    `${TERRAIN}struct_turret_base.svg`,
-  struct_heavy_gate:     `${TERRAIN}struct_heavy_gate.svg`,
-  struct_reactor_core:   `${TERRAIN}struct_reactor_core.svg`,
+  struct_vektran_tower:    `${TERRAIN}struct_vektran_tower.png`,
+  struct_turret_base:    `${TERRAIN}struct_turret_base.png`,
+  struct_heavy_gate:     `${TERRAIN}struct_heavy_gate.png`,
+  struct_reactor_core:   `${TERRAIN}struct_reactor_core.png`,
 
   // Level 6 Props (Shipyard)
   prop_scrap_metal:      `${TERRAIN}prop_scrap_metal.svg`,
