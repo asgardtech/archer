@@ -11,6 +11,7 @@ import { EnemyWeaponSystem } from "./systems/EnemyWeaponSystem";
 import { SaveSystem } from "./systems/SaveSystem";
 import { PerformanceManager } from "./systems/PerformanceManager";
 import { PlayerStatsTracker } from "./systems/achievements/PlayerStatsTracker";
+import { AchievementManager } from "./systems/achievements/AchievementManager";
 import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponCommands, registerPowerUpCommands, registerPlayerCommands, registerCombatCommands } from "./systems/CommandRegistry";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
@@ -124,6 +125,8 @@ export class RaptorGame implements IGame {
   private nextStoryMessageIndex = 0;
   private perfManager: PerformanceManager;
   private statsTracker = new PlayerStatsTracker();
+  private achievementManager: AchievementManager;
+  private achievementCheckTimer = 0;
   private skyGradientCanvas: HTMLCanvasElement | null = null;
   private cachedSkyGradient: [string, string] | null = null;
   private playTimeSeconds = 0;
@@ -182,6 +185,8 @@ export class RaptorGame implements IGame {
     this.terrainRenderer = new TerrainRenderer(width, height, this.assets);
 
     this.perfManager = new PerformanceManager();
+    this.achievementManager = new AchievementManager(this.statsTracker);
+    this.achievementManager.onUnlock = (_a) => { /* future: toast notification */ };
     this.initStars(60);
     this.setupResize();
   }
@@ -715,6 +720,11 @@ export class RaptorGame implements IGame {
     this.levelElapsed += dt;
     this.playTimeSeconds += dt;
     this.statsTracker.addPlayTime(dt);
+    this.achievementCheckTimer += dt;
+    if (this.achievementCheckTimer >= 5) {
+      this.achievementCheckTimer = 0;
+      this.achievementManager.checkAchievements();
+    }
     this.hud.updateWingmanTimer(dt);
     this.input.updateFromKeyboard(dt, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
@@ -1085,6 +1095,9 @@ export class RaptorGame implements IGame {
           this.sound.play("enemy_missile_hit");
           this.vfx.triggerExplosionFlash(hit.bullet.pos.x, hit.bullet.pos.y, 15);
         }
+        if (this.player.armor > 0 && this.player.armor < this.player.maxArmor * 0.1) {
+          this.achievementManager.fireEvent("armor_below_10pct");
+        }
       }
     }
 
@@ -1113,10 +1126,15 @@ export class RaptorGame implements IGame {
         this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
         this.vfx.triggerScreenShake(8, 0.4);
         this.weaponSystem.laserBeam.active = false;
-      } else if (this.enemyLaserHitSoundCooldown <= 0) {
-        this.sound.play("enemy_laser_hit");
-        this.vfx.triggerScreenShake(1, 0.05);
-        this.enemyLaserHitSoundCooldown = 0.15;
+      } else {
+        if (this.enemyLaserHitSoundCooldown <= 0) {
+          this.sound.play("enemy_laser_hit");
+          this.vfx.triggerScreenShake(1, 0.05);
+          this.enemyLaserHitSoundCooldown = 0.15;
+        }
+        if (this.player.armor > 0 && this.player.armor < this.player.maxArmor * 0.1) {
+          this.achievementManager.fireEvent("armor_below_10pct");
+        }
       }
     }
 
@@ -1129,6 +1147,8 @@ export class RaptorGame implements IGame {
       this.score += hit.enemy.scoreValue;
       this.statsTracker.recordRamKill(hit.enemy.variant, hit.enemy.scoreValue, isBossVariant(hit.enemy.variant));
       this.statsTracker.updateScore(this.score, this.totalScore + this.score);
+      this.achievementManager.fireEvent("ram_kill");
+      this.achievementManager.checkAchievements();
       if (isBossVariant(hit.enemy.variant)) {
         this.sound.play("boss_destroy");
         this.spawner.markBossDefeated();
@@ -1149,6 +1169,9 @@ export class RaptorGame implements IGame {
       } else {
         this.sound.play("player_hit");
         this.vfx.triggerScreenShake(4, 0.2);
+        if (this.player.armor > 0 && this.player.armor < this.player.maxArmor * 0.1) {
+          this.achievementManager.fireEvent("armor_below_10pct");
+        }
       }
     }
 
@@ -1196,6 +1219,9 @@ export class RaptorGame implements IGame {
           if (this.player.bombs < this.player.maxBombs) {
             this.player.bombs++;
           }
+          if (this.player.bombs >= this.player.maxBombs) {
+            this.achievementManager.fireEvent("bombs_at_max");
+          }
           break;
         case "shield-battery":
           if (this.player.shieldBattery >= this.player.maxShieldBattery) {
@@ -1211,6 +1237,7 @@ export class RaptorGame implements IGame {
           this.powerUpManager.activate("deflector");
           break;
       }
+      this.achievementManager.checkAchievements();
     }
 
     RaptorGame.compactAlive(this.projectiles);
@@ -1237,6 +1264,16 @@ export class RaptorGame implements IGame {
       this.totalScore += this.score;
       this.statsTracker.updateScore(this.score, this.totalScore);
       this.statsTracker.recordLevelComplete(this.currentLevel, this.levelElapsed, 0);
+
+      this.achievementManager.fireEvent("level_complete");
+      if (this.statsTracker.getStats().damageTakenThisLevel === 0) {
+        this.achievementManager.fireEvent("no_damage_level");
+      }
+      if (this.levelElapsed < 120) {
+        this.achievementManager.fireEvent("level_under_2min");
+      }
+      this.achievementManager.checkAchievements();
+
       this.projectiles = [];
       this.enemyBullets = [];
       this.powerUps = [];
@@ -1299,6 +1336,8 @@ export class RaptorGame implements IGame {
         this.spawnPowerUp(enemy.pos.x, enemy.pos.y);
       }
     }
+
+    this.achievementManager.checkAchievements();
   }
 
   private handleWeaponPickup(weaponType: WeaponType): void {
@@ -1311,6 +1350,10 @@ export class RaptorGame implements IGame {
       this.hud.triggerTierFlash();
     }
     this.statsTracker.recordWeaponUpgrade(weaponType, this.powerUpManager.weaponTier);
+    if (this.powerUpManager.weaponTier >= 3) {
+      this.achievementManager.fireEvent("weapon_tier_3");
+    }
+    this.achievementManager.checkAchievements();
   }
 
   private assignProjectileSprite(proj: Projectile): void {
@@ -1423,6 +1466,7 @@ export class RaptorGame implements IGame {
     this.totalScore = 0;
     this.playTimeSeconds = 0;
     this.statsTracker.resetAll();
+    this.achievementManager.reset();
     this.vfx.reset();
     this.hud.setCompletionText(null);
     this.hud.setVictoryStoryActive(false);
@@ -1605,6 +1649,7 @@ export class RaptorGame implements IGame {
     if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
 
     this.levelElapsed = 0;
+    this.achievementCheckTimer = 0;
     this.nextStoryMessageIndex = 0;
     this.hud.setCompletionText(null);
     this.hud.setVictoryStoryActive(false);
