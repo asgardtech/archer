@@ -478,6 +478,7 @@ export class HUD {
       case "briefing":
         break;
       case "playing":
+      case "paused":
         this.renderPlayingHUD(ctx, score, lives, armor, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isEnergyRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction, energy);
         this.renderBottomBar(ctx, width, height, currentWeapon ?? "machine-gun", inventory, bombs ?? 0, weaponTier ?? 1, chargeLevel ?? 0);
         break;
@@ -1941,6 +1942,93 @@ export class HUD {
       ctx.fillStyle = i < bombs ? "#e74c3c" : "rgba(255, 255, 255, 0.15)";
       ctx.fill();
     }
+
+    ctx.restore();
+  }
+
+  // --- Pause menu ---
+
+  private getPauseMenuRect(width: number, height: number) {
+    const panelW = 340;
+    const panelH = 200;
+    const px = (width - panelW) / 2;
+    const py = (height - panelH) / 2;
+    return { px, py, panelW, panelH };
+  }
+
+  private getResumeButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getPauseMenuRect(width, height);
+    const btnW = 200;
+    const btnH = 36;
+    const btnX = px + (panelW - btnW) / 2;
+    const btnY = py + 90;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  private getQuitButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getPauseMenuRect(width, height);
+    const btnW = 200;
+    const btnH = 36;
+    const btnX = px + (panelW - btnW) / 2;
+    const btnY = py + 140;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  isResumeButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getResumeButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  isQuitButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getQuitButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  renderPauseMenu(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, width, height);
+
+    const { px, py, panelW, panelH } = this.getPauseMenuRect(width, height);
+
+    const panelGrad = ctx.createLinearGradient(px, py, px, py + panelH);
+    panelGrad.addColorStop(0, "rgba(15, 25, 50, 0.92)");
+    panelGrad.addColorStop(1, "rgba(5, 10, 25, 0.96)");
+    ctx.fillStyle = panelGrad;
+    this.roundedRect(ctx, px, py, panelW, panelH, 12);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(100, 140, 220, 0.3)";
+    ctx.lineWidth = 1;
+    this.roundedRect(ctx, px, py, panelW, panelH, 12);
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = `20px ${RETRO_FONT}`;
+    ctx.fillText("PAUSED", width / 2, py + 45);
+
+    const resumeBtn = this.getResumeButtonRect(width, height);
+    ctx.fillStyle = "#2ecc71";
+    this.roundedRect(ctx, resumeBtn.x, resumeBtn.y, resumeBtn.w, resumeBtn.h, 6);
+    ctx.fill();
+    ctx.font = `12px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("RESUME", resumeBtn.x + resumeBtn.w / 2, resumeBtn.y + resumeBtn.h / 2);
+
+    const quitBtn = this.getQuitButtonRect(width, height);
+    ctx.fillStyle = "rgba(231, 76, 60, 0.8)";
+    this.roundedRect(ctx, quitBtn.x, quitBtn.y, quitBtn.w, quitBtn.h, 6);
+    ctx.fill();
+    ctx.font = `10px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("QUIT TO MENU", quitBtn.x + quitBtn.w / 2, quitBtn.y + quitBtn.h / 2);
 
     ctx.restore();
   }

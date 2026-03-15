@@ -471,10 +471,13 @@ export class RaptorGame implements IGame {
     if (this.handleUIClicks()) return;
 
     if (this.state === "playing" && this.input.wasEscPressed) {
-      this.weaponSystem.laserBeam.active = false;
-      this.sound.stopMusic();
-      this.state = "menu";
-      this.refreshSaveStatus().catch(console.error);
+      this.state = "paused";
+      this.input.consume();
+      return;
+    }
+
+    if (this.state === "paused" && this.input.wasEscPressed) {
+      this.state = "playing";
       this.input.consume();
       return;
     }
@@ -598,6 +601,19 @@ export class RaptorGame implements IGame {
 
       case "playing":
         this.updatePlaying(dt);
+        break;
+
+      case "paused":
+        if (this.input.wasClicked) {
+          if (this.hud.isResumeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+            this.state = "playing";
+          } else if (this.hud.isQuitButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+            this.weaponSystem.laserBeam.active = false;
+            this.sound.stopMusic();
+            this.state = "menu";
+            this.refreshSaveStatus().catch(console.error);
+          }
+        }
         break;
 
       case "level_complete":
@@ -1712,6 +1728,7 @@ export class RaptorGame implements IGame {
 
     if (
       this.state === "playing" ||
+      this.state === "paused" ||
       this.state === "gameover" ||
       this.state === "level_complete"
     ) {
@@ -1745,7 +1762,7 @@ export class RaptorGame implements IGame {
     this.vfx.applyPostRender(this.ctx);
 
     const config = this.currentLevelConfig;
-    const displayScore = this.state === "playing" ? this.score : this.totalScore;
+    const displayScore = (this.state === "playing" || this.state === "paused") ? this.score : this.totalScore;
     this.hud.render(
       this.ctx,
       this.state,
@@ -1772,8 +1789,12 @@ export class RaptorGame implements IGame {
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
     this.hud.renderSettingsButton(this.ctx, this.width);
 
-    if (this.state === "playing" || (this.state === "victory" && this.storyRenderer.isActive)) {
+    if (this.state === "playing" || this.state === "paused" || (this.state === "victory" && this.storyRenderer.isActive)) {
       this.storyRenderer.render(this.ctx, this.width, this.height);
+    }
+
+    if (this.state === "paused") {
+      this.hud.renderPauseMenu(this.ctx, this.width, this.height);
     }
 
     if (this.settingsOpen) {
