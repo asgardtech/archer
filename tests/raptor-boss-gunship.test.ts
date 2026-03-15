@@ -399,7 +399,7 @@ describe("EnemySpawner — boss_gunship wiring", () => {
 
 describe("Asset manifest includes boss_gunship sprite key", () => {
   test("ASSET_MANIFEST contains enemy_boss_gunship", () => {
-    expect(ASSET_MANIFEST.enemy_boss_gunship).toBe("assets/raptor/enemy_boss_gunship.svg");
+    expect(ASSET_MANIFEST.enemy_boss_gunship).toBe("assets/raptor/enemy_boss_gunship.png");
   });
 });
 
