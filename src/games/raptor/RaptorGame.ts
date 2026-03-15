@@ -127,6 +127,9 @@ export class RaptorGame implements IGame {
   public onExit: (() => void) | null = null;
   private activeSlot = 0;
   private _hasSaveData = false;
+  private slotData: (RaptorSaveData | null)[] = [null, null, null];
+  private slotDataLoaded = false;
+  private slotLoadingInProgress = false;
 
   get saveSlot(): number {
     return this.activeSlot;
@@ -468,34 +471,84 @@ export class RaptorGame implements IGame {
       case "menu":
         this.updateBackground(dt);
         if (this.input.wasClicked) {
-          const hasSave = this.hasSaveData;
-          if (hasSave) {
-            if (this.hud.isContinueButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
-              this.audio.ensureContext();
-              this.sound.play("menu_start");
-              this.continueGame().then(() => {
-                this.state = "playing";
-                this.sound.startMusic("playing", this.currentLevel);
-              }).catch(console.error);
-            } else if (this.hud.isNewGameButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
-              this.audio.ensureContext();
-              this.sound.play("menu_start");
-              SaveSystem.clear(this.activeSlot).catch(console.error);
-              this._hasSaveData = false;
-              this.resetGame();
-              const act = getActForLevel(0);
-              this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
-              this.state = "story_intro";
-              this.sound.startMusic("playing", 0);
-            }
-          } else {
+          if (this.hud.isPlayButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.audio.ensureContext();
             this.sound.play("menu_start");
-            this.resetGame();
-            const act = getActForLevel(0);
-            this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
-            this.state = "story_intro";
-            this.sound.startMusic("playing", 0);
+            this.slotDataLoaded = false;
+            this.state = "slot_select";
+            SaveSystem.listSlots().then(slots => {
+              this.slotData = slots;
+              this.slotDataLoaded = true;
+            }).catch(e => {
+              console.error(e);
+              this.slotData = [null, null, null];
+              this.slotDataLoaded = true;
+            });
+          }
+        }
+        break;
+
+      case "slot_select":
+        this.updateBackground(dt);
+        if (this.input.wasEscPressed) {
+          if (this.hud.deleteConfirmActive !== null) {
+            this.hud.setDeleteConfirm(null);
+          } else {
+            this.state = "menu";
+          }
+          break;
+        }
+        if (!this.input.wasClicked || !this.slotDataLoaded || this.slotLoadingInProgress) break;
+
+        {
+          const mx = this.input.mouseX;
+          const my = this.input.mouseY;
+
+          if (this.hud.deleteConfirmActive !== null) {
+            const confirmSlot = this.hud.deleteConfirmActive;
+            if (this.hud.isDeleteConfirmYesHit(mx, my, this.width, this.height)) {
+              SaveSystem.clear(confirmSlot).then(() => {
+                this.slotData[confirmSlot] = null;
+                this.hud.setDeleteConfirm(null);
+                this.refreshSaveStatus().catch(console.error);
+              }).catch(console.error);
+            } else if (this.hud.isDeleteConfirmNoHit(mx, my, this.width, this.height)) {
+              this.hud.setDeleteConfirm(null);
+            }
+            break;
+          }
+
+          if (this.hud.isBackButtonHit(mx, my, this.width, this.height)) {
+            this.state = "menu";
+            break;
+          }
+
+          for (let i = 0; i < MAX_SAVE_SLOTS; i++) {
+            if (this.hud.isSlotDeleteHit(mx, my, i, this.width, this.height) && this.slotData[i]) {
+              this.hud.setDeleteConfirm(i);
+              break;
+            }
+            if (this.hud.isSlotCardHit(mx, my, i, this.width, this.height)) {
+              this.activeSlot = i;
+              if (this.slotData[i]) {
+                this.slotLoadingInProgress = true;
+                this.continueGame().then(() => {
+                  this.state = "playing";
+                  this.sound.startMusic("playing", this.currentLevel);
+                  this.slotLoadingInProgress = false;
+                }).catch(e => {
+                  console.error(e);
+                  this.slotLoadingInProgress = false;
+                });
+              } else {
+                this.resetGame();
+                const act = getActForLevel(0);
+                this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
+                this.state = "story_intro";
+                this.sound.startMusic("playing", 0);
+              }
+              break;
+            }
           }
         }
         break;
@@ -1597,6 +1650,13 @@ export class RaptorGame implements IGame {
     this.vfx.applyPreRender(this.ctx);
 
     this.renderBackground();
+
+    if (this.state === "slot_select") {
+      this.hud.renderSlotSelect(
+        this.ctx, this.slotData, this.width, this.height,
+        this.input.mouseX, this.input.mouseY
+      );
+    }
 
     if (this.state === "story_intro") {
       this.storyRenderer.render(this.ctx, this.width, this.height);

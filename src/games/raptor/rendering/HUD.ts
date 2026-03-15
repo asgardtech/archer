@@ -1,4 +1,5 @@
-import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SpeakerType, ActStory } from "../types";
+import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SpeakerType, ActStory, RaptorSaveData, MAX_SAVE_SLOTS } from "../types";
+import { LEVELS } from "../levels";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
 import { ShipRenderer } from "./ShipRenderer";
@@ -91,6 +92,7 @@ export class HUD {
   private _victoryStoryActive = false;
   private actEnd: ActStory | null = null;
   private measureCtx: CanvasRenderingContext2D;
+  private deleteConfirmSlot: number | null = null;
   private shipRenderer = new ShipRenderer();
 
   private wingmanText = "";
@@ -470,6 +472,8 @@ export class HUD {
       case "menu":
         this.renderMenu(ctx, width, height, hasSave);
         break;
+      case "slot_select":
+        break;
       case "story_intro":
       case "briefing":
         break;
@@ -586,6 +590,20 @@ export class HUD {
     return { x: btnX, y: btnY, w: btnW, h: btnH };
   }
 
+  private getPlayButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getMenuPanelRect(width, height);
+    const btnW = 200;
+    const btnH = 36;
+    const btnX = px + (panelW - btnW) / 2;
+    const btnY = py + 120;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  isPlayButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getPlayButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
   isContinueButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getContinueButtonRect(width, height);
     return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
@@ -626,39 +644,15 @@ export class HUD {
     ctx.fillStyle = "#B0C4DE";
     ctx.fillText("A Vertical Scrolling Shoot-em-up", width / 2, py + 90);
 
-    if (hasSave) {
-      const contBtn = this.getContinueButtonRect(width, height);
-      ctx.fillStyle = "#2ecc71";
-      this.roundedRect(ctx, contBtn.x, contBtn.y, contBtn.w, contBtn.h, 6);
-      ctx.fill();
-      ctx.font = `10px ${RETRO_FONT}`;
-      ctx.fillStyle = "#FFFFFF";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("Continue", contBtn.x + contBtn.w / 2, contBtn.y + contBtn.h / 2);
-
-      const newBtn = this.getNewGameButtonRect(width, height);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-      this.roundedRect(ctx, newBtn.x, newBtn.y, newBtn.w, newBtn.h, 6);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-      ctx.lineWidth = 1;
-      this.roundedRect(ctx, newBtn.x, newBtn.y, newBtn.w, newBtn.h, 6);
-      ctx.stroke();
-      ctx.font = `10px ${RETRO_FONT}`;
-      ctx.fillStyle = "#B0C4DE";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("New Game", newBtn.x + newBtn.w / 2, newBtn.y + newBtn.h / 2);
-    } else {
-      ctx.font = `10px ${RETRO_FONT}`;
-      ctx.fillStyle = "#FFD700";
-      ctx.fillText(
-        this.isTouchDevice ? "Tap to Start" : "Click to Start",
-        width / 2,
-        py + 140
-      );
-    }
+    const playBtn = this.getPlayButtonRect(width, height);
+    ctx.fillStyle = "#2ecc71";
+    this.roundedRect(ctx, playBtn.x, playBtn.y, playBtn.w, playBtn.h, 6);
+    ctx.fill();
+    ctx.font = `12px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("PLAY", playBtn.x + playBtn.w / 2, playBtn.y + playBtn.h / 2);
 
     ctx.font = `7px ${RETRO_FONT}`;
     ctx.fillStyle = "#8899AA";
@@ -677,6 +671,294 @@ export class HUD {
     ctx.fillText(`v${__APP_VERSION__}`, width - 8, height - 4);
 
     ctx.restore();
+  }
+
+  // --- Slot selection screen ---
+
+  private getSlotCardRect(slotIndex: number, width: number, height: number) {
+    const cardW = 600;
+    const cardH = 80;
+    const gap = 12;
+    const totalH = MAX_SAVE_SLOTS * cardH + (MAX_SAVE_SLOTS - 1) * gap;
+    const startY = (height - totalH) / 2 - 10;
+    const x = (width - cardW) / 2;
+    const y = startY + slotIndex * (cardH + gap);
+    return { x, y, w: cardW, h: cardH };
+  }
+
+  private getSlotDeleteButtonRect(slotIndex: number, width: number, height: number) {
+    const card = this.getSlotCardRect(slotIndex, width, height);
+    const size = 28;
+    return { x: card.x + card.w - size - 8, y: card.y + 8, w: size, h: size };
+  }
+
+  private getBackButtonRect(width: number, height: number) {
+    const lastCard = this.getSlotCardRect(MAX_SAVE_SLOTS - 1, width, height);
+    const btnW = 120;
+    const btnH = 32;
+    return { x: (width - btnW) / 2, y: lastCard.y + lastCard.h + 20, w: btnW, h: btnH };
+  }
+
+  private getDeleteConfirmRect(width: number, height: number) {
+    const w = 340;
+    const h = 100;
+    return { x: (width - w) / 2, y: (height - h) / 2, w, h };
+  }
+
+  private formatSaveDate(isoString: string): string {
+    try {
+      const saved = new Date(isoString);
+      if (isNaN(saved.getTime())) return isoString;
+      const now = Date.now();
+      const diffMs = now - saved.getTime();
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) return "Just now";
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffH = Math.floor(diffMin / 60);
+      if (diffH < 24) return `${diffH}h ago`;
+      const diffD = Math.floor(diffH / 24);
+      if (diffD < 30) return `${diffD}d ago`;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${months[saved.getMonth()]} ${saved.getDate()}, ${saved.getFullYear()}`;
+    } catch {
+      return "Unknown date";
+    }
+  }
+
+  setDeleteConfirm(slot: number | null): void {
+    this.deleteConfirmSlot = slot;
+  }
+
+  get deleteConfirmActive(): number | null {
+    return this.deleteConfirmSlot;
+  }
+
+  renderSlotSelect(
+    ctx: CanvasRenderingContext2D,
+    slots: (RaptorSaveData | null)[],
+    width: number,
+    height: number,
+    mouseX: number,
+    mouseY: number
+  ): void {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillRect(0, 0, width, height);
+
+    const firstCard = this.getSlotCardRect(0, width, height);
+    ctx.font = `16px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("SELECT SAVE SLOT", width / 2, firstCard.y - 50);
+
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.fillStyle = "#B0C4DE";
+    ctx.fillText("Choose a slot to continue or start a new game", width / 2, firstCard.y - 28);
+
+    for (let i = 0; i < MAX_SAVE_SLOTS; i++) {
+      const card = this.getSlotCardRect(i, width, height);
+      const slot = slots[i] ?? null;
+      const hovered = mouseX >= card.x && mouseX <= card.x + card.w
+                   && mouseY >= card.y && mouseY <= card.y + card.h;
+
+      const panelGrad = ctx.createLinearGradient(card.x, card.y, card.x, card.y + card.h);
+      if (hovered) {
+        panelGrad.addColorStop(0, "rgba(20, 35, 65, 0.94)");
+        panelGrad.addColorStop(1, "rgba(10, 18, 35, 0.97)");
+      } else {
+        panelGrad.addColorStop(0, "rgba(15, 25, 50, 0.92)");
+        panelGrad.addColorStop(1, "rgba(5, 10, 25, 0.96)");
+      }
+      ctx.fillStyle = panelGrad;
+      this.roundedRect(ctx, card.x, card.y, card.w, card.h, 8);
+      ctx.fill();
+
+      ctx.strokeStyle = hovered
+        ? "rgba(100, 180, 255, 0.6)"
+        : "rgba(100, 140, 220, 0.3)";
+      ctx.lineWidth = hovered ? 1.5 : 1;
+      this.roundedRect(ctx, card.x, card.y, card.w, card.h, 8);
+      ctx.stroke();
+
+      if (slot) {
+        this.renderPopulatedSlotCard(ctx, i, slot, card, width, height);
+      } else {
+        this.renderEmptySlotCard(ctx, i, card);
+      }
+    }
+
+    const backBtn = this.getBackButtonRect(width, height);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+    this.roundedRect(ctx, backBtn.x, backBtn.y, backBtn.w, backBtn.h, 6);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 1;
+    this.roundedRect(ctx, backBtn.x, backBtn.y, backBtn.w, backBtn.h, 6);
+    ctx.stroke();
+    ctx.font = `9px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("BACK", backBtn.x + backBtn.w / 2, backBtn.y + backBtn.h / 2);
+
+    if (this.deleteConfirmSlot !== null) {
+      this.renderDeleteConfirmDialog(ctx, this.deleteConfirmSlot, width, height);
+    }
+
+    ctx.restore();
+  }
+
+  private renderPopulatedSlotCard(
+    ctx: CanvasRenderingContext2D,
+    index: number,
+    slot: RaptorSaveData,
+    card: { x: number; y: number; w: number; h: number },
+    width: number,
+    height: number
+  ): void {
+    const leftX = card.x + 16;
+
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(`SLOT ${index + 1}`, leftX, card.y + 20);
+
+    const levelName = LEVELS[slot.levelReached]?.name ?? "Unknown";
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFD700";
+    ctx.fillText(`LEVEL ${slot.levelReached + 1}: ${levelName.toUpperCase()}`, leftX, card.y + 38);
+
+    const midX = card.x + 280;
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.fillStyle = "#B0C4DE";
+    ctx.textAlign = "left";
+    ctx.fillText(`Score: ${slot.totalScore.toLocaleString()}`, midX, card.y + 20);
+
+    const weaponLabel = WEAPON_LABELS[slot.weapon] ?? slot.weapon;
+    ctx.fillStyle = WEAPON_COLORS[slot.weapon] ?? "#888";
+    ctx.fillText(`Weapon: ${weaponLabel}`, midX, card.y + 38);
+
+    ctx.fillStyle = "#667799";
+    ctx.fillText(this.formatSaveDate(slot.savedAt), midX, card.y + 56);
+
+    const delBtn = this.getSlotDeleteButtonRect(index, width, height);
+    ctx.fillStyle = "rgba(231, 76, 60, 0.6)";
+    this.roundedRect(ctx, delBtn.x, delBtn.y, delBtn.w, delBtn.h, 4);
+    ctx.fill();
+    ctx.font = `12px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("\u00D7", delBtn.x + delBtn.w / 2, delBtn.y + delBtn.h / 2);
+  }
+
+  private renderEmptySlotCard(
+    ctx: CanvasRenderingContext2D,
+    index: number,
+    card: { x: number; y: number; w: number; h: number }
+  ): void {
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#667799";
+    ctx.fillText(`SLOT ${index + 1} \u2014 EMPTY`, card.x + 16, card.y + card.h / 2 - 8);
+
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.fillStyle = "#2ecc71";
+    ctx.fillText("NEW GAME", card.x + 16, card.y + card.h / 2 + 12);
+  }
+
+  private renderDeleteConfirmDialog(
+    ctx: CanvasRenderingContext2D,
+    slotIndex: number,
+    width: number,
+    height: number
+  ): void {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillRect(0, 0, width, height);
+
+    const rect = this.getDeleteConfirmRect(width, height);
+
+    const grad = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.h);
+    grad.addColorStop(0, "rgba(30, 15, 15, 0.96)");
+    grad.addColorStop(1, "rgba(15, 5, 5, 0.98)");
+    ctx.fillStyle = grad;
+    this.roundedRect(ctx, rect.x, rect.y, rect.w, rect.h, 10);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(231, 76, 60, 0.5)";
+    ctx.lineWidth = 1;
+    this.roundedRect(ctx, rect.x, rect.y, rect.w, rect.h, 10);
+    ctx.stroke();
+
+    ctx.font = `9px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`Delete save in Slot ${slotIndex + 1}?`, rect.x + rect.w / 2, rect.y + 30);
+
+    const btnW = 80;
+    const btnH = 28;
+    const gap = 20;
+    const yesX = rect.x + rect.w / 2 - btnW - gap / 2;
+    const noX = rect.x + rect.w / 2 + gap / 2;
+    const btnY = rect.y + rect.h - btnH - 16;
+
+    ctx.fillStyle = "rgba(231, 76, 60, 0.8)";
+    this.roundedRect(ctx, yesX, btnY, btnW, btnH, 5);
+    ctx.fill();
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("YES", yesX + btnW / 2, btnY + btnH / 2);
+
+    ctx.fillStyle = "rgba(127, 140, 141, 0.8)";
+    this.roundedRect(ctx, noX, btnY, btnW, btnH, 5);
+    ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText("NO", noX + btnW / 2, btnY + btnH / 2);
+  }
+
+  isSlotCardHit(clickX: number, clickY: number, slotIndex: number, width: number, height: number): boolean {
+    const card = this.getSlotCardRect(slotIndex, width, height);
+    return clickX >= card.x && clickX <= card.x + card.w
+        && clickY >= card.y && clickY <= card.y + card.h;
+  }
+
+  isSlotDeleteHit(clickX: number, clickY: number, slotIndex: number, width: number, height: number): boolean {
+    const btn = this.getSlotDeleteButtonRect(slotIndex, width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w
+        && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  isBackButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getBackButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w
+        && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  isDeleteConfirmYesHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const rect = this.getDeleteConfirmRect(width, height);
+    const btnW = 80;
+    const btnH = 28;
+    const gap = 20;
+    const yesX = rect.x + rect.w / 2 - btnW - gap / 2;
+    const btnY = rect.y + rect.h - btnH - 16;
+    return clickX >= yesX && clickX <= yesX + btnW
+        && clickY >= btnY && clickY <= btnY + btnH;
+  }
+
+  isDeleteConfirmNoHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const rect = this.getDeleteConfirmRect(width, height);
+    const btnW = 80;
+    const btnH = 28;
+    const gap = 20;
+    const noX = rect.x + rect.w / 2 + gap / 2;
+    const btnY = rect.y + rect.h - btnH - 16;
+    return clickX >= noX && clickX <= noX + btnW
+        && clickY >= btnY && clickY <= btnY + btnH;
   }
 
   private renderPlayingHUD(

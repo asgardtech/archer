@@ -6,6 +6,7 @@ export interface Vec2 {
 export type RaptorGameState =
   | "loading"
   | "menu"
+  | "slot_select"
   | "story_intro"
   | "briefing"
   | "playing"
