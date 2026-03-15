@@ -135,6 +135,95 @@ export class PlayerStatsTracker {
     this.stats = defaultStats();
   }
 
+  serialize(): PlayerStats {
+    const stats = this.getStats();
+    stats.damageTakenThisLevel = 0;
+    stats.lowestArmorSurvived = 100;
+    return stats;
+  }
+
+  deserialize(saved: Partial<PlayerStats>): void {
+    if (!saved || typeof saved !== "object") return;
+
+    const s = this.stats;
+
+    if (typeof saved.totalKills === "number" && saved.totalKills >= 0 && Number.isInteger(saved.totalKills)) {
+      s.totalKills = saved.totalKills;
+    }
+    if (typeof saved.bossesDefeated === "number" && saved.bossesDefeated >= 0 && Number.isInteger(saved.bossesDefeated)) {
+      s.bossesDefeated = saved.bossesDefeated;
+    }
+    if (typeof saved.ramKills === "number" && saved.ramKills >= 0 && Number.isInteger(saved.ramKills)) {
+      s.ramKills = saved.ramKills;
+    }
+    if (typeof saved.totalScore === "number" && saved.totalScore >= 0) {
+      s.totalScore = saved.totalScore;
+    }
+    if (typeof saved.levelsCompleted === "number" && saved.levelsCompleted >= 0 && Number.isInteger(saved.levelsCompleted)) {
+      s.levelsCompleted = saved.levelsCompleted;
+    }
+    if (typeof saved.highestLevelCompleted === "number" && saved.highestLevelCompleted >= 0 && Number.isInteger(saved.highestLevelCompleted)) {
+      s.highestLevelCompleted = saved.highestLevelCompleted;
+    }
+    if (typeof saved.totalDeaths === "number" && saved.totalDeaths >= 0 && Number.isInteger(saved.totalDeaths)) {
+      s.totalDeaths = saved.totalDeaths;
+    }
+    if (typeof saved.totalDodgesUsed === "number" && saved.totalDodgesUsed >= 0 && Number.isInteger(saved.totalDodgesUsed)) {
+      s.totalDodgesUsed = saved.totalDodgesUsed;
+    }
+    if (typeof saved.totalEmpsUsed === "number" && saved.totalEmpsUsed >= 0 && Number.isInteger(saved.totalEmpsUsed)) {
+      s.totalEmpsUsed = saved.totalEmpsUsed;
+    }
+    if (typeof saved.totalPowerUpsCollected === "number" && saved.totalPowerUpsCollected >= 0 && Number.isInteger(saved.totalPowerUpsCollected)) {
+      s.totalPowerUpsCollected = saved.totalPowerUpsCollected;
+    }
+    if (typeof saved.highestWeaponTier === "number" && saved.highestWeaponTier >= 0 && saved.highestWeaponTier <= 3 && Number.isInteger(saved.highestWeaponTier)) {
+      s.highestWeaponTier = saved.highestWeaponTier;
+    }
+    if (typeof saved.projectilesReflected === "number" && saved.projectilesReflected >= 0 && Number.isInteger(saved.projectilesReflected)) {
+      s.projectilesReflected = saved.projectilesReflected;
+    }
+    if (typeof saved.totalPlayTimeSeconds === "number" && saved.totalPlayTimeSeconds >= 0) {
+      s.totalPlayTimeSeconds = saved.totalPlayTimeSeconds;
+    }
+
+    if (saved.killsByVariant && typeof saved.killsByVariant === "object" && !Array.isArray(saved.killsByVariant)) {
+      const merged: Record<string, number> = {};
+      for (const [k, v] of Object.entries(saved.killsByVariant)) {
+        if (typeof v === "number" && v >= 0 && Number.isInteger(v)) {
+          merged[k] = v;
+        }
+      }
+      s.killsByVariant = merged;
+    }
+
+    if (saved.powerUpsByType && typeof saved.powerUpsByType === "object" && !Array.isArray(saved.powerUpsByType)) {
+      const merged: Record<string, number> = {};
+      for (const [k, v] of Object.entries(saved.powerUpsByType)) {
+        if (typeof v === "number" && v >= 0 && Number.isInteger(v)) {
+          merged[k] = v;
+        }
+      }
+      s.powerUpsByType = merged;
+    }
+
+    if (Array.isArray(saved.weaponsOwned)) {
+      const valid = saved.weaponsOwned.filter((w): w is string => typeof w === "string" && w.length > 0);
+      s.weaponsOwned = valid.length > 0 ? valid : ["machine-gun"];
+    }
+
+    if (saved.fastestLevelCompletionSeconds && typeof saved.fastestLevelCompletionSeconds === "object" && !Array.isArray(saved.fastestLevelCompletionSeconds)) {
+      const merged: Record<number, number> = {};
+      for (const [k, v] of Object.entries(saved.fastestLevelCompletionSeconds)) {
+        const key = Number(k);
+        if (!isNaN(key) && typeof v === "number" && v > 0) {
+          merged[key] = v;
+        }
+      }
+      s.fastestLevelCompletionSeconds = merged;
+    }
+  }
+
   getStats(): PlayerStats {
     return {
       ...this.stats,
