@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS } from "./types";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
@@ -174,7 +174,7 @@ export class RaptorGame implements IGame {
     this.hud = new HUD(this.input.isTouchDevice);
     this.audio = new AudioManager();
     this.sound = new SoundSystem(this.audio);
-    this.player = new Player(width, height - HUD_BAR_HEIGHT);
+    this.player = new Player(this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
     this.assets = new AssetLoader();
     this.vfx = new VFXManager();
     this.terrainRenderer = new TerrainRenderer(width, height, this.assets);
@@ -188,9 +188,10 @@ export class RaptorGame implements IGame {
     return LEVELS[this.currentLevel];
   }
 
-  private get gameAreaHeight(): number {
-    return this.height - HUD_BAR_HEIGHT;
-  }
+  get gameAreaX(): number { return HUD_LEFT_PANEL_WIDTH; }
+  get gameAreaY(): number { return HUD_TOP_BAR_HEIGHT; }
+  get gameAreaWidth(): number { return this.width - HUD_LEFT_PANEL_WIDTH - HUD_RIGHT_PANEL_WIDTH; }
+  get gameAreaHeight(): number { return this.height - HUD_TOP_BAR_HEIGHT - HUD_BAR_HEIGHT; }
 
   private setupResize(): void {
     const resize = () => {
@@ -352,13 +353,13 @@ export class RaptorGame implements IGame {
 
     if (!this.input.wasClicked) return false;
 
-    if (this.hud.isSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width)) {
+    if (this.hud.isSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
       this.settingsOpen = true;
       this.input.consume();
       return true;
     }
 
-    if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width)) {
+    if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
       this.audio.ensureContext();
       this.audio.toggleMute();
       this.persistSettings();
@@ -412,7 +413,7 @@ export class RaptorGame implements IGame {
       return true;
     }
 
-    if (this.hud.isMuteButtonHit(mx, my, this.width)) {
+    if (this.hud.isMuteButtonHit(mx, my, this.width, HUD_RIGHT_PANEL_WIDTH)) {
       this.audio.ensureContext();
       this.audio.toggleMute();
       this.persistSettings();
@@ -685,8 +686,8 @@ export class RaptorGame implements IGame {
     this.levelElapsed += dt;
     this.playTimeSeconds += dt;
     this.hud.updateWingmanTimer(dt);
-    this.input.updateFromKeyboard(dt, this.width, this.gameAreaHeight);
-    this.player.update(dt, this.input.targetX, this.input.targetY, this.width, this.gameAreaHeight);
+    this.input.updateFromKeyboard(dt, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
+    this.player.update(dt, this.input.targetX, this.input.targetY, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
     if (this.player.alive) {
       this.vfx.addEngineTrail(this.player.pos.x, this.player.pos.y + this.player.height / 2, ShipRenderer.getEngineSpacing(this.player.width));
     }
@@ -734,7 +735,7 @@ export class RaptorGame implements IGame {
     if (this.input.wasBombPressed && this.player.bombs > 0) {
       this.player.bombs--;
       this.sound.play("mega_bomb_fire");
-      this.vfx.triggerMegaBombFlash(this.width, this.height);
+      this.vfx.triggerMegaBombFlash(this.gameAreaWidth + this.gameAreaX, this.gameAreaHeight + this.gameAreaY);
       this.vfx.triggerScreenShake(12, 0.6);
       for (const enemy of this.enemies) {
         if (enemy.alive) {
@@ -774,7 +775,7 @@ export class RaptorGame implements IGame {
 
     const { newProjectiles, soundEvent } = this.weaponSystem.update(
       dt, this.player, config, this.powerUpManager,
-      this.width, this.projectiles
+      this.gameAreaWidth + this.gameAreaX, this.projectiles
     );
 
     for (const proj of newProjectiles) {
@@ -803,14 +804,14 @@ export class RaptorGame implements IGame {
       }
     }
 
-    const newEnemies = this.spawner.update(dt, this.width);
+    const newEnemies = this.spawner.update(dt, this.gameAreaWidth, this.gameAreaX);
     for (const e of newEnemies) {
       this.assignEnemySprite(e);
       this.enemies.push(e);
     }
 
     if (this.spawner.shouldSpawnBoss()) {
-      const boss = this.spawner.spawnBoss(this.width);
+      const boss = this.spawner.spawnBoss(this.gameAreaWidth, this.gameAreaX);
       if (boss) {
         this.assignEnemySprite(boss);
         this.enemies.push(boss);
@@ -844,7 +845,7 @@ export class RaptorGame implements IGame {
     this.storyRenderer.update(dt);
 
     for (const enemy of this.enemies) {
-      enemy.update(dt, this.gameAreaHeight, this.player.pos.x, this.width);
+      enemy.update(dt, this.gameAreaHeight, this.player.pos.x, this.gameAreaWidth, this.gameAreaX, this.gameAreaY);
 
       if (enemy.canFire()) {
         const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
@@ -974,7 +975,7 @@ export class RaptorGame implements IGame {
       }
     }
     for (const eb of this.enemyBullets) {
-      eb.update(dt, this.width, this.gameAreaHeight, this.player.pos);
+      eb.update(dt, this.gameAreaWidth + this.gameAreaX, this.gameAreaHeight + this.gameAreaY, this.player.pos);
       if (eb instanceof EnemyMissile) {
         this.vfx.addMissileTrail(eb.pos.x, eb.pos.y, eb.heading);
       }
@@ -983,7 +984,7 @@ export class RaptorGame implements IGame {
       exp.update(dt);
     }
     for (const pu of this.powerUps) {
-      pu.update(dt, this.gameAreaHeight);
+      pu.update(dt, this.gameAreaHeight + this.gameAreaY);
     }
 
     const enemyHits = this.collisions.checkBulletsEnemies(this.projectiles, this.enemies);
@@ -1487,7 +1488,7 @@ export class RaptorGame implements IGame {
       enemyBullets: this.enemyBullets,
       spawnEnemy: (variant: EnemyVariant) => {
         const margin = 50;
-        const x = margin + Math.random() * (this.width - 2 * margin);
+        const x = this.gameAreaX + margin + Math.random() * (this.gameAreaWidth - 2 * margin);
         const enemy = new Enemy(x, -30, variant);
         this.assignEnemySprite(enemy);
         this.enemies.push(enemy);
@@ -1541,7 +1542,7 @@ export class RaptorGame implements IGame {
     this.enemyBullets = [];
     this.explosions = [];
     this.powerUps = [];
-    this.player.reset(this.width, this.gameAreaHeight, fullReset);
+    this.player.reset(this.gameAreaWidth, this.gameAreaHeight, fullReset, this.gameAreaX, this.gameAreaY);
 
     this.enemyWeaponSystem.resetLasers();
 
@@ -1706,6 +1707,8 @@ export class RaptorGame implements IGame {
 
     this.renderBackground();
 
+    this.renderSidePanelBackgrounds();
+
     if (this.state === "slot_select") {
       this.hud.renderSlotSelect(
         this.ctx, this.slotData, this.width, this.height,
@@ -1728,6 +1731,11 @@ export class RaptorGame implements IGame {
       this.state === "gameover" ||
       this.state === "level_complete"
     ) {
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.ctx.rect(this.gameAreaX, this.gameAreaY, this.gameAreaWidth, this.gameAreaHeight);
+      this.ctx.clip();
+
       this.vfx.renderTrails(this.ctx);
       this.vfx.renderMuzzleFlashes(this.ctx);
 
@@ -1753,6 +1761,8 @@ export class RaptorGame implements IGame {
       }
 
       this.player.render(this.ctx);
+
+      this.ctx.restore();
     }
 
     this.vfx.applyPostRender(this.ctx);
@@ -1782,8 +1792,8 @@ export class RaptorGame implements IGame {
       this.player.empCooldownFraction,
       this.player.energy
     );
-    this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width);
-    this.hud.renderSettingsButton(this.ctx, this.width);
+    this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width, HUD_RIGHT_PANEL_WIDTH);
+    this.hud.renderSettingsButton(this.ctx, this.width, HUD_RIGHT_PANEL_WIDTH);
 
     if (this.state === "playing" || (this.state === "victory" && this.storyRenderer.isActive)) {
       this.storyRenderer.render(this.ctx, this.width, this.height);
@@ -1806,7 +1816,7 @@ export class RaptorGame implements IGame {
       const fps = Math.round(1000 / avgFrameTime);
       this.ctx.font = "10px monospace";
       this.ctx.fillStyle = "rgba(0, 255, 65, 0.8)";
-      this.ctx.fillText(`FPS: ${fps}`, 30, 60);
+      this.ctx.fillText(`FPS: ${fps}`, this.gameAreaX + 10, this.gameAreaY + 16);
     }
 
     this.devConsole.render(this.ctx, this.width, this.height);
@@ -1846,6 +1856,41 @@ export class RaptorGame implements IGame {
     offCtx.fillStyle = grad;
     offCtx.fillRect(0, 0, 1, this.height);
     this.cachedSkyGradient = [config.skyGradient[0], config.skyGradient[1]];
+  }
+
+  private renderSidePanelBackgrounds(): void {
+    const ctx = this.ctx;
+    const panelTop = HUD_TOP_BAR_HEIGHT;
+    const panelBottom = this.height - HUD_BAR_HEIGHT;
+    const panelHeight = panelBottom - panelTop;
+
+    // Left panel
+    const leftGrad = ctx.createLinearGradient(0, panelTop, 0, panelBottom);
+    leftGrad.addColorStop(0, "rgb(0, 10, 30)");
+    leftGrad.addColorStop(1, "rgb(0, 5, 15)");
+    ctx.fillStyle = leftGrad;
+    ctx.fillRect(0, panelTop, HUD_LEFT_PANEL_WIDTH, panelHeight);
+
+    ctx.strokeStyle = "rgba(100, 160, 255, 0.15)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(HUD_LEFT_PANEL_WIDTH, panelTop);
+    ctx.lineTo(HUD_LEFT_PANEL_WIDTH, panelBottom);
+    ctx.stroke();
+
+    // Right panel
+    const rightX = this.width - HUD_RIGHT_PANEL_WIDTH;
+    const rightGrad = ctx.createLinearGradient(0, panelTop, 0, panelBottom);
+    rightGrad.addColorStop(0, "rgb(0, 10, 30)");
+    rightGrad.addColorStop(1, "rgb(0, 5, 15)");
+    ctx.fillStyle = rightGrad;
+    ctx.fillRect(rightX, panelTop, HUD_RIGHT_PANEL_WIDTH, panelHeight);
+
+    ctx.strokeStyle = "rgba(100, 160, 255, 0.15)";
+    ctx.beginPath();
+    ctx.moveTo(rightX, panelTop);
+    ctx.lineTo(rightX, panelBottom);
+    ctx.stroke();
   }
 
   private renderBackground(): void {

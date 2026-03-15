@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, SpeakerType, ActStory, RaptorSaveData, MAX_SAVE_SLOTS } from "../types";
+import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SpeakerType, ActStory, RaptorSaveData, MAX_SAVE_SLOTS } from "../types";
 import { LEVELS } from "../levels";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
@@ -14,10 +14,7 @@ const SLIDER_TRACK_H = 10;
 const SLIDER_HANDLE_W = 16;
 const SLIDER_HANDLE_H = 22;
 
-const SHIELD_BAR_X = 8;
-const SHIELD_BAR_W = 10;
-const SHIELD_BAR_H = 200;
-const SHIELD_BAR_TOP = 54;
+// Old overlay bar constants removed; bars now render inside the left panel
 
 const EFFECT_COLORS: Partial<Record<RaptorPowerUpType, string>> = {
   "spread-shot": "#3498db",
@@ -176,8 +173,8 @@ export class HUD {
     }
   }
 
-  renderMuteButton(ctx: CanvasRenderingContext2D, muted: boolean, canvasW: number): void {
-    const x = canvasW - MUTE_BTN_SIZE - MUTE_BTN_MARGIN;
+  renderMuteButton(ctx: CanvasRenderingContext2D, muted: boolean, canvasW: number, rightPanelWidth = 0): void {
+    const x = canvasW - rightPanelWidth - MUTE_BTN_SIZE - MUTE_BTN_MARGIN;
     const y = MUTE_BTN_MARGIN;
     const size = MUTE_BTN_SIZE;
 
@@ -195,8 +192,8 @@ export class HUD {
     ctx.restore();
   }
 
-  isMuteButtonHit(clickX: number, clickY: number, canvasW: number): boolean {
-    const x = canvasW - MUTE_BTN_SIZE - MUTE_BTN_MARGIN;
+  isMuteButtonHit(clickX: number, clickY: number, canvasW: number, rightPanelWidth = 0): boolean {
+    const x = canvasW - rightPanelWidth - MUTE_BTN_SIZE - MUTE_BTN_MARGIN;
     const y = MUTE_BTN_MARGIN;
     return (
       clickX >= x &&
@@ -206,8 +203,8 @@ export class HUD {
     );
   }
 
-  renderSettingsButton(ctx: CanvasRenderingContext2D, canvasW: number): void {
-    const x = canvasW - MUTE_BTN_SIZE - MUTE_BTN_MARGIN - SETTINGS_BTN_SIZE - 6;
+  renderSettingsButton(ctx: CanvasRenderingContext2D, canvasW: number, rightPanelWidth = 0): void {
+    const x = canvasW - rightPanelWidth - MUTE_BTN_SIZE - MUTE_BTN_MARGIN - SETTINGS_BTN_SIZE - 6;
     const y = MUTE_BTN_MARGIN;
     const size = SETTINGS_BTN_SIZE;
 
@@ -225,8 +222,8 @@ export class HUD {
     ctx.restore();
   }
 
-  isSettingsButtonHit(clickX: number, clickY: number, canvasW: number): boolean {
-    const x = canvasW - MUTE_BTN_SIZE - MUTE_BTN_MARGIN - SETTINGS_BTN_SIZE - 6;
+  isSettingsButtonHit(clickX: number, clickY: number, canvasW: number, rightPanelWidth = 0): boolean {
+    const x = canvasW - rightPanelWidth - MUTE_BTN_SIZE - MUTE_BTN_MARGIN - SETTINGS_BTN_SIZE - 6;
     const y = MUTE_BTN_MARGIN;
     return (
       clickX >= x &&
@@ -480,11 +477,11 @@ export class HUD {
       case "playing":
       case "paused":
         this.renderPlayingHUD(ctx, score, lives, armor, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isEnergyRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction, energy);
-        this.renderBottomBar(ctx, width, height, currentWeapon ?? "machine-gun", inventory, bombs ?? 0, weaponTier ?? 1, chargeLevel ?? 0);
+        this.renderBottomBar(ctx, width, height);
         break;
       case "level_complete":
         this.renderPlayingHUD(ctx, score, lives, armor, level, levelName, width, height, activeEffects, currentWeapon, chargeLevel, bombs, weaponTier, isEnergyRegenerating, dodgeCooldownFraction, inventory, shieldBattery, empCooldownFraction, energy);
-        this.renderBottomBar(ctx, width, height, currentWeapon ?? "machine-gun", inventory, bombs ?? 0, weaponTier ?? 1, chargeLevel ?? 0);
+        this.renderBottomBar(ctx, width, height);
         this.renderOverlay(ctx, width, height, "Level Complete!",
           this.completionLines,
           `Score: ${score}`,
@@ -1074,17 +1071,18 @@ export class HUD {
   ): void {
     ctx.save();
 
-    const panelGrad = ctx.createLinearGradient(0, 0, 0, 44);
-    panelGrad.addColorStop(0, "rgba(0, 10, 30, 0.7)");
-    panelGrad.addColorStop(1, "rgba(0, 5, 15, 0.5)");
+    // Top bar background
+    const panelGrad = ctx.createLinearGradient(0, 0, 0, HUD_TOP_BAR_HEIGHT);
+    panelGrad.addColorStop(0, "rgba(0, 10, 30, 0.85)");
+    panelGrad.addColorStop(1, "rgba(0, 5, 15, 0.95)");
     ctx.fillStyle = panelGrad;
-    ctx.fillRect(0, 0, width, 44);
+    ctx.fillRect(0, 0, width, HUD_TOP_BAR_HEIGHT);
 
     ctx.strokeStyle = "rgba(100, 160, 255, 0.15)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, 44);
-    ctx.lineTo(width, 44);
+    ctx.moveTo(0, HUD_TOP_BAR_HEIGHT);
+    ctx.lineTo(width, HUD_TOP_BAR_HEIGHT);
     ctx.stroke();
 
     ctx.font = `9px ${RETRO_FONT}`;
@@ -1102,183 +1100,281 @@ export class HUD {
     ctx.fillText(`Level ${level} \u2013 ${levelName}`, width / 2, 14);
 
     if (activeEffects && activeEffects.length > 0) {
-      this.renderActiveEffects(ctx, activeEffects, width);
+      this.renderActiveEffects(ctx, activeEffects, width - HUD_RIGHT_PANEL_WIDTH);
     }
 
     ctx.restore();
 
-    this.renderArmorBar(ctx, armor, height);
-    this.renderEnergyBar(ctx, energy ?? 100, height, isEnergyRegenerating);
-    this.renderBatteryBar(ctx, shieldBattery ?? 0, height);
-    this.renderDodgeCooldown(ctx, dodgeCooldownFraction ?? 0, 10, 52);
-    this.renderEmpCooldown(ctx, empCooldownFraction ?? 0, 10, 64);
+    // Left panel contents
+    this.renderLeftPanel(ctx, armor, energy ?? 100, shieldBattery ?? 0, isEnergyRegenerating, dodgeCooldownFraction ?? 0, empCooldownFraction ?? 0, height);
+
+    // Right panel contents
+    this.renderRightPanel(ctx, width, height, currentWeapon ?? "machine-gun", inventory, bombs ?? 0, weaponTier ?? 1, chargeLevel ?? 0);
+
+    // Touch buttons (positioned within game area)
     this.renderTouchBombButton(ctx, bombs ?? 0, width, height);
     this.renderTouchDodgeButton(ctx, dodgeCooldownFraction ?? 0, width, height);
     this.renderTouchEmpButton(ctx, empCooldownFraction ?? 0, width, height);
-
     this.renderTouchWeaponCycleButton(ctx, width, height, inventory);
   }
 
-  private renderArmorBar(ctx: CanvasRenderingContext2D, armor: number, canvasHeight: number): void {
-    ctx.save();
+  private renderLeftPanel(
+    ctx: CanvasRenderingContext2D,
+    armor: number,
+    energy: number,
+    shieldBattery: number,
+    isEnergyRegenerating: boolean | undefined,
+    dodgeCooldownFraction: number,
+    empCooldownFraction: number,
+    canvasHeight: number
+  ): void {
+    const panelX = 0;
+    const panelTop = HUD_TOP_BAR_HEIGHT;
+    const panelBottom = canvasHeight - HUD_BAR_HEIGHT;
+    const panelH = panelBottom - panelTop;
 
-    const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
-    if (barH <= 0) {
-      ctx.restore();
-      return;
+    const contentX = panelX + 4;
+    let cursorY = panelTop + 8;
+
+    // Dodge cooldown
+    this.renderDodgeCooldown(ctx, dodgeCooldownFraction, contentX, cursorY + 5);
+    cursorY += 18;
+
+    // EMP cooldown
+    this.renderEmpCooldown(ctx, empCooldownFraction, contentX, cursorY + 5);
+    cursorY += 22;
+
+    // Vertical bars
+    const barW = 10;
+    const barGap = 4;
+    const barsAvailH = panelH - (cursorY - panelTop) - 10;
+    const barH = Math.min(160, barsAvailH);
+
+    // Armor bar
+    this.renderVerticalBar(ctx, contentX + 4, cursorY, barW, barH, armor / 100, "armor");
+
+    // Energy bar
+    this.renderVerticalBar(ctx, contentX + 4 + barW + barGap + 12, cursorY, barW, barH, energy / 100, "energy", isEnergyRegenerating);
+
+    // Battery bar (only if > 0)
+    if (shieldBattery > 0) {
+      this.renderVerticalBar(ctx, contentX + 4 + (barW + barGap + 12) * 2, cursorY, barW, barH, shieldBattery / 100, "battery");
     }
+  }
 
-    const barX = SHIELD_BAR_X;
-    const barY = SHIELD_BAR_TOP;
+  private renderVerticalBar(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    fraction: number,
+    type: "armor" | "energy" | "battery",
+    isRegenerating?: boolean
+  ): void {
+    ctx.save();
+    fraction = Math.min(1, Math.max(0, fraction));
 
     ctx.fillStyle = "rgba(0, 10, 30, 0.6)";
-    this.roundedRect(ctx, barX - 3, barY - 3, SHIELD_BAR_W + 6, barH + 6, 6);
+    this.roundedRect(ctx, x - 3, y - 3, w + 6, h + 6, 4);
     ctx.fill();
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
+    this.roundedRect(ctx, x, y, w, h, 3);
     ctx.fill();
 
-    const armorFrac = Math.min(1, Math.max(0, armor / 100));
-    if (armorFrac > 0) {
-      const fillH = barH * armorFrac;
-      const fillY = barY + barH - fillH;
+    if (fraction > 0) {
+      const fillH = h * fraction;
+      const fillY = y + h - fillH;
+      const grad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
 
-      const armorGrad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
-      if (armorFrac > 0.5) {
-        armorGrad.addColorStop(0, "#2e7d32");
-        armorGrad.addColorStop(1, "#4caf50");
-      } else if (armorFrac > 0.25) {
-        armorGrad.addColorStop(0, "#d4ac0d");
-        armorGrad.addColorStop(1, "#f1c40f");
+      if (type === "armor") {
+        if (fraction > 0.5) {
+          grad.addColorStop(0, "#2e7d32");
+          grad.addColorStop(1, "#4caf50");
+        } else if (fraction > 0.25) {
+          grad.addColorStop(0, "#d4ac0d");
+          grad.addColorStop(1, "#f1c40f");
+        } else {
+          grad.addColorStop(0, "#c0392b");
+          grad.addColorStop(1, "#e74c3c");
+        }
+      } else if (type === "energy") {
+        grad.addColorStop(0, "#2980b9");
+        grad.addColorStop(1, "#3498db");
       } else {
-        armorGrad.addColorStop(0, "#c0392b");
-        armorGrad.addColorStop(1, "#e74c3c");
+        grad.addColorStop(0, "#e65100");
+        grad.addColorStop(1, "#ff9800");
       }
-      ctx.fillStyle = armorGrad;
-      this.roundedRect(ctx, barX, fillY, SHIELD_BAR_W, fillH, 4);
-      ctx.fill();
-    }
 
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-    ctx.lineWidth = 0.5;
-    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
-    ctx.stroke();
-
-    ctx.save();
-    ctx.font = `6px ${RETRO_FONT}`;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.translate(barX + SHIELD_BAR_W + 10, barY + barH / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText("ARMOR", 0, 0);
-    ctx.restore();
-
-    ctx.restore();
-  }
-
-  private renderEnergyBar(ctx: CanvasRenderingContext2D, energy: number, canvasHeight: number, isRegenerating?: boolean): void {
-    ctx.save();
-
-    const barX = SHIELD_BAR_X + SHIELD_BAR_W + 16;
-    const barY = SHIELD_BAR_TOP;
-    const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
-    if (barH <= 0) { ctx.restore(); return; }
-
-    ctx.fillStyle = "rgba(0, 10, 30, 0.6)";
-    this.roundedRect(ctx, barX - 3, barY - 3, SHIELD_BAR_W + 6, barH + 6, 6);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
-    ctx.fill();
-
-    const energyFrac = Math.min(1, Math.max(0, energy / 100));
-    if (energyFrac > 0) {
-      const fillH = barH * energyFrac;
-      const fillY = barY + barH - fillH;
-      const grad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
-      grad.addColorStop(0, "#2980b9");
-      grad.addColorStop(1, "#3498db");
       ctx.fillStyle = grad;
-      this.roundedRect(ctx, barX, fillY, SHIELD_BAR_W, fillH, 4);
+      this.roundedRect(ctx, x, fillY, w, fillH, 3);
       ctx.fill();
     }
 
-    if (isRegenerating && energyFrac < 1) {
+    if (type === "energy" && isRegenerating && fraction < 1) {
       const regenAlpha = Math.sin(Date.now() / 200) * 0.15 + 0.15;
-      const emptyH = barH * (1 - energyFrac);
+      const emptyH = h * (1 - fraction);
       ctx.fillStyle = `rgba(52, 152, 219, ${regenAlpha})`;
-      this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, emptyH, 4);
+      this.roundedRect(ctx, x, y, w, emptyH, 3);
       ctx.fill();
     }
 
     ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
     ctx.lineWidth = 0.5;
-    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
+    this.roundedRect(ctx, x, y, w, h, 3);
     ctx.stroke();
 
+    const labels: Record<string, string> = { armor: "ARMOR", energy: "ENRGY", battery: "BATT" };
     ctx.save();
-    ctx.font = `6px ${RETRO_FONT}`;
+    ctx.font = `5px ${RETRO_FONT}`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.translate(barX + SHIELD_BAR_W + 10, barY + barH / 2);
+    ctx.translate(x + w + 8, y + h / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText("ENERGY", 0, 0);
+    ctx.fillText(labels[type], 0, 0);
     ctx.restore();
 
     ctx.restore();
   }
 
-  private renderBatteryBar(ctx: CanvasRenderingContext2D, battery: number, canvasHeight: number): void {
-    if (battery <= 0) return;
+  private renderRightPanel(
+    ctx: CanvasRenderingContext2D,
+    canvasWidth: number,
+    canvasHeight: number,
+    activeWeapon: WeaponType,
+    inventory: ReadonlyMap<WeaponType, number> | undefined,
+    bombs: number,
+    weaponTier: number,
+    chargeLevel: number
+  ): void {
+    const TIER_PIPS = ["I", "II", "III"];
+    const panelX = canvasWidth - HUD_RIGHT_PANEL_WIDTH;
+    const panelTop = HUD_TOP_BAR_HEIGHT;
 
-    ctx.save();
+    const slotW = HUD_RIGHT_PANEL_WIDTH - 8;
+    const slotH = 28;
+    const gap = 3;
 
-    const barX = SHIELD_BAR_X + (SHIELD_BAR_W + 16) * 2;
-    const barY = SHIELD_BAR_TOP;
-    const barH = Math.min(SHIELD_BAR_H, canvasHeight - SHIELD_BAR_TOP - 10);
-    if (barH <= 0) { ctx.restore(); return; }
-
-    ctx.fillStyle = "rgba(0, 10, 30, 0.6)";
-    this.roundedRect(ctx, barX - 3, barY - 3, SHIELD_BAR_W + 6, barH + 6, 6);
-    ctx.fill();
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
-    ctx.fill();
-
-    const battFrac = Math.min(1, Math.max(0, battery / 100));
-    if (battFrac > 0) {
-      const fillH = barH * battFrac;
-      const fillY = barY + barH - fillH;
-      const grad = ctx.createLinearGradient(0, fillY + fillH, 0, fillY);
-      grad.addColorStop(0, "#e65100");
-      grad.addColorStop(1, "#ff9800");
-      ctx.fillStyle = grad;
-      this.roundedRect(ctx, barX, fillY, SHIELD_BAR_W, fillH, 4);
-      ctx.fill();
+    let ownedWeapons: WeaponType[];
+    if (inventory && inventory.size > 0) {
+      ownedWeapons = WEAPON_SLOT_ORDER.filter((w) => inventory.has(w));
+    } else {
+      ownedWeapons = [activeWeapon];
     }
 
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
-    ctx.lineWidth = 0.5;
-    this.roundedRect(ctx, barX, barY, SHIELD_BAR_W, barH, 4);
-    ctx.stroke();
+    let cursorY = panelTop + 6;
 
     ctx.save();
-    ctx.font = `6px ${RETRO_FONT}`;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.translate(barX + SHIELD_BAR_W + 10, barY + barH / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText("BATT", 0, 0);
-    ctx.restore();
+
+    for (let i = 0; i < ownedWeapons.length; i++) {
+      const weapon = ownedWeapons[i];
+      const tier = inventory?.get(weapon) ?? 1;
+      const isActive = weapon === activeWeapon;
+      const x = panelX + 4;
+      const y = cursorY;
+
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = isActive
+        ? "rgba(255, 255, 255, 0.15)"
+        : "rgba(0, 0, 0, 0.3)";
+      this.roundedRect(ctx, x, y, slotW, slotH, 4);
+      ctx.fill();
+
+      if (isActive) {
+        ctx.strokeStyle = WEAPON_COLORS[weapon];
+        ctx.lineWidth = 1.5;
+        this.roundedRect(ctx, x, y, slotW, slotH, 4);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = isActive ? 1.0 : 0.5;
+
+      ctx.font = `6px ${RETRO_FONT}`;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = WEAPON_COLORS[weapon];
+      ctx.fillText(WEAPON_LABELS[weapon], x + 4, y + slotH / 2);
+
+      ctx.font = `5px ${RETRO_FONT}`;
+      ctx.textAlign = "right";
+      ctx.fillStyle = isActive ? "#ffffff" : "#aaaaaa";
+      ctx.fillText(TIER_PIPS[tier - 1], x + slotW - 4, y + slotH / 2);
+
+      if (!this.isTouchDevice) {
+        const slotIndex = WEAPON_SLOT_ORDER.indexOf(weapon) + 1;
+        ctx.font = `5px ${RETRO_FONT}`;
+        ctx.textAlign = "right";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fillText(`${slotIndex}`, x + slotW - 4, y + 6);
+      }
+
+      ctx.globalAlpha = 1.0;
+
+      if (isActive && this.tierFlashTimer > 0) {
+        ctx.save();
+        ctx.globalAlpha = this.tierFlashTimer / 0.5;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        this.roundedRect(ctx, x, y, slotW, slotH, 4);
+        ctx.fill();
+        ctx.restore();
+        this.tierFlashTimer = Math.max(0, this.tierFlashTimer - 1 / 60);
+      }
+
+      if (isActive && weapon === "ion-cannon" && chargeLevel > 0) {
+        const cBarW = slotW - 6;
+        const cBarH = 3;
+        const cBarX = x + 3;
+        const cBarY = y + slotH - 5;
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.fillRect(cBarX, cBarY, cBarW, cBarH);
+
+        const grad = ctx.createLinearGradient(cBarX, 0, cBarX + cBarW, 0);
+        grad.addColorStop(0, "#00bcd4");
+        grad.addColorStop(1, "#00e5ff");
+        ctx.fillStyle = grad;
+        ctx.fillRect(cBarX, cBarY, cBarW * chargeLevel, cBarH);
+      }
+
+      cursorY += slotH + gap;
+    }
+
+    // Bomb count below weapons
+    cursorY += 6;
+    this.renderRightPanelBombCount(ctx, panelX, cursorY, bombs);
 
     ctx.restore();
   }
+
+  private renderRightPanelBombCount(
+    ctx: CanvasRenderingContext2D,
+    panelX: number,
+    y: number,
+    bombs: number
+  ): void {
+    const maxBombs = 5;
+    const x = panelX + 4;
+
+    ctx.font = `6px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = bombs > 0 ? "#e74c3c" : "#666666";
+    ctx.fillText("BOMB", x + 2, y);
+
+    const dotStartX = x + 4;
+    const dotY = y + 12;
+    const dotSpacing = 9;
+    for (let i = 0; i < maxBombs; i++) {
+      ctx.beginPath();
+      ctx.arc(dotStartX + i * dotSpacing, dotY, 3, 0, Math.PI * 2);
+      ctx.fillStyle = i < bombs ? "#e74c3c" : "rgba(255, 255, 255, 0.15)";
+      ctx.fill();
+    }
+  }
+
+  // Old standalone bar methods removed; rendering is now handled by renderLeftPanel/renderVerticalBar
 
   private renderEmpCooldown(
     ctx: CanvasRenderingContext2D,
@@ -1287,7 +1383,7 @@ export class HUD {
     y: number
   ): void {
     ctx.save();
-    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.font = `5px ${RETRO_FONT}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
 
@@ -1295,11 +1391,10 @@ export class HUD {
     ctx.fillStyle = ready ? "#64b5f6" : "#95a5a6";
     ctx.fillText("EMP", startX, y);
 
-    const labelW = ctx.measureText("EMP").width;
-    const barX = startX + labelW + 6;
-    const barW = 40;
-    const barH = 5;
-    const barY = y - barH / 2;
+    const barX = startX;
+    const barW = HUD_LEFT_PANEL_WIDTH - 12;
+    const barH = 4;
+    const barY = y + 8;
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
     ctx.fillRect(barX, barY, barW, barH);
@@ -1308,12 +1403,6 @@ export class HUD {
     if (fillFrac > 0) {
       ctx.fillStyle = ready ? "#64b5f6" : "#42a5f5";
       ctx.fillRect(barX, barY, barW * fillFrac, barH);
-    }
-
-    if (ready) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-      ctx.font = `5px ${RETRO_FONT}`;
-      ctx.fillText("[V]", barX + barW + 4, y);
     }
 
     ctx.restore();
@@ -1374,46 +1463,7 @@ export class HUD {
     return `rgb(${br}, ${bg}, ${bb})`;
   }
 
-  private renderWeaponIndicator(ctx: CanvasRenderingContext2D, weapon: WeaponType, width: number, chargeLevel?: number, weaponTier: number = 1): void {
-    const label = WEAPON_LABELS[weapon];
-    const suffix = HUD.TIER_SUFFIXES[Math.min(weaponTier, 3) - 1];
-    const color = WEAPON_COLORS[weapon];
-    const x = width / 2;
-    const y = 42;
-
-    const brightness = 1.0 + (weaponTier - 1) * 0.2;
-
-    ctx.font = `6px ${RETRO_FONT}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillStyle = this.brightenColor(color, brightness);
-    ctx.fillText(`[${label}${suffix}]`, x, y);
-
-    if (this.tierFlashTimer > 0) {
-      ctx.save();
-      ctx.globalAlpha = this.tierFlashTimer / 0.5;
-      ctx.fillStyle = "#ffffff";
-      ctx.fillText(`[${label}${suffix}]`, x, y);
-      ctx.restore();
-      this.tierFlashTimer = Math.max(0, this.tierFlashTimer - 1 / 60);
-    }
-
-    if (weapon === "ion-cannon" && chargeLevel !== undefined && chargeLevel > 0) {
-      const barW = 40;
-      const barH = 4;
-      const barX = x - barW / 2;
-      const barY = y + 10;
-
-      ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-      ctx.fillRect(barX, barY, barW, barH);
-
-      const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
-      grad.addColorStop(0, "#00bcd4");
-      grad.addColorStop(1, "#00e5ff");
-      ctx.fillStyle = grad;
-      ctx.fillRect(barX, barY, barW * chargeLevel, barH);
-    }
-  }
+  // Old renderWeaponIndicator removed; active weapon is now shown in the right panel
 
   private renderLivesIcons(ctx: CanvasRenderingContext2D, lives: number, startX: number, y: number): void {
     const iconW = 14;
@@ -1429,7 +1479,7 @@ export class HUD {
   private getBombButtonRect(width: number, height: number) {
     const size = 44;
     const margin = 14;
-    return { x: width - size - margin, y: height - HUD_BAR_HEIGHT - size - margin, w: size, h: size };
+    return { x: width - HUD_RIGHT_PANEL_WIDTH - size - margin, y: height - HUD_BAR_HEIGHT - size - margin, w: size, h: size };
   }
 
   isBombButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -1474,7 +1524,7 @@ export class HUD {
     y: number
   ): void {
     ctx.save();
-    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.font = `5px ${RETRO_FONT}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
 
@@ -1482,11 +1532,10 @@ export class HUD {
     ctx.fillStyle = ready ? "#2ecc71" : "#95a5a6";
     ctx.fillText("DODGE", startX, y);
 
-    const labelW = ctx.measureText("DODGE").width;
-    const barX = startX + labelW + 6;
-    const barW = 40;
-    const barH = 5;
-    const barY = y - barH / 2;
+    const barX = startX;
+    const barW = HUD_LEFT_PANEL_WIDTH - 12;
+    const barH = 4;
+    const barY = y + 8;
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
     ctx.fillRect(barX, barY, barW, barH);
@@ -1495,12 +1544,6 @@ export class HUD {
     if (fillFrac > 0) {
       ctx.fillStyle = ready ? "#2ecc71" : "#3498db";
       ctx.fillRect(barX, barY, barW * fillFrac, barH);
-    }
-
-    if (ready) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-      ctx.font = `5px ${RETRO_FONT}`;
-      ctx.fillText("[SHIFT]", barX + barW + 4, y);
     }
 
     ctx.restore();
@@ -1551,66 +1594,7 @@ export class HUD {
     ctx.restore();
   }
 
-  private renderWeaponTray(
-    ctx: CanvasRenderingContext2D,
-    inventory: ReadonlyMap<WeaponType, number>,
-    activeWeapon: WeaponType,
-    canvasWidth: number
-  ): void {
-    const TIER_PIPS = ["I", "II", "III"];
-    const slotW = 38;
-    const slotH = 28;
-    const gap = 3;
-    const ownedWeapons = WEAPON_SLOT_ORDER.filter((w) => inventory.has(w));
-    const totalW = ownedWeapons.length * slotW + (ownedWeapons.length - 1) * gap;
-    const startX = (canvasWidth - totalW) / 2;
-    const trayY = 50;
-
-    ctx.save();
-
-    for (let i = 0; i < ownedWeapons.length; i++) {
-      const weapon = ownedWeapons[i];
-      const tier = inventory.get(weapon) ?? 1;
-      const isActive = weapon === activeWeapon;
-      const x = startX + i * (slotW + gap);
-
-      ctx.fillStyle = isActive
-        ? "rgba(255, 255, 255, 0.15)"
-        : "rgba(0, 0, 0, 0.3)";
-      this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
-      ctx.fill();
-
-      if (isActive) {
-        ctx.strokeStyle = WEAPON_COLORS[weapon];
-        ctx.lineWidth = 1.5;
-        this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
-        ctx.stroke();
-      }
-
-      ctx.globalAlpha = isActive ? 1.0 : 0.5;
-
-      ctx.font = `6px ${RETRO_FONT}`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = WEAPON_COLORS[weapon];
-      ctx.fillText(WEAPON_LABELS[weapon], x + slotW / 2, trayY + 10);
-
-      ctx.font = `5px ${RETRO_FONT}`;
-      ctx.fillStyle = isActive ? "#ffffff" : "#aaaaaa";
-      ctx.fillText(TIER_PIPS[tier - 1], x + slotW / 2, trayY + 20);
-
-      if (!this.isTouchDevice) {
-        const slotIndex = WEAPON_SLOT_ORDER.indexOf(weapon) + 1;
-        ctx.font = `5px ${RETRO_FONT}`;
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-        ctx.fillText(`${slotIndex}`, x + slotW / 2, trayY + slotH + 6);
-      }
-
-      ctx.globalAlpha = 1.0;
-    }
-
-    ctx.restore();
-  }
+  // Old renderWeaponTray removed; weapon display is now in the right panel
 
   private getWeaponCycleButtonRect(width: number, height: number) {
     const empBtn = this.getEmpButtonRect(width, height);
@@ -1657,20 +1641,7 @@ export class HUD {
     ctx.restore();
   }
 
-  private renderBombCount(ctx: CanvasRenderingContext2D, bombs: number, startX: number, y: number): void {
-    ctx.save();
-    ctx.font = `7px ${RETRO_FONT}`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#e74c3c";
-    const label = "BOMB";
-    ctx.fillText(label, startX, y);
-    const labelW = ctx.measureText(label).width;
-    for (let i = 0; i < bombs; i++) {
-      ctx.fillText("\u25CF", startX + labelW + 4 + i * 10, y);
-    }
-    ctx.restore();
-  }
+  // Old renderBombCount removed; bomb count is now in the right panel
 
   private renderActiveEffects(
     ctx: CanvasRenderingContext2D,
@@ -1783,12 +1754,7 @@ export class HUD {
   private renderBottomBar(
     ctx: CanvasRenderingContext2D,
     width: number,
-    height: number,
-    currentWeapon: WeaponType,
-    inventory: ReadonlyMap<WeaponType, number> | undefined,
-    bombs: number,
-    weaponTier: number,
-    chargeLevel: number
+    height: number
   ): void {
     const barY = height - HUD_BAR_HEIGHT;
 
@@ -1807,9 +1773,7 @@ export class HUD {
     ctx.lineTo(width, barY);
     ctx.stroke();
 
-    this.renderWingmanSection(ctx, barY);
-    this.renderBottomWeaponTray(ctx, width, barY, currentWeapon, inventory, weaponTier, chargeLevel);
-    this.renderBottomBombCount(ctx, width, barY, bombs);
+    this.renderWingmanSection(ctx, barY, width);
 
     ctx.restore();
   }
@@ -1840,10 +1804,12 @@ export class HUD {
 
   private renderWingmanSection(
     ctx: CanvasRenderingContext2D,
-    barY: number
+    barY: number,
+    canvasWidth?: number
   ): void {
     const msgX = 8;
     const centerY = barY + HUD_BAR_HEIGHT / 2;
+    const availWidth = (canvasWidth ?? 800) - 16;
 
     if (this.wingmanTimer <= 0 || !this.wingmanText) {
       ctx.save();
@@ -1872,13 +1838,13 @@ export class HUD {
       const highlightAlpha = 0.15 * flashIntensity;
       ctx.fillStyle = `rgba(255, 255, 255, ${highlightAlpha})`;
       const labelWidth = ctx.measureText(label + ": " + this.wingmanText).width;
-      ctx.fillRect(msgX - 4, barY + 2, Math.min(labelWidth + 12, ctx.canvas.width * 0.45), HUD_BAR_HEIGHT - 4);
+      ctx.fillRect(msgX - 4, barY + 2, Math.min(labelWidth + 12, availWidth), HUD_BAR_HEIGHT - 4);
     }
 
     ctx.fillStyle = speakerColor;
     ctx.fillText(label + ":", msgX, barY + 12);
 
-    const maxTextWidth = Math.max(80, ctx.canvas.width * 0.4 - msgX);
+    const maxTextWidth = Math.max(80, availWidth - msgX);
     const wrapped = this.wrapWingmanText(ctx, this.wingmanText, maxTextWidth);
 
     ctx.fillStyle = "#D0D8E8";
@@ -1901,139 +1867,7 @@ export class HUD {
     ctx.restore();
   }
 
-  private renderBottomWeaponTray(
-    ctx: CanvasRenderingContext2D,
-    canvasWidth: number,
-    barY: number,
-    activeWeapon: WeaponType,
-    inventory: ReadonlyMap<WeaponType, number> | undefined,
-    weaponTier: number,
-    chargeLevel: number
-  ): void {
-    const TIER_PIPS = ["I", "II", "III"];
-    const slotW = 38;
-    const slotH = 28;
-    const gap = 3;
-    const trayY = barY + (HUD_BAR_HEIGHT - slotH) / 2;
-
-    let ownedWeapons: WeaponType[];
-    if (inventory && inventory.size > 0) {
-      ownedWeapons = WEAPON_SLOT_ORDER.filter((w) => inventory.has(w));
-    } else {
-      ownedWeapons = [activeWeapon];
-    }
-
-    const totalW = ownedWeapons.length * slotW + (ownedWeapons.length - 1) * gap;
-    const startX = (canvasWidth - totalW) / 2;
-
-    ctx.save();
-
-    for (let i = 0; i < ownedWeapons.length; i++) {
-      const weapon = ownedWeapons[i];
-      const tier = inventory?.get(weapon) ?? 1;
-      const isActive = weapon === activeWeapon;
-      const x = startX + i * (slotW + gap);
-
-      ctx.globalAlpha = 1.0;
-      ctx.fillStyle = isActive
-        ? "rgba(255, 255, 255, 0.15)"
-        : "rgba(0, 0, 0, 0.3)";
-      this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
-      ctx.fill();
-
-      if (isActive) {
-        ctx.strokeStyle = WEAPON_COLORS[weapon];
-        ctx.lineWidth = 1.5;
-        this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
-        ctx.stroke();
-      }
-
-      ctx.globalAlpha = isActive ? 1.0 : 0.5;
-
-      ctx.font = `6px ${RETRO_FONT}`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = WEAPON_COLORS[weapon];
-      ctx.fillText(WEAPON_LABELS[weapon], x + slotW / 2, trayY + 10);
-
-      ctx.font = `5px ${RETRO_FONT}`;
-      ctx.fillStyle = isActive ? "#ffffff" : "#aaaaaa";
-      ctx.fillText(TIER_PIPS[tier - 1], x + slotW / 2, trayY + 20);
-
-      ctx.globalAlpha = 1.0;
-
-      if (isActive && this.tierFlashTimer > 0) {
-        ctx.save();
-        ctx.globalAlpha = this.tierFlashTimer / 0.5;
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-        this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
-        ctx.fill();
-        ctx.restore();
-        this.tierFlashTimer = Math.max(0, this.tierFlashTimer - 1 / 60);
-      }
-
-      if (isActive && weapon === "ion-cannon" && chargeLevel > 0) {
-        const cBarW = slotW - 6;
-        const cBarH = 3;
-        const cBarX = x + 3;
-        const cBarY = trayY + slotH - 5;
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-        ctx.fillRect(cBarX, cBarY, cBarW, cBarH);
-
-        const grad = ctx.createLinearGradient(cBarX, 0, cBarX + cBarW, 0);
-        grad.addColorStop(0, "#00bcd4");
-        grad.addColorStop(1, "#00e5ff");
-        ctx.fillStyle = grad;
-        ctx.fillRect(cBarX, cBarY, cBarW * chargeLevel, cBarH);
-      }
-    }
-
-    if (!this.isTouchDevice && ownedWeapons.length > 1) {
-      for (let i = 0; i < ownedWeapons.length; i++) {
-        const weapon = ownedWeapons[i];
-        const x = startX + i * (slotW + gap);
-        const slotIndex = WEAPON_SLOT_ORDER.indexOf(weapon) + 1;
-        ctx.font = `5px ${RETRO_FONT}`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-        ctx.fillText(`${slotIndex}`, x + slotW / 2, trayY + slotH + 6);
-      }
-    }
-
-    ctx.restore();
-  }
-
-  private renderBottomBombCount(
-    ctx: CanvasRenderingContext2D,
-    canvasWidth: number,
-    barY: number,
-    bombs: number
-  ): void {
-    ctx.save();
-
-    const centerY = barY + HUD_BAR_HEIGHT / 2;
-    const maxBombs = 5;
-    const dotSpacing = 10;
-
-    ctx.font = `7px ${RETRO_FONT}`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = bombs > 0 ? "#e74c3c" : "#666666";
-    const labelX = canvasWidth - 78;
-    ctx.fillText("BOMB", labelX, centerY - 8);
-
-    for (let i = 0; i < maxBombs; i++) {
-      const dotX = labelX + i * dotSpacing + 5;
-      ctx.beginPath();
-      ctx.arc(dotX, centerY + 6, 3, 0, Math.PI * 2);
-      ctx.fillStyle = i < bombs ? "#e74c3c" : "rgba(255, 255, 255, 0.15)";
-      ctx.fill();
-    }
-
-    ctx.restore();
-  }
+  // Old renderBottomWeaponTray and renderBottomBombCount removed; these are now in the right panel
 
   private roundedRect(
     ctx: CanvasRenderingContext2D,

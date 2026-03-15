@@ -61,8 +61,8 @@ export class Player {
   private panelLightOn = true;
   private panelLightNextToggle = PANEL_LIGHT_BASE_INTERVAL;
 
-  constructor(canvasWidth: number, canvasHeight: number) {
-    this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
+  constructor(canvasWidth: number, canvasHeight: number, offsetX = 0, offsetY = 0) {
+    this.pos = { x: offsetX + canvasWidth / 2, y: offsetY + canvasHeight * 0.8 };
   }
 
   /** @deprecated Use procedural rendering instead. */
@@ -97,7 +97,7 @@ export class Player {
       && this.energyRegenTimer >= ENERGY_REGEN_DELAY;
   }
 
-  update(dt: number, targetX: number, targetY: number, canvasWidth: number, canvasHeight: number): void {
+  update(dt: number, targetX: number, targetY: number, canvasWidth: number, canvasHeight: number, offsetX = 0, offsetY = 0): void {
     if (!this.alive) return;
 
     if (this.invincibilityTimer > 0) {
@@ -139,10 +139,10 @@ export class Player {
     }
 
     const padding = this.width / 2;
-    this.pos.x = Math.max(padding, Math.min(canvasWidth - padding, this.pos.x));
+    this.pos.x = Math.max(offsetX + padding, Math.min(offsetX + canvasWidth - padding, this.pos.x));
 
-    const minY = canvasHeight * 0.6;
-    const maxY = canvasHeight - this.height / 2 - 5;
+    const minY = offsetY + canvasHeight * 0.6;
+    const maxY = offsetY + canvasHeight - this.height / 2 - 5;
     this.pos.y = Math.max(minY, Math.min(maxY, this.pos.y));
   }
 
@@ -242,8 +242,8 @@ export class Player {
     return false;
   }
 
-  reset(canvasWidth: number, canvasHeight: number, fullReset = true): void {
-    this.pos = { x: canvasWidth / 2, y: canvasHeight * 0.8 };
+  reset(canvasWidth: number, canvasHeight: number, fullReset = true, offsetX = 0, offsetY = 0): void {
+    this.pos = { x: offsetX + canvasWidth / 2, y: offsetY + canvasHeight * 0.8 };
     this.armor = this.maxArmor;
     this.energy = this.maxEnergy;
     this.alive = true;
