@@ -23,8 +23,46 @@ export class SaveSystem {
     return `raptor_save_${slot}`;
   }
 
+  private static backupKey(slot: number): string {
+    return `${this.storageKey(slot)}_backup`;
+  }
+
   private static isValidSlot(slot: number): boolean {
     return Number.isInteger(slot) && slot >= 0 && slot < MAX_SAVE_SLOTS;
+  }
+
+  private static fnv1aHash(input: string): string {
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < input.length; i++) {
+      hash ^= input.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0).toString(16).padStart(8, "0");
+  }
+
+  private static computeChecksum(data: Record<string, unknown>): string {
+    const copy = { ...data };
+    delete copy.checksum;
+    return this.fnv1aHash(JSON.stringify(copy));
+  }
+
+  private static verifyAndLoad(raw: string): Record<string, unknown> | null {
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed !== "object" || parsed === null) return null;
+
+      const storedChecksum = parsed.checksum;
+      if (storedChecksum !== undefined) {
+        const copy = { ...parsed };
+        delete copy.checksum;
+        const computed = this.fnv1aHash(JSON.stringify(copy));
+        if (computed !== storedChecksum) return null;
+      }
+
+      return parsed;
+    } catch {
+      return null;
+    }
   }
 
   private static async runLegacyMigration(): Promise<void> {
@@ -46,7 +84,24 @@ export class SaveSystem {
     if (!this.isValidSlot(slot)) return;
     data.slotIndex = slot;
     const backend = getStorageBackend();
-    await backend.set(this.storageKey(slot), JSON.stringify(data));
+
+    const existing = await backend.get(this.storageKey(slot));
+
+    delete data.checksum;
+    const payload = JSON.stringify(data);
+    const checksum = this.fnv1aHash(payload);
+    data.checksum = checksum;
+    const finalPayload = JSON.stringify(data);
+
+    if (existing) {
+      try {
+        await backend.set(this.backupKey(slot), existing);
+      } catch {
+        console.warn(`Save slot ${slot}: failed to write backup, continuing with save`);
+      }
+    }
+
+    await backend.set(this.storageKey(slot), finalPayload);
   }
 
   static async autoSave(slot: number, data: RaptorSaveData): Promise<void> {
@@ -63,7 +118,12 @@ export class SaveSystem {
     if (!raw) return null;
 
     try {
-      const parsed = JSON.parse(raw);
+      const parsed = this.verifyAndLoad(raw);
+      if (!parsed) {
+        console.warn(`Save slot ${slot}: checksum mismatch, attempting backup recovery`);
+        return this.tryLoadBackup(slot);
+      }
+
       const migrated = this.runMigrations(parsed);
       if (!migrated) return null;
       if (!this.validate(migrated)) return null;
@@ -73,10 +133,37 @@ export class SaveSystem {
     }
   }
 
+  private static async tryLoadBackup(slot: number): Promise<RaptorSaveData | null> {
+    const backend = getStorageBackend();
+    const backupRaw = await backend.get(this.backupKey(slot));
+    if (!backupRaw) return null;
+
+    try {
+      const backupParsed = this.verifyAndLoad(backupRaw);
+      if (!backupParsed) {
+        console.warn(`Save slot ${slot}: backup also corrupted, save unrecoverable`);
+        return null;
+      }
+
+      const migrated = this.runMigrations(backupParsed);
+      if (!migrated || !this.validate(migrated)) {
+        console.warn(`Save slot ${slot}: backup also corrupted, save unrecoverable`);
+        return null;
+      }
+
+      console.warn(`Save slot ${slot}: recovered from backup`);
+      return migrated as RaptorSaveData;
+    } catch {
+      console.warn(`Save slot ${slot}: backup also corrupted, save unrecoverable`);
+      return null;
+    }
+  }
+
   static async clear(slot: number): Promise<void> {
     if (!this.isValidSlot(slot)) return;
     const backend = getStorageBackend();
     await backend.remove(this.storageKey(slot));
+    await backend.remove(this.backupKey(slot));
   }
 
   static async hasSave(slot: number): Promise<boolean> {
@@ -88,12 +175,44 @@ export class SaveSystem {
     if (!raw) return false;
 
     try {
-      const parsed = JSON.parse(raw);
+      const parsed = this.verifyAndLoad(raw);
+      if (!parsed) {
+        const backupRaw = await backend.get(this.backupKey(slot));
+        if (!backupRaw) return false;
+
+        const backupParsed = this.verifyAndLoad(backupRaw);
+        if (!backupParsed) return false;
+
+        const backupMigrated = this.runMigrations(backupParsed);
+        if (!backupMigrated) return false;
+        return this.validate(backupMigrated);
+      }
+
       const migrated = this.runMigrations(parsed);
       if (!migrated) return false;
       return this.validate(migrated);
     } catch {
       return false;
+    }
+  }
+
+  static async restoreFromBackup(slot: number): Promise<RaptorSaveData | null> {
+    if (!this.isValidSlot(slot)) return null;
+
+    const backend = getStorageBackend();
+    const backupRaw = await backend.get(this.backupKey(slot));
+    if (!backupRaw) return null;
+
+    try {
+      const parsed = this.verifyAndLoad(backupRaw);
+      if (!parsed) return null;
+
+      const migrated = this.runMigrations(parsed);
+      if (!migrated || !this.validate(migrated)) return null;
+
+      return migrated as RaptorSaveData;
+    } catch {
+      return null;
     }
   }
 

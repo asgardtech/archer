@@ -213,6 +213,8 @@ export interface RaptorSaveData {
   waveIndex?: number;
   /** Cumulative play time in seconds across all sessions. */
   playTimeSeconds?: number;
+  /** FNV-1a hash of the serialized save payload (excluding this field). Optional for backward compat with pre-checksum saves. */
+  checksum?: string;
 }
 
 export interface WeaponTierConfig {
