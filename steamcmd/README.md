@@ -1,6 +1,6 @@
 # SteamCMD Build Configuration
 
-This directory contains [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) configuration files used by [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) to upload Raptor Skies builds to the Steam content delivery network.
+This directory contains [Valve Data Format (VDF)](https://developer.valvesoftware.com/wiki/KeyValues) configuration files used by [SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) to upload Archer builds to the Steam content delivery network.
 
 ## Files
 
@@ -17,7 +17,7 @@ The VDF files use placeholder IDs that **must be replaced** with real values fro
 
 | Placeholder | Meaning |
 |---|---|
-| `1000` | App ID (Raptor Skies) |
+| `1000` | App ID (Archer) |
 | `1001` | Windows depot ID |
 | `1002` | macOS depot ID |
 | `1003` | Linux depot ID |

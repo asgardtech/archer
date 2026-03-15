@@ -139,9 +139,9 @@ function createPlayingGame(): { game: any; canvas: HTMLCanvasElement } {
 // RAPTOR DESCRIPTOR
 // ════════════════════════════════════════════════════════════════
 
-describe("Scenario: Raptor Skies descriptor has correct metadata", () => {
-  test("descriptor name should be 'Raptor Skies'", () => {
-    expect(raptorDescriptor.name).toBe("Raptor Skies");
+describe("Scenario: Archer descriptor has correct metadata", () => {
+  test("descriptor name should be 'Archer'", () => {
+    expect(raptorDescriptor.name).toBe("Archer");
   });
 
   test("the descriptor should have a non-empty description", () => {
@@ -155,7 +155,7 @@ describe("Scenario: Raptor Skies descriptor has correct metadata", () => {
   });
 });
 
-describe("Scenario: Raptor Skies can be instantiated from the descriptor", () => {
+describe("Scenario: Archer can be instantiated from the descriptor", () => {
   test("the descriptor factory creates a valid game instance", () => {
     const canvas = createMockCanvas();
     setupDom(canvas);
@@ -167,7 +167,7 @@ describe("Scenario: Raptor Skies can be instantiated from the descriptor", () =>
   });
 });
 
-describe("Scenario: Raptor Skies descriptor has correct id", () => {
+describe("Scenario: Archer descriptor has correct id", () => {
   test('it should have id "raptor"', () => {
     expect(raptorDescriptor.id).toBe("raptor");
   });
@@ -1003,7 +1003,7 @@ describe("Scenario: Mute button is displayed and functional", () => {
 });
 
 describe("Scenario: Menu screen rendering", () => {
-  test("menu should display game title 'Raptor Skies'", () => {
+  test("menu should display game title 'Archer'", () => {
     const { HUD } = require("../src/games/raptor/rendering/HUD");
     const hud = new HUD(false);
     const canvas = createMockCanvas();
@@ -1012,7 +1012,7 @@ describe("Scenario: Menu screen rendering", () => {
     hud.render(ctx, "menu", 0, 3, 100, 1, "Coastal Patrol", 800, 600);
 
     const fillTextCalls = (canvas as any).__fillTextCalls as Array<{ text: string }>;
-    const hasTitle = fillTextCalls.some((c) => c.text.includes("Raptor Skies"));
+    const hasTitle = fillTextCalls.some((c) => c.text.includes("Archer"));
     expect(hasTitle).toBe(true);
   });
 
@@ -1549,9 +1549,9 @@ describe("Scenario: Raptor source files are organized correctly", () => {
 });
 
 describe("Scenario: Raptor descriptor has correct identity", () => {
-  test('raptorDescriptor should have id "raptor" and name "Raptor Skies"', () => {
+  test('raptorDescriptor should have id "raptor" and name "Archer"', () => {
     expect(raptorDescriptor.id).toBe("raptor");
-    expect(raptorDescriptor.name).toBe("Raptor Skies");
+    expect(raptorDescriptor.name).toBe("Archer");
   });
 });
 
@@ -1933,8 +1933,8 @@ describe("Scenario: Raptor descriptor fields", () => {
     expect(raptorDescriptor.id).toBe("raptor");
   });
 
-  test("descriptor name is 'Raptor Skies'", () => {
-    expect(raptorDescriptor.name).toBe("Raptor Skies");
+  test("descriptor name is 'Archer'", () => {
+    expect(raptorDescriptor.name).toBe("Archer");
   });
 
   test("descriptor thumbnailColor is '#1a1a2e'", () => {

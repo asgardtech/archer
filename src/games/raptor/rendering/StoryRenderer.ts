@@ -36,7 +36,7 @@ const PORTRAIT_MARGIN = 14;
 const SMALL_CANVAS_THRESHOLD = 500;
 
 const SPEAKER_LABELS: Record<SpeakerType, string> = {
-  pilot: "RAPTOR-1",
+  pilot: "ARCHER",
   wingman: "WINGMAN",
   hq: "ADM. RENNICK",
   sensor: "SENSOR OPS",
@@ -264,7 +264,7 @@ export class StoryRenderer {
       renderPortraitForSpeaker(ctx, this.speaker, portraitX, portraitY, portraitSize, this.elapsed, this.assets);
 
       if (!this.isQuickMessage) {
-        const label = SPEAKER_LABELS[this.speaker] || "RAPTOR-1";
+        const label = SPEAKER_LABELS[this.speaker] || "ARCHER";
         ctx.font = `bold ${7}px ${RETRO_FONT}`;
         ctx.fillStyle = this.getSpeakerLabelColor();
         ctx.textAlign = "center";

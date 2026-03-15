@@ -57,7 +57,7 @@ const WEAPON_COLORS: Record<WeaponType, string> = {
 };
 
 const SPEAKER_HUD_LABELS: Record<SpeakerType, string> = {
-  pilot: "RAPTOR-1",
+  pilot: "ARCHER",
   wingman: "WINGMAN",
   hq: "HQ",
   sensor: "SENSOR",
@@ -527,7 +527,7 @@ export class HUD {
     ctx.font = `24px ${RETRO_FONT}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("RAPTOR SKIES", width / 2, height / 2 - 60);
+    ctx.fillText("ARCHER", width / 2, height / 2 - 60);
 
     ctx.font = `10px ${RETRO_FONT}`;
     ctx.fillStyle = "#8899BB";
@@ -636,7 +636,7 @@ export class HUD {
     ctx.font = `22px ${RETRO_FONT}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("Raptor Skies", width / 2, py + 50);
+    ctx.fillText("Archer", width / 2, py + 50);
 
     ctx.font = `8px ${RETRO_FONT}`;
     ctx.fillStyle = "#B0C4DE";
@@ -1734,7 +1734,7 @@ export class HUD {
     ctx.globalAlpha = fadeAlpha;
 
     const speakerColor = SPEAKER_HUD_COLORS[this.wingmanSpeaker] ?? "#5082dc";
-    const label = SPEAKER_HUD_LABELS[this.wingmanSpeaker] ?? "RAPTOR-1";
+    const label = SPEAKER_HUD_LABELS[this.wingmanSpeaker] ?? "ARCHER";
 
     ctx.font = `6px ${RETRO_FONT}`;
     ctx.textAlign = "left";

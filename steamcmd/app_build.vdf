@@ -2,7 +2,7 @@
 {
   // Replace 1000 with your actual App ID from the Steamworks partner portal
   "AppID" "1000"
-  "Desc" "Raptor Skies build"
+  "Desc" "Archer build"
   "ContentRoot" "../release"
   "BuildOutput" "../steam_build_output"
   "Depots"
