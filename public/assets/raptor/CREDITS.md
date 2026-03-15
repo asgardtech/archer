@@ -24,9 +24,13 @@ style of [Kenney.nl](https://kenney.nl/) game asset packs:
 | `powerup_rapid.svg`  | Rapid-fire power-up    | CC0 1.0 |
 | `powerup_shield.svg` | Shield restore power-up| CC0 1.0 |
 | `powerup_life.svg`   | Bonus life power-up    | CC0 1.0 |
-| `bg_nebula.svg`      | Nebula background      | CC0 1.0 |
-| `planet_01.svg`      | Blue/green planet       | CC0 1.0 |
-| `planet_02.svg`      | Orange/red planet       | CC0 1.0 |
+| `bg_nebula.png`      | Nebula background (AI-generated) | CC0 1.0 |
+| `planet_01.png`      | Blue/green planet (AI-generated) | CC0 1.0 |
+| `planet_02.png`      | Orange/red planet (AI-generated) | CC0 1.0 |
+| `portrait_pilot.png` | Player character portrait (AI-generated) | CC0 1.0 |
+| `portrait_wingman.png` | Wingman character portrait (AI-generated) | CC0 1.0 |
+| `portrait_hq.png`    | Admiral Rennick / HQ portrait (AI-generated) | CC0 1.0 |
+| `portrait_sensor.png` | Sensor operator portrait (AI-generated) | CC0 1.0 |
 
 ## Procedurally Generated Assets
 
