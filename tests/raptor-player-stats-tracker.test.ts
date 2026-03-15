@@ -85,6 +85,15 @@ describe("PlayerStatsTracker", () => {
       expect(s.killsByVariant["bomber"]).toBe(1);
     });
 
+    it("records a boss ram kill", () => {
+      tracker.recordRamKill("boss", 400, true);
+      const s = tracker.getStats();
+      expect(s.totalKills).toBe(1);
+      expect(s.ramKills).toBe(1);
+      expect(s.bossesDefeated).toBe(1);
+      expect(s.killsByVariant["boss"]).toBe(1);
+    });
+
     it("does not double-count with recordKill", () => {
       tracker.recordRamKill("scout", 10);
       tracker.recordKill("fighter", 25, false);

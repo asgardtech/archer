@@ -58,7 +58,7 @@ function defaultStats(): PlayerStats {
 export class PlayerStatsTracker {
   private stats: PlayerStats = defaultStats();
 
-  recordKill(variant: string, scoreValue: number, isBoss: boolean): void {
+  recordKill(variant: string, _scoreValue: number, isBoss: boolean): void {
     this.stats.totalKills++;
     this.stats.killsByVariant[variant] = (this.stats.killsByVariant[variant] ?? 0) + 1;
     if (isBoss) {
@@ -66,7 +66,7 @@ export class PlayerStatsTracker {
     }
   }
 
-  recordRamKill(variant: string, scoreValue: number, isBoss = false): void {
+  recordRamKill(variant: string, _scoreValue: number, isBoss = false): void {
     this.stats.totalKills++;
     this.stats.ramKills++;
     this.stats.killsByVariant[variant] = (this.stats.killsByVariant[variant] ?? 0) + 1;
@@ -96,7 +96,7 @@ export class PlayerStatsTracker {
     this.stats.projectilesReflected++;
   }
 
-  recordLevelComplete(levelIndex: number, elapsedSeconds: number, damageTaken: number): void {
+  recordLevelComplete(levelIndex: number, elapsedSeconds: number, _damageTaken: number): void {
     this.stats.levelsCompleted++;
     this.stats.highestLevelCompleted = Math.max(this.stats.highestLevelCompleted, levelIndex);
 
@@ -122,7 +122,7 @@ export class PlayerStatsTracker {
     this.stats.totalPlayTimeSeconds += dt;
   }
 
-  updateScore(currentScore: number, totalScore: number): void {
+  updateScore(_currentScore: number, totalScore: number): void {
     this.stats.totalScore = totalScore;
   }
 

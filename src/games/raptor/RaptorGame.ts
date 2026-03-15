@@ -1071,8 +1071,8 @@ export class RaptorGame implements IGame {
         this.statsTracker.recordReflect();
         continue;
       }
-      this.statsTracker.recordDamageTaken(hit.bullet.damage, this.player.armor);
       const dead = this.player.takeDamage(hit.bullet.damage);
+      this.statsTracker.recordDamageTaken(hit.bullet.damage, this.player.armor);
       if (dead) {
         this.sound.play("player_destroy");
         this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
@@ -1106,8 +1106,8 @@ export class RaptorGame implements IGame {
       this.enemyWeaponSystem.getActiveLasers(), this.player, this.height, dt
     );
     for (const hit of beamHits) {
-      this.statsTracker.recordDamageTaken(hit.damage, this.player.armor);
       const dead = this.player.takeDamage(hit.damage);
+      this.statsTracker.recordDamageTaken(hit.damage, this.player.armor);
       if (dead) {
         this.sound.play("player_destroy");
         this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
@@ -1139,8 +1139,8 @@ export class RaptorGame implements IGame {
           this.spawnPowerUp(hit.enemy.pos.x, hit.enemy.pos.y);
         }
       }
-      this.statsTracker.recordDamageTaken(50, this.player.armor);
       const dead = this.player.takeDamage(50);
+      this.statsTracker.recordDamageTaken(50, this.player.armor);
       if (dead) {
         this.sound.play("player_destroy");
         this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
@@ -1236,7 +1236,7 @@ export class RaptorGame implements IGame {
     if (this.spawner.isLevelComplete && this.enemies.length === 0) {
       this.totalScore += this.score;
       this.statsTracker.updateScore(this.score, this.totalScore);
-      this.statsTracker.recordLevelComplete(this.currentLevel, this.levelElapsed, this.statsTracker.getStats().damageTakenThisLevel);
+      this.statsTracker.recordLevelComplete(this.currentLevel, this.levelElapsed, 0);
       this.projectiles = [];
       this.enemyBullets = [];
       this.powerUps = [];
