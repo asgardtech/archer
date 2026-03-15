@@ -439,6 +439,7 @@ describe("Scenario: Save data is cleared on victory", () => {
     (game as any).updatePlaying(0.001);
 
     expect(game.state).toBe("victory");
+    await new Promise(r => setTimeout(r, 0));
     expect(await SaveSystem.hasSave(0)).toBe(false);
   });
 });
@@ -1460,6 +1461,7 @@ describe("Scenario: Between-wave checkpoint auto-save", () => {
     const { game } = createPlayingGame();
     game.currentLevel = 0;
     (game as any).startLevel(0);
+    await new Promise(r => setTimeout(r, 0));
     await SaveSystem.clear(0);
 
     (game as any).levelElapsed = 10;
@@ -1622,5 +1624,350 @@ describe("Scenario: Loading an auto-save resumes at the beginning of the saved l
     expect(game.player.lives).toBe(2);
     expect(game.powerUpManager.currentWeapon).toBe("missile");
     expect((game as any).playTimeSeconds).toBe(150);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// CHECKSUM & BACKUP SAVE INTEGRITY TESTS
+// ════════════════════════════════════════════════════════════════
+
+function fnv1aHash(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+describe("Scenario: save() stores checksum in saved data", () => {
+  test("saved data contains a checksum field that is an 8-char hex string", async () => {
+    await SaveSystem.save(validSaveData(), 0);
+    const raw = JSON.parse(mockBackend.data["raptor_save_0"]);
+    expect(raw.checksum).toBeDefined();
+    expect(raw.checksum).toMatch(/^[0-9a-f]{8}$/);
+  });
+
+  test("checksum matches FNV-1a hash of payload without checksum", async () => {
+    await SaveSystem.save(validSaveData(), 0);
+    const raw = JSON.parse(mockBackend.data["raptor_save_0"]);
+    const storedChecksum = raw.checksum;
+    delete raw.checksum;
+    const expected = fnv1aHash(JSON.stringify(raw));
+    expect(storedChecksum).toBe(expected);
+  });
+});
+
+describe("Scenario: load() accepts valid checksum", () => {
+  test("save then load returns data correctly with checksum", async () => {
+    const data = validSaveData();
+    await SaveSystem.save(data, 0);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.levelReached).toBe(data.levelReached);
+    expect(loaded!.totalScore).toBe(data.totalScore);
+    expect(loaded!.weapon).toBe(data.weapon);
+  });
+});
+
+describe("Scenario: load() rejects corrupted data and falls back to backup", () => {
+  test("corrupted primary falls back to backup data", async () => {
+    const dataA = validSaveData({ totalScore: 100 });
+    const dataB = validSaveData({ totalScore: 200 });
+    await SaveSystem.save(dataA, 0);
+    await SaveSystem.save(dataB, 0);
+
+    const parsed = JSON.parse(mockBackend.data["raptor_save_0"]);
+    parsed.checksum = "deadbeef";
+    mockBackend.data["raptor_save_0"] = JSON.stringify(parsed);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.totalScore).toBe(100);
+  });
+});
+
+describe("Scenario: load() returns null when both primary and backup are corrupted", () => {
+  test("both corrupted returns null", async () => {
+    const dataA = validSaveData({ totalScore: 100 });
+    const dataB = validSaveData({ totalScore: 200 });
+    await SaveSystem.save(dataA, 0);
+    await SaveSystem.save(dataB, 0);
+
+    const primary = JSON.parse(mockBackend.data["raptor_save_0"]);
+    primary.checksum = "deadbeef";
+    mockBackend.data["raptor_save_0"] = JSON.stringify(primary);
+
+    const backup = JSON.parse(mockBackend.data["raptor_save_0_backup"]);
+    backup.checksum = "cafebabe";
+    mockBackend.data["raptor_save_0_backup"] = JSON.stringify(backup);
+
+    expect(await SaveSystem.load(0)).toBeNull();
+  });
+});
+
+describe("Scenario: load() accepts legacy save without checksum", () => {
+  test("legacy save without checksum field loads correctly", async () => {
+    const legacy = {
+      version: SAVE_FORMAT_VERSION,
+      levelReached: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+    };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(legacy);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.levelReached).toBe(2);
+    expect(loaded!.totalScore).toBe(500);
+  });
+
+  test("v1 save without checksum migrates and loads", async () => {
+    const v1Save = {
+      version: 1,
+      levelReached: 3,
+      totalScore: 1200,
+      lives: 2,
+      weapon: "laser",
+      savedAt: "2026-03-10T12:00:00.000Z",
+    };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(v1Save);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.version).toBe(SAVE_FORMAT_VERSION);
+    expect(loaded!.levelReached).toBe(3);
+  });
+});
+
+describe("Scenario: load() rejects data with wrong checksum", () => {
+  test("tampered checksum falls back to backup", async () => {
+    const dataA = validSaveData({ totalScore: 100 });
+    const dataB = validSaveData({ totalScore: 200 });
+    await SaveSystem.save(dataA, 0);
+    await SaveSystem.save(dataB, 0);
+
+    const primary = JSON.parse(mockBackend.data["raptor_save_0"]);
+    primary.checksum = "00000000";
+    mockBackend.data["raptor_save_0"] = JSON.stringify(primary);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.totalScore).toBe(100);
+  });
+
+  test("tampered checksum with no backup returns null", async () => {
+    await SaveSystem.save(validSaveData(), 0);
+
+    const primary = JSON.parse(mockBackend.data["raptor_save_0"]);
+    primary.checksum = "00000000";
+    mockBackend.data["raptor_save_0"] = JSON.stringify(primary);
+
+    expect(await SaveSystem.load(0)).toBeNull();
+  });
+});
+
+describe("Scenario: save() creates backup of previous save", () => {
+  test("second save creates backup containing first save's data", async () => {
+    const dataA = validSaveData({ totalScore: 100 });
+    await SaveSystem.save(dataA, 0);
+    const firstSaveRaw = mockBackend.data["raptor_save_0"];
+
+    const dataB = validSaveData({ totalScore: 200 });
+    await SaveSystem.save(dataB, 0);
+
+    expect(mockBackend.data["raptor_save_0_backup"]).toBe(firstSaveRaw);
+  });
+
+  test("first save does not create a backup", async () => {
+    await SaveSystem.save(validSaveData(), 0);
+    expect(mockBackend.data["raptor_save_0_backup"]).toBeUndefined();
+  });
+});
+
+describe("Scenario: autoSave also creates a backup", () => {
+  test("auto-save creates backup of previous save", async () => {
+    const dataA = validSaveData({ totalScore: 100 });
+    await SaveSystem.save(dataA, 0);
+    const firstSaveRaw = mockBackend.data["raptor_save_0"];
+
+    const dataB = validSaveData({ totalScore: 200 });
+    await SaveSystem.autoSave(0, dataB);
+
+    expect(mockBackend.data["raptor_save_0_backup"]).toBe(firstSaveRaw);
+  });
+});
+
+describe("Scenario: clear() removes both primary and backup", () => {
+  test("clear removes primary and backup keys", async () => {
+    await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    expect(mockBackend.data["raptor_save_0"]).toBeDefined();
+    expect(mockBackend.data["raptor_save_0_backup"]).toBeDefined();
+
+    await SaveSystem.clear(0);
+
+    expect(mockBackend.data["raptor_save_0"]).toBeUndefined();
+    expect(mockBackend.data["raptor_save_0_backup"]).toBeUndefined();
+  });
+});
+
+describe("Scenario: restoreFromBackup()", () => {
+  test("returns backup data when backup exists", async () => {
+    const dataA = validSaveData({ totalScore: 100 });
+    await SaveSystem.save(dataA, 0);
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    const restored = await SaveSystem.restoreFromBackup(0);
+    expect(restored).not.toBeNull();
+    expect(restored!.totalScore).toBe(100);
+  });
+
+  test("returns null when no backup exists", async () => {
+    expect(await SaveSystem.restoreFromBackup(0)).toBeNull();
+  });
+
+  test("returns null when backup is corrupted", async () => {
+    await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    const backup = JSON.parse(mockBackend.data["raptor_save_0_backup"]);
+    backup.checksum = "deadbeef";
+    mockBackend.data["raptor_save_0_backup"] = JSON.stringify(backup);
+
+    expect(await SaveSystem.restoreFromBackup(0)).toBeNull();
+  });
+
+  test("does not overwrite the primary key", async () => {
+    await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    const primaryBefore = mockBackend.data["raptor_save_0"];
+    await SaveSystem.restoreFromBackup(0);
+
+    expect(mockBackend.data["raptor_save_0"]).toBe(primaryBefore);
+  });
+});
+
+describe("Scenario: hasSave() with checksum integrity checks", () => {
+  test("returns true with valid checksum", async () => {
+    await SaveSystem.save(validSaveData(), 0);
+    expect(await SaveSystem.hasSave(0)).toBe(true);
+  });
+
+  test("falls back to backup on corrupted primary", async () => {
+    await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    const primary = JSON.parse(mockBackend.data["raptor_save_0"]);
+    primary.checksum = "deadbeef";
+    mockBackend.data["raptor_save_0"] = JSON.stringify(primary);
+
+    expect(await SaveSystem.hasSave(0)).toBe(true);
+  });
+
+  test("returns false when both primary and backup are corrupted", async () => {
+    await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    const primary = JSON.parse(mockBackend.data["raptor_save_0"]);
+    primary.checksum = "deadbeef";
+    mockBackend.data["raptor_save_0"] = JSON.stringify(primary);
+
+    const backup = JSON.parse(mockBackend.data["raptor_save_0_backup"]);
+    backup.checksum = "cafebabe";
+    mockBackend.data["raptor_save_0_backup"] = JSON.stringify(backup);
+
+    expect(await SaveSystem.hasSave(0)).toBe(false);
+  });
+});
+
+describe("Scenario: Backup write failure does not prevent primary save", () => {
+  test("primary save succeeds even when backup write fails", async () => {
+    await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
+
+    const originalSet = mockBackend.set.bind(mockBackend);
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    jest.spyOn(mockBackend, "set").mockImplementation(async (key: string, value: string) => {
+      if (key === "raptor_save_0_backup") {
+        throw new Error("storage full");
+      }
+      return originalSet(key, value);
+    });
+
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.totalScore).toBe(200);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("failed to write backup")
+    );
+
+    warnSpy.mockRestore();
+  });
+});
+
+describe("Scenario: No infinite loop on double corruption", () => {
+  test("returns null in bounded time when both primary and backup are corrupted", async () => {
+    mockBackend.data["raptor_save_0"] = "corrupted{{{not-json";
+    mockBackend.data["raptor_save_0_backup"] = "also-corrupted{{{";
+
+    const start = Date.now();
+    const result = await SaveSystem.load(0);
+    const elapsed = Date.now() - start;
+
+    expect(result).toBeNull();
+    expect(elapsed).toBeLessThan(1000);
+  });
+});
+
+describe("Scenario: Checksum warnings are logged appropriately", () => {
+  test("logs warning on checksum mismatch with backup recovery", async () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    const primary = JSON.parse(mockBackend.data["raptor_save_0"]);
+    primary.checksum = "deadbeef";
+    mockBackend.data["raptor_save_0"] = JSON.stringify(primary);
+
+    await SaveSystem.load(0);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("checksum mismatch")
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("recovered from backup")
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  test("logs unrecoverable warning when both are corrupted", async () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
+    await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
+    await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+
+    const primary = JSON.parse(mockBackend.data["raptor_save_0"]);
+    primary.checksum = "deadbeef";
+    mockBackend.data["raptor_save_0"] = JSON.stringify(primary);
+
+    const backup = JSON.parse(mockBackend.data["raptor_save_0_backup"]);
+    backup.checksum = "cafebabe";
+    mockBackend.data["raptor_save_0_backup"] = JSON.stringify(backup);
+
+    await SaveSystem.load(0);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("backup also corrupted")
+    );
+
+    warnSpy.mockRestore();
   });
 });
