@@ -142,11 +142,29 @@ export class EnemyLaserBeam {
     bottomX: number, bottomY: number,
     halfWidth: number,
   ): void {
+    const dx = bottomX - topX;
+    const dy = bottomY - topY;
+    const len = Math.sqrt(dx * dx + dy * dy);
+
+    let perpX: number;
+    let perpY: number;
+
+    if (len < 0.001) {
+      perpX = 1;
+      perpY = 0;
+    } else {
+      perpX = -dy / len;
+      perpY = dx / len;
+    }
+
+    const offsetX = perpX * halfWidth;
+    const offsetY = perpY * halfWidth;
+
     ctx.beginPath();
-    ctx.moveTo(topX - halfWidth, topY);
-    ctx.lineTo(topX + halfWidth, topY);
-    ctx.lineTo(bottomX + halfWidth, bottomY);
-    ctx.lineTo(bottomX - halfWidth, bottomY);
+    ctx.moveTo(topX - offsetX, topY - offsetY);
+    ctx.lineTo(topX + offsetX, topY + offsetY);
+    ctx.lineTo(bottomX + offsetX, bottomY + offsetY);
+    ctx.lineTo(bottomX - offsetX, bottomY - offsetY);
     ctx.closePath();
   }
 
