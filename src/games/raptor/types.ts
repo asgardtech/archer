@@ -200,6 +200,12 @@ export interface RaptorSaveData {
   weaponInventory?: Record<string, number>;
   /** Which save slot this data was written to (0-based). */
   slotIndex?: number;
+  /** Whether this save was created by the auto-save system (vs. level-complete). */
+  isAutoSave?: boolean;
+  /** The wave index the player had reached when auto-saved (0-based). */
+  waveIndex?: number;
+  /** Cumulative play time in seconds across all sessions. */
+  playTimeSeconds?: number;
 }
 
 export interface WeaponTierConfig {

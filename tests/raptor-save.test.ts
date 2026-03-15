@@ -1,4 +1,5 @@
 import { SaveSystem } from "../src/games/raptor/systems/SaveSystem";
+import { EnemySpawner } from "../src/games/raptor/systems/EnemySpawner";
 import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration, MAX_SAVE_SLOTS } from "../src/games/raptor/types";
 import { LEVELS } from "../src/games/raptor/levels";
 import { raptorDescriptor } from "../src/games/raptor";
@@ -493,7 +494,7 @@ describe("Scenario: Clicking Continue resumes from the saved level", () => {
 });
 
 describe("Scenario: Starting a New Game clears existing save data", () => {
-  test("new game from menu clears save and starts at level 0", async () => {
+  test("new game from menu resets state and auto-saves at level 0", async () => {
     const { game } = createPlayingGame();
     await SaveSystem.save(validSaveData({ levelReached: 3 }), 0);
     game.state = "menu";
@@ -507,7 +508,10 @@ describe("Scenario: Starting a New Game clears existing save data", () => {
     expect(game.currentLevel).toBe(0);
     expect(game.totalScore).toBe(0);
     expect(game.player.lives).toBe(3);
-    expect(await SaveSystem.hasSave(0)).toBe(false);
+    const saved = await SaveSystem.load(0);
+    expect(saved).not.toBeNull();
+    expect(saved!.isAutoSave).toBe(true);
+    expect(saved!.levelReached).toBe(0);
   });
 });
 
@@ -1120,16 +1124,19 @@ describe("Scenario: RaptorGame passes activeSlot to SaveSystem.load on continue"
 });
 
 describe("Scenario: RaptorGame passes activeSlot to SaveSystem.clear on New Game", () => {
-  test("new game clears the active slot", async () => {
+  test("new game clears old save and auto-saves fresh state to active slot", async () => {
     const { game } = createPlayingGame();
-    await SaveSystem.save(validSaveData(), 1);
+    await SaveSystem.save(validSaveData({ levelReached: 5 }), 1);
     game.saveSlot = 1;
     game.state = "menu";
 
     await SaveSystem.clear(game.saveSlot);
     (game as any).resetGame();
 
-    expect(await SaveSystem.hasSave(1)).toBe(false);
+    const saved = await SaveSystem.load(1);
+    expect(saved).not.toBeNull();
+    expect(saved!.isAutoSave).toBe(true);
+    expect(saved!.levelReached).toBe(0);
   });
 });
 
@@ -1202,5 +1209,418 @@ describe("Scenario: Overwriting a slot replaces only that slot's data", () => {
 
     expect((await SaveSystem.load(1))!.totalScore).toBe(999);
     expect((await SaveSystem.load(0))!.totalScore).toBe(100);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// AUTO-SAVE SYSTEM TESTS
+// ════════════════════════════════════════════════════════════════
+
+describe("Scenario: SaveSystem.autoSave sets isAutoSave flag", () => {
+  test("autoSave sets isAutoSave to true on saved data", async () => {
+    const data = validSaveData();
+    await SaveSystem.autoSave(0, data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.isAutoSave).toBe(true);
+  });
+
+  test("autoSave delegates to save (same slot, same key)", async () => {
+    const data = validSaveData();
+    await SaveSystem.autoSave(1, data);
+    expect(mockBackend.data["raptor_save_1"]).toBeDefined();
+    const loaded = await SaveSystem.load(1);
+    expect(loaded!.slotIndex).toBe(1);
+  });
+});
+
+describe("Scenario: Validation accepts and sanitizes new optional fields", () => {
+  test("validation accepts isAutoSave: true", async () => {
+    const data = validSaveData({ isAutoSave: true });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.isAutoSave).toBe(true);
+  });
+
+  test("validation accepts isAutoSave: false", async () => {
+    const data = validSaveData({ isAutoSave: false });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.isAutoSave).toBe(false);
+  });
+
+  test("validation sanitizes non-boolean isAutoSave to undefined", async () => {
+    const data = { ...validSaveData(), isAutoSave: "yes" };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.isAutoSave).toBeUndefined();
+  });
+
+  test("validation accepts valid waveIndex (non-negative integer)", async () => {
+    const data = validSaveData({ waveIndex: 3 });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.waveIndex).toBe(3);
+  });
+
+  test("validation accepts waveIndex: 0", async () => {
+    const data = validSaveData({ waveIndex: 0 });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.waveIndex).toBe(0);
+  });
+
+  test("validation sanitizes waveIndex: -1 to undefined", async () => {
+    const data = { ...validSaveData(), waveIndex: -1 };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.waveIndex).toBeUndefined();
+  });
+
+  test("validation sanitizes waveIndex: 1.5 to undefined", async () => {
+    const data = { ...validSaveData(), waveIndex: 1.5 };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.waveIndex).toBeUndefined();
+  });
+
+  test("validation accepts playTimeSeconds: 0", async () => {
+    const data = validSaveData({ playTimeSeconds: 0 });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.playTimeSeconds).toBe(0);
+  });
+
+  test("validation accepts positive playTimeSeconds", async () => {
+    const data = validSaveData({ playTimeSeconds: 120.5 });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.playTimeSeconds).toBe(120.5);
+  });
+
+  test("validation sanitizes negative playTimeSeconds to undefined", async () => {
+    const data = { ...validSaveData(), playTimeSeconds: -10 };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.playTimeSeconds).toBeUndefined();
+  });
+
+  test("saves without new fields load correctly (backward compat)", async () => {
+    const data = validSaveData();
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.isAutoSave).toBeUndefined();
+    expect(loaded!.waveIndex).toBeUndefined();
+    expect(loaded!.playTimeSeconds).toBeUndefined();
+  });
+
+  test("validation accepts save data with all three new valid fields", async () => {
+    const data = validSaveData({ isAutoSave: true, waveIndex: 3, playTimeSeconds: 120.5 });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.isAutoSave).toBe(true);
+    expect(loaded!.waveIndex).toBe(3);
+    expect(loaded!.playTimeSeconds).toBe(120.5);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// ENEMY SPAWNER WAVE TRACKING
+// ════════════════════════════════════════════════════════════════
+
+describe("Scenario: EnemySpawner completedWaveCount tracking", () => {
+  test("completedWaveCount returns 0 before any waves complete", () => {
+    const spawner = new EnemySpawner();
+    spawner.configure(LEVELS[0]);
+    expect(spawner.completedWaveCount).toBe(0);
+  });
+
+  test("completedWaveCount increments as waves complete", () => {
+    const spawner = new EnemySpawner();
+    spawner.configure(LEVELS[0]);
+
+    for (let t = 0; t < 50; t += 0.1) {
+      spawner.update(0.1, 800);
+    }
+
+    expect(spawner.completedWaveCount).toBeGreaterThan(0);
+  });
+
+  test("completedWaveCount equals total wave count when all waves are done", () => {
+    const spawner = new EnemySpawner();
+    const level = LEVELS[0];
+    spawner.configure(level);
+
+    for (let t = 0; t < 200; t += 0.1) {
+      spawner.update(0.1, 800);
+    }
+
+    expect(spawner.completedWaveCount).toBe(level.waves.length);
+    expect(spawner.allWavesComplete).toBe(true);
+  });
+
+  test("shouldSpawnBoss still works correctly after refactor", () => {
+    const spawner = new EnemySpawner();
+    spawner.configure(LEVELS[1]);
+
+    expect(spawner.shouldSpawnBoss()).toBe(false);
+
+    for (let t = 0; t < 100; t += 0.1) {
+      spawner.update(0.1, 800);
+    }
+
+    expect(spawner.shouldSpawnBoss()).toBe(true);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// RAPTORGAME AUTO-SAVE INTEGRATION
+// ════════════════════════════════════════════════════════════════
+
+describe("Scenario: Auto-save triggers at level start", () => {
+  test("auto-save exists with isAutoSave: true after startLevel", async () => {
+    const { game } = createPlayingGame();
+    game.currentLevel = 0;
+    (game as any).startLevel(3);
+
+    const saved = await SaveSystem.load(0);
+    expect(saved).not.toBeNull();
+    expect(saved!.isAutoSave).toBe(true);
+    expect(saved!.levelReached).toBe(3);
+  });
+
+  test("auto-save at level start has waveIndex: 0", async () => {
+    const { game } = createPlayingGame();
+    (game as any).startLevel(2);
+
+    const saved = await SaveSystem.load(0);
+    expect(saved).not.toBeNull();
+    expect(saved!.waveIndex).toBe(0);
+  });
+
+  test("auto-save at level start has playTimeSeconds in save data", async () => {
+    const { game } = createPlayingGame();
+    (game as any).playTimeSeconds = 120;
+    (game as any).startLevel(1);
+
+    const saved = await SaveSystem.load(0);
+    expect(saved).not.toBeNull();
+    expect(saved!.playTimeSeconds).toBe(120);
+  });
+
+  test("auto-save at level 0 on new game", async () => {
+    const { game } = createPlayingGame();
+    (game as any).resetGame();
+
+    const saved = await SaveSystem.load(0);
+    expect(saved).not.toBeNull();
+    expect(saved!.isAutoSave).toBe(true);
+    expect(saved!.levelReached).toBe(0);
+  });
+});
+
+describe("Scenario: Between-wave checkpoint auto-save", () => {
+  test("auto-save fires when wave completes and throttle permits", async () => {
+    const { game } = createPlayingGame();
+    game.currentLevel = 0;
+    (game as any).startLevel(0);
+    await SaveSystem.clear(0);
+
+    (game as any).levelElapsed = 35;
+    (game as any).lastAutoSaveTime = 0;
+    (game as any).lastCompletedWaveCount = 0;
+
+    for (let t = 0; t < 50; t += 0.1) {
+      game.spawner.update(0.1, 800);
+    }
+
+    const wavesBefore = game.spawner.completedWaveCount;
+    if (wavesBefore > 0) {
+      (game as any).updatePlaying(0.001);
+      const saved = await SaveSystem.load(0);
+      expect(saved).not.toBeNull();
+      expect(saved!.isAutoSave).toBe(true);
+      expect(saved!.waveIndex).toBe(wavesBefore);
+    }
+  });
+
+  test("auto-save is suppressed when throttle interval has not elapsed", async () => {
+    const { game } = createPlayingGame();
+    game.currentLevel = 0;
+    (game as any).startLevel(0);
+    await SaveSystem.clear(0);
+
+    (game as any).levelElapsed = 10;
+    (game as any).lastAutoSaveTime = 5;
+    (game as any).lastCompletedWaveCount = 0;
+
+    for (let t = 0; t < 50; t += 0.1) {
+      game.spawner.update(0.1, 800);
+    }
+
+    (game as any).updatePlaying(0.001);
+    const saved = await SaveSystem.load(0);
+    expect(saved).toBeNull();
+  });
+});
+
+describe("Scenario: Level-complete save does not have isAutoSave flag", () => {
+  test("level-complete save has isAutoSave undefined", async () => {
+    const { game } = createPlayingGame();
+    game.currentLevel = 1;
+    game.totalScore = 200;
+    game.score = 100;
+    game.player.lives = 2;
+    game.spawner.configure(LEVELS[1]);
+
+    for (let t = 0; t < 100; t += 0.1) {
+      game.spawner.update(0.1, 800);
+    }
+    game.spawner.spawnBoss(800);
+    game.spawner.markBossDefeated();
+    game.enemies = [];
+
+    (game as any).updatePlaying(0.001);
+
+    expect(game.state).toBe("level_complete");
+    const saved = await SaveSystem.load(0);
+    expect(saved).not.toBeNull();
+    expect(saved!.isAutoSave).toBeUndefined();
+    expect(saved!.levelReached).toBe(2);
+  });
+});
+
+describe("Scenario: buildSaveData produces correct payload", () => {
+  test("buildSaveData contains all expected fields", () => {
+    const { game } = createPlayingGame();
+    game.currentLevel = 2;
+    game.totalScore = 500;
+    game.player.lives = 2;
+    game.player.bombs = 3;
+    game.player.shieldBattery = 50;
+    game.player.armor = 80;
+    game.player.energy = 60;
+    (game as any).playTimeSeconds = 120;
+    game.powerUpManager.setWeapon("laser");
+
+    const data = (game as any).buildSaveData();
+
+    expect(data.version).toBe(SAVE_FORMAT_VERSION);
+    expect(data.levelReached).toBe(2);
+    expect(data.totalScore).toBe(500);
+    expect(data.lives).toBe(2);
+    expect(data.weapon).toBe("laser");
+    expect(data.savedAt).toBeDefined();
+    expect(data.bombs).toBe(3);
+    expect(data.shieldBattery).toBe(50);
+    expect(data.armor).toBe(80);
+    expect(data.energy).toBe(60);
+    expect(data.playTimeSeconds).toBe(120);
+    expect(data.weaponInventory).toBeDefined();
+  });
+
+  test("buildSaveData accepts overrides", () => {
+    const { game } = createPlayingGame();
+    game.currentLevel = 2;
+
+    const data = (game as any).buildSaveData({ levelReached: 3 });
+
+    expect(data.levelReached).toBe(3);
+    expect(data.totalScore).toBe(game.totalScore);
+  });
+});
+
+describe("Scenario: playTimeSeconds tracking", () => {
+  test("playTimeSeconds accumulates during updatePlaying", () => {
+    const { game } = createPlayingGame();
+    (game as any).playTimeSeconds = 0;
+    game.currentLevel = 0;
+    (game as any).startLevel(0);
+    (game as any).playTimeSeconds = 0;
+
+    for (let i = 0; i < 100; i++) {
+      (game as any).updatePlaying(0.1);
+    }
+
+    expect((game as any).playTimeSeconds).toBeCloseTo(10, 0);
+  });
+
+  test("playTimeSeconds is restored by continueGame", async () => {
+    const { game } = createPlayingGame();
+    await SaveSystem.save(validSaveData({ playTimeSeconds: 300 }), 0);
+
+    await (game as any).continueGame();
+
+    expect((game as any).playTimeSeconds).toBe(300);
+  });
+
+  test("playTimeSeconds defaults to 0 for old saves without the field", async () => {
+    const { game } = createPlayingGame();
+    await SaveSystem.save(validSaveData(), 0);
+
+    await (game as any).continueGame();
+
+    expect((game as any).playTimeSeconds).toBe(0);
+  });
+
+  test("playTimeSeconds is reset to 0 by resetGame", () => {
+    const { game } = createPlayingGame();
+    (game as any).playTimeSeconds = 200;
+
+    (game as any).resetGame();
+
+    expect((game as any).playTimeSeconds).toBe(0);
+  });
+});
+
+describe("Scenario: Auto-save failure does not crash the game", () => {
+  test("game continues when storage backend fails", async () => {
+    const failingBackend: StorageBackend = {
+      async get(): Promise<string | null> { return null; },
+      async set(): Promise<void> { throw new Error("storage full"); },
+      async remove(): Promise<void> { },
+    };
+
+    const { game } = createPlayingGame();
+    setStorageBackend(failingBackend);
+
+    expect(() => {
+      (game as any).startLevel(0);
+    }).not.toThrow();
+  });
+});
+
+describe("Scenario: Loading an auto-save resumes at the beginning of the saved level", () => {
+  test("continueGame starts at the saved level with restored state", async () => {
+    const { game } = createPlayingGame();
+    await SaveSystem.save(validSaveData({
+      isAutoSave: true,
+      levelReached: 3,
+      waveIndex: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "missile",
+      playTimeSeconds: 150,
+    }), 0);
+
+    await (game as any).continueGame();
+
+    expect(game.currentLevel).toBe(3);
+    expect(game.totalScore).toBe(500);
+    expect(game.player.lives).toBe(2);
+    expect(game.powerUpManager.currentWeapon).toBe("missile");
+    expect((game as any).playTimeSeconds).toBe(150);
   });
 });

@@ -49,6 +49,11 @@ export class SaveSystem {
     await backend.set(this.storageKey(slot), JSON.stringify(data));
   }
 
+  static async autoSave(slot: number, data: RaptorSaveData): Promise<void> {
+    data.isAutoSave = true;
+    return this.save(data, slot);
+  }
+
   static async load(slot: number): Promise<RaptorSaveData | null> {
     await this.runLegacyMigration();
     if (!this.isValidSlot(slot)) return null;
@@ -188,6 +193,24 @@ export class SaveSystem {
     if (d.energy !== undefined) {
       if (typeof d.energy !== "number" || d.energy < 0 || d.energy > 100) {
         d.energy = 100;
+      }
+    }
+
+    if (d.isAutoSave !== undefined) {
+      if (typeof d.isAutoSave !== "boolean") {
+        d.isAutoSave = undefined;
+      }
+    }
+
+    if (d.waveIndex !== undefined) {
+      if (typeof d.waveIndex !== "number" || !Number.isInteger(d.waveIndex) || d.waveIndex < 0) {
+        d.waveIndex = undefined;
+      }
+    }
+
+    if (d.playTimeSeconds !== undefined) {
+      if (typeof d.playTimeSeconds !== "number" || d.playTimeSeconds < 0) {
+        d.playTimeSeconds = undefined;
       }
     }
 
