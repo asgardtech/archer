@@ -33,7 +33,7 @@ export class EnemySpawner {
     }));
   }
 
-  update(dt: number, canvasWidth: number): Enemy[] {
+  update(dt: number, canvasWidth: number, offsetX = 0): Enemy[] {
     this.levelTimer += dt;
     const spawned: Enemy[] = [];
 
@@ -50,7 +50,7 @@ export class EnemySpawner {
       wave.spawnTimer += dt;
       if (wave.spawned < wave.config.count && wave.spawnTimer >= wave.config.spawnDelay) {
         wave.spawnTimer -= wave.config.spawnDelay;
-        const x = this.getSpawnX(wave.config.formation, wave.spawned, wave.config.count, canvasWidth);
+        const x = this.getSpawnX(wave.config.formation, wave.spawned, wave.config.count, canvasWidth, offsetX);
         const overrides = wave.config.weaponType
           ? { weaponType: wave.config.weaponType }
           : undefined;
@@ -87,7 +87,7 @@ export class EnemySpawner {
     carrier: "boss_carrier",
   };
 
-  spawnBoss(canvasWidth: number): Enemy | null {
+  spawnBoss(canvasWidth: number, offsetX = 0): Enemy | null {
     if (!this.bossConfig) return null;
     this.bossSpawned = true;
     const bossType = this.bossConfig.bossType ?? "standard";
@@ -101,7 +101,7 @@ export class EnemySpawner {
       overrides.weaponType = this.bossConfig.weaponType;
     }
     return new Enemy(
-      canvasWidth / 2,
+      offsetX + canvasWidth / 2,
       -40,
       variant,
       this.bossConfig.speed,
@@ -123,15 +123,15 @@ export class EnemySpawner {
     return true;
   }
 
-  private getSpawnX(formation: string, index: number, count: number, canvasWidth: number): number {
+  private getSpawnX(formation: string, index: number, count: number, canvasWidth: number, offsetX = 0): number {
     const margin = 50;
     const usableWidth = canvasWidth - margin * 2;
 
     switch (formation) {
       case "line":
-        return margin + (usableWidth / (count + 1)) * (index + 1);
+        return offsetX + margin + (usableWidth / (count + 1)) * (index + 1);
       case "v": {
-        const center = canvasWidth / 2;
+        const center = offsetX + canvasWidth / 2;
         const spread = usableWidth * 0.4;
         const halfCount = Math.floor(count / 2) || 1;
         if (index === 0) return center;
@@ -140,10 +140,10 @@ export class EnemySpawner {
         return center + side * (arm / halfCount) * spread;
       }
       case "sweep":
-        return margin + (usableWidth / (count + 1)) * (index + 1);
+        return offsetX + margin + (usableWidth / (count + 1)) * (index + 1);
       case "random":
       default:
-        return margin + Math.random() * usableWidth;
+        return offsetX + margin + Math.random() * usableWidth;
     }
   }
 }

@@ -89,16 +89,16 @@ export class Enemy {
   get top(): number { return this.pos.y - this.height / 2; }
   get bottom(): number { return this.pos.y + this.height / 2; }
 
-  update(dt: number, canvasHeight: number, targetX?: number, canvasWidth?: number): void {
+  update(dt: number, canvasHeight: number, targetX?: number, canvasWidth?: number, offsetX = 0, offsetY = 0): void {
     if (!this.alive) return;
     this.time += dt;
 
     if (this.flashTimer > 0) this.flashTimer -= dt;
 
     if (this.variant === "boss_gunship") {
-      const cw = canvasWidth ?? 800;
-      const margin = 40;
-      const parkY = canvasHeight * 0.18;
+      const cw = (canvasWidth ?? 800) + offsetX;
+      const margin = offsetX + 40;
+      const parkY = offsetY + canvasHeight * 0.18;
 
       if (this.gunshipPhase === "entering") {
         this.pos.y += this.vel.y * dt;
@@ -106,7 +106,7 @@ export class Enemy {
           this.pos.y = parkY;
           this.gunshipPhase = "pausing";
           this.gunshipPauseTimer = 0.4 + Math.random() * 0.2;
-          this.gunshipStrafeDirection = this.pos.x > cw / 2 ? -1 : 1;
+          this.gunshipStrafeDirection = this.pos.x > offsetX + (canvasWidth ?? 800) / 2 ? -1 : 1;
         }
       } else if (this.gunshipPhase === "pausing") {
         this.gunshipPauseTimer -= dt;
@@ -136,9 +136,9 @@ export class Enemy {
 
       this.pos.x = Math.max(margin, Math.min(cw - margin, this.pos.x));
     } else if (this.variant === "boss_dreadnought") {
-      const dCw = canvasWidth ?? 800;
-      const dMargin = 50;
-      const parkY = canvasHeight * 0.25;
+      const dCw = (canvasWidth ?? 800) + offsetX;
+      const dMargin = offsetX + 50;
+      const parkY = offsetY + canvasHeight * 0.25;
 
       if (this.dreadnoughtPhase === "entering") {
         this.pos.y += this.vel.y * dt;
@@ -173,9 +173,9 @@ export class Enemy {
         this.burstTimer -= dt;
       }
     } else if (this.variant === "boss_fortress") {
-      const fCw = canvasWidth ?? 800;
-      const fMargin = 50;
-      const parkY = canvasHeight * 0.12;
+      const fCw = (canvasWidth ?? 800) + offsetX;
+      const fMargin = offsetX + 50;
+      const parkY = offsetY + canvasHeight * 0.12;
 
       if (this.fortressPhase === "entering") {
         this.pos.y += this.vel.y * dt;
@@ -189,9 +189,9 @@ export class Enemy {
         this.pos.x = Math.max(fMargin, Math.min(fCw - fMargin, this.pos.x));
       }
     } else if (this.variant === "boss_carrier") {
-      const cCw = canvasWidth ?? 800;
-      const cMargin = 50;
-      const cParkY = canvasHeight * 0.2;
+      const cCw = (canvasWidth ?? 800) + offsetX;
+      const cMargin = offsetX + 50;
+      const cParkY = offsetY + canvasHeight * 0.2;
 
       if (this.carrierPhase === "entering") {
         this.pos.y += this.vel.y * dt;
@@ -222,7 +222,7 @@ export class Enemy {
       }
     } else if (isBossVariant(this.variant)) {
       this.pos.x += Math.sin(this.time * 1.5) * 60 * dt;
-      const bossTargetY = canvasHeight * 0.15;
+      const bossTargetY = offsetY + canvasHeight * 0.15;
       if (this.pos.y < bossTargetY) {
         this.pos.y += this.vel.y * dt;
         if (this.pos.y > bossTargetY) this.pos.y = bossTargetY;
@@ -238,7 +238,7 @@ export class Enemy {
       this.pos.x += dx * 1.5 * dt;
       this.pos.y += this.vel.y * dt;
     } else if (this.variant === "cruiser") {
-      const patrolThreshold = canvasHeight * 0.3;
+      const patrolThreshold = offsetY + canvasHeight * 0.3;
       if (this.pos.y >= patrolThreshold) {
         this.pos.y += this.vel.y * 0.1 * dt;
         this.pos.x += Math.sin(this.time * 0.8) * 50 * dt;
@@ -246,7 +246,7 @@ export class Enemy {
         this.pos.y += this.vel.y * dt;
       }
     } else if (this.variant === "destroyer") {
-      const stopY = canvasHeight * 0.25;
+      const stopY = offsetY + canvasHeight * 0.25;
       if (this.pos.y < stopY) {
         this.pos.y += this.vel.y * dt;
       } else {
@@ -254,7 +254,7 @@ export class Enemy {
         this.pos.y += Math.sin(this.time * 0.3) * 5 * dt;
       }
     } else if (this.variant === "juggernaut") {
-      const targetY = canvasHeight * 0.2;
+      const targetY = offsetY + canvasHeight * 0.2;
       if (this.pos.y < targetY) {
         this.pos.y += this.vel.y * dt;
       } else {
@@ -277,18 +277,19 @@ export class Enemy {
         }
       }
     } else if (this.variant === "minelayer") {
+      const rightEdge = offsetX + (canvasWidth ?? 800);
       if (!this.minelayerInitialized) {
         this.minelayerInitialized = true;
         this.minelayerDirection = Math.random() < 0.5 ? -1 : 1;
         this.vel.x = this.minelayerDirection * Math.abs(this.vel.y);
         this.vel.y = 20;
         if (this.minelayerDirection > 0) {
-          this.pos.x = -30;
+          this.pos.x = offsetX - 30;
         } else {
-          this.pos.x = 830;
+          this.pos.x = rightEdge + 30;
         }
         if (this.pos.y < 0) {
-          this.pos.y = 30 + Math.random() * 100;
+          this.pos.y = offsetY + 30 + Math.random() * 100;
         }
       }
 
@@ -297,8 +298,8 @@ export class Enemy {
       this.mineTimer += dt;
 
       if (
-        (this.minelayerDirection > 0 && this.pos.x > 850) ||
-        (this.minelayerDirection < 0 && this.pos.x < -50)
+        (this.minelayerDirection > 0 && this.pos.x > rightEdge + 50) ||
+        (this.minelayerDirection < 0 && this.pos.x < offsetX - 50)
       ) {
         this.alive = false;
       }
@@ -313,7 +314,7 @@ export class Enemy {
     if (
       !isBossVariant(this.variant) && this.variant !== "destroyer" &&
       this.variant !== "juggernaut" && this.variant !== "minelayer" &&
-      this.pos.y > canvasHeight + 50
+      this.pos.y > offsetY + canvasHeight + 50
     ) {
       this.alive = false;
     }

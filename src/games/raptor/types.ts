@@ -171,6 +171,9 @@ export const WEAPON_SLOT_ORDER: WeaponType[] = [
 ];
 
 export const HUD_BAR_HEIGHT = 48;
+export const HUD_LEFT_PANEL_WIDTH = 60;
+export const HUD_RIGHT_PANEL_WIDTH = 60;
+export const HUD_TOP_BAR_HEIGHT = 44;
 
 export const SAVE_FORMAT_VERSION = 2;
 

@@ -62,15 +62,15 @@ export class InputManager {
     canvas.addEventListener("wheel", this.boundWheel, { passive: false });
   }
 
-  updateFromKeyboard(dt: number, canvasWidth: number, canvasHeight: number): void {
+  updateFromKeyboard(dt: number, canvasWidth: number, canvasHeight: number, offsetX = 0, offsetY = 0): void {
     const speed = 400 * dt;
     if (this.keys.has("ArrowLeft") || this.keys.has("a")) this.targetX -= speed;
     if (this.keys.has("ArrowRight") || this.keys.has("d")) this.targetX += speed;
     if (this.keys.has("ArrowUp") || this.keys.has("w")) this.targetY -= speed;
     if (this.keys.has("ArrowDown") || this.keys.has("s")) this.targetY += speed;
 
-    this.targetX = Math.max(0, Math.min(canvasWidth, this.targetX));
-    this.targetY = Math.max(0, Math.min(canvasHeight, this.targetY));
+    this.targetX = Math.max(offsetX, Math.min(offsetX + canvasWidth, this.targetX));
+    this.targetY = Math.max(offsetY, Math.min(offsetY + canvasHeight, this.targetY));
 
     this.isFiring = this.keys.has(" ") || this.isFiring;
   }
