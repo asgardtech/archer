@@ -40,7 +40,7 @@ module.exports = {
     }),
     new HtmlWebpackPlugin({
       template: "./public/index.html",
-      title: "Raptor Skies",
+      title: "Archer",
     }),
     new CopyWebpackPlugin({
       patterns: [

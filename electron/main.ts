@@ -90,7 +90,7 @@ function createWindow(): void {
     resizable: true,
     fullscreenable: true,
     backgroundColor: '#1a1a2e',
-    title: 'Raptor Skies',
+    title: 'Archer',
     icon: path.join(__dirname, '..', '..', 'build', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

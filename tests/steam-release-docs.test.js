@@ -136,9 +136,9 @@ describe('Steamworks Portal Setup section', () => {
 
   test('Explains how to configure launch options per platform', () => {
     expect(section).toMatch(/launch\s+option/i);
-    expect(section).toMatch(/Raptor Skies\.exe/);
-    expect(section).toMatch(/Raptor Skies\.app/);
-    expect(section).toMatch(/raptor-skies/);
+    expect(section).toMatch(/Archer\.exe/);
+    expect(section).toMatch(/Archer\.app/);
+    expect(section).toMatch(/\barcher\b/);
   });
 
   test('Explains staging, beta, and default branches', () => {

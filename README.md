@@ -1,4 +1,4 @@
-# Raptor Skies
+# Archer
 
 A browser-based aerial combat game built with TypeScript and HTML5 Canvas. Pilot your ship through 10 levels of intense action featuring diverse enemies, upgradeable weapons, power-ups, and boss encounters.
 
@@ -11,7 +11,7 @@ A browser-based aerial combat game built with TypeScript and HTML5 Canvas. Pilot
 
 ```bash
 git clone <repo-url>
-cd raptor-skies
+cd archer
 npm install
 npm run dev
 ```
@@ -80,7 +80,7 @@ For instructions on setting up and using the Steam release pipeline — includin
 
 ```
 src/
-├── index.ts                    # Entry point — launches Raptor Skies
+├── index.ts                    # Entry point — launches Archer
 ├── shared/
 │   ├── types.ts                # IGame, GameDescriptor interfaces
 │   ├── storage.ts              # localStorage utilities
@@ -88,7 +88,7 @@ src/
 │   └── AssetLoader.ts          # Shared asset loader
 └── games/
     └── raptor/
-        ├── index.ts            # Exports GameDescriptor for Raptor Skies
+        ├── index.ts            # Exports GameDescriptor for Archer
         ├── RaptorGame.ts       # Main game loop and state management
         ├── types.ts            # Raptor-specific type definitions
         ├── levels.ts           # Level configurations (10 levels)

@@ -1,7 +1,7 @@
 {
-  "name": "raptor-skies",
+  "name": "archer",
   "version": "1.0.0",
-  "description": "Raptor Skies — a browser-based aerial combat game built with TypeScript and Canvas",
+  "description": "Archer — a browser-based aerial combat game built with TypeScript and Canvas",
   "main": "electron/dist/main.js",
   "private": true,
   "scripts": {

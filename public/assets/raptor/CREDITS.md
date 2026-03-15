@@ -1,6 +1,6 @@
-# Raptor Skies — Asset Credits
+# Archer — Asset Credits
 
-All visual assets in this directory are created for the Raptor Skies game.
+All visual assets in this directory are created for the Archer game.
 
 ## Sprite Assets
 

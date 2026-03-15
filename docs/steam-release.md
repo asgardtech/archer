@@ -1,6 +1,6 @@
 # Steam Release Pipeline
 
-This document covers the end-to-end setup and operation of the Raptor Skies Steam release pipeline, from initial Steamworks portal configuration through CI-driven uploads.
+This document covers the end-to-end setup and operation of the Archer Steam release pipeline, from initial Steamworks portal configuration through CI-driven uploads.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ This document covers the end-to-end setup and operation of the Raptor Skies Stea
 
 Before setting up the pipeline, ensure you have:
 
-- **Steamworks partner account** — register at <https://partner.steamgames.com/> and have the game (Raptor Skies) created in the portal with an assigned **App ID**.
+- **Steamworks partner account** — register at <https://partner.steamgames.com/> and have the game (Archer) created in the portal with an assigned **App ID**.
 - **Three Depot IDs** — one per platform (Windows, macOS, Linux), provisioned in the Steamworks portal.
 - **A dedicated Steam "builder" account** for CI use:
   - Do **not** use a personal Steam account. Create a separate account specifically for automated builds.
@@ -47,9 +47,9 @@ Before setting up the pipeline, ensure you have:
 
 | Platform | Executable | OS Setting |
 |---|---|---|
-| Windows | `Raptor Skies.exe` | Windows |
-| macOS | `Raptor Skies.app` | macOS |
-| Linux | `raptor-skies` (AppImage) | Linux |
+| Windows | `Archer.exe` | Windows |
+| macOS | `Archer.app` | macOS |
+| Linux | `archer` (AppImage) | Linux |
 
 ### Branches
 
