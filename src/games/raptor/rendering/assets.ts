@@ -62,10 +62,10 @@ export const ASSET_MANIFEST: AssetManifest = {
   horizon_arctic:      `${TERRAIN}horizon_arctic.png`,
   horizon_fortress:    `${TERRAIN}horizon_fortress.png`,
 
-  ground_grass:        `${TERRAIN}ground_grass.svg`,
-  ground_sand:         `${TERRAIN}ground_sand.svg`,
-  ground_snow:         `${TERRAIN}ground_snow.svg`,
-  ground_concrete:     `${TERRAIN}ground_concrete.svg`,
+  ground_grass:        `${TERRAIN}ground_grass.png`,
+  ground_sand:         `${TERRAIN}ground_sand.png`,
+  ground_snow:         `${TERRAIN}ground_snow.png`,
+  ground_concrete:     `${TERRAIN}ground_concrete.png`,
 
   struct_beach_hut:    `${TERRAIN}struct_beach_hut.svg`,
   struct_lighthouse:   `${TERRAIN}struct_lighthouse.svg`,
@@ -95,11 +95,11 @@ export const ASSET_MANIFEST: AssetManifest = {
   horizon_stronghold:    `${TERRAIN}horizon_stronghold.png`,
 
   // Level 6–10 Ground Textures
-  ground_rust:           `${TERRAIN}ground_rust.svg`,
-  ground_ash:            `${TERRAIN}ground_ash.svg`,
-  ground_metal:          `${TERRAIN}ground_metal.svg`,
-  ground_hull_plate:     `${TERRAIN}ground_hull_plate.svg`,
-  ground_dark_metal:     `${TERRAIN}ground_dark_metal.svg`,
+  ground_rust:           `${TERRAIN}ground_rust.png`,
+  ground_ash:            `${TERRAIN}ground_ash.png`,
+  ground_metal:          `${TERRAIN}ground_metal.png`,
+  ground_hull_plate:     `${TERRAIN}ground_hull_plate.png`,
+  ground_dark_metal:     `${TERRAIN}ground_dark_metal.png`,
 
   // Level 6 Structures (Shipyard)
   struct_crane:          `${TERRAIN}struct_crane.svg`,
