@@ -20,7 +20,6 @@ const NON_HP_BAR_VARIANTS = ALL_VARIANTS.filter((v) => !HP_BAR_VARIANTS.includes
 // Sprites on main that are NOT 128x128 — documented as QA findings (section 17)
 const NON_CONFORMING_DIMENSIONS: Record<string, { width: number; height: number }> = {
   bomber: { width: 160, height: 144 },
-  boss: { width: 256, height: 224 },
   juggernaut: { width: 192, height: 192 },
 };
 const CONFORMING_VARIANTS = ALL_VARIANTS.filter((v) => !(v in NON_CONFORMING_DIMENSIONS));
@@ -515,17 +514,11 @@ describe("16. Fallback rendering not triggered", () => {
 // ════════════════════════════════════════════════════════════════
 
 describe("17. QA Findings — documented sprite issues (to be filed as separate bugs)", () => {
-  describe("FINDING: 3 sprites have non-standard dimensions (should be 128x128)", () => {
+  describe("FINDING: 2 sprites have non-standard dimensions (should be 128x128)", () => {
     test("enemy_bomber.png is 160x144 (should be resized to 128x128)", () => {
       const png = getCachedPNG("bomber");
       expect(png.width).toBe(160);
       expect(png.height).toBe(144);
-    });
-
-    test("enemy_boss.png is 256x224 (should be resized to 128x128)", () => {
-      const png = getCachedPNG("boss");
-      expect(png.width).toBe(256);
-      expect(png.height).toBe(224);
     });
 
     test("enemy_juggernaut.png is 192x192 (should be resized to 128x128)", () => {
@@ -559,7 +552,7 @@ describe("17. QA Findings — documented sprite issues (to be filed as separate 
   });
 
   describe("FINDING: non-standard dimension sprites exceed vertical span threshold", () => {
-    test.each(["bomber", "boss", "juggernaut"])(
+    test.each(["bomber", "juggernaut"])(
       "enemy_%s.png vertical span is a consequence of non-standard dimensions",
       (variant) => {
         const png = getCachedPNG(variant);
