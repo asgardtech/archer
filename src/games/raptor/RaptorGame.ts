@@ -281,6 +281,21 @@ export class RaptorGame implements IGame {
 
     await this.refreshSaveStatus();
     this.state = "menu";
+    this.hideLoadingOverlay();
+  }
+
+  private updateLoadingOverlay(progress: number): void {
+    const fill = document.getElementById("loading-progress-fill");
+    const pct = document.getElementById("loading-percent");
+    if (fill) fill.style.width = `${Math.floor(progress * 100)}%`;
+    if (pct) pct.textContent = `${Math.floor(progress * 100)}%`;
+  }
+
+  private hideLoadingOverlay(): void {
+    const overlay = document.getElementById("loading-overlay");
+    if (!overlay) return;
+    overlay.classList.add("hidden");
+    overlay.addEventListener("transitionend", () => overlay.remove(), { once: true });
   }
 
   private generateProceduralAssets(): void {
@@ -1711,6 +1726,7 @@ export class RaptorGame implements IGame {
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 
     if (this.state === "loading") {
+      this.updateLoadingOverlay(this.assets.progress);
       this.hud.renderLoadingScreen(this.ctx, this.assets.progress, this.width, this.height);
       return;
     }
