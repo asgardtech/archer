@@ -735,7 +735,7 @@ export class RaptorGame implements IGame {
     if (this.input.wasBombPressed && this.player.bombs > 0) {
       this.player.bombs--;
       this.sound.play("mega_bomb_fire");
-      this.vfx.triggerMegaBombFlash(this.gameAreaWidth + this.gameAreaX, this.gameAreaHeight + this.gameAreaY);
+      this.vfx.triggerMegaBombFlash(this.width, this.height);
       this.vfx.triggerScreenShake(12, 0.6);
       for (const enemy of this.enemies) {
         if (enemy.alive) {

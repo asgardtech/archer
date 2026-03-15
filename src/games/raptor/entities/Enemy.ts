@@ -106,7 +106,7 @@ export class Enemy {
           this.pos.y = parkY;
           this.gunshipPhase = "pausing";
           this.gunshipPauseTimer = 0.4 + Math.random() * 0.2;
-          this.gunshipStrafeDirection = this.pos.x > (offsetX + (canvasWidth ?? 800)) / 2 ? -1 : 1;
+          this.gunshipStrafeDirection = this.pos.x > offsetX + (canvasWidth ?? 800) / 2 ? -1 : 1;
         }
       } else if (this.gunshipPhase === "pausing") {
         this.gunshipPauseTimer -= dt;

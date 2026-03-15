@@ -1463,8 +1463,6 @@ export class HUD {
     return `rgb(${br}, ${bg}, ${bb})`;
   }
 
-  // Old renderWeaponIndicator removed; active weapon is now shown in the right panel
-
   private renderLivesIcons(ctx: CanvasRenderingContext2D, lives: number, startX: number, y: number): void {
     const iconW = 14;
     const iconH = 16;
@@ -1594,8 +1592,6 @@ export class HUD {
     ctx.restore();
   }
 
-  // Old renderWeaponTray removed; weapon display is now in the right panel
-
   private getWeaponCycleButtonRect(width: number, height: number) {
     const empBtn = this.getEmpButtonRect(width, height);
     const size = 44;
@@ -1640,8 +1636,6 @@ export class HUD {
     ctx.fillText("WPN", btn.x + btn.w / 2, btn.y + btn.h / 2);
     ctx.restore();
   }
-
-  // Old renderBombCount removed; bomb count is now in the right panel
 
   private renderActiveEffects(
     ctx: CanvasRenderingContext2D,
@@ -1866,8 +1860,6 @@ export class HUD {
 
     ctx.restore();
   }
-
-  // Old renderBottomWeaponTray and renderBottomBombCount removed; these are now in the right panel
 
   private roundedRect(
     ctx: CanvasRenderingContext2D,
