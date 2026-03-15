@@ -353,7 +353,7 @@ export class RaptorGame implements IGame {
 
     if (!this.input.wasClicked) return false;
 
-    if (this.state !== "playing" && this.state !== "paused") {
+    if (this.state !== "playing" && this.state !== "paused" && !this.slotLoadingInProgress) {
       if (this.hud.isSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
         this.settingsOpen = true;
         this.input.consume();
@@ -1804,7 +1804,7 @@ export class RaptorGame implements IGame {
       this.player.empCooldownFraction,
       this.player.energy
     );
-    if (this.state !== "playing" && this.state !== "paused") {
+    if (this.state !== "playing" && this.state !== "paused" && !this.slotLoadingInProgress) {
       this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width, HUD_RIGHT_PANEL_WIDTH);
       this.hud.renderSettingsButton(this.ctx, this.width, HUD_RIGHT_PANEL_WIDTH);
     }
