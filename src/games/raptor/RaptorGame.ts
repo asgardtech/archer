@@ -353,18 +353,20 @@ export class RaptorGame implements IGame {
 
     if (!this.input.wasClicked) return false;
 
-    if (this.hud.isSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
-      this.settingsOpen = true;
-      this.input.consume();
-      return true;
-    }
+    if (this.state !== "playing" && this.state !== "paused") {
+      if (this.hud.isSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
+        this.settingsOpen = true;
+        this.input.consume();
+        return true;
+      }
 
-    if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
-      this.audio.ensureContext();
-      this.audio.toggleMute();
-      this.persistSettings();
-      this.input.consume();
-      return true;
+      if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
+        this.audio.ensureContext();
+        this.audio.toggleMute();
+        this.persistSettings();
+        this.input.consume();
+        return true;
+      }
     }
 
     return false;
@@ -608,6 +610,12 @@ export class RaptorGame implements IGame {
         if (this.input.wasClicked) {
           if (this.hud.isResumeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.state = "playing";
+          } else if (this.hud.isPauseMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+            this.audio.ensureContext();
+            this.audio.toggleMute();
+            this.persistSettings();
+          } else if (this.hud.isPauseSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+            this.settingsOpen = true;
           } else if (this.hud.isQuitButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.weaponSystem.laserBeam.active = false;
             this.sound.stopMusic();
@@ -1796,15 +1804,17 @@ export class RaptorGame implements IGame {
       this.player.empCooldownFraction,
       this.player.energy
     );
-    this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width, HUD_RIGHT_PANEL_WIDTH);
-    this.hud.renderSettingsButton(this.ctx, this.width, HUD_RIGHT_PANEL_WIDTH);
+    if (this.state !== "playing" && this.state !== "paused") {
+      this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width, HUD_RIGHT_PANEL_WIDTH);
+      this.hud.renderSettingsButton(this.ctx, this.width, HUD_RIGHT_PANEL_WIDTH);
+    }
 
     if (this.state === "playing" || this.state === "paused" || (this.state === "victory" && this.storyRenderer.isActive)) {
       this.storyRenderer.render(this.ctx, this.width, this.height);
     }
 
     if (this.state === "paused") {
-      this.hud.renderPauseMenu(this.ctx, this.width, this.height);
+      this.hud.renderPauseMenu(this.ctx, this.width, this.height, this.audio.muted);
     }
 
     if (this.settingsOpen) {
