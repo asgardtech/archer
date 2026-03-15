@@ -1861,6 +1861,227 @@ export class HUD {
     ctx.restore();
   }
 
+  private renderBottomWeaponTray(
+    ctx: CanvasRenderingContext2D,
+    canvasWidth: number,
+    barY: number,
+    activeWeapon: WeaponType,
+    inventory: ReadonlyMap<WeaponType, number> | undefined,
+    weaponTier: number,
+    chargeLevel: number
+  ): void {
+    const TIER_PIPS = ["I", "II", "III"];
+    const slotW = 38;
+    const slotH = 28;
+    const gap = 3;
+    const trayY = barY + (HUD_BAR_HEIGHT - slotH) / 2;
+
+    let ownedWeapons: WeaponType[];
+    if (inventory && inventory.size > 0) {
+      ownedWeapons = WEAPON_SLOT_ORDER.filter((w) => inventory.has(w));
+    } else {
+      ownedWeapons = [activeWeapon];
+    }
+
+    const totalW = ownedWeapons.length * slotW + (ownedWeapons.length - 1) * gap;
+    const startX = (canvasWidth - totalW) / 2;
+
+    ctx.save();
+
+    for (let i = 0; i < ownedWeapons.length; i++) {
+      const weapon = ownedWeapons[i];
+      const tier = inventory?.get(weapon) ?? 1;
+      const isActive = weapon === activeWeapon;
+      const x = startX + i * (slotW + gap);
+
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = isActive
+        ? "rgba(255, 255, 255, 0.15)"
+        : "rgba(0, 0, 0, 0.3)";
+      this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
+      ctx.fill();
+
+      if (isActive) {
+        ctx.strokeStyle = WEAPON_COLORS[weapon];
+        ctx.lineWidth = 1.5;
+        this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
+        ctx.stroke();
+      }
+
+      ctx.globalAlpha = isActive ? 1.0 : 0.5;
+
+      ctx.font = `6px ${RETRO_FONT}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = WEAPON_COLORS[weapon];
+      ctx.fillText(WEAPON_LABELS[weapon], x + slotW / 2, trayY + 10);
+
+      ctx.font = `5px ${RETRO_FONT}`;
+      ctx.fillStyle = isActive ? "#ffffff" : "#aaaaaa";
+      ctx.fillText(TIER_PIPS[tier - 1], x + slotW / 2, trayY + 20);
+
+      ctx.globalAlpha = 1.0;
+
+      if (isActive && this.tierFlashTimer > 0) {
+        ctx.save();
+        ctx.globalAlpha = this.tierFlashTimer / 0.5;
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        this.roundedRect(ctx, x, trayY, slotW, slotH, 4);
+        ctx.fill();
+        ctx.restore();
+        this.tierFlashTimer = Math.max(0, this.tierFlashTimer - 1 / 60);
+      }
+
+      if (isActive && weapon === "ion-cannon" && chargeLevel > 0) {
+        const cBarW = slotW - 6;
+        const cBarH = 3;
+        const cBarX = x + 3;
+        const cBarY = trayY + slotH - 5;
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+        ctx.fillRect(cBarX, cBarY, cBarW, cBarH);
+
+        const grad = ctx.createLinearGradient(cBarX, 0, cBarX + cBarW, 0);
+        grad.addColorStop(0, "#00bcd4");
+        grad.addColorStop(1, "#00e5ff");
+        ctx.fillStyle = grad;
+        ctx.fillRect(cBarX, cBarY, cBarW * chargeLevel, cBarH);
+      }
+    }
+
+    if (!this.isTouchDevice && ownedWeapons.length > 1) {
+      for (let i = 0; i < ownedWeapons.length; i++) {
+        const weapon = ownedWeapons[i];
+        const x = startX + i * (slotW + gap);
+        const slotIndex = WEAPON_SLOT_ORDER.indexOf(weapon) + 1;
+        ctx.font = `5px ${RETRO_FONT}`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.fillText(`${slotIndex}`, x + slotW / 2, trayY + slotH + 6);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  private renderBottomBombCount(
+    ctx: CanvasRenderingContext2D,
+    canvasWidth: number,
+    barY: number,
+    bombs: number
+  ): void {
+    ctx.save();
+
+    const centerY = barY + HUD_BAR_HEIGHT / 2;
+    const maxBombs = 5;
+    const dotSpacing = 10;
+
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = bombs > 0 ? "#e74c3c" : "#666666";
+    const labelX = canvasWidth - 78;
+    ctx.fillText("BOMB", labelX, centerY - 8);
+
+    for (let i = 0; i < maxBombs; i++) {
+      const dotX = labelX + i * dotSpacing + 5;
+      ctx.beginPath();
+      ctx.arc(dotX, centerY + 6, 3, 0, Math.PI * 2);
+      ctx.fillStyle = i < bombs ? "#e74c3c" : "rgba(255, 255, 255, 0.15)";
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  // --- Pause menu ---
+
+  private getPauseMenuRect(width: number, height: number) {
+    const panelW = 340;
+    const panelH = 200;
+    const px = (width - panelW) / 2;
+    const py = (height - panelH) / 2;
+    return { px, py, panelW, panelH };
+  }
+
+  private getResumeButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getPauseMenuRect(width, height);
+    const btnW = 200;
+    const btnH = 36;
+    const btnX = px + (panelW - btnW) / 2;
+    const btnY = py + 90;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  private getQuitButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getPauseMenuRect(width, height);
+    const btnW = 200;
+    const btnH = 36;
+    const btnX = px + (panelW - btnW) / 2;
+    const btnY = py + 140;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  isResumeButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getResumeButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  isQuitButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getQuitButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
+  renderPauseMenu(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    ctx.save();
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, width, height);
+
+    const { px, py, panelW, panelH } = this.getPauseMenuRect(width, height);
+
+    const panelGrad = ctx.createLinearGradient(px, py, px, py + panelH);
+    panelGrad.addColorStop(0, "rgba(15, 25, 50, 0.92)");
+    panelGrad.addColorStop(1, "rgba(5, 10, 25, 0.96)");
+    ctx.fillStyle = panelGrad;
+    this.roundedRect(ctx, px, py, panelW, panelH, 12);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(100, 140, 220, 0.3)";
+    ctx.lineWidth = 1;
+    this.roundedRect(ctx, px, py, panelW, panelH, 12);
+    ctx.stroke();
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = `20px ${RETRO_FONT}`;
+    ctx.fillText("PAUSED", width / 2, py + 45);
+
+    const resumeBtn = this.getResumeButtonRect(width, height);
+    ctx.fillStyle = "#2ecc71";
+    this.roundedRect(ctx, resumeBtn.x, resumeBtn.y, resumeBtn.w, resumeBtn.h, 6);
+    ctx.fill();
+    ctx.font = `12px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("RESUME", resumeBtn.x + resumeBtn.w / 2, resumeBtn.y + resumeBtn.h / 2);
+
+    const quitBtn = this.getQuitButtonRect(width, height);
+    ctx.fillStyle = "rgba(231, 76, 60, 0.8)";
+    this.roundedRect(ctx, quitBtn.x, quitBtn.y, quitBtn.w, quitBtn.h, 6);
+    ctx.fill();
+    ctx.font = `10px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("QUIT TO MENU", quitBtn.x + quitBtn.w / 2, quitBtn.y + quitBtn.h / 2);
+
+    ctx.restore();
+  }
+
   private roundedRect(
     ctx: CanvasRenderingContext2D,
     x: number,

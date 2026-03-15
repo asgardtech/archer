@@ -477,6 +477,12 @@ export class RaptorGame implements IGame {
       return;
     }
 
+    if (this.state === "paused" && this.input.wasEscPressed) {
+      this.state = "playing";
+      this.input.consume();
+      return;
+    }
+
     this.vfx.update(dt);
 
     switch (this.state) {
@@ -599,9 +605,7 @@ export class RaptorGame implements IGame {
         break;
 
       case "paused":
-        if (this.input.wasEscPressed) {
-          this.state = "playing";
-        } else if (this.input.wasClicked) {
+        if (this.input.wasClicked) {
           if (this.hud.isResumeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.state = "playing";
           } else if (this.hud.isQuitButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
@@ -1795,7 +1799,7 @@ export class RaptorGame implements IGame {
     this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width, HUD_RIGHT_PANEL_WIDTH);
     this.hud.renderSettingsButton(this.ctx, this.width, HUD_RIGHT_PANEL_WIDTH);
 
-    if (this.state === "playing" || (this.state === "victory" && this.storyRenderer.isActive)) {
+    if (this.state === "playing" || this.state === "paused" || (this.state === "victory" && this.storyRenderer.isActive)) {
       this.storyRenderer.render(this.ctx, this.width, this.height);
     }
 
