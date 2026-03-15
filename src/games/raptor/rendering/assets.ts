@@ -56,11 +56,11 @@ export const ASSET_MANIFEST: AssetManifest = {
   portrait_hq:       `${BASE}portrait_hq.png`,
   portrait_sensor:   `${BASE}portrait_sensor.png`,
 
-  horizon_coastal:     `${TERRAIN}horizon_coastal.svg`,
-  horizon_desert:      `${TERRAIN}horizon_desert.svg`,
-  horizon_mountain:    `${TERRAIN}horizon_mountain.svg`,
-  horizon_arctic:      `${TERRAIN}horizon_arctic.svg`,
-  horizon_fortress:    `${TERRAIN}horizon_fortress.svg`,
+  horizon_coastal:     `${TERRAIN}horizon_coastal.png`,
+  horizon_desert:      `${TERRAIN}horizon_desert.png`,
+  horizon_mountain:    `${TERRAIN}horizon_mountain.png`,
+  horizon_arctic:      `${TERRAIN}horizon_arctic.png`,
+  horizon_fortress:    `${TERRAIN}horizon_fortress.png`,
 
   ground_grass:        `${TERRAIN}ground_grass.svg`,
   ground_sand:         `${TERRAIN}ground_sand.svg`,
@@ -88,11 +88,11 @@ export const ASSET_MANIFEST: AssetManifest = {
   prop_debris:         `${TERRAIN}prop_debris.svg`,
 
   // Level 6–10 Horizons
-  horizon_shipyard:      `${TERRAIN}horizon_shipyard.svg`,
-  horizon_wasteland:     `${TERRAIN}horizon_wasteland.svg`,
-  horizon_industrial:    `${TERRAIN}horizon_industrial.svg`,
-  horizon_orbital:       `${TERRAIN}horizon_orbital.svg`,
-  horizon_stronghold:    `${TERRAIN}horizon_stronghold.svg`,
+  horizon_shipyard:      `${TERRAIN}horizon_shipyard.png`,
+  horizon_wasteland:     `${TERRAIN}horizon_wasteland.png`,
+  horizon_industrial:    `${TERRAIN}horizon_industrial.png`,
+  horizon_orbital:       `${TERRAIN}horizon_orbital.png`,
+  horizon_stronghold:    `${TERRAIN}horizon_stronghold.png`,
 
   // Level 6–10 Ground Textures
   ground_rust:           `${TERRAIN}ground_rust.svg`,
