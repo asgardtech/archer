@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+  <defs>
+    <linearGradient id="hq_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#162040"/>
+      <stop offset="100%" stop-color="#0f1a2e"/>
+    </linearGradient>
+    <linearGradient id="hq_uniform" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#203050"/>
+      <stop offset="100%" stop-color="#1a2844"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="120" fill="url(#hq_bg)"/>
+  <ellipse cx="50" cy="105" rx="45" ry="25" fill="url(#hq_uniform)"/>
+  <path d="M30,89 Q14,97 6,107" fill="none" stroke="#243258" stroke-width="1"/>
+  <path d="M70,89 Q86,97 94,107" fill="none" stroke="#243258" stroke-width="1"/>
+  <line x1="44" y1="87" x2="40" y2="109" stroke="#243258" stroke-width="1"/>
+  <line x1="56" y1="87" x2="60" y2="109" stroke="#243258" stroke-width="1"/>
+  <rect x="24" y="91" width="4" height="2.5" fill="#c83030"/>
+  <rect x="28" y="91" width="4" height="2.5" fill="#3060c8"/>
+  <rect x="32" y="91" width="4" height="2.5" fill="#c8a832"/>
+  <rect x="24" y="94.5" width="4" height="2.5" fill="#30a040"/>
+  <rect x="28" y="94.5" width="4" height="2.5" fill="#f0e0a0"/>
+  <rect x="32" y="94.5" width="4" height="2.5" fill="#8040a0"/>
+  <circle cx="50" cy="99" r="1.5" fill="#c8a832"/>
+  <circle cx="50" cy="105" r="1.5" fill="#c8a832"/>
+  <circle cx="50" cy="111" r="1.5" fill="#c8a832"/>
+  <polygon points="38,83 62,83 58,95 42,95" fill="#d8d8d0"/>
+  <line x1="42" y1="95" x2="58" y2="95" stroke="#b8b8b0" stroke-width="0.8"/>
+  <rect x="3" y="85" width="16" height="8" rx="2" fill="#c8a832"/>
+  <rect x="81" y="85" width="16" height="8" rx="2" fill="#c8a832"/>
+  <rect x="3" y="92" width="16" height="3" rx="1" fill="rgba(0,0,0,0.2)"/>
+  <rect x="81" y="92" width="16" height="3" rx="1" fill="rgba(0,0,0,0.2)"/>
+  <rect x="5" y="87" width="12" height="1.5" fill="#e8c840"/>
+  <rect x="5" y="90" width="12" height="1.5" fill="#e8c840"/>
+  <rect x="83" y="87" width="12" height="1.5" fill="#e8c840"/>
+  <rect x="83" y="90" width="12" height="1.5" fill="#e8c840"/>
+  <ellipse cx="50" cy="81" rx="10" ry="12" fill="#c89a70"/>
+  <ellipse cx="17" cy="46" rx="4" ry="6" fill="#c08a64"/>
+  <ellipse cx="83" cy="46" rx="4" ry="6" fill="#c08a64"/>
+  <circle cx="17" cy="46" r="2" fill="none" stroke="#a87a54" stroke-width="0.7"/>
+  <circle cx="83" cy="46" r="2" fill="none" stroke="#a87a54" stroke-width="0.7"/>
+  <ellipse cx="50" cy="42" rx="30" ry="33" fill="#c89a70"/>
+  <path d="M24,50 Q37,74 50,75 Q63,74 76,50" fill="#c09268"/>
+  <ellipse cx="50" cy="47" rx="28" ry="23" fill="#c89a70"/>
+  <ellipse cx="50" cy="24" rx="32" ry="20" fill="#888"/>
+  <path d="M26,20 A24,24 0 0,1 74,20" fill="#8c8c8c"/>
+  <ellipse cx="21" cy="34" rx="5" ry="12" fill="#828282" transform="rotate(8.5,21,34)"/>
+  <ellipse cx="79" cy="34" rx="5" ry="12" fill="#828282" transform="rotate(-8.5,79,34)"/>
+  <path d="M36,28 Q50,27 64,28" fill="none" stroke="rgba(160,128,96,0.4)" stroke-width="0.7"/>
+  <path d="M36,31 Q50,30 64,31" fill="none" stroke="rgba(160,128,96,0.4)" stroke-width="0.7"/>
+  <path d="M36,34 Q50,33 64,34" fill="none" stroke="rgba(160,128,96,0.4)" stroke-width="0.7"/>
+  <ellipse cx="38" cy="40" rx="5" ry="4" fill="#f0e8d8"/>
+  <ellipse cx="62" cy="40" rx="5" ry="4" fill="#f0e8d8"/>
+  <circle cx="39" cy="40" r="2.5" fill="#4a6a8a"/>
+  <circle cx="63" cy="40" r="2.5" fill="#4a6a8a"/>
+  <circle cx="39" cy="40" r="1.2" fill="#1a1a2a"/>
+  <circle cx="63" cy="40" r="1.2" fill="#1a1a2a"/>
+  <line x1="32" y1="38" x2="28" y2="36.5" stroke="rgba(160,128,96,0.45)" stroke-width="0.7"/>
+  <line x1="32" y1="40" x2="28" y2="40" stroke="rgba(160,128,96,0.45)" stroke-width="0.7"/>
+  <line x1="32" y1="42" x2="28" y2="43.5" stroke="rgba(160,128,96,0.45)" stroke-width="0.7"/>
+  <line x1="68" y1="38" x2="72" y2="36.5" stroke="rgba(160,128,96,0.45)" stroke-width="0.7"/>
+  <line x1="68" y1="40" x2="72" y2="40" stroke="rgba(160,128,96,0.45)" stroke-width="0.7"/>
+  <line x1="68" y1="42" x2="72" y2="43.5" stroke="rgba(160,128,96,0.45)" stroke-width="0.7"/>
+  <line x1="31" y1="32" x2="42" y2="35" stroke="#5a5a5a" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="69" y1="32" x2="58" y2="35" stroke="#5a5a5a" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M42,48 Q40,56 39,62" fill="none" stroke="rgba(160,120,80,0.35)" stroke-width="0.8"/>
+  <path d="M58,48 Q60,56 61,62" fill="none" stroke="rgba(160,120,80,0.35)" stroke-width="0.8"/>
+  <path d="M50,44 L47,55 L53,55" fill="none" stroke="#a07a54" stroke-width="1.5" stroke-linejoin="round"/>
+  <line x1="41" y1="60" x2="59" y2="60" stroke="#7a4a30" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M46,66 Q50,68 54,66" fill="none" stroke="#a08060" stroke-width="1"/>
+  <rect x="40" y="93" width="20" height="10" rx="2" fill="#c8a832"/>
+  <text x="50" y="99.5" font-family="sans-serif" font-weight="bold" font-size="6" fill="#1a2844" text-anchor="middle" dominant-baseline="middle">ADM</text>
+</svg>
