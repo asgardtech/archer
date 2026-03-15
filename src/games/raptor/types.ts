@@ -678,3 +678,46 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     weaponType: "standard",
   },
 };
+
+export type AchievementCategory =
+  | "combat"
+  | "survival"
+  | "progression"
+  | "collection"
+  | "mastery";
+
+export interface AchievementCondition {
+  type: "stat_threshold" | "single_event" | "composite";
+  /** Stat key to compare (for stat_threshold). */
+  stat?: string;
+  /** Minimum value to unlock (for stat_threshold). */
+  threshold?: number;
+  /** Event name that triggers unlock (for single_event). */
+  eventType?: string;
+  /** Sub-conditions, all of which must be true (for composite). */
+  conditions?: AchievementCondition[];
+}
+
+export interface AchievementDefinition {
+  /** Unique machine-readable identifier (snake_case). */
+  id: string;
+  /** Human-readable display name. */
+  name: string;
+  /** Player-facing description of how to earn the achievement. */
+  description: string;
+  /** Icon key for UI rendering. */
+  icon: string;
+  /** Grouping category. */
+  category: AchievementCategory;
+  /** Condition tree evaluated by the runtime tracker. */
+  condition: AchievementCondition;
+  /** If true, hidden from the achievement list until unlocked. */
+  hidden?: boolean;
+}
+
+export interface UnlockedAchievement {
+  /** Achievement definition id. */
+  id: string;
+  /** Unix-epoch milliseconds when the achievement was unlocked. */
+  unlockedAt: number;
+}
