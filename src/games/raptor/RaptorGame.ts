@@ -266,6 +266,7 @@ export class RaptorGame implements IGame {
 
     this.generateProceduralAssets();
     this.hud.setAssets(this.assets);
+    this.storyRenderer.setAssets(this.assets);
 
     const playerSprite = this.assets.getOptional("player");
     if (playerSprite) this.player.setSprite(playerSprite);
@@ -626,6 +627,7 @@ export class RaptorGame implements IGame {
         if (this.storyRenderer.isActive) {
           if (this.input.wasEscPressed) {
             this.storyRenderer = new StoryRenderer();
+            this.storyRenderer.setAssets(this.assets);
             this.hud.setVictoryStoryActive(false);
           } else if (this.input.wasClicked) {
             this.storyRenderer.advance();

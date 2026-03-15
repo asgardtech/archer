@@ -1,7 +1,5 @@
 import { SpeakerType, HUD_BAR_HEIGHT } from "../types";
-import { PilotPortrait } from "./PilotPortrait";
-import { WingmanPortrait } from "./WingmanPortrait";
-import { HQPortrait } from "./HQPortrait";
+import { AssetLoader } from "./AssetLoader";
 
 type StoryPosition = "top" | "center" | "bottom";
 
@@ -51,29 +49,60 @@ export function detectSpeaker(text: string): SpeakerType {
   return "pilot";
 }
 
+const PORTRAIT_ASSET_KEYS: Record<SpeakerType, string> = {
+  pilot: "portrait_pilot",
+  wingman: "portrait_wingman",
+  hq: "portrait_hq",
+  sensor: "portrait_sensor",
+};
+
+const FRAME_COLORS: Record<SpeakerType, { outer: string; inner: string }> = {
+  pilot:   { outer: "rgba(80, 130, 220, 0.7)",  inner: "rgba(60, 100, 180, 0.4)" },
+  wingman: { outer: "rgba(80, 180, 100, 0.7)",  inner: "rgba(50, 140, 70, 0.4)" },
+  hq:      { outer: "rgba(220, 180, 60, 0.7)",  inner: "rgba(180, 140, 40, 0.4)" },
+  sensor:  { outer: "rgba(220, 180, 60, 0.7)",  inner: "rgba(180, 140, 40, 0.4)" },
+};
+
 function renderPortraitForSpeaker(
   ctx: CanvasRenderingContext2D,
   speaker: SpeakerType,
   x: number,
   y: number,
   size: number,
-  elapsed: number
+  _elapsed: number,
+  assets: AssetLoader | null
 ): void {
-  switch (speaker) {
-    case "wingman":
-      WingmanPortrait.render(ctx, x, y, size, elapsed);
-      break;
-    case "hq":
-      HQPortrait.render(ctx, x, y, size, elapsed);
-      break;
-    case "sensor":
-      HQPortrait.renderSensor(ctx, x, y, size, elapsed);
-      break;
-    case "pilot":
-    default:
-      PilotPortrait.render(ctx, x, y, size, elapsed);
-      break;
+  const h = size * 1.2;
+  const key = PORTRAIT_ASSET_KEYS[speaker];
+  const img = assets?.getOptional(key) ?? null;
+  const frame = FRAME_COLORS[speaker];
+
+  ctx.save();
+
+  ctx.strokeStyle = frame.outer;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(x - 4, y - 4, size + 8, h + 8, 6);
+  ctx.stroke();
+
+  ctx.strokeStyle = frame.inner;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x - 6, y - 6, size + 12, h + 12, 8);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.roundRect(x, y, size, h, 4);
+  ctx.clip();
+
+  if (img) {
+    ctx.drawImage(img, x, y, size, h);
+  } else {
+    ctx.fillStyle = "#0f1a2e";
+    ctx.fillRect(x, y, size, h);
   }
+
+  ctx.restore();
 }
 
 export class StoryRenderer {
@@ -93,12 +122,17 @@ export class StoryRenderer {
   private blinkTimer = 0;
   private elapsed = 0;
   private speaker: SpeakerType = "pilot";
+  private assets: AssetLoader | null = null;
 
   private measureCtx: CanvasRenderingContext2D;
 
   constructor() {
     const canvas = document.createElement("canvas");
     this.measureCtx = canvas.getContext("2d")!;
+  }
+
+  setAssets(assets: AssetLoader): void {
+    this.assets = assets;
   }
 
   show(messages: string[], position: StoryPosition = "center", speaker?: SpeakerType): void {
@@ -227,7 +261,7 @@ export class StoryRenderer {
     if (portraitVisible) {
       const portraitX = panelX + PORTRAIT_MARGIN;
       const portraitY = panelY + paddingY;
-      renderPortraitForSpeaker(ctx, this.speaker, portraitX, portraitY, portraitSize, this.elapsed);
+      renderPortraitForSpeaker(ctx, this.speaker, portraitX, portraitY, portraitSize, this.elapsed, this.assets);
 
       if (!this.isQuickMessage) {
         const label = SPEAKER_LABELS[this.speaker] || "RAPTOR-1";

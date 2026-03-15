@@ -51,6 +51,11 @@ export const ASSET_MANIFEST: AssetManifest = {
   planet_01:        `${BASE}planet_01.svg`,
   planet_02:        `${BASE}planet_02.svg`,
 
+  portrait_pilot:    `${BASE}portrait_pilot.svg`,
+  portrait_wingman:  `${BASE}portrait_wingman.svg`,
+  portrait_hq:       `${BASE}portrait_hq.svg`,
+  portrait_sensor:   `${BASE}portrait_sensor.svg`,
+
   horizon_coastal:     `${TERRAIN}horizon_coastal.svg`,
   horizon_desert:      `${TERRAIN}horizon_desert.svg`,
   horizon_mountain:    `${TERRAIN}horizon_mountain.svg`,
