@@ -10,6 +10,7 @@ import { WeaponSystem } from "./systems/WeaponSystem";
 import { EnemyWeaponSystem } from "./systems/EnemyWeaponSystem";
 import { SaveSystem } from "./systems/SaveSystem";
 import { PerformanceManager } from "./systems/PerformanceManager";
+import { PlayerStatsTracker } from "./systems/achievements/PlayerStatsTracker";
 import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponCommands, registerPowerUpCommands, registerPlayerCommands, registerCombatCommands } from "./systems/CommandRegistry";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
@@ -122,6 +123,7 @@ export class RaptorGame implements IGame {
   private levelElapsed = 0;
   private nextStoryMessageIndex = 0;
   private perfManager: PerformanceManager;
+  private statsTracker = new PlayerStatsTracker();
   private skyGradientCanvas: HTMLCanvasElement | null = null;
   private cachedSkyGradient: [string, string] | null = null;
   private playTimeSeconds = 0;
@@ -712,6 +714,7 @@ export class RaptorGame implements IGame {
   private updatePlaying(dt: number): void {
     this.levelElapsed += dt;
     this.playTimeSeconds += dt;
+    this.statsTracker.addPlayTime(dt);
     this.hud.updateWingmanTimer(dt);
     this.input.updateFromKeyboard(dt, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
@@ -746,6 +749,7 @@ export class RaptorGame implements IGame {
       const dodged = this.player.dodge();
       if (dodged) {
         this.sound.play("dodge");
+        this.statsTracker.recordDodge();
       }
     }
 
@@ -756,6 +760,7 @@ export class RaptorGame implements IGame {
         this.enemyWeaponSystem.resetLasers();
         this.vfx.triggerEmpPulse(this.player.pos.x, this.player.pos.y, Math.max(this.width, this.height));
         this.sound.play("emp_burst");
+        this.statsTracker.recordEmp();
       }
     }
 
@@ -1063,8 +1068,10 @@ export class RaptorGame implements IGame {
     for (const hit of bulletPlayerHits) {
       if (hit.reflected) {
         this.sound.play("deflect");
+        this.statsTracker.recordReflect();
         continue;
       }
+      this.statsTracker.recordDamageTaken(hit.bullet.damage, this.player.armor);
       const dead = this.player.takeDamage(hit.bullet.damage);
       if (dead) {
         this.sound.play("player_destroy");
@@ -1099,6 +1106,7 @@ export class RaptorGame implements IGame {
       this.enemyWeaponSystem.getActiveLasers(), this.player, this.height, dt
     );
     for (const hit of beamHits) {
+      this.statsTracker.recordDamageTaken(hit.damage, this.player.armor);
       const dead = this.player.takeDamage(hit.damage);
       if (dead) {
         this.sound.play("player_destroy");
@@ -1119,6 +1127,8 @@ export class RaptorGame implements IGame {
         : 1;
       this.addExplosion(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
       this.score += hit.enemy.scoreValue;
+      this.statsTracker.recordRamKill(hit.enemy.variant, hit.enemy.scoreValue, isBossVariant(hit.enemy.variant));
+      this.statsTracker.updateScore(this.score, this.totalScore + this.score);
       if (isBossVariant(hit.enemy.variant)) {
         this.sound.play("boss_destroy");
         this.spawner.markBossDefeated();
@@ -1129,6 +1139,7 @@ export class RaptorGame implements IGame {
           this.spawnPowerUp(hit.enemy.pos.x, hit.enemy.pos.y);
         }
       }
+      this.statsTracker.recordDamageTaken(50, this.player.armor);
       const dead = this.player.takeDamage(50);
       if (dead) {
         this.sound.play("player_destroy");
@@ -1144,6 +1155,7 @@ export class RaptorGame implements IGame {
     const puHits = this.collisions.checkPlayerPowerUps(this.player, this.powerUps);
     for (const hit of puHits) {
       this.sound.play("power_up_collect");
+      this.statsTracker.recordPowerUpCollected(hit.powerUp.type);
       switch (hit.powerUp.type) {
         case "spread-shot":
         case "rapid-fire":
@@ -1212,6 +1224,7 @@ export class RaptorGame implements IGame {
     this.player.updateEmp(dt);
 
     if (!this.player.alive) {
+      this.statsTracker.recordDeath();
       this.totalScore += this.score;
       this.weaponSystem.laserBeam.active = false;
       this.sound.stopMusic();
@@ -1222,6 +1235,8 @@ export class RaptorGame implements IGame {
 
     if (this.spawner.isLevelComplete && this.enemies.length === 0) {
       this.totalScore += this.score;
+      this.statsTracker.updateScore(this.score, this.totalScore);
+      this.statsTracker.recordLevelComplete(this.currentLevel, this.levelElapsed, this.statsTracker.getStats().damageTakenThisLevel);
       this.projectiles = [];
       this.enemyBullets = [];
       this.powerUps = [];
@@ -1261,6 +1276,8 @@ export class RaptorGame implements IGame {
 
   private handleEnemyDestroyed(enemy: Enemy, config: RaptorLevelConfig): void {
     this.score += enemy.scoreValue;
+    this.statsTracker.recordKill(enemy.variant, enemy.scoreValue, isBossVariant(enemy.variant));
+    this.statsTracker.updateScore(this.score, this.totalScore + this.score);
     const explosionSize = (isBossVariant(enemy.variant) || enemy.variant === "juggernaut") ? 3
       : (enemy.variant === "bomber" || enemy.variant === "gunship" || enemy.variant === "cruiser" || enemy.variant === "destroyer" || enemy.variant === "minelayer") ? 2
       : 1;
@@ -1293,6 +1310,7 @@ export class RaptorGame implements IGame {
       this.vfx.triggerTierUpFlash(this.player.pos.x, this.player.top);
       this.hud.triggerTierFlash();
     }
+    this.statsTracker.recordWeaponUpgrade(weaponType, this.powerUpManager.weaponTier);
   }
 
   private assignProjectileSprite(proj: Projectile): void {
@@ -1404,6 +1422,7 @@ export class RaptorGame implements IGame {
   private resetGame(): void {
     this.totalScore = 0;
     this.playTimeSeconds = 0;
+    this.statsTracker.resetAll();
     this.vfx.reset();
     this.hud.setCompletionText(null);
     this.hud.setVictoryStoryActive(false);
@@ -1564,6 +1583,7 @@ export class RaptorGame implements IGame {
   private startLevel(levelIndex: number, fullReset = false): void {
     this.currentLevel = levelIndex;
     this.score = 0;
+    this.statsTracker.resetLevelStats();
     this.projectiles = [];
     this.enemies = [];
     this.enemyBullets = [];
