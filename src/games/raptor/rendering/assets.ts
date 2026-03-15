@@ -82,10 +82,10 @@ export const ASSET_MANIFEST: AssetManifest = {
   struct_command_center: `${TERRAIN}struct_command_center.svg`,
   struct_wall_segment: `${TERRAIN}struct_wall_segment.svg`,
 
-  prop_crater:         `${TERRAIN}prop_crater.svg`,
-  prop_rocks:          `${TERRAIN}prop_rocks.svg`,
-  prop_tire_tracks:    `${TERRAIN}prop_tire_tracks.svg`,
-  prop_debris:         `${TERRAIN}prop_debris.svg`,
+  prop_crater:         `${TERRAIN}prop_crater.png`,
+  prop_rocks:          `${TERRAIN}prop_rocks.png`,
+  prop_tire_tracks:    `${TERRAIN}prop_tire_tracks.png`,
+  prop_debris:         `${TERRAIN}prop_debris.png`,
 
   // Level 6–10 Horizons
   horizon_shipyard:      `${TERRAIN}horizon_shipyard.png`,
@@ -132,27 +132,27 @@ export const ASSET_MANIFEST: AssetManifest = {
   struct_reactor_core:   `${TERRAIN}struct_reactor_core.png`,
 
   // Level 6 Props (Shipyard)
-  prop_scrap_metal:      `${TERRAIN}prop_scrap_metal.svg`,
-  prop_oil_drum:         `${TERRAIN}prop_oil_drum.svg`,
-  prop_anchor:           `${TERRAIN}prop_anchor.svg`,
+  prop_scrap_metal:      `${TERRAIN}prop_scrap_metal.png`,
+  prop_oil_drum:         `${TERRAIN}prop_oil_drum.png`,
+  prop_anchor:           `${TERRAIN}prop_anchor.png`,
 
   // Level 7 Props (Wasteland)
-  prop_bones:            `${TERRAIN}prop_bones.svg`,
-  prop_radiation_sign:   `${TERRAIN}prop_radiation_sign.svg`,
+  prop_bones:            `${TERRAIN}prop_bones.png`,
+  prop_radiation_sign:   `${TERRAIN}prop_radiation_sign.png`,
 
   // Level 8 Props (Industrial)
-  prop_grate:            `${TERRAIN}prop_grate.svg`,
-  prop_steam_vent:       `${TERRAIN}prop_steam_vent.svg`,
+  prop_grate:            `${TERRAIN}prop_grate.png`,
+  prop_steam_vent:       `${TERRAIN}prop_steam_vent.png`,
 
   // Level 9 Props (Orbital)
-  prop_space_debris:     `${TERRAIN}prop_space_debris.svg`,
-  prop_hull_fragment:    `${TERRAIN}prop_hull_fragment.svg`,
-  prop_wiring:           `${TERRAIN}prop_wiring.svg`,
-  prop_panel_shard:      `${TERRAIN}prop_panel_shard.svg`,
+  prop_space_debris:     `${TERRAIN}prop_space_debris.png`,
+  prop_hull_fragment:    `${TERRAIN}prop_hull_fragment.png`,
+  prop_wiring:           `${TERRAIN}prop_wiring.png`,
+  prop_panel_shard:      `${TERRAIN}prop_panel_shard.png`,
 
   // Level 10 Props (Stronghold)
-  prop_red_light:        `${TERRAIN}prop_red_light.svg`,
-  prop_cable_cluster:    `${TERRAIN}prop_cable_cluster.svg`,
-  prop_vent_grate:       `${TERRAIN}prop_vent_grate.svg`,
-  prop_blast_mark:       `${TERRAIN}prop_blast_mark.svg`,
+  prop_red_light:        `${TERRAIN}prop_red_light.png`,
+  prop_cable_cluster:    `${TERRAIN}prop_cable_cluster.png`,
+  prop_vent_grate:       `${TERRAIN}prop_vent_grate.png`,
+  prop_blast_mark:       `${TERRAIN}prop_blast_mark.png`,
 };
