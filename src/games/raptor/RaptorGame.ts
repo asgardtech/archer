@@ -39,6 +39,7 @@ import { GAME_STORY, getActForLevel } from "./story";
 import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
 import { SettingsStorage } from "../../shared/storage";
+import { AchievementStorage } from "./systems/achievements/AchievementStorage";
 
 const DT_CAP = 0.1;
 const MAX_ENEMY_BULLETS = 30;
@@ -186,7 +187,7 @@ export class RaptorGame implements IGame {
 
     this.perfManager = new PerformanceManager();
     this.achievementManager = new AchievementManager(this.statsTracker);
-    this.achievementManager.onUnlock = (_a) => { /* future: toast notification */ };
+    this.achievementManager.onUnlock = (_a) => { this.saveAchievements(); };
     this.initStars(60);
     this.setupResize();
   }
@@ -285,6 +286,10 @@ export class RaptorGame implements IGame {
     this.audio.sfxVolume = settings.sfxVolume;
     if (settings.muted) this.audio.muted = true;
     this.showFps = settings.showFps;
+
+    const achievementData = await AchievementStorage.load();
+    this.achievementManager.loadUnlocked(achievementData.unlockedAchievements);
+    this.statsTracker.deserialize(achievementData.playerStats);
 
     await this.refreshSaveStatus();
     this.state = "menu";
@@ -1254,6 +1259,7 @@ export class RaptorGame implements IGame {
       this.statsTracker.recordDeath();
       this.totalScore += this.score;
       this.weaponSystem.laserBeam.active = false;
+      this.saveAchievements();
       this.sound.stopMusic();
       this.sound.play("game_over");
       this.state = "gameover";
@@ -1273,6 +1279,7 @@ export class RaptorGame implements IGame {
         this.achievementManager.fireEvent("level_under_2min");
       }
       this.achievementManager.checkAchievements();
+      this.saveAchievements();
 
       this.projectiles = [];
       this.enemyBullets = [];
@@ -1462,11 +1469,17 @@ export class RaptorGame implements IGame {
     }).catch(() => {});
   }
 
+  private saveAchievements(): void {
+    AchievementStorage.save(
+      this.achievementManager.getUnlocked(),
+      this.statsTracker.serialize(),
+    ).catch(console.error);
+  }
+
   private resetGame(): void {
     this.totalScore = 0;
     this.playTimeSeconds = 0;
-    this.statsTracker.resetAll();
-    this.achievementManager.reset();
+    this.statsTracker.resetLevelStats();
     this.vfx.reset();
     this.hud.setCompletionText(null);
     this.hud.setVictoryStoryActive(false);
