@@ -3,6 +3,13 @@ export interface Vec2 {
   y: number;
 }
 
+export interface UserSettings {
+  musicVolume: number;   // 0–1, default 0.5
+  sfxVolume: number;     // 0–1, default 0.25
+  muted: boolean;        // default false
+  showFps: boolean;      // default false
+}
+
 export type RaptorGameState =
   | "loading"
   | "menu"

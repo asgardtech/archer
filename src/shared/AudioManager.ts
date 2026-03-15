@@ -1,5 +1,3 @@
-import { tryGetStorage, trySetStorage } from "./storage";
-
 export interface EnvelopeParams {
   attack: number;
   decay: number;
@@ -45,19 +43,10 @@ export class AudioManager {
   private noiseBuffers: Map<number, AudioBuffer> = new Map();
 
   constructor() {
-    this._muted = tryGetStorage("audio_muted", "false") === "true";
-    this._volume = parseFloat(tryGetStorage("audio_volume", "0.5"));
-    if (isNaN(this._volume) || this._volume < 0 || this._volume > 1) {
-      this._volume = 0.5;
-    }
-    this._musicVolume = parseFloat(tryGetStorage("audio_music_volume", "0.5"));
-    if (isNaN(this._musicVolume) || this._musicVolume < 0 || this._musicVolume > 1) {
-      this._musicVolume = 0.5;
-    }
-    this._sfxVolume = parseFloat(tryGetStorage("audio_sfx_volume", "0.25"));
-    if (isNaN(this._sfxVolume) || this._sfxVolume < 0 || this._sfxVolume > 1) {
-      this._sfxVolume = 0.25;
-    }
+    this._muted = false;
+    this._volume = 0.5;
+    this._musicVolume = 0.5;
+    this._sfxVolume = 0.25;
   }
 
   ensureContext(): AudioContext {
@@ -144,7 +133,6 @@ export class AudioManager {
 
   set muted(v: boolean) {
     this._muted = v;
-    trySetStorage("audio_muted", String(v));
     this.applyVolume();
   }
 
@@ -154,7 +142,6 @@ export class AudioManager {
 
   set volume(v: number) {
     this._volume = Math.max(0, Math.min(1, v));
-    trySetStorage("audio_volume", String(this._volume));
     this.applyVolume();
   }
 
@@ -164,7 +151,6 @@ export class AudioManager {
 
   set musicVolume(v: number) {
     this._musicVolume = Math.max(0, Math.min(1, v));
-    trySetStorage("audio_music_volume", String(this._musicVolume));
     if (this._musicGain) {
       this._musicGain.gain.value = this._musicVolume;
     }
@@ -176,7 +162,6 @@ export class AudioManager {
 
   set sfxVolume(v: number) {
     this._sfxVolume = Math.max(0, Math.min(1, v));
-    trySetStorage("audio_sfx_volume", String(this._sfxVolume));
     if (this._sfxGain) {
       this._sfxGain.gain.value = this._sfxVolume;
     }

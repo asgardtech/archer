@@ -36,6 +36,7 @@ import { LEVELS } from "./levels";
 import { GAME_STORY, getActForLevel } from "./story";
 import { IGame } from "../../shared/types";
 import { AudioManager } from "../../shared/AudioManager";
+import { SettingsStorage } from "../../shared/storage";
 
 const DT_CAP = 0.1;
 const MAX_ENEMY_BULLETS = 30;
@@ -270,6 +271,12 @@ export class RaptorGame implements IGame {
     if (playerSprite) this.player.setSprite(playerSprite);
     if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
 
+    const settings = await SettingsStorage.load();
+    this.audio.musicVolume = settings.musicVolume;
+    this.audio.sfxVolume = settings.sfxVolume;
+    if (settings.muted) this.audio.muted = true;
+    this.showFps = settings.showFps;
+
     await this.refreshSaveStatus();
     this.state = "menu";
   }
@@ -353,6 +360,7 @@ export class RaptorGame implements IGame {
     if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width)) {
       this.audio.ensureContext();
       this.audio.toggleMute();
+      this.persistSettings();
       this.input.consume();
       return true;
     }
@@ -372,6 +380,7 @@ export class RaptorGame implements IGame {
       }
       if (!this.input.isMouseDown) {
         this.draggingSlider = null;
+        this.persistSettings();
       }
       this.input.consume();
       return true;
@@ -405,6 +414,7 @@ export class RaptorGame implements IGame {
     if (this.hud.isMuteButtonHit(mx, my, this.width)) {
       this.audio.ensureContext();
       this.audio.toggleMute();
+      this.persistSettings();
       this.input.consume();
       return true;
     }
@@ -1340,6 +1350,15 @@ export class RaptorGame implements IGame {
     this._hasSaveData = await SaveSystem.hasSave(this.activeSlot);
   }
 
+  private persistSettings(): void {
+    SettingsStorage.save({
+      musicVolume: this.audio.musicVolume,
+      sfxVolume: this.audio.sfxVolume,
+      muted: this.audio.muted,
+      showFps: this.showFps,
+    }).catch(() => {});
+  }
+
   private resetGame(): void {
     this.totalScore = 0;
     this.playTimeSeconds = 0;
@@ -1471,6 +1490,7 @@ export class RaptorGame implements IGame {
       showFps: this.showFps,
       toggleFps: () => {
         this.showFps = !this.showFps;
+        this.persistSettings();
         return this.showFps;
       },
     };
