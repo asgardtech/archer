@@ -17,6 +17,7 @@ export type RaptorGameState =
   | "story_intro"
   | "briefing"
   | "playing"
+  | "paused"
   | "level_complete"
   | "gameover"
   | "victory";
