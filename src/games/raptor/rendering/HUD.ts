@@ -3,6 +3,7 @@ import { LEVELS } from "../levels";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
 import { ShipRenderer } from "./ShipRenderer";
+import { formatRelativeDate } from "./formatDate";
 
 const MUTE_BTN_SIZE = 36;
 const MUTE_BTN_MARGIN = 12;
@@ -564,7 +565,7 @@ export class HUD {
 
   private getMenuPanelRect(width: number, height: number) {
     const panelW = 420;
-    const panelH = 220;
+    const panelH = 270;
     const px = (width - panelW) / 2;
     const py = (height - panelH) / 2 - 10;
     return { px, py, panelW, panelH };
@@ -612,6 +613,20 @@ export class HUD {
     return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
   }
 
+  private getMenuAchievementsButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getMenuPanelRect(width, height);
+    const btnW = 200;
+    const btnH = 28;
+    const btnX = px + (panelW - btnW) / 2;
+    const btnY = py + 160;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  isMenuAchievementsButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getMenuAchievementsButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
   private renderMenu(ctx: CanvasRenderingContext2D, width: number, height: number, hasSave?: boolean): void {
     ctx.save();
 
@@ -652,14 +667,29 @@ export class HUD {
     ctx.textBaseline = "middle";
     ctx.fillText("PLAY", playBtn.x + playBtn.w / 2, playBtn.y + playBtn.h / 2);
 
+    const achBtn = this.getMenuAchievementsButtonRect(width, height);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
+    this.roundedRect(ctx, achBtn.x, achBtn.y, achBtn.w, achBtn.h, 6);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 1;
+    this.roundedRect(ctx, achBtn.x, achBtn.y, achBtn.w, achBtn.h, 6);
+    ctx.stroke();
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.fillStyle = "#B0C4DE";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("ACHIEVEMENTS", achBtn.x + achBtn.w / 2, achBtn.y + achBtn.h / 2);
+
     ctx.font = `7px ${RETRO_FONT}`;
     ctx.fillStyle = "#8899AA";
+    ctx.textAlign = "center";
     ctx.fillText(
       this.isTouchDevice
         ? "Touch to move \u2022 Auto-fire \u2022 Destroy enemies"
         : "Mouse/WASD to move \u2022 Auto-fire \u2022 Destroy enemies",
       width / 2,
-      py + 180
+      py + 220
     );
 
     ctx.font = `6px ${RETRO_FONT}`;
@@ -704,23 +734,7 @@ export class HUD {
   }
 
   private formatSaveDate(isoString: string): string {
-    try {
-      const saved = new Date(isoString);
-      if (isNaN(saved.getTime())) return isoString;
-      const now = Date.now();
-      const diffMs = now - saved.getTime();
-      const diffMin = Math.floor(diffMs / 60000);
-      if (diffMin < 1) return "Just now";
-      if (diffMin < 60) return `${diffMin}m ago`;
-      const diffH = Math.floor(diffMin / 60);
-      if (diffH < 24) return `${diffH}h ago`;
-      const diffD = Math.floor(diffH / 24);
-      if (diffD < 30) return `${diffD}d ago`;
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      return `${months[saved.getMonth()]} ${saved.getDate()}, ${saved.getFullYear()}`;
-    } catch {
-      return "Unknown date";
-    }
+    return formatRelativeDate(isoString);
   }
 
   setDeleteConfirm(slot: number | null): void {
@@ -1912,7 +1926,7 @@ export class HUD {
 
   private getPauseMenuRect(width: number, height: number) {
     const panelW = 340;
-    const panelH = 280;
+    const panelH = 330;
     const px = (width - panelW) / 2;
     const py = (height - panelH) / 2;
     return { px, py, panelW, panelH };
@@ -1947,12 +1961,26 @@ export class HUD {
     return { x: startX + btnSize + gap, y: btnY, w: btnSize, h: btnSize };
   }
 
+  private getPauseAchievementsButtonRect(width: number, height: number) {
+    const { px, py, panelW } = this.getPauseMenuRect(width, height);
+    const btnW = 200;
+    const btnH = 32;
+    const btnX = px + (panelW - btnW) / 2;
+    const btnY = py + 195;
+    return { x: btnX, y: btnY, w: btnW, h: btnH };
+  }
+
+  isPauseAchievementsButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
+    const btn = this.getPauseAchievementsButtonRect(width, height);
+    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+  }
+
   private getQuitButtonRect(width: number, height: number) {
     const { px, py, panelW } = this.getPauseMenuRect(width, height);
     const btnW = 200;
     const btnH = 36;
     const btnX = px + (panelW - btnW) / 2;
-    const btnY = py + 210;
+    const btnY = py + 260;
     return { x: btnX, y: btnY, w: btnW, h: btnH };
   }
 
@@ -2039,6 +2067,20 @@ export class HUD {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("\u2699", settingsBtn.x + settingsBtn.w / 2, settingsBtn.y + settingsBtn.h / 2);
+
+    const achBtn = this.getPauseAchievementsButtonRect(width, height);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+    this.roundedRect(ctx, achBtn.x, achBtn.y, achBtn.w, achBtn.h, 6);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+    ctx.lineWidth = 1;
+    this.roundedRect(ctx, achBtn.x, achBtn.y, achBtn.w, achBtn.h, 6);
+    ctx.stroke();
+    ctx.font = `8px ${RETRO_FONT}`;
+    ctx.fillStyle = "#B0C4DE";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("ACHIEVEMENTS", achBtn.x + achBtn.w / 2, achBtn.y + achBtn.h / 2);
 
     const quitBtn = this.getQuitButtonRect(width, height);
     ctx.fillStyle = "rgba(231, 76, 60, 0.8)";
