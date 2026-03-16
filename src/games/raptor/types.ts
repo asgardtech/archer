@@ -428,6 +428,7 @@ export interface Projectile {
   readonly bottom: number;
   damage: number;
   piercing: boolean;
+  sourceWeapon: WeaponType;
   update(dt: number, canvasWidth: number, canvasHeight: number, enemies?: import("./entities/Enemy").Enemy[]): void;
   render(ctx: CanvasRenderingContext2D): void;
 }

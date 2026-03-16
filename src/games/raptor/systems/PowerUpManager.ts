@@ -41,13 +41,12 @@ export class PowerUpManager {
 
     if (type === this._currentWeapon) {
       if (existingTier >= MAX_WEAPON_TIER) return "maxed";
-      this._inventory.set(type, existingTier + 1);
+      this._inventory.set(type, Math.min(existingTier + 1, MAX_WEAPON_TIER));
       return "upgraded";
     }
 
-    // Owned but not active: upgrade tier and switch to it
     if (existingTier < MAX_WEAPON_TIER) {
-      this._inventory.set(type, existingTier + 1);
+      this._inventory.set(type, Math.min(existingTier + 1, MAX_WEAPON_TIER));
       this._currentWeapon = type;
       return "upgraded";
     }
@@ -91,7 +90,10 @@ export class PowerUpManager {
   }
 
   setInventory(inventory: Map<WeaponType, number>): void {
-    this._inventory = new Map(inventory);
+    this._inventory = new Map();
+    for (const [type, tier] of inventory) {
+      this._inventory.set(type, Math.max(1, Math.min(MAX_WEAPON_TIER, Math.floor(tier))));
+    }
     if (!this._inventory.has("machine-gun")) {
       this._inventory.set("machine-gun", 1);
     }

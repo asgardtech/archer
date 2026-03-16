@@ -1,4 +1,4 @@
-import { Vec2, Projectile } from "../types";
+import { Vec2, Projectile, WeaponType } from "../types";
 import { Enemy } from "./Enemy";
 
 const TRACKING_BULLET_SPEED = 480;
@@ -10,6 +10,7 @@ export class TrackingBullet implements Projectile {
   public height = 8;
   public damage = 1;
   public piercing = false;
+  public sourceWeapon: WeaponType = "auto-gun";
 
   private angle: number;
   private vx: number;
