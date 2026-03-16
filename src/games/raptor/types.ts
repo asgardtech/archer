@@ -102,6 +102,38 @@ export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = 
   },
 };
 
+/** Visual skin override for enemy projectiles — cosmetic only. */
+export interface ProjectileSkin {
+  /** Override the weapon-type default sprite key. Optional. */
+  spriteKey?: string;
+  /** Fallback fill color when no sprite is loaded. */
+  fallbackColor: string;
+  /** Inner core color for fallback rendering. */
+  coreColor?: string;
+  /** Glow/shadow color for fallback rendering. */
+  glowColor?: string;
+}
+
+export const ENEMY_PROJECTILE_SKINS: Partial<Record<EnemyVariant, ProjectileSkin>> = {
+  scout:        { fallbackColor: "#44ff44", coreColor: "#aaffaa", glowColor: "#88ff88" },
+  interceptor:  { fallbackColor: "#44ff44", coreColor: "#aaffaa", glowColor: "#88ff88" },
+  dart:         { fallbackColor: "#44ff44", coreColor: "#aaffaa", glowColor: "#88ff88" },
+  drone:        { fallbackColor: "#cc44ff", coreColor: "#ee99ff", glowColor: "#dd88ff" },
+  swarmer:      { fallbackColor: "#cc44ff", coreColor: "#ee99ff", glowColor: "#dd88ff" },
+  fighter:      { fallbackColor: "#ff3333", coreColor: "#ff8888", glowColor: "#ff6666" },
+  stealth:      { fallbackColor: "#ff3333", coreColor: "#ff8888", glowColor: "#ff6666" },
+  bomber:       { fallbackColor: "#ff8800", coreColor: "#ffcc66", glowColor: "#ffbb44" },
+  gunship:      { fallbackColor: "#ff8800", coreColor: "#ffcc66", glowColor: "#ffbb44" },
+  cruiser:      { fallbackColor: "#4488ff", coreColor: "#99ccff", glowColor: "#88bbff" },
+  destroyer:    { fallbackColor: "#4488ff", coreColor: "#99ccff", glowColor: "#88bbff" },
+  juggernaut:   { fallbackColor: "#4488ff", coreColor: "#99ccff", glowColor: "#88bbff" },
+  boss:         { fallbackColor: "#ff4444", coreColor: "#ff9999", glowColor: "#ff6666" },
+  boss_carrier: { fallbackColor: "#ff4444", coreColor: "#ff9999", glowColor: "#ff6666" },
+  boss_gunship: { fallbackColor: "#5577ff", coreColor: "#99aaff", glowColor: "#7799ff" },
+  boss_dreadnought: { fallbackColor: "#ff44aa", coreColor: "#ff88cc", glowColor: "#ff66bb" },
+  boss_fortress:    { fallbackColor: "#00ccff", coreColor: "#88eeff", glowColor: "#66ddff" },
+};
+
 export interface EnemyConfig {
   variant: EnemyVariant;
   hitPoints: number;
@@ -111,6 +143,7 @@ export interface EnemyConfig {
   width: number;
   height: number;
   weaponType?: EnemyWeaponType;
+  projectileSkin?: ProjectileSkin;
 }
 
 export type RaptorPowerUpType =

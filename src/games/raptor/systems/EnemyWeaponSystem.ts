@@ -1,4 +1,4 @@
-import { EnemyWeaponType, ENEMY_WEAPON_CONFIGS, RaptorSoundEvent } from "../types";
+import { EnemyWeaponType, ENEMY_WEAPON_CONFIGS, ENEMY_PROJECTILE_SKINS, RaptorSoundEvent } from "../types";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { EnemyMissile } from "../entities/EnemyMissile";
 import { EnemyLaserBeam, EnemyLaserBeamConfig } from "../entities/EnemyLaserBeam";
@@ -165,10 +165,14 @@ export class EnemyWeaponSystem {
 
   private fireStandard(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
     const config = ENEMY_WEAPON_CONFIGS["standard"];
+    const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];
     const bullet = new EnemyBullet(enemy.pos.x, enemy.bottom, targetX, targetY, {
       damage: config.damage,
       speed: config.projectileSpeed,
-      spriteKey: config.spriteKey,
+      spriteKey: skin?.spriteKey ?? config.spriteKey,
+      fallbackColor: skin?.fallbackColor,
+      glowColor: skin?.glowColor,
+      coreColor: skin?.coreColor,
     });
     return {
       bullets: [bullet],
@@ -178,6 +182,7 @@ export class EnemyWeaponSystem {
 
   private fireSpread(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
     const config = ENEMY_WEAPON_CONFIGS["spread"];
+    const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];
     const dx = targetX - enemy.pos.x;
     const dy = targetY - enemy.bottom;
     const baseAngle = Math.atan2(dx, dy);
@@ -195,8 +200,10 @@ export class EnemyWeaponSystem {
         damage: config.damage,
         speed: config.projectileSpeed,
         radius: 3,
-        spriteKey: config.spriteKey,
-        fallbackColor: "#ff8800",
+        spriteKey: skin?.spriteKey ?? config.spriteKey,
+        fallbackColor: skin?.fallbackColor ?? "#ff8800",
+        glowColor: skin?.glowColor,
+        coreColor: skin?.coreColor,
       }));
     }
 
@@ -208,12 +215,16 @@ export class EnemyWeaponSystem {
 
   private fireMissile(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
     const config = ENEMY_WEAPON_CONFIGS["missile"];
+    const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];
     const bullet = new EnemyMissile(enemy.pos.x, enemy.bottom, targetX, targetY, {
       damage: config.damage,
       speed: config.projectileSpeed,
       homing: config.homing,
       homingStrength: config.homingStrength,
-      spriteKey: config.spriteKey,
+      spriteKey: skin?.spriteKey ?? config.spriteKey,
+      fallbackColor: skin?.fallbackColor,
+      glowColor: skin?.glowColor,
+      coreColor: skin?.coreColor,
       radius: 7,
     });
     return {
@@ -224,6 +235,7 @@ export class EnemyWeaponSystem {
 
   fireMissileFrom(enemy: Enemy, targetX: number, targetY: number, offsetX: number, offsetY: number): EnemyFireResult {
     const config = ENEMY_WEAPON_CONFIGS["missile"];
+    const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];
     const bullet = new EnemyMissile(
       enemy.pos.x + offsetX,
       enemy.bottom + offsetY,
@@ -233,7 +245,10 @@ export class EnemyWeaponSystem {
         speed: config.projectileSpeed,
         homing: config.homing,
         homingStrength: config.homingStrength,
-        spriteKey: config.spriteKey,
+        spriteKey: skin?.spriteKey ?? config.spriteKey,
+        fallbackColor: skin?.fallbackColor,
+        glowColor: skin?.glowColor,
+        coreColor: skin?.coreColor,
         radius: 7,
       }
     );

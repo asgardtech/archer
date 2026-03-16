@@ -10,6 +10,8 @@ export interface EnemyBulletOptions {
   homingStrength?: number;
   spriteKey?: string;
   fallbackColor?: string;
+  glowColor?: string;
+  coreColor?: string;
   ttl?: number;
   isMine?: boolean;
 }
@@ -25,6 +27,8 @@ export class EnemyBullet {
   public speed: number;
   public spriteKey: string;
   public fallbackColor: string;
+  public glowColor: string | null;
+  public coreColor: string | null;
   public ttl: number | null;
   public isMine: boolean;
   public reflected = false;
@@ -42,6 +46,8 @@ export class EnemyBullet {
     this.homingStrength = options?.homingStrength ?? 0;
     this.spriteKey = options?.spriteKey ?? "bullet_enemy";
     this.fallbackColor = options?.fallbackColor ?? "#ff3333";
+    this.glowColor = options?.glowColor ?? null;
+    this.coreColor = options?.coreColor ?? null;
     this.ttl = options?.ttl ?? null;
     this.isMine = options?.isMine ?? false;
 
@@ -163,20 +169,21 @@ export class EnemyBullet {
   private renderFallback(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.fillStyle = this.fallbackColor;
-    ctx.shadowColor = this.fallbackColor;
+    ctx.shadowColor = this.glowColor ?? this.fallbackColor;
     ctx.shadowBlur = 4;
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = this.fallbackCoreColor;
+    ctx.fillStyle = this.resolvedCoreColor;
     ctx.beginPath();
     ctx.arc(this.pos.x, this.pos.y, this.radius * 0.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
-  private get fallbackCoreColor(): string {
+  private get resolvedCoreColor(): string {
+    if (this.coreColor) return this.coreColor;
     if (this.fallbackColor === "#ff3333") return "#ff8888";
     if (this.fallbackColor === "#ff8800") return "#ffcc66";
     return "#ffffff";
