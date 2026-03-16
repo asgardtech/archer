@@ -162,7 +162,8 @@ export type RaptorSoundEvent =
   | "mega_bomb_fire"
   | "dodge"
   | "emp_burst"
-  | "deflect";
+  | "deflect"
+  | "achievement_unlock";
 
 export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun" | "rocket";
 
