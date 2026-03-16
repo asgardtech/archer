@@ -67,6 +67,16 @@ export class EnemySpawner {
     return spawned;
   }
 
+  skipToWave(waveIndex: number): void {
+    if (waveIndex <= 0 || this.waves.length === 0) return;
+    const clamped = Math.min(waveIndex, this.waves.length - 1);
+    for (let i = 0; i < clamped; i++) {
+      this.waves[i].started = true;
+      this.waves[i].complete = true;
+      this.waves[i].spawned = this.waves[i].config.count;
+    }
+  }
+
   get completedWaveCount(): number {
     let count = 0;
     for (const wave of this.waves) {
