@@ -838,10 +838,35 @@ export class HUD {
     ctx.fillStyle = "#FFFFFF";
     ctx.fillText(`SLOT ${index + 1}`, leftX, card.y + 20);
 
+    const isAuto = slot.isAutoSave === true;
+    const badgeText = isAuto ? "AUTO-SAVE" : "CHECKPOINT";
+    const badgeColor = isAuto ? "rgba(230, 126, 34, 0.8)" : "rgba(46, 204, 113, 0.8)";
+
+    const slotLabelWidth = this.measureCtx.font === `8px ${RETRO_FONT}`
+      ? this.measureCtx.measureText(`SLOT ${index + 1}`).width
+      : 60;
+    const badgeX = leftX + slotLabelWidth + 12;
+    ctx.font = `5px ${RETRO_FONT}`;
+    const badgeTextWidth = this.measureCtx.measureText(badgeText).width + 8;
+    ctx.fillStyle = badgeColor;
+    this.roundedRect(ctx, badgeX, card.y + 14, badgeTextWidth, 12, 3);
+    ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "left";
+    ctx.fillText(badgeText, badgeX + 4, card.y + 20);
+
     const levelName = LEVELS[slot.levelReached]?.name ?? "Unknown";
     ctx.font = `7px ${RETRO_FONT}`;
     ctx.fillStyle = "#FFD700";
+    ctx.textAlign = "left";
     ctx.fillText(`LEVEL ${slot.levelReached + 1}: ${levelName.toUpperCase()}`, leftX, card.y + 38);
+
+    if (isAuto && slot.waveIndex !== undefined) {
+      const totalWaves = LEVELS[slot.levelReached]?.waves.length ?? 0;
+      ctx.font = `6px ${RETRO_FONT}`;
+      ctx.fillStyle = "#B0C4DE";
+      ctx.fillText(`Wave ${slot.waveIndex}/${totalWaves}`, leftX, card.y + 54);
+    }
 
     const midX = card.x + 280;
     ctx.font = `7px ${RETRO_FONT}`;

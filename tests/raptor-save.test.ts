@@ -509,7 +509,7 @@ describe("Scenario: Starting a New Game clears existing save data", () => {
     expect(game.currentLevel).toBe(0);
     expect(game.totalScore).toBe(0);
     expect(game.player.lives).toBe(3);
-    const saved = await SaveSystem.load(0);
+    const saved = await SaveSystem.loadBest(0);
     expect(saved).not.toBeNull();
     expect(saved!.isAutoSave).toBe(true);
     expect(saved!.levelReached).toBe(0);
@@ -1134,7 +1134,7 @@ describe("Scenario: RaptorGame passes activeSlot to SaveSystem.clear on New Game
     await SaveSystem.clear(game.saveSlot);
     (game as any).resetGame();
 
-    const saved = await SaveSystem.load(1);
+    const saved = await SaveSystem.loadBest(1);
     expect(saved).not.toBeNull();
     expect(saved!.isAutoSave).toBe(true);
     expect(saved!.levelReached).toBe(0);
@@ -1221,16 +1221,17 @@ describe("Scenario: SaveSystem.autoSave sets isAutoSave flag", () => {
   test("autoSave sets isAutoSave to true on saved data", async () => {
     const data = validSaveData();
     await SaveSystem.autoSave(0, data);
-    const loaded = await SaveSystem.load(0);
+    const loaded = await SaveSystem.loadBest(0);
     expect(loaded).not.toBeNull();
     expect(loaded!.isAutoSave).toBe(true);
   });
 
-  test("autoSave delegates to save (same slot, same key)", async () => {
+  test("autoSave writes to the auto-save key, not the checkpoint key", async () => {
     const data = validSaveData();
     await SaveSystem.autoSave(1, data);
-    expect(mockBackend.data["raptor_save_1"]).toBeDefined();
-    const loaded = await SaveSystem.load(1);
+    expect(mockBackend.data["raptor_save_1_auto"]).toBeDefined();
+    expect(mockBackend.data["raptor_save_1"]).toBeUndefined();
+    const loaded = await SaveSystem.loadBest(1);
     expect(loaded!.slotIndex).toBe(1);
   });
 });
@@ -1396,7 +1397,7 @@ describe("Scenario: Auto-save triggers at level start", () => {
     game.currentLevel = 0;
     (game as any).startLevel(3);
 
-    const saved = await SaveSystem.load(0);
+    const saved = await SaveSystem.loadBest(0);
     expect(saved).not.toBeNull();
     expect(saved!.isAutoSave).toBe(true);
     expect(saved!.levelReached).toBe(3);
@@ -1406,7 +1407,7 @@ describe("Scenario: Auto-save triggers at level start", () => {
     const { game } = createPlayingGame();
     (game as any).startLevel(2);
 
-    const saved = await SaveSystem.load(0);
+    const saved = await SaveSystem.loadBest(0);
     expect(saved).not.toBeNull();
     expect(saved!.waveIndex).toBe(0);
   });
@@ -1416,7 +1417,7 @@ describe("Scenario: Auto-save triggers at level start", () => {
     (game as any).playTimeSeconds = 120;
     (game as any).startLevel(1);
 
-    const saved = await SaveSystem.load(0);
+    const saved = await SaveSystem.loadBest(0);
     expect(saved).not.toBeNull();
     expect(saved!.playTimeSeconds).toBe(120);
   });
@@ -1425,10 +1426,23 @@ describe("Scenario: Auto-save triggers at level start", () => {
     const { game } = createPlayingGame();
     (game as any).resetGame();
 
-    const saved = await SaveSystem.load(0);
+    const saved = await SaveSystem.loadBest(0);
     expect(saved).not.toBeNull();
     expect(saved!.isAutoSave).toBe(true);
     expect(saved!.levelReached).toBe(0);
+  });
+
+  test("auto-save at level start does not overwrite checkpoint key", async () => {
+    const { game } = createPlayingGame();
+    await SaveSystem.save(validSaveData({ levelReached: 3, armor: 200 }), 0);
+    (game as any).startLevel(3);
+
+    const checkpoint = await SaveSystem.load(0);
+    expect(checkpoint).not.toBeNull();
+    expect(checkpoint!.armor).toBe(200);
+    expect(checkpoint!.isAutoSave).toBeUndefined();
+
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeDefined();
   });
 });
 
@@ -1450,7 +1464,7 @@ describe("Scenario: Between-wave checkpoint auto-save", () => {
     const wavesBefore = game.spawner.completedWaveCount;
     if (wavesBefore > 0) {
       (game as any).updatePlaying(0.001);
-      const saved = await SaveSystem.load(0);
+      const saved = await SaveSystem.loadBest(0);
       expect(saved).not.toBeNull();
       expect(saved!.isAutoSave).toBe(true);
       expect(saved!.waveIndex).toBe(wavesBefore);
@@ -1473,7 +1487,7 @@ describe("Scenario: Between-wave checkpoint auto-save", () => {
     }
 
     (game as any).updatePlaying(0.001);
-    const saved = await SaveSystem.load(0);
+    const saved = await SaveSystem.loadBest(0);
     expect(saved).toBeNull();
   });
 });
@@ -1604,18 +1618,17 @@ describe("Scenario: Auto-save failure does not crash the game", () => {
   });
 });
 
-describe("Scenario: Loading an auto-save resumes at the beginning of the saved level", () => {
+describe("Scenario: Loading an auto-save resumes at the saved wave", () => {
   test("continueGame starts at the saved level with restored state", async () => {
     const { game } = createPlayingGame();
-    await SaveSystem.save(validSaveData({
-      isAutoSave: true,
+    await SaveSystem.autoSave(0, validSaveData({
       levelReached: 3,
       waveIndex: 2,
       totalScore: 500,
       lives: 2,
       weapon: "missile",
       playTimeSeconds: 150,
-    }), 0);
+    }));
 
     await (game as any).continueGame();
 
@@ -1624,6 +1637,20 @@ describe("Scenario: Loading an auto-save resumes at the beginning of the saved l
     expect(game.player.lives).toBe(2);
     expect(game.powerUpManager.currentWeapon).toBe("missile");
     expect((game as any).playTimeSeconds).toBe(150);
+  });
+
+  test("continueGame restores wave progress from auto-save", async () => {
+    const { game } = createPlayingGame();
+    await SaveSystem.autoSave(0, validSaveData({
+      levelReached: 2,
+      waveIndex: 3,
+      lives: 2,
+    }));
+
+    await (game as any).continueGame();
+
+    expect(game.currentLevel).toBe(2);
+    expect(game.spawner.completedWaveCount).toBe(3);
   });
 });
 
@@ -1788,30 +1815,47 @@ describe("Scenario: save() creates backup of previous save", () => {
 });
 
 describe("Scenario: autoSave also creates a backup", () => {
-  test("auto-save creates backup of previous save", async () => {
+  test("auto-save creates backup of previous auto-save", async () => {
     const dataA = validSaveData({ totalScore: 100 });
-    await SaveSystem.save(dataA, 0);
-    const firstSaveRaw = mockBackend.data["raptor_save_0"];
+    await SaveSystem.autoSave(0, dataA);
+    const firstAutoRaw = mockBackend.data["raptor_save_0_auto"];
 
     const dataB = validSaveData({ totalScore: 200 });
     await SaveSystem.autoSave(0, dataB);
 
-    expect(mockBackend.data["raptor_save_0_backup"]).toBe(firstSaveRaw);
+    expect(mockBackend.data["raptor_save_0_auto_backup"]).toBe(firstAutoRaw);
+  });
+
+  test("auto-save does not overwrite checkpoint backup", async () => {
+    const checkpoint = validSaveData({ totalScore: 500 });
+    await SaveSystem.save(checkpoint, 0);
+
+    const autoData = validSaveData({ totalScore: 200 });
+    await SaveSystem.autoSave(0, autoData);
+
+    expect(mockBackend.data["raptor_save_0_backup"]).toBeUndefined();
+    expect(mockBackend.data["raptor_save_0"]).toBeDefined();
   });
 });
 
 describe("Scenario: clear() removes both primary and backup", () => {
-  test("clear removes primary and backup keys", async () => {
+  test("clear removes checkpoint, auto-save, and all backup keys", async () => {
     await SaveSystem.save(validSaveData({ totalScore: 100 }), 0);
     await SaveSystem.save(validSaveData({ totalScore: 200 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ totalScore: 150 }));
+    await SaveSystem.autoSave(0, validSaveData({ totalScore: 250 }));
 
     expect(mockBackend.data["raptor_save_0"]).toBeDefined();
     expect(mockBackend.data["raptor_save_0_backup"]).toBeDefined();
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeDefined();
+    expect(mockBackend.data["raptor_save_0_auto_backup"]).toBeDefined();
 
     await SaveSystem.clear(0);
 
     expect(mockBackend.data["raptor_save_0"]).toBeUndefined();
     expect(mockBackend.data["raptor_save_0_backup"]).toBeUndefined();
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeUndefined();
+    expect(mockBackend.data["raptor_save_0_auto_backup"]).toBeUndefined();
   });
 });
 
@@ -2080,6 +2124,413 @@ describe("Scenario: Save and load preserves new HP values", () => {
     expect(loaded!.armor).toBe(200);
     expect(loaded!.energy).toBe(200);
     expect(loaded!.shieldBattery).toBe(200);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// ISSUE 749: DUAL-KEY SAVE SYSTEM
+// ════════════════════════════════════════════════════════════════
+
+describe("Scenario: Checkpoint save survives starting a new level", () => {
+  test("checkpoint is preserved when auto-save writes at level start", async () => {
+    const { game } = createPlayingGame();
+    await SaveSystem.save(validSaveData({ levelReached: 3, armor: 200, lives: 3 }), 0);
+
+    (game as any).startLevel(3);
+
+    const checkpoint = await SaveSystem.load(0);
+    expect(checkpoint).not.toBeNull();
+    expect(checkpoint!.levelReached).toBe(3);
+    expect(checkpoint!.armor).toBe(200);
+    expect(checkpoint!.isAutoSave).toBeUndefined();
+
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeDefined();
+  });
+});
+
+describe("Scenario: Checkpoint save survives game over", () => {
+  test("game over clears auto-save but preserves checkpoint", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 3, armor: 200 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 3, armor: 100, waveIndex: 2 }));
+
+    const { game } = createPlayingGame();
+    game.player.alive = false;
+    game.state = "playing";
+
+    (game as any).updatePlaying(0.001);
+
+    expect(game.state).toBe("gameover");
+    await new Promise(r => setTimeout(r, 0));
+
+    const checkpoint = await SaveSystem.load(0);
+    expect(checkpoint).not.toBeNull();
+    expect(checkpoint!.levelReached).toBe(3);
+    expect(checkpoint!.armor).toBe(200);
+
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeUndefined();
+  });
+});
+
+describe("Scenario: Player falls back to checkpoint after game over", () => {
+  test("loading after game over returns checkpoint with full state", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 3, armor: 200, lives: 3 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 3, armor: 50, lives: 1, waveIndex: 5 }));
+
+    await SaveSystem.clearAutoSave(0);
+
+    const best = await SaveSystem.loadBest(0);
+    expect(best).not.toBeNull();
+    expect(best!.levelReached).toBe(3);
+    expect(best!.armor).toBe(200);
+    expect(best!.lives).toBe(3);
+    expect(best!.isAutoSave).toBeUndefined();
+  });
+});
+
+describe("Scenario: loadBest returns the best available save", () => {
+  test("returns checkpoint when only checkpoint exists", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 4 }), 0);
+
+    const best = await SaveSystem.loadBest(0);
+    expect(best).not.toBeNull();
+    expect(best!.levelReached).toBe(4);
+    expect(best!.isAutoSave).toBeUndefined();
+  });
+
+  test("returns auto-save when only auto-save exists", async () => {
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 2, waveIndex: 3 }));
+
+    const best = await SaveSystem.loadBest(0);
+    expect(best).not.toBeNull();
+    expect(best!.levelReached).toBe(2);
+    expect(best!.isAutoSave).toBe(true);
+  });
+
+  test("prefers checkpoint over auto-save at same levelReached", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 4, armor: 200 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 4, armor: 50, waveIndex: 2 }));
+
+    const best = await SaveSystem.loadBest(0);
+    expect(best).not.toBeNull();
+    expect(best!.armor).toBe(200);
+    expect(best!.isAutoSave).toBeUndefined();
+  });
+
+  test("prefers higher levelReached regardless of save type", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 3 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 4, waveIndex: 0 }));
+
+    const best = await SaveSystem.loadBest(0);
+    expect(best).not.toBeNull();
+    expect(best!.levelReached).toBe(4);
+    expect(best!.isAutoSave).toBe(true);
+  });
+
+  test("returns null when neither exists", async () => {
+    const best = await SaveSystem.loadBest(0);
+    expect(best).toBeNull();
+  });
+});
+
+describe("Scenario: clearAutoSave only removes auto-save", () => {
+  test("clearAutoSave preserves checkpoint", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 5 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 5, waveIndex: 2 }));
+
+    await SaveSystem.clearAutoSave(0);
+
+    const checkpoint = await SaveSystem.load(0);
+    expect(checkpoint).not.toBeNull();
+    expect(checkpoint!.levelReached).toBe(5);
+
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeUndefined();
+    expect(mockBackend.data["raptor_save_0_auto_backup"]).toBeUndefined();
+  });
+
+  test("clearAutoSave is no-op for invalid slot", async () => {
+    await SaveSystem.autoSave(0, validSaveData());
+    await SaveSystem.clearAutoSave(-1);
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeDefined();
+  });
+});
+
+describe("Scenario: hasSave checks both checkpoint and auto-save", () => {
+  test("returns true when only auto-save exists", async () => {
+    await SaveSystem.autoSave(0, validSaveData());
+    expect(await SaveSystem.hasSave(0)).toBe(true);
+  });
+
+  test("returns true when only checkpoint exists", async () => {
+    await SaveSystem.save(validSaveData(), 0);
+    expect(await SaveSystem.hasSave(0)).toBe(true);
+  });
+
+  test("returns true when both exist", async () => {
+    await SaveSystem.save(validSaveData(), 0);
+    await SaveSystem.autoSave(0, validSaveData());
+    expect(await SaveSystem.hasSave(0)).toBe(true);
+  });
+
+  test("returns false after clearAutoSave when no checkpoint", async () => {
+    await SaveSystem.autoSave(0, validSaveData());
+    await SaveSystem.clearAutoSave(0);
+    expect(await SaveSystem.hasSave(0)).toBe(false);
+  });
+});
+
+describe("Scenario: listSlots returns best save per slot", () => {
+  test("returns checkpoint over auto-save at same level", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 4, armor: 200 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 4, armor: 50, waveIndex: 2 }));
+
+    const slots = await SaveSystem.listSlots();
+    expect(slots[0]).not.toBeNull();
+    expect(slots[0]!.armor).toBe(200);
+    expect(slots[0]!.isAutoSave).toBeUndefined();
+  });
+});
+
+describe("Scenario: Non-final level complete clears auto-save", () => {
+  test("level-complete writes checkpoint and clears auto-save", async () => {
+    const { game } = createPlayingGame();
+    game.currentLevel = 1;
+    game.totalScore = 200;
+    game.score = 100;
+    game.player.lives = 2;
+    game.spawner.configure(LEVELS[1]);
+
+    for (let t = 0; t < 100; t += 0.1) {
+      game.spawner.update(0.1, 800);
+    }
+    game.spawner.spawnBoss(800);
+    game.spawner.markBossDefeated();
+    game.enemies = [];
+
+    (game as any).updatePlaying(0.001);
+
+    expect(game.state).toBe("level_complete");
+    await new Promise(r => setTimeout(r, 0));
+
+    const checkpoint = await SaveSystem.load(0);
+    expect(checkpoint).not.toBeNull();
+    expect(checkpoint!.levelReached).toBe(2);
+    expect(checkpoint!.isAutoSave).toBeUndefined();
+
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeUndefined();
+  });
+});
+
+describe("Scenario: EnemySpawner skipToWave", () => {
+  test("skipToWave marks earlier waves as complete", () => {
+    const spawner = new EnemySpawner();
+    spawner.configure(LEVELS[0]);
+    spawner.skipToWave(3);
+    expect(spawner.completedWaveCount).toBe(3);
+  });
+
+  test("skipToWave(0) is a no-op", () => {
+    const spawner = new EnemySpawner();
+    spawner.configure(LEVELS[0]);
+    spawner.skipToWave(0);
+    expect(spawner.completedWaveCount).toBe(0);
+  });
+
+  test("skipToWave clamps to waves.length - 1", () => {
+    const spawner = new EnemySpawner();
+    const level = LEVELS[0];
+    spawner.configure(level);
+    spawner.skipToWave(100);
+    expect(spawner.completedWaveCount).toBe(level.waves.length - 1);
+  });
+
+  test("skipToWave with negative is a no-op", () => {
+    const spawner = new EnemySpawner();
+    spawner.configure(LEVELS[0]);
+    spawner.skipToWave(-1);
+    expect(spawner.completedWaveCount).toBe(0);
+  });
+});
+
+describe("Scenario: Legacy save without isAutoSave loads as checkpoint", () => {
+  test("legacy save at checkpoint key is treated as checkpoint", async () => {
+    const legacy = validSaveData({ levelReached: 5 });
+    await SaveSystem.save(legacy, 0);
+
+    const best = await SaveSystem.loadBest(0);
+    expect(best).not.toBeNull();
+    expect(best!.isAutoSave).toBeUndefined();
+    expect(best!.levelReached).toBe(5);
+  });
+});
+
+describe("Scenario: Empty slot starts a new game", () => {
+  test("loadBest returns null for empty slot", async () => {
+    const best = await SaveSystem.loadBest(2);
+    expect(best).toBeNull();
+  });
+});
+
+describe("Scenario: Slot shows appropriate save type badge", () => {
+  test("HUD renders CHECKPOINT badge for checkpoint saves", () => {
+    const { HUD } = require("../src/games/raptor/rendering/HUD");
+    const hud = new HUD(false);
+    const canvas = createMockCanvas();
+    const ctx = (canvas as any).__ctx;
+
+    const checkpointSlot = validSaveData({ levelReached: 4 });
+    hud.renderSlotSelect(ctx, [checkpointSlot, null, null], 800, 600, 0, 0);
+
+    const fillTextCalls = (canvas as any).__fillTextCalls as Array<{ text: string }>;
+    expect(fillTextCalls.some((c: any) => c.text === "CHECKPOINT")).toBe(true);
+  });
+
+  test("HUD renders AUTO-SAVE badge for auto-saves", () => {
+    const { HUD } = require("../src/games/raptor/rendering/HUD");
+    const hud = new HUD(false);
+    const canvas = createMockCanvas();
+    const ctx = (canvas as any).__ctx;
+
+    const autoSlot = validSaveData({ levelReached: 2, isAutoSave: true, waveIndex: 3 });
+    hud.renderSlotSelect(ctx, [autoSlot, null, null], 800, 600, 0, 0);
+
+    const fillTextCalls = (canvas as any).__fillTextCalls as Array<{ text: string }>;
+    expect(fillTextCalls.some((c: any) => c.text === "AUTO-SAVE")).toBe(true);
+  });
+
+  test("HUD shows wave progress for auto-saves", () => {
+    const { HUD } = require("../src/games/raptor/rendering/HUD");
+    const hud = new HUD(false);
+    const canvas = createMockCanvas();
+    const ctx = (canvas as any).__ctx;
+
+    const totalWaves = LEVELS[2]?.waves.length ?? 0;
+    const autoSlot = validSaveData({ levelReached: 2, isAutoSave: true, waveIndex: 4 });
+    hud.renderSlotSelect(ctx, [autoSlot, null, null], 800, 600, 0, 0);
+
+    const fillTextCalls = (canvas as any).__fillTextCalls as Array<{ text: string }>;
+    expect(fillTextCalls.some((c: any) => c.text === `Wave 4/${totalWaves}`)).toBe(true);
+  });
+});
+
+describe("Scenario: Deleting a slot clears both checkpoint and auto-save", () => {
+  test("clear removes all keys for a slot", async () => {
+    await SaveSystem.save(validSaveData(), 1);
+    await SaveSystem.autoSave(1, validSaveData());
+
+    await SaveSystem.clear(1);
+
+    expect(await SaveSystem.hasSave(1)).toBe(false);
+    expect(await SaveSystem.loadBest(1)).toBeNull();
+    expect(mockBackend.data["raptor_save_1"]).toBeUndefined();
+    expect(mockBackend.data["raptor_save_1_auto"]).toBeUndefined();
+  });
+});
+
+describe("Scenario: Final victory clears both checkpoint and auto-save", () => {
+  test("completing the final level clears save data", async () => {
+    await SaveSystem.save(validSaveData(), 0);
+    await SaveSystem.autoSave(0, validSaveData());
+    expect(await SaveSystem.hasSave(0)).toBe(true);
+
+    const { game } = createPlayingGame();
+    game.currentLevel = LEVELS.length - 1;
+    game.spawner.configure(LEVELS[LEVELS.length - 1]);
+
+    for (let t = 0; t < 200; t += 0.1) {
+      game.spawner.update(0.1, 800);
+    }
+    game.spawner.spawnBoss(800);
+    game.spawner.markBossDefeated();
+    game.enemies = [];
+
+    (game as any).updatePlaying(0.001);
+
+    expect(game.state).toBe("victory");
+    await new Promise(r => setTimeout(r, 0));
+    expect(await SaveSystem.hasSave(0)).toBe(false);
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeUndefined();
+  });
+});
+
+describe("Scenario: Auto-save waveIndex exceeds level wave count", () => {
+  test("skipToWave clamps to last wave", () => {
+    const spawner = new EnemySpawner();
+    const level = LEVELS[0];
+    spawner.configure(level);
+
+    spawner.skipToWave(10);
+
+    expect(spawner.completedWaveCount).toBe(level.waves.length - 1);
+    expect(spawner.allWavesComplete).toBe(false);
+  });
+});
+
+describe("Scenario: Save data is preserved on game over (checkpoint survives)", () => {
+  test("checkpoint survives when player dies, auto-save is cleared", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 2, armor: 200 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 2, armor: 50, waveIndex: 3 }));
+
+    const { game } = createPlayingGame();
+    game.player.alive = false;
+    game.state = "playing";
+
+    (game as any).updatePlaying(0.001);
+
+    expect(game.state).toBe("gameover");
+    await new Promise(r => setTimeout(r, 0));
+
+    expect(await SaveSystem.hasSave(0)).toBe(true);
+    const checkpoint = await SaveSystem.load(0);
+    expect(checkpoint!.levelReached).toBe(2);
+    expect(checkpoint!.armor).toBe(200);
+
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeUndefined();
+  });
+});
+
+describe("Scenario: Auto-save is written to separate key at level start", () => {
+  test("level start auto-save uses auto key, not checkpoint key", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 2 }), 0);
+    const checkpointBefore = mockBackend.data["raptor_save_0"];
+
+    const { game } = createPlayingGame();
+    (game as any).startLevel(2);
+    await new Promise(r => setTimeout(r, 0));
+
+    expect(mockBackend.data["raptor_save_0"]).toBe(checkpointBefore);
+    expect(mockBackend.data["raptor_save_0_auto"]).toBeDefined();
+
+    const autoData = JSON.parse(mockBackend.data["raptor_save_0_auto"]);
+    expect(autoData.isAutoSave).toBe(true);
+    expect(autoData.waveIndex).toBe(0);
+  });
+});
+
+describe("Scenario: Slot prefers checkpoint over auto-save at same level", () => {
+  test("loadBest returns checkpoint state for same-level saves", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 4, armor: 200, lives: 3 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 4, armor: 50, lives: 1, waveIndex: 2 }));
+
+    const best = await SaveSystem.loadBest(0);
+    expect(best).not.toBeNull();
+    expect(best!.armor).toBe(200);
+    expect(best!.lives).toBe(3);
+    expect(best!.isAutoSave).toBeUndefined();
+  });
+});
+
+describe("Scenario: Player quits mid-level without game over", () => {
+  test("auto-save persists; checkpoint also persists as fallback", async () => {
+    await SaveSystem.save(validSaveData({ levelReached: 4, armor: 200 }), 0);
+    await SaveSystem.autoSave(0, validSaveData({ levelReached: 4, armor: 100, waveIndex: 3 }));
+
+    const checkpoint = await SaveSystem.load(0);
+    expect(checkpoint).not.toBeNull();
+    expect(checkpoint!.armor).toBe(200);
+
+    const best = await SaveSystem.loadBest(0);
+    expect(best).not.toBeNull();
+    expect(best!.armor).toBe(200);
   });
 });
 

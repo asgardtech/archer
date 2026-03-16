@@ -1328,6 +1328,7 @@ export class RaptorGame implements IGame {
       this.saveAchievements();
       this.sound.stopMusic();
       this.sound.play("game_over");
+      SaveSystem.clearAutoSave(this.activeSlot).catch(console.error);
       this.state = "gameover";
       return;
     }
@@ -1366,6 +1367,7 @@ export class RaptorGame implements IGame {
             this.buildSaveData({ levelReached: this.currentLevel + 1 }),
             this.activeSlot
           ).catch(console.error);
+          SaveSystem.clearAutoSave(this.activeSlot).catch(console.error);
           this._hasSaveData = true;
         }
         this.storyRenderer.show([act.ending.join(" ")], "center", "pilot");
@@ -1379,6 +1381,7 @@ export class RaptorGame implements IGame {
           this.buildSaveData({ levelReached: this.currentLevel + 1 }),
           this.activeSlot
         ).catch(console.error);
+        SaveSystem.clearAutoSave(this.activeSlot).catch(console.error);
         this._hasSaveData = true;
       }
     }
@@ -1560,7 +1563,7 @@ export class RaptorGame implements IGame {
   }
 
   private async continueGame(): Promise<void> {
-    const data = await SaveSystem.load(this.activeSlot);
+    const data = await SaveSystem.loadBest(this.activeSlot);
     if (!data) {
       this.resetGame();
       return;
@@ -1575,6 +1578,10 @@ export class RaptorGame implements IGame {
     this.player.armor = data.armor ?? 200;
     this.player.energy = data.energy ?? 200;
 
+    if (data.isAutoSave && data.waveIndex !== undefined && data.waveIndex > 0) {
+      this.spawner.skipToWave(data.waveIndex);
+    }
+
     if (data.weaponInventory) {
       const inv = new Map<WeaponType, number>();
       for (const [key, val] of Object.entries(data.weaponInventory)) {
@@ -1586,7 +1593,6 @@ export class RaptorGame implements IGame {
       this.powerUpManager.setInventory(inv);
       this.powerUpManager.setActiveWeapon(data.weapon);
     } else {
-      // Backward compat: construct inventory from single weapon + tier
       const inv = new Map<WeaponType, number>([["machine-gun", 1]]);
       const tier = data.weaponTier ?? 1;
       if (data.weapon !== "machine-gun") {
