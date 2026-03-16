@@ -1,4 +1,4 @@
-import { RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER } from "../types";
+import { RaptorPowerUpType, WeaponType, WEAPON_SLOT_ORDER, MAX_WEAPON_TIER } from "../types";
 
 export interface ActiveEffect {
   type: RaptorPowerUpType;
@@ -40,13 +40,13 @@ export class PowerUpManager {
     }
 
     if (type === this._currentWeapon) {
-      if (existingTier >= 3) return "maxed";
+      if (existingTier >= MAX_WEAPON_TIER) return "maxed";
       this._inventory.set(type, existingTier + 1);
       return "upgraded";
     }
 
     // Owned but not active: upgrade tier and switch to it
-    if (existingTier < 3) {
+    if (existingTier < MAX_WEAPON_TIER) {
       this._inventory.set(type, existingTier + 1);
       this._currentWeapon = type;
       return "upgraded";
@@ -86,7 +86,7 @@ export class PowerUpManager {
   }
 
   setTier(tier: number): void {
-    const clamped = Math.max(1, Math.min(3, Math.floor(tier)));
+    const clamped = Math.max(1, Math.min(MAX_WEAPON_TIER, Math.floor(tier)));
     this._inventory.set(this._currentWeapon, clamped);
   }
 
@@ -104,7 +104,7 @@ export class PowerUpManager {
   }
 
   addToInventory(type: WeaponType, tier: number = 1): void {
-    const clamped = Math.max(1, Math.min(3, Math.floor(tier)));
+    const clamped = Math.max(1, Math.min(MAX_WEAPON_TIER, Math.floor(tier)));
     this._inventory.set(type, clamped);
   }
 

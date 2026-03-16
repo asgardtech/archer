@@ -1,4 +1,4 @@
-import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration, MAX_SAVE_SLOTS } from "../types";
+import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration, MAX_SAVE_SLOTS, MAX_WEAPON_TIER } from "../types";
 import { LEVELS } from "../levels";
 import { getStorageBackend } from "../../../shared/storage";
 
@@ -10,6 +10,14 @@ const MIGRATIONS: readonly SaveMigration[] = [
     toVersion: 2,
     migrate(data) {
       data.version = 2;
+      return data;
+    },
+  },
+  {
+    fromVersion: 2,
+    toVersion: 3,
+    migrate(data) {
+      data.version = 3;
       return data;
     },
   },
@@ -292,7 +300,7 @@ export class SaveSystem {
     }
 
     if (d.weaponTier !== undefined) {
-      if (typeof d.weaponTier !== "number" || !Number.isInteger(d.weaponTier) || d.weaponTier < 1 || d.weaponTier > 3) {
+      if (typeof d.weaponTier !== "number" || !Number.isInteger(d.weaponTier) || d.weaponTier < 1 || d.weaponTier > MAX_WEAPON_TIER) {
         return false;
       }
     }
@@ -341,7 +349,7 @@ export class SaveSystem {
       const cleaned: Record<string, number> = {};
       for (const [key, val] of Object.entries(inv)) {
         if (!VALID_WEAPONS.includes(key as WeaponType)) continue;
-        if (typeof val !== "number" || !Number.isInteger(val) || val < 1 || val > 3) continue;
+        if (typeof val !== "number" || !Number.isInteger(val) || val < 1 || val > MAX_WEAPON_TIER) continue;
         cleaned[key] = val;
       }
       d.weaponInventory = cleaned;

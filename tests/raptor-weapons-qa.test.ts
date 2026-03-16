@@ -1115,8 +1115,12 @@ describe("PowerUpManager Weapon Management", () => {
     expect(pm.weaponTier).toBe(2);
     expect(pm.setWeapon("missile")).toBe("upgraded");
     expect(pm.weaponTier).toBe(3);
+    expect(pm.setWeapon("missile")).toBe("upgraded");
+    expect(pm.weaponTier).toBe(4);
+    expect(pm.setWeapon("missile")).toBe("upgraded");
+    expect(pm.weaponTier).toBe(5);
     expect(pm.setWeapon("missile")).toBe("maxed");
-    expect(pm.weaponTier).toBe(3);
+    expect(pm.weaponTier).toBe(5);
     expect(pm.setWeapon("laser")).toBe("switched");
     expect(pm.weaponTier).toBe(1);
     expect(pm.setWeapon("laser")).toBe("upgraded");

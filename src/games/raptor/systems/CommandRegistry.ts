@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_CONFIGS, EnemyVariant, ENEMY_CONFIGS } from "../types";
+import { RaptorGameState, RaptorPowerUpType, WeaponType, WEAPON_CONFIGS, EnemyVariant, ENEMY_CONFIGS, MAX_WEAPON_TIER } from "../types";
 import { Player } from "../entities/Player";
 import { Enemy } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
@@ -188,8 +188,8 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
       let tier = 1;
       if (args.length >= 3) {
         const parsed = parseInt(args[2], 10);
-        if (isNaN(parsed) || parsed < 1 || parsed > 3) {
-          return "Tier must be between 1 and 3";
+        if (isNaN(parsed) || parsed < 1 || parsed > MAX_WEAPON_TIER) {
+          return `Tier must be between 1 and ${MAX_WEAPON_TIER}`;
         }
         tier = parsed;
       }
@@ -220,8 +220,8 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
       return `Current weapon tier: ${ctx.powerUpManager.weaponTier}`;
     }
     const n = parseInt(args[0], 10);
-    if (isNaN(n) || n < 1 || n > 3) {
-      return "Tier must be between 1 and 3";
+    if (isNaN(n) || n < 1 || n > MAX_WEAPON_TIER) {
+      return `Tier must be between 1 and ${MAX_WEAPON_TIER}`;
     }
     ctx.powerUpManager.setTier(n);
     return `Weapon tier set to ${n}`;

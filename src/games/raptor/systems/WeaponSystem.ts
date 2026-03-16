@@ -1,4 +1,4 @@
-import { WeaponType, WEAPON_CONFIGS, WeaponTierConfig, Projectile, RaptorLevelConfig, RaptorSoundEvent } from "../types";
+import { WeaponType, WEAPON_CONFIGS, WeaponTierConfig, Projectile, RaptorLevelConfig, RaptorSoundEvent, MAX_WEAPON_TIER } from "../types";
 import { Player } from "../entities/Player";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
@@ -40,7 +40,7 @@ export class WeaponSystem {
 
   private getTierConfig(powerUpManager: PowerUpManager): WeaponTierConfig {
     const config = WEAPON_CONFIGS[this.currentWeapon];
-    const tierIndex = Math.max(0, Math.min(2, powerUpManager.weaponTier - 1));
+    const tierIndex = Math.max(0, Math.min(MAX_WEAPON_TIER - 1, powerUpManager.weaponTier - 1));
     return config.tiers[tierIndex];
   }
 

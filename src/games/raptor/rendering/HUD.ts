@@ -81,7 +81,7 @@ interface SliderLayout {
 }
 
 export class HUD {
-  private static readonly TIER_SUFFIXES = ["", " II", " III"];
+  private static readonly TIER_SUFFIXES = ["", " II", " III", " IV", " V"];
 
   private isTouchDevice: boolean;
   private assets: AssetLoader | null = null;
@@ -1176,7 +1176,7 @@ export class HUD {
     weaponTier: number,
     chargeLevel: number
   ): void {
-    const TIER_PIPS = ["I", "II", "III"];
+    const TIER_PIPS = ["I", "II", "III", "IV", "V"];
     const panelX = canvasWidth - HUD_RIGHT_PANEL_WIDTH;
     const panelTop = HUD_TOP_BAR_HEIGHT;
 
@@ -1797,7 +1797,7 @@ export class HUD {
     weaponTier: number,
     chargeLevel: number
   ): void {
-    const TIER_PIPS = ["I", "II", "III"];
+    const TIER_PIPS = ["I", "II", "III", "IV", "V"];
     const slotW = 38;
     const slotH = 28;
     const gap = 3;

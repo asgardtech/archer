@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS, MAX_WEAPON_TIER } from "./types";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
@@ -1407,8 +1407,8 @@ export class RaptorGame implements IGame {
       this.hud.triggerTierFlash();
     }
     this.statsTracker.recordWeaponUpgrade(weaponType, this.powerUpManager.weaponTier);
-    if (this.powerUpManager.weaponTier >= 3) {
-      this.achievementManager.fireEvent("weapon_tier_3");
+    if (this.powerUpManager.weaponTier >= MAX_WEAPON_TIER) {
+      this.achievementManager.fireEvent("weapon_tier_5");
     }
     this.achievementManager.checkAchievements();
   }
