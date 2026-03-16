@@ -184,6 +184,21 @@ export class AchievementManager {
     this.compositeEventState.clear();
   }
 
+  forceUnlock(id: string): boolean {
+    if (this.unlockedAchievements.has(id)) return false;
+    const def = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === id);
+    if (!def) return false;
+    this.unlock(def);
+    return true;
+  }
+
+  forceLock(id: string): boolean {
+    if (!this.unlockedAchievements.has(id)) return false;
+    this.unlockedAchievements.delete(id);
+    this.compositeEventState.delete(id);
+    return true;
+  }
+
   private unlock(def: AchievementDefinition): void {
     const unlocked: UnlockedAchievement = {
       id: def.id,

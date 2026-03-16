@@ -13,6 +13,7 @@ import { PerformanceManager } from "./systems/PerformanceManager";
 import { PlayerStatsTracker } from "./systems/achievements/PlayerStatsTracker";
 import { AchievementManager } from "./systems/achievements/AchievementManager";
 import { CommandRegistry, CommandContext, registerLevelCommands, registerWeaponCommands, registerPowerUpCommands, registerPlayerCommands, registerCombatCommands } from "./systems/CommandRegistry";
+import { registerAchievementCommands } from "./systems/achievements/achievementCommands";
 import { Player } from "./entities/Player";
 import { Bullet } from "./entities/Bullet";
 import { Missile } from "./entities/Missile";
@@ -170,6 +171,7 @@ export class RaptorGame implements IGame {
     registerPowerUpCommands(this.commandRegistry);
     registerPlayerCommands(this.commandRegistry);
     registerCombatCommands(this.commandRegistry);
+    registerAchievementCommands(this.commandRegistry);
     this.devConsole.onSubmit = (cmd) => {
       this.devConsole.log(`> ${cmd}`);
       const output = this.commandRegistry.dispatch(cmd, this.buildCommandContext());
@@ -1666,6 +1668,10 @@ export class RaptorGame implements IGame {
         this.persistSettings();
         return this.showFps;
       },
+
+      achievementManager: this.achievementManager,
+      statsTracker: this.statsTracker,
+      saveAchievements: () => this.saveAchievements(),
     };
   }
 
