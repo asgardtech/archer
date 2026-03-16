@@ -4,6 +4,8 @@ import { Enemy } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { PowerUpManager } from "./PowerUpManager";
 import { WeaponSystem } from "./WeaponSystem";
+import type { AchievementManager } from "./achievements/AchievementManager";
+import type { PlayerStatsTracker } from "./achievements/PlayerStatsTracker";
 
 export interface CommandContext {
   currentLevel: number;
@@ -30,6 +32,10 @@ export interface CommandContext {
   destroyAllEnemies(): number;
   showFps: boolean;
   toggleFps(): boolean;
+
+  achievementManager: AchievementManager;
+  statsTracker: PlayerStatsTracker;
+  saveAchievements: () => void;
 }
 
 export type CommandHandler = (args: string[], ctx: CommandContext) => string | string[];

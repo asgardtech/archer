@@ -119,9 +119,12 @@ export class AchievementManager {
     const condition = def.condition;
 
     if (condition.type === "stat_threshold") {
+      const target = condition.threshold!;
+      if (this.isUnlocked(id)) {
+        return { current: target, target, percentage: 100 };
+      }
       const stats = this.statsTracker.getStats();
       const current = resolveStat(condition.stat!, stats);
-      const target = condition.threshold!;
       const percentage = target > 0 ? Math.min(100, (current / target) * 100) : 100;
       return { current, target, percentage };
     }
@@ -182,6 +185,21 @@ export class AchievementManager {
   reset(): void {
     this.unlockedAchievements.clear();
     this.compositeEventState.clear();
+  }
+
+  forceUnlock(id: string): boolean {
+    if (this.unlockedAchievements.has(id)) return false;
+    const def = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === id);
+    if (!def) return false;
+    this.unlock(def);
+    return true;
+  }
+
+  forceLock(id: string): boolean {
+    if (!this.unlockedAchievements.has(id)) return false;
+    this.unlockedAchievements.delete(id);
+    this.compositeEventState.delete(id);
+    return true;
   }
 
   private unlock(def: AchievementDefinition): void {
