@@ -17,12 +17,12 @@ describe("Issue #598: EMP depletes shield energy and destroys all enemy projecti
   describe("EMP energy cost", () => {
     test("EMP deducts 25 energy from the player's shield", () => {
       const player = createPlayer();
-      expect(player.energy).toBe(100);
+      expect(player.energy).toBe(200);
 
       const fired = player.emp();
 
       expect(fired).toBe(true);
-      expect(player.energy).toBe(100 - EMP_ENERGY_COST);
+      expect(player.energy).toBe(200 - EMP_ENERGY_COST);
     });
 
     test("EMP can fire when player has less energy than the cost", () => {
@@ -65,13 +65,13 @@ describe("Issue #598: EMP depletes shield energy and destroys all enemy projecti
       expect(player.energy).toBeGreaterThanOrEqual(0);
     });
 
-    test("EMP with full energy leaves 75", () => {
+    test("EMP with full energy leaves 175", () => {
       const player = createPlayer();
-      expect(player.energy).toBe(100);
+      expect(player.energy).toBe(200);
 
       player.emp();
 
-      expect(player.energy).toBe(75);
+      expect(player.energy).toBe(175);
     });
   });
 
@@ -150,7 +150,7 @@ describe("Issue #598: EMP depletes shield energy and destroys all enemy projecti
       const fired = player.emp();
 
       expect(fired).toBe(false);
-      expect(player.energy).toBe(100);
+      expect(player.energy).toBe(200);
     });
 
     test("EMP sets the cooldown timer after firing", () => {
@@ -181,7 +181,7 @@ describe("Issue #598: EMP depletes shield energy and destroys all enemy projecti
       const fired = player.emp();
 
       expect(fired).toBe(true);
-      expect(player.energy).toBe(75);
+      expect(player.energy).toBe(175);
     });
 
     test("EMP can fire when god mode is active", () => {
@@ -191,7 +191,7 @@ describe("Issue #598: EMP depletes shield energy and destroys all enemy projecti
       const fired = player.emp();
 
       expect(fired).toBe(true);
-      expect(player.energy).toBe(75);
+      expect(player.energy).toBe(175);
     });
   });
 });

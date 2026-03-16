@@ -1078,14 +1078,14 @@ export class HUD {
     const barH = Math.min(160, barsAvailH);
 
     // Armor bar
-    this.renderVerticalBar(ctx, contentX + 4, cursorY, barW, barH, armor / 100, "armor");
+    this.renderVerticalBar(ctx, contentX + 4, cursorY, barW, barH, armor / 200, "armor");
 
     // Energy bar
-    this.renderVerticalBar(ctx, contentX + 4 + barW + barGap + 12, cursorY, barW, barH, energy / 100, "energy", isEnergyRegenerating);
+    this.renderVerticalBar(ctx, contentX + 4 + barW + barGap + 12, cursorY, barW, barH, energy / 200, "energy", isEnergyRegenerating);
 
     // Battery bar (only if > 0)
     if (shieldBattery > 0) {
-      this.renderVerticalBar(ctx, contentX + 4 + (barW + barGap + 12) * 2, cursorY, barW, barH, shieldBattery / 100, "battery");
+      this.renderVerticalBar(ctx, contentX + 4 + (barW + barGap + 12) * 2, cursorY, barW, barH, shieldBattery / 200, "battery");
     }
   }
 
