@@ -1482,12 +1482,9 @@ describe("Weapon Balance Validation", () => {
     expect(WEAPON_CONFIGS["plasma"].fireRateMultiplier).toBe(0.7);
   });
 
-  test("Rocket splashRadius is 60 and largest of all weapons", () => {
-    const rocketSplash = WEAPON_CONFIGS["rocket"].splashRadius;
-    expect(rocketSplash).toBe(60);
-    for (const [key, cfg] of Object.entries(WEAPON_CONFIGS)) {
-      expect(rocketSplash).toBeGreaterThanOrEqual(cfg.splashRadius);
-    }
+  test("Rocket has no splash damage (splashRadius and splashDamageRatio are 0)", () => {
+    expect(WEAPON_CONFIGS["rocket"].splashRadius).toBe(0);
+    expect(WEAPON_CONFIGS["rocket"].splashDamageRatio).toBe(0);
   });
 
   test("Rocket fireRateMultiplier is 0.3", () => {
@@ -1586,9 +1583,10 @@ describe("Splash Damage Scaling", () => {
     expect(Math.ceil(cfg.damage * cfg.splashDamageRatio)).toBe(2);
   });
 
-  test("Rocket splash damage is ceil(5 * 0.6) = 3", () => {
+  test("Rocket has zero splash damage (splashRadius=0, splashDamageRatio=0)", () => {
     const cfg = WEAPON_CONFIGS["rocket"];
-    expect(Math.ceil(cfg.damage * cfg.splashDamageRatio)).toBe(3);
+    expect(cfg.splashRadius).toBe(0);
+    expect(cfg.splashDamageRatio).toBe(0);
   });
 
   test("Plasma splash damage is ceil(2 * 0.5) = 1", () => {
@@ -1608,5 +1606,65 @@ describe("Splash Damage Scaling", () => {
       expect(splashHits[0].damage).toBe(2);
       expect(splashHits[0].damage).not.toBe(1);
     }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECTION 23: Rocket vs Missile Splash Differentiation
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe("Rocket vs Missile Splash Differentiation", () => {
+  test("Rocket direct hit deals full damage but produces no splash hits", () => {
+    const cs = new CollisionSystem();
+    const rocket = new Rocket(200, 100);
+    const enemyA = makeEnemy(200, 100);
+    const enemyB = makeEnemy(215, 108);
+
+    const hits = cs.checkBulletsEnemies([rocket], [enemyA, enemyB]);
+    const directHits = hits.filter(h => !h.splash);
+    const splashHits = hits.filter(h => h.splash);
+
+    expect(directHits.length).toBe(1);
+    expect(directHits[0].enemy).toBe(enemyA);
+    expect(directHits[0].damage).toBe(5);
+    expect(splashHits.length).toBe(0);
+  });
+
+  test("Rocket hitting near a group of enemies only damages the directly-hit enemy", () => {
+    const cs = new CollisionSystem();
+    const rocket = new Rocket(200, 100);
+    const enemyA = makeEnemy(200, 100);
+    const enemyB = makeEnemy(210, 105);
+    const enemyC = makeEnemy(220, 110);
+
+    const hits = cs.checkBulletsEnemies([rocket], [enemyA, enemyB, enemyC]);
+
+    expect(hits.length).toBe(1);
+    expect(hits[0].enemy).toBe(enemyA);
+    expect(hits[0].splash).toBeFalsy();
+  });
+
+  test("Missile still deals splash damage to nearby enemies", () => {
+    const cs = new CollisionSystem();
+    const missile = new Missile(200, 100);
+    const enemyA = makeEnemy(200, 100);
+    const enemyB = makeEnemy(210, 105);
+
+    const hits = cs.checkBulletsEnemies([missile], [enemyA, enemyB]);
+    const splashHits = hits.filter(h => h.splash);
+
+    expect(splashHits.length).toBeGreaterThan(0);
+    expect(splashHits[0].damage).toBe(Math.ceil(WEAPON_CONFIGS["missile"].damage * WEAPON_CONFIGS["missile"].splashDamageRatio));
+  });
+
+  test("Only missile and plasma have splashRadius > 0", () => {
+    const splashWeapons = Object.entries(WEAPON_CONFIGS)
+      .filter(([_, cfg]) => cfg.splashRadius > 0)
+      .map(([key]) => key);
+
+    expect(splashWeapons).toHaveLength(2);
+    expect(splashWeapons).toContain("missile");
+    expect(splashWeapons).toContain("plasma");
+    expect(splashWeapons).not.toContain("rocket");
   });
 });

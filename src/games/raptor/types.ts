@@ -405,8 +405,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     piercing: false,
     homing: false,
     homingStrength: 0,
-    splashRadius: 60,
-    splashDamageRatio: 0.6,
+    splashRadius: 0,
+    splashDamageRatio: 0,
     rapidFireBonus: 1.4,
     spreadShotBehavior: "multi-projectile",
     tiers: [
