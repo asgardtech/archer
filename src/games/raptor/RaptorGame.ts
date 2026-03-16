@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS, MAX_WEAPON_TIER } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS, MAX_WEAPON_TIER, WEAPON_SPEED_BONUS_THRESHOLD, WEAPON_SPEED_BONUS_PER_TYPE } from "./types";
 import { MenuStateMachine } from "./systems/MenuStateMachine";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
@@ -844,7 +844,13 @@ export class RaptorGame implements IGame {
     this.hud.updateWingmanTimer(dt);
     this.achievementNotification.update(dt);
     this.input.updateFromKeyboard(dt, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
-    this.player.update(dt, this.input.targetX, this.input.targetY, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
+    const levelNumber = this.currentLevelConfig.level;
+    const weaponTypeCount = this.powerUpManager.inventory.size;
+    const speedMultiplier = levelNumber > WEAPON_SPEED_BONUS_THRESHOLD
+      ? 1 + weaponTypeCount * WEAPON_SPEED_BONUS_PER_TYPE
+      : 1;
+
+    this.player.update(dt, this.input.targetX, this.input.targetY, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY, speedMultiplier);
     if (this.player.alive) {
       this.vfx.addEngineTrail(this.player.pos.x, this.player.pos.y + this.player.height / 2, ShipRenderer.getEngineSpacing(this.player.width));
     }

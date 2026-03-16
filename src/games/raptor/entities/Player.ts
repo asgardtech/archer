@@ -2,7 +2,8 @@ import { Vec2 } from "../types";
 import { SpriteSheet } from "../rendering/SpriteSheet";
 import { ShipRenderer, ShipRenderState } from "../rendering/ShipRenderer";
 
-const MOVE_SPEED = 500;
+export const BASE_MOVE_SPEED = 500;
+const MOVE_SPEED = BASE_MOVE_SPEED;
 const INVINCIBILITY_DURATION = 2.0;
 const HITBOX_INSET_X = 4;
 const HITBOX_INSET_Y = 5;
@@ -97,7 +98,7 @@ export class Player {
       && this.energyRegenTimer >= ENERGY_REGEN_DELAY;
   }
 
-  update(dt: number, targetX: number, targetY: number, canvasWidth: number, canvasHeight: number, offsetX = 0, offsetY = 0): void {
+  update(dt: number, targetX: number, targetY: number, canvasWidth: number, canvasHeight: number, offsetX = 0, offsetY = 0, speedMultiplier = 1): void {
     if (!this.alive) return;
 
     if (this.invincibilityTimer > 0) {
@@ -116,7 +117,8 @@ export class Player {
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist > 2) {
-      const moveAmount = Math.min(MOVE_SPEED * dt, dist);
+      const effectiveSpeed = MOVE_SPEED * speedMultiplier;
+      const moveAmount = Math.min(effectiveSpeed * dt, dist);
       this.pos.x += (dx / dist) * moveAmount;
       this.pos.y += (dy / dist) * moveAmount;
       this.lastDx = dx / dist;
