@@ -1,4 +1,5 @@
 import type { AchievementCategory, AchievementDefinition, UnlockedAchievement } from "../types";
+import { formatRelativeDate } from "./formatDate";
 
 interface AchievementEntry {
   definition: AchievementDefinition;
@@ -224,9 +225,9 @@ export class AchievementGallery {
     ctx.fillText("ACHIEVEMENTS", px + PANEL_W / 2, py + HEADER_H / 2);
 
     ctx.font = `10px ${RETRO_FONT}`;
-    ctx.textAlign = "left";
+    ctx.textAlign = "right";
     ctx.fillStyle = "#FFD700";
-    ctx.fillText(`${unlocked}/${total}`, px + CONTENT_PADDING, py + HEADER_H / 2);
+    ctx.fillText(`${unlocked}/${total}`, px + PANEL_W - CONTENT_PADDING, py + HEADER_H / 2);
   }
 
   private renderCloseButton(ctx: CanvasRenderingContext2D, px: number, py: number): void {
@@ -373,12 +374,12 @@ export class AchievementGallery {
       ctx.font = `6px ${RETRO_FONT}`;
       ctx.fillStyle = "#667799";
       ctx.textAlign = "right";
-      ctx.fillText(this.formatDate(unlockedAt), x + CARD_W - 8, y + 20);
+      ctx.fillText(formatRelativeDate(unlockedAt), x + CARD_W - 8, y + 20);
       ctx.textAlign = "left";
     } else if (!unlocked && !isHiddenLocked && definition.condition.type === "stat_threshold") {
       const barX = textX;
       const barY = y + 54;
-      const barW = textMaxW;
+      const barW = textMaxW - 40;
       const barH = 4;
       const fillFrac = Math.min(1, progress / 100);
 
@@ -392,7 +393,9 @@ export class AchievementGallery {
 
       ctx.font = `5px ${RETRO_FONT}`;
       ctx.fillStyle = "#667799";
-      ctx.fillText(`${Math.floor(progress)}%`, barX + barW + 4, barY + barH / 2);
+      ctx.textAlign = "right";
+      ctx.fillText(`${Math.floor(progress)}%`, x + CARD_W - 8, barY + barH / 2);
+      ctx.textAlign = "left";
     }
   }
 
@@ -433,23 +436,4 @@ export class AchievementGallery {
     return t + ellipsis;
   }
 
-  private formatDate(unixMs: number): string {
-    try {
-      const saved = new Date(unixMs);
-      if (isNaN(saved.getTime())) return "Unknown";
-      const now = Date.now();
-      const diffMs = now - saved.getTime();
-      const diffMin = Math.floor(diffMs / 60000);
-      if (diffMin < 1) return "Just now";
-      if (diffMin < 60) return `${diffMin}m ago`;
-      const diffH = Math.floor(diffMin / 60);
-      if (diffH < 24) return `${diffH}h ago`;
-      const diffD = Math.floor(diffH / 24);
-      if (diffD < 30) return `${diffD}d ago`;
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      return `${months[saved.getMonth()]} ${saved.getDate()}, ${saved.getFullYear()}`;
-    } catch {
-      return "Unknown";
-    }
-  }
 }

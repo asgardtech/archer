@@ -523,7 +523,7 @@ export class RaptorGame implements IGame {
       if (this.input.scrollDelta !== 0) {
         this.achievementGallery.handleScroll(this.input.scrollDelta);
       }
-      this.achievementGallery.update(0.016);
+      this.achievementGallery.update(dt);
       this.input.consume();
       return;
     }
@@ -677,7 +677,9 @@ export class RaptorGame implements IGame {
         if (this.input.wasClicked) {
           if (this.hud.isPauseAchievementsButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.openAchievementGallery();
-          } else if (this.hud.isResumeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+            break;
+          }
+          if (this.hud.isResumeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.state = "playing";
           } else if (this.hud.isPauseMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.audio.ensureContext();

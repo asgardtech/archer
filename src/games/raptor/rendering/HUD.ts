@@ -3,6 +3,7 @@ import { LEVELS } from "../levels";
 import { ActiveEffect, EFFECT_DURATIONS } from "../systems/PowerUpManager";
 import { AssetLoader } from "./AssetLoader";
 import { ShipRenderer } from "./ShipRenderer";
+import { formatRelativeDate } from "./formatDate";
 
 const MUTE_BTN_SIZE = 36;
 const MUTE_BTN_MARGIN = 12;
@@ -733,23 +734,7 @@ export class HUD {
   }
 
   private formatSaveDate(isoString: string): string {
-    try {
-      const saved = new Date(isoString);
-      if (isNaN(saved.getTime())) return isoString;
-      const now = Date.now();
-      const diffMs = now - saved.getTime();
-      const diffMin = Math.floor(diffMs / 60000);
-      if (diffMin < 1) return "Just now";
-      if (diffMin < 60) return `${diffMin}m ago`;
-      const diffH = Math.floor(diffMin / 60);
-      if (diffH < 24) return `${diffH}h ago`;
-      const diffD = Math.floor(diffH / 24);
-      if (diffD < 30) return `${diffD}d ago`;
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      return `${months[saved.getMonth()]} ${saved.getDate()}, ${saved.getFullYear()}`;
-    } catch {
-      return "Unknown date";
-    }
+    return formatRelativeDate(isoString);
   }
 
   setDeleteConfirm(slot: number | null): void {
