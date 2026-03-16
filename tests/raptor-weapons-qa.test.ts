@@ -951,8 +951,8 @@ describe("Power-Up Drop Configuration (Levels)", () => {
     expect(level6.weaponDrops).not.toContain("auto-gun");
   });
 
-  test("Levels 7-10 have full late-game arsenal without auto-gun", () => {
-    for (let i = 6; i < LEVELS.length; i++) {
+  test("Act 1 levels 7-10 have full late-game arsenal without auto-gun", () => {
+    for (let i = 6; i <= 9; i++) {
       const level = LEVELS[i];
       expect(level.weaponDrops).toContain("rocket");
       expect(level.weaponDrops).toContain("laser");

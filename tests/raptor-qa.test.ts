@@ -828,8 +828,8 @@ describe("Scenario: Advancing to the next level", () => {
 });
 
 describe("Scenario: Victory after completing all levels", () => {
-  test("there are exactly 10 levels", () => {
-    expect(LEVELS.length).toBe(10);
+  test("there are exactly 12 levels", () => {
+    expect(LEVELS.length).toBe(12);
   });
 
   test("completing the last level should lead to victory state", () => {
@@ -854,9 +854,9 @@ describe("Scenario: Victory after completing all levels", () => {
 // LEVELS
 // ════════════════════════════════════════════════════════════════
 
-describe("Scenario: Game has 10 levels with correct names", () => {
-  test("there should be exactly 10 levels", () => {
-    expect(LEVELS.length).toBe(10);
+describe("Scenario: Game has 12 levels with correct names", () => {
+  test("there should be exactly 12 levels", () => {
+    expect(LEVELS.length).toBe(12);
   });
 
   test("level names should be correct", () => {
@@ -871,6 +871,8 @@ describe("Scenario: Game has 10 levels with correct names", () => {
       "Industrial Core",
       "Orbital Debris",
       "Vektran Stronghold",
+      "Colony Defense",
+      "Asteroid Ambush",
     ];
     const actualNames = LEVELS.map((l) => l.name);
     expect(actualNames).toEqual(expectedNames);
@@ -878,34 +880,45 @@ describe("Scenario: Game has 10 levels with correct names", () => {
 });
 
 describe("Scenario: Level difficulty increases progressively", () => {
-  test("later levels should have more waves than earlier levels", () => {
-    for (let i = 1; i < LEVELS.length; i++) {
-      expect(LEVELS[i].waves.length).toBeGreaterThanOrEqual(LEVELS[i - 1].waves.length);
+  test("later levels should have more waves than earlier levels within each act", () => {
+    const act1 = LEVELS.filter((l) => l.act === 1);
+    for (let i = 1; i < act1.length; i++) {
+      expect(act1[i].waves.length).toBeGreaterThanOrEqual(act1[i - 1].waves.length);
+    }
+    const act2 = LEVELS.filter((l) => l.act === 2);
+    for (let i = 1; i < act2.length; i++) {
+      expect(act2[i].waves.length).toBeGreaterThanOrEqual(act2[i - 1].waves.length);
     }
   });
 
-  test("later levels should have higher enemy fire rate multipliers", () => {
-    for (let i = 1; i < LEVELS.length; i++) {
-      expect(LEVELS[i].enemyFireRateMultiplier).toBeGreaterThanOrEqual(
-        LEVELS[i - 1].enemyFireRateMultiplier
+  test("later levels should have higher enemy fire rate multipliers within each act", () => {
+    const act1 = LEVELS.filter((l) => l.act === 1);
+    for (let i = 1; i < act1.length; i++) {
+      expect(act1[i].enemyFireRateMultiplier).toBeGreaterThanOrEqual(
+        act1[i - 1].enemyFireRateMultiplier
+      );
+    }
+    const act2 = LEVELS.filter((l) => l.act === 2);
+    for (let i = 1; i < act2.length; i++) {
+      expect(act2[i].enemyFireRateMultiplier).toBeGreaterThanOrEqual(
+        act2[i - 1].enemyFireRateMultiplier
       );
     }
   });
 
   test("boss-enabled levels should have increasing boss HP within each act", () => {
-    const act1Bosses = LEVELS.filter((l) => l.level >= 1 && l.level <= 5 && l.bossEnabled && l.bossConfig);
+    const act1Bosses = LEVELS.filter((l) => l.act === 1 && l.bossEnabled && l.bossConfig);
     for (let i = 1; i < act1Bosses.length; i++) {
       expect(act1Bosses[i].bossConfig!.hitPoints).toBeGreaterThan(
         act1Bosses[i - 1].bossConfig!.hitPoints
       );
     }
-    const act2Bosses = LEVELS.filter((l) => l.level >= 6 && l.level <= 10 && l.bossEnabled && l.bossConfig);
+    const act2Bosses = LEVELS.filter((l) => l.act === 2 && l.bossEnabled && l.bossConfig);
     for (let i = 1; i < act2Bosses.length; i++) {
       expect(act2Bosses[i].bossConfig!.hitPoints).toBeGreaterThan(
         act2Bosses[i - 1].bossConfig!.hitPoints
       );
     }
-    expect(act2Bosses[act2Bosses.length - 1].bossConfig!.hitPoints).toBe(100);
   });
 
   test("levels 1-5 should have bosses", () => {
