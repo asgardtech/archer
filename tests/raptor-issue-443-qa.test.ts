@@ -242,7 +242,7 @@ describe("Scenario: Music keys follow the level_N naming convention", () => {
   );
 
   test("all levels defined in LEVELS array have corresponding manifest keys (or fall back to procedural)", () => {
-    expect(LEVELS.length).toBe(12);
+    expect(LEVELS.length).toBe(14);
     for (let i = 0; i < 10; i++) {
       const key = `level_${i + 1}`;
       expect(AUDIO_MANIFEST.music).toHaveProperty(key);
@@ -387,10 +387,10 @@ describe("Scenario: stopMusic covers all 10 levels", () => {
     sound.stopMusic();
 
     expect(stopBufferSpy).toHaveBeenCalledWith("menu");
-    for (let i = 1; i <= 12; i++) {
+    for (let i = 1; i <= 14; i++) {
       expect(stopBufferSpy).toHaveBeenCalledWith(`level_${i}`);
     }
-    expect(stopBufferSpy).toHaveBeenCalledTimes(13); // menu + levels 1–12
+    expect(stopBufferSpy).toHaveBeenCalledTimes(15); // menu + levels 1–14
 
     sound.destroy();
   });
@@ -610,9 +610,9 @@ describe("Scenario: Existing levels 1–5 music is preserved", () => {
 // Scenario: LEVELS array includes all 10 levels
 // ---------------------------------------------------------------------------
 
-describe("Scenario: LEVELS array covers all 12 levels", () => {
-  test("LEVELS has exactly 12 entries", () => {
-    expect(LEVELS.length).toBe(12);
+describe("Scenario: LEVELS array covers all 14 levels", () => {
+  test("LEVELS has exactly 14 entries", () => {
+    expect(LEVELS.length).toBe(14);
   });
 
   test.each([

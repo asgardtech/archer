@@ -828,8 +828,8 @@ describe("Scenario: Advancing to the next level", () => {
 });
 
 describe("Scenario: Victory after completing all levels", () => {
-  test("there are exactly 12 levels", () => {
-    expect(LEVELS.length).toBe(12);
+  test("there are exactly 14 levels", () => {
+    expect(LEVELS.length).toBe(14);
   });
 
   test("completing the last level should lead to victory state", () => {
@@ -854,9 +854,9 @@ describe("Scenario: Victory after completing all levels", () => {
 // LEVELS
 // ════════════════════════════════════════════════════════════════
 
-describe("Scenario: Game has 12 levels with correct names", () => {
-  test("there should be exactly 12 levels", () => {
-    expect(LEVELS.length).toBe(12);
+describe("Scenario: Game has 14 levels with correct names", () => {
+  test("there should be exactly 14 levels", () => {
+    expect(LEVELS.length).toBe(14);
   });
 
   test("level names should be correct", () => {
