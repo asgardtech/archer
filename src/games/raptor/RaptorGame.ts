@@ -168,6 +168,7 @@ export class RaptorGame implements IGame {
     this._stateMachine = new MenuStateMachine("menu", () => this.input.consume());
     this._stateMachine.onAsyncTimeout = () => {
       this.slotLoadingInProgress = false;
+      this._stateMachine.forceState("menu");
       this.hud.showErrorToast("Operation timed out. Please try again.");
     };
     this.input.setPlayingStateCallback(() => this.state === "playing");
@@ -484,8 +485,15 @@ export class RaptorGame implements IGame {
 
     if (this.hud.isClearSaveButtonHit(mx, my, this.width, this.height)) {
       SaveSystem.clear(this.activeSlot)
-        .then(() => this.refreshSaveStatus())
-        .catch(console.error);
+        .then(() => {
+          if (this.destroyed) return;
+          this.refreshSaveStatus();
+        })
+        .catch(e => {
+          if (this.destroyed) return;
+          console.error("[RaptorGame] Failed to clear save:", e);
+          this.hud.showErrorToast("Failed to clear save data.");
+        });
       this._hasSaveData = false;
       this.input.consume();
       return true;
@@ -600,6 +608,7 @@ export class RaptorGame implements IGame {
                 this.slotData = [null, null, null];
                 this.slotDataLoaded = true;
                 this._stateMachine.setAsyncPending(false);
+                this._stateMachine.forceState("menu");
                 this.hud.showErrorToast("Failed to load save slots.");
               });
             }
@@ -1408,7 +1417,10 @@ export class RaptorGame implements IGame {
         this._stateMachine.forceState("victory");
         this.sound.play("victory");
         if (act.isFinal) {
-          SaveSystem.clear(this.activeSlot).catch(console.error);
+          SaveSystem.clear(this.activeSlot).catch(e => {
+            if (this.destroyed) return;
+            console.error("[RaptorGame] Failed to clear save:", e);
+          });
           this._hasSaveData = false;
         } else {
           SaveSystem.save(

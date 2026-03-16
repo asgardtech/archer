@@ -327,7 +327,8 @@ export class HUD {
 
   isClearSaveButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getClearSaveButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   renderSettingsPanel(
@@ -472,7 +473,8 @@ export class HUD {
 
   isCloseButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getCloseButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   isSettingsPanelHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -655,7 +657,8 @@ export class HUD {
 
   isNewGameButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getNewGameButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   private getMenuAchievementsButtonRect(width: number, height: number) {
