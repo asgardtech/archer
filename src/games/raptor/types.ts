@@ -515,6 +515,10 @@ export interface RaptorLevelConfig {
   act?: number;
 }
 
+export interface StateTransitionMap {
+  [from: string]: RaptorGameState[];
+}
+
 export type AssetManifest = Record<string, string>;
 export type LoadedAssets = Map<string, HTMLImageElement>;
 

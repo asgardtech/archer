@@ -2,8 +2,6 @@ export class InputManager {
   public targetX: number;
   public targetY: number;
   public isFiring = false;
-  public wasClicked = false;
-  public wasEscPressed = false;
   public wasBombPressed = false;
   public wasDodgePressed = false;
   public wasEmpPressed = false;
@@ -17,6 +15,16 @@ export class InputManager {
   public wasCyclePrevPressed = false;
   public wasCycleNextPressed = false;
   public scrollDelta = 0;
+
+  private _wasClicked = false;
+  private _wasEscPressed = false;
+  private lastClickConsumedTime = 0;
+  private lastEscConsumedTime = 0;
+
+  private static readonly CLICK_DEBOUNCE_MS = 150;
+  private static readonly ESC_DEBOUNCE_MS = 200;
+
+  private _isPlayingState: (() => boolean) | null = null;
 
   private canvas: HTMLCanvasElement;
   private logicalWidth: number;
@@ -63,6 +71,32 @@ export class InputManager {
     canvas.addEventListener("wheel", this.boundWheel, { passive: false });
   }
 
+  setPlayingStateCallback(cb: () => boolean): void {
+    this._isPlayingState = cb;
+  }
+
+  get wasClicked(): boolean {
+    if (!this._wasClicked) return false;
+    const now = performance.now();
+    if (now - this.lastClickConsumedTime < InputManager.CLICK_DEBOUNCE_MS) return false;
+    return true;
+  }
+
+  set wasClicked(val: boolean) {
+    this._wasClicked = val;
+  }
+
+  get wasEscPressed(): boolean {
+    if (!this._wasEscPressed) return false;
+    const now = performance.now();
+    if (now - this.lastEscConsumedTime < InputManager.ESC_DEBOUNCE_MS) return false;
+    return true;
+  }
+
+  set wasEscPressed(val: boolean) {
+    this._wasEscPressed = val;
+  }
+
   updateFromKeyboard(dt: number, canvasWidth: number, canvasHeight: number, offsetX = 0, offsetY = 0): void {
     const speed = 400 * dt;
     if (this.keys.has("ArrowLeft") || this.keys.has("a")) this.targetX -= speed;
@@ -77,8 +111,14 @@ export class InputManager {
   }
 
   consume(): void {
-    this.wasClicked = false;
-    this.wasEscPressed = false;
+    if (this._wasClicked) {
+      this.lastClickConsumedTime = performance.now();
+    }
+    this._wasClicked = false;
+    if (this._wasEscPressed) {
+      this.lastEscConsumedTime = performance.now();
+    }
+    this._wasEscPressed = false;
     this.wasBombPressed = false;
     this.wasDodgePressed = false;
     this.wasEmpPressed = false;
@@ -119,7 +159,7 @@ export class InputManager {
   }
 
   private onMouseDown(e: MouseEvent): void {
-    this.wasClicked = true;
+    this._wasClicked = true;
     this.isMouseDown = true;
     this.targetX = this.toCanvasX(e.clientX);
     this.targetY = this.toCanvasY(e.clientY);
@@ -138,11 +178,12 @@ export class InputManager {
     this.activeTouchId = touch.identifier;
     const cx = this.toCanvasX(touch.clientX);
     const cy = this.toCanvasY(touch.clientY);
+    const isPlaying = this._isPlayingState?.() ?? false;
     this.targetX = cx;
-    this.targetY = cy - 60;
+    this.targetY = isPlaying ? cy - 60 : cy;
     this.mouseX = cx;
     this.mouseY = cy;
-    this.wasClicked = true;
+    this._wasClicked = true;
     this.isMouseDown = true;
   }
 
@@ -152,8 +193,9 @@ export class InputManager {
     if (!touch) return;
     const cx = this.toCanvasX(touch.clientX);
     const cy = this.toCanvasY(touch.clientY);
+    const isPlaying = this._isPlayingState?.() ?? false;
     this.targetX = cx;
-    this.targetY = cy - 60;
+    this.targetY = isPlaying ? cy - 60 : cy;
     this.mouseX = cx;
     this.mouseY = cy;
   }
@@ -172,7 +214,7 @@ export class InputManager {
       e.preventDefault();
     }
     if (e.key === "Escape") {
-      this.wasEscPressed = true;
+      this._wasEscPressed = true;
       e.preventDefault();
     }
     if (e.key === "b") {

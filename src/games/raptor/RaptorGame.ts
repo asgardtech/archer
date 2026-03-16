@@ -1,4 +1,5 @@
 import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS, MAX_WEAPON_TIER } from "./types";
+import { MenuStateMachine } from "./systems/MenuStateMachine";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
@@ -78,7 +79,7 @@ export class RaptorGame implements IGame {
   private destroyed = false;
   private rafId = 0;
 
-  private state: RaptorGameState = "menu";
+  private _stateMachine: MenuStateMachine;
   private settingsOpen = false;
   private draggingSlider: "music" | "sfx" | null = null;
   private currentLevel = 0;
@@ -164,6 +165,13 @@ export class RaptorGame implements IGame {
     this.ctx = ctx;
 
     this.input = new InputManager(this.canvas, width, height);
+    this._stateMachine = new MenuStateMachine("menu", () => this.input.consume());
+    this._stateMachine.onAsyncTimeout = () => {
+      this.slotLoadingInProgress = false;
+      this._stateMachine.forceState("menu");
+      this.hud.showErrorToast("Operation timed out. Please try again.");
+    };
+    this.input.setPlayingStateCallback(() => this.state === "playing");
     this.devConsole = new DevConsole();
     this.commandRegistry = new CommandRegistry();
     registerLevelCommands(this.commandRegistry);
@@ -210,6 +218,9 @@ export class RaptorGame implements IGame {
     return LEVELS[this.currentLevel];
   }
 
+  private get state(): RaptorGameState { return this._stateMachine.state; }
+  private set state(value: RaptorGameState) { this._stateMachine.forceState(value); }
+
   get gameAreaX(): number { return HUD_LEFT_PANEL_WIDTH; }
   get gameAreaY(): number { return HUD_TOP_BAR_HEIGHT; }
   get gameAreaWidth(): number { return this.width - HUD_LEFT_PANEL_WIDTH - HUD_RIGHT_PANEL_WIDTH; }
@@ -254,7 +265,7 @@ export class RaptorGame implements IGame {
 
   start(): void {
     this.running = true;
-    this.state = "loading";
+    this._stateMachine.forceState("loading");
     this.lastTime = performance.now();
     this.loadAssets();
 
@@ -306,7 +317,8 @@ export class RaptorGame implements IGame {
     this.statsTracker.deserialize(achievementData.playerStats);
 
     await this.refreshSaveStatus();
-    this.state = "menu";
+    if (this.destroyed) return;
+    this._stateMachine.forceState("menu");
     this.hideLoadingOverlay();
   }
 
@@ -388,19 +400,28 @@ export class RaptorGame implements IGame {
   }
 
   private handleUIClicks(): boolean {
+    if (this._stateMachine.transitionPending) {
+      this.input.consume();
+      return true;
+    }
+
     if (this.settingsOpen) {
       return this.handleSettingsInput();
     }
 
     if (!this.input.wasClicked) return false;
 
-    if (this.state !== "playing" && this.state !== "paused" && !this.slotLoadingInProgress) {
+    if (this._stateMachine.isSettingsAllowed() && this.state !== "paused") {
+      if (this.hud.deleteConfirmActive !== null) return false;
+
       if (this.hud.isSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
         this.settingsOpen = true;
         this.input.consume();
         return true;
       }
+    }
 
+    if (this._stateMachine.isMuteAllowed() && this.state !== "paused") {
       if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
         this.audio.ensureContext();
         this.audio.toggleMute();
@@ -466,8 +487,15 @@ export class RaptorGame implements IGame {
 
     if (this.hud.isClearSaveButtonHit(mx, my, this.width, this.height)) {
       SaveSystem.clear(this.activeSlot)
-        .then(() => this.refreshSaveStatus())
-        .catch(console.error);
+        .then(() => {
+          if (this.destroyed) return;
+          this.refreshSaveStatus();
+        })
+        .catch(e => {
+          if (this.destroyed) return;
+          console.error("[RaptorGame] Failed to clear save:", e);
+          this.hud.showErrorToast("Failed to clear save data.");
+        });
       this._hasSaveData = false;
       this.input.consume();
       return true;
@@ -490,6 +518,9 @@ export class RaptorGame implements IGame {
       this.input.consume();
       return;
     }
+
+    this._stateMachine.checkAsyncTimeout();
+    this.hud.updateErrorToast(dt);
 
     if (this.input.wasConsoleToggled) {
       this.devConsole.toggle();
@@ -541,13 +572,13 @@ export class RaptorGame implements IGame {
     if (this.handleUIClicks()) return;
 
     if (this.state === "playing" && this.input.wasEscPressed) {
-      this.state = "paused";
+      this._stateMachine.transition("paused");
       this.input.consume();
       return;
     }
 
     if (this.state === "paused" && this.input.wasEscPressed) {
-      this.state = "playing";
+      this._stateMachine.transition("playing");
       this.input.consume();
       return;
     }
@@ -566,15 +597,23 @@ export class RaptorGame implements IGame {
             this.audio.ensureContext();
             this.sound.play("menu_start");
             this.slotDataLoaded = false;
-            this.state = "slot_select";
-            SaveSystem.listSlots().then(slots => {
-              this.slotData = slots;
-              this.slotDataLoaded = true;
-            }).catch(e => {
-              console.error(e);
-              this.slotData = [null, null, null];
-              this.slotDataLoaded = true;
-            });
+            if (this._stateMachine.transition("slot_select")) {
+              this._stateMachine.setAsyncPending(true);
+              SaveSystem.listSlots().then(slots => {
+                if (this.destroyed) return;
+                this.slotData = slots;
+                this.slotDataLoaded = true;
+                this._stateMachine.setAsyncPending(false);
+              }).catch(e => {
+                if (this.destroyed) return;
+                console.error("[RaptorGame] Failed to load save slots:", e);
+                this.slotData = [null, null, null];
+                this.slotDataLoaded = true;
+                this._stateMachine.setAsyncPending(false);
+                this._stateMachine.forceState("menu");
+                this.hud.showErrorToast("Failed to load save slots.");
+              });
+            }
           }
         }
         break;
@@ -584,8 +623,9 @@ export class RaptorGame implements IGame {
         if (this.input.wasEscPressed) {
           if (this.hud.deleteConfirmActive !== null) {
             this.hud.setDeleteConfirm(null);
+            this.input.consume();
           } else {
-            this.state = "menu";
+            this._stateMachine.transition("menu");
           }
           break;
         }
@@ -599,10 +639,15 @@ export class RaptorGame implements IGame {
             const confirmSlot = this.hud.deleteConfirmActive;
             if (this.hud.isDeleteConfirmYesHit(mx, my, this.width, this.height)) {
               SaveSystem.clear(confirmSlot).then(() => {
+                if (this.destroyed) return;
                 this.slotData[confirmSlot] = null;
                 this.hud.setDeleteConfirm(null);
                 this.refreshSaveStatus().catch(console.error);
-              }).catch(console.error);
+              }).catch(e => {
+                if (this.destroyed) return;
+                console.error("[RaptorGame] Failed to delete save slot:", e);
+                this.hud.showErrorToast("Failed to delete save.");
+              });
             } else if (this.hud.isDeleteConfirmNoHit(mx, my, this.width, this.height)) {
               this.hud.setDeleteConfirm(null);
             }
@@ -610,7 +655,7 @@ export class RaptorGame implements IGame {
           }
 
           if (this.hud.isBackButtonHit(mx, my, this.width, this.height)) {
-            this.state = "menu";
+            this._stateMachine.transition("menu");
             break;
           }
 
@@ -623,19 +668,25 @@ export class RaptorGame implements IGame {
               this.activeSlot = i;
               if (this.slotData[i]) {
                 this.slotLoadingInProgress = true;
+                this._stateMachine.setAsyncPending(true);
                 this.continueGame().then(() => {
-                  this.state = "playing";
+                  if (this.destroyed) return;
+                  this._stateMachine.forceState("playing");
                   this.sound.startMusic("playing", this.currentLevel);
                   this.slotLoadingInProgress = false;
+                  this._stateMachine.setAsyncPending(false);
                 }).catch(e => {
-                  console.error(e);
+                  if (this.destroyed) return;
+                  console.error("[RaptorGame] Failed to load save:", e);
                   this.slotLoadingInProgress = false;
+                  this._stateMachine.setAsyncPending(false);
+                  this.hud.showErrorToast("Failed to load save data.");
                 });
               } else {
                 this.resetGame();
                 const act = getActForLevel(0);
                 this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
-                this.state = "story_intro";
+                this._stateMachine.forceState("story_intro");
                 this.sound.startMusic("playing", 0);
               }
               break;
@@ -663,7 +714,7 @@ export class RaptorGame implements IGame {
         this.storyRenderer.update(dt);
 
         if (this.input.wasEscPressed || this.storyRenderer.isComplete || !this.storyRenderer.isActive) {
-          this.state = "playing";
+          this._stateMachine.transition("playing");
           this.sound.startMusic("playing", this.currentLevel);
           break;
         }
@@ -684,17 +735,19 @@ export class RaptorGame implements IGame {
             break;
           }
           if (this.hud.isResumeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
-            this.state = "playing";
+            this._stateMachine.transition("playing");
           } else if (this.hud.isPauseMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.audio.ensureContext();
             this.audio.toggleMute();
             this.persistSettings();
           } else if (this.hud.isPauseSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
-            this.settingsOpen = true;
+            if (!this.achievementGalleryOpen) {
+              this.settingsOpen = true;
+            }
           } else if (this.hud.isQuitButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.weaponSystem.laserBeam.active = false;
             this.sound.stopMusic();
-            this.state = "menu";
+            this._stateMachine.transition("menu");
             this.refreshSaveStatus().catch(console.error);
           }
         }
@@ -702,6 +755,13 @@ export class RaptorGame implements IGame {
 
       case "level_complete":
         this.updateBackground(dt);
+        if (this.input.wasEscPressed) {
+          this.weaponSystem.laserBeam.active = false;
+          this.sound.stopMusic();
+          this._stateMachine.transition("menu");
+          this.refreshSaveStatus().catch(console.error);
+          break;
+        }
         if (this.input.wasClicked) {
           this.startLevel(this.currentLevel + 1);
           this.enterBriefing();
@@ -710,12 +770,12 @@ export class RaptorGame implements IGame {
 
       case "gameover":
         this.updateBackground(dt);
-        if (this.input.wasClicked) {
+        if (this.input.wasEscPressed || this.input.wasClicked) {
           this.sound.stopMusic();
           if (this.onExit) {
             this.onExit();
           } else {
-            this.state = "menu";
+            this._stateMachine.transition("menu");
           }
         }
         break;
@@ -736,12 +796,12 @@ export class RaptorGame implements IGame {
           if (this.hud.victoryStoryActive) {
             this.hud.setVictoryStoryActive(false);
           }
-          if (this.input.wasClicked) {
+          if (this.input.wasEscPressed || this.input.wasClicked) {
             this.sound.stopMusic();
             if (this.onExit) {
               this.onExit();
             } else {
-              this.state = "menu";
+              this._stateMachine.transition("menu");
             }
           }
         }
@@ -1329,7 +1389,7 @@ export class RaptorGame implements IGame {
       this.sound.stopMusic();
       this.sound.play("game_over");
       SaveSystem.clearAutoSave(this.activeSlot).catch(console.error);
-      this.state = "gameover";
+      this._stateMachine.forceState("gameover");
       return;
     }
 
@@ -1357,10 +1417,13 @@ export class RaptorGame implements IGame {
 
       if (this.currentLevel >= LEVELS.length - 1) {
         const act = getActForLevel(this.currentLevel);
-        this.state = "victory";
+        this._stateMachine.forceState("victory");
         this.sound.play("victory");
         if (act.isFinal) {
-          SaveSystem.clear(this.activeSlot).catch(console.error);
+          SaveSystem.clear(this.activeSlot).catch(e => {
+            if (this.destroyed) return;
+            console.error("[RaptorGame] Failed to clear save:", e);
+          });
           this._hasSaveData = false;
         } else {
           SaveSystem.save(
@@ -1374,7 +1437,7 @@ export class RaptorGame implements IGame {
         this.hud.setVictoryStoryActive(true);
         this.hud.setActEnd(act.isFinal ? null : act);
       } else {
-        this.state = "level_complete";
+        this._stateMachine.forceState("level_complete");
         this.sound.play("level_complete");
         this.hud.setCompletionText(this.currentLevelConfig.story?.completionText ?? null);
         SaveSystem.save(
@@ -1610,13 +1673,13 @@ export class RaptorGame implements IGame {
     const briefingText = config.story?.briefing;
 
     if (!briefingText) {
-      this.state = "playing";
+      this._stateMachine.forceState("playing");
       this.sound.startMusic("playing", this.currentLevel);
       return;
     }
 
     this.storyRenderer.show([briefingText], "center", "pilot");
-    this.state = "briefing";
+    this._stateMachine.forceState("briefing");
   }
 
   private renderBriefingHeader(): void {
@@ -1642,7 +1705,7 @@ export class RaptorGame implements IGame {
         this.startLevel(idx);
       },
       setState: (state: "playing") => {
-        this.state = state;
+        this._stateMachine.forceState(state);
       },
       startMusic: (levelIndex: number) => {
         this.sound.startMusic("playing", levelIndex);
@@ -1981,8 +2044,10 @@ export class RaptorGame implements IGame {
       this.player.empCooldownFraction,
       this.player.energy
     );
-    if (this.state !== "playing" && this.state !== "paused" && !this.slotLoadingInProgress) {
+    if (this._stateMachine.isMuteAllowed() && this.state !== "paused") {
       this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width, HUD_RIGHT_PANEL_WIDTH);
+    }
+    if (this._stateMachine.isSettingsAllowed() && this.state !== "paused") {
       this.hud.renderSettingsButton(this.ctx, this.width, HUD_RIGHT_PANEL_WIDTH);
     }
 
@@ -2007,6 +2072,7 @@ export class RaptorGame implements IGame {
     }
 
     this.achievementNotification.render(this.ctx, this.width, this.height);
+    this.hud.renderErrorToast(this.ctx, this.width, this.height);
 
     if (this.showFps) {
       const avgFrameTime = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
