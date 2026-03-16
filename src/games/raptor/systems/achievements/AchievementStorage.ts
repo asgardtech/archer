@@ -152,7 +152,7 @@ export class AchievementStorage {
         if (typeof s.totalDodgesUsed === "number" && s.totalDodgesUsed >= 0 && Number.isInteger(s.totalDodgesUsed)) stats.totalDodgesUsed = s.totalDodgesUsed;
         if (typeof s.totalEmpsUsed === "number" && s.totalEmpsUsed >= 0 && Number.isInteger(s.totalEmpsUsed)) stats.totalEmpsUsed = s.totalEmpsUsed;
         if (typeof s.totalPowerUpsCollected === "number" && s.totalPowerUpsCollected >= 0 && Number.isInteger(s.totalPowerUpsCollected)) stats.totalPowerUpsCollected = s.totalPowerUpsCollected;
-        if (typeof s.highestWeaponTier === "number" && s.highestWeaponTier >= 0 && s.highestWeaponTier <= 3 && Number.isInteger(s.highestWeaponTier)) stats.highestWeaponTier = s.highestWeaponTier;
+        if (typeof s.highestWeaponTier === "number" && s.highestWeaponTier >= 0 && s.highestWeaponTier <= 5 && Number.isInteger(s.highestWeaponTier)) stats.highestWeaponTier = s.highestWeaponTier;
         if (typeof s.projectilesReflected === "number" && s.projectilesReflected >= 0 && Number.isInteger(s.projectilesReflected)) stats.projectilesReflected = s.projectilesReflected;
         if (typeof s.totalPlayTimeSeconds === "number" && s.totalPlayTimeSeconds >= 0) stats.totalPlayTimeSeconds = s.totalPlayTimeSeconds;
 

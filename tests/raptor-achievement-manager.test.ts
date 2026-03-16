@@ -129,8 +129,8 @@ describe("AchievementManager", () => {
       expect(manager.isUnlocked("speedrunner")).toBe(false);
     });
 
-    it("unlocks max_tier on weapon_tier_3 event", () => {
-      manager.fireEvent("weapon_tier_3");
+    it("unlocks max_tier on weapon_tier_5 event", () => {
+      manager.fireEvent("weapon_tier_5");
       expect(manager.isUnlocked("max_tier")).toBe(true);
     });
 

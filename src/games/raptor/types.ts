@@ -176,7 +176,9 @@ export const HUD_LEFT_PANEL_WIDTH = 60;
 export const HUD_RIGHT_PANEL_WIDTH = 60;
 export const HUD_TOP_BAR_HEIGHT = 44;
 
-export const SAVE_FORMAT_VERSION = 2;
+export const SAVE_FORMAT_VERSION = 3;
+
+export const MAX_WEAPON_TIER = 5;
 
 export const MAX_SAVE_SLOTS = 3;
 
@@ -208,7 +210,7 @@ export interface RaptorSaveData {
   energy?: number;
   /** @deprecated Kept for backward compat; use weaponInventory instead. */
   weaponTier?: number;
-  /** Full weapon inventory mapping weapon type to tier (1-3). */
+  /** Full weapon inventory mapping weapon type to tier (1-5). */
   weaponInventory?: Record<string, number>;
   /** Which save slot this data was written to (0-based). */
   slotIndex?: number;
@@ -243,7 +245,7 @@ export interface WeaponConfig {
   rapidFireBonus: number;
   spreadShotBehavior: "multi-projectile" | "wider-beam";
   chargeTime?: number;
-  tiers: [WeaponTierConfig, WeaponTierConfig, WeaponTierConfig];
+  tiers: [WeaponTierConfig, WeaponTierConfig, WeaponTierConfig, WeaponTierConfig, WeaponTierConfig];
 }
 
 const TIER_1: WeaponTierConfig = { damageMultiplier: 1, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1 };
@@ -265,6 +267,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       TIER_1,
       { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.1, visualScale: 1 },
+      { damageMultiplier: 1, fireRateMultiplier: 1.6, projectileCount: 3, projectileSpread: 0.1, visualScale: 1 },
+      { damageMultiplier: 1, fireRateMultiplier: 1.6, projectileCount: 5, projectileSpread: 0.08, visualScale: 1 },
     ],
   },
   "missile": {
@@ -283,6 +287,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       TIER_1,
       { damageMultiplier: 1.33, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1.33, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1 },
+      { damageMultiplier: 1.67, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1 },
+      { damageMultiplier: 2.0, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0.12, visualScale: 1 },
     ],
   },
   "laser": {
@@ -301,6 +307,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       TIER_1,
       { damageMultiplier: 1.5, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1.33 },
       { damageMultiplier: 2.0, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1.67 },
+      { damageMultiplier: 2.5, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 2.0 },
+      { damageMultiplier: 3.0, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 2.5 },
     ],
   },
   "plasma": {
@@ -319,6 +327,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       TIER_1,
       { damageMultiplier: 1.5, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1.25 },
       { damageMultiplier: 1.5, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.12, visualScale: 1 },
+      { damageMultiplier: 2.0, fireRateMultiplier: 1, projectileCount: 3, projectileSpread: 0.1, visualScale: 1 },
+      { damageMultiplier: 2.5, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0.1, visualScale: 1.25 },
     ],
   },
   "ion-cannon": {
@@ -338,6 +348,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       TIER_1,
       { damageMultiplier: 1.5, fireRateMultiplier: 1.2, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1.8, fireRateMultiplier: 1.4, projectileCount: 1, projectileSpread: 0, visualScale: 1.3 },
+      { damageMultiplier: 2.0, fireRateMultiplier: 1.6, projectileCount: 2, projectileSpread: 0.08, visualScale: 1.3 },
+      { damageMultiplier: 2.5, fireRateMultiplier: 1.8, projectileCount: 2, projectileSpread: 0.08, visualScale: 1.5 },
     ],
   },
   "auto-gun": {
@@ -356,6 +368,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       TIER_1,
       { damageMultiplier: 1.2, fireRateMultiplier: 1.3, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1.2, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
+      { damageMultiplier: 1.4, fireRateMultiplier: 1.6, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
+      { damageMultiplier: 1.6, fireRateMultiplier: 1.8, projectileCount: 5, projectileSpread: 0.05, visualScale: 1 },
     ],
   },
   "rocket": {
@@ -374,6 +388,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       TIER_1,
       { damageMultiplier: 1.4, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1.4, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.1, visualScale: 1 },
+      { damageMultiplier: 1.8, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.1, visualScale: 1 },
+      { damageMultiplier: 2.0, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0.08, visualScale: 1.1 },
     ],
   },
 };

@@ -177,7 +177,7 @@ export class PlayerStatsTracker {
     if (typeof saved.totalPowerUpsCollected === "number" && saved.totalPowerUpsCollected >= 0 && Number.isInteger(saved.totalPowerUpsCollected)) {
       s.totalPowerUpsCollected = saved.totalPowerUpsCollected;
     }
-    if (typeof saved.highestWeaponTier === "number" && saved.highestWeaponTier >= 0 && saved.highestWeaponTier <= 3 && Number.isInteger(saved.highestWeaponTier)) {
+    if (typeof saved.highestWeaponTier === "number" && saved.highestWeaponTier >= 0 && saved.highestWeaponTier <= 5 && Number.isInteger(saved.highestWeaponTier)) {
       s.highestWeaponTier = saved.highestWeaponTier;
     }
     if (typeof saved.projectilesReflected === "number" && saved.projectilesReflected >= 0 && Number.isInteger(saved.projectilesReflected)) {

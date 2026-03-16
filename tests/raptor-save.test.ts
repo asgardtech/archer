@@ -377,8 +377,8 @@ describe("Scenario: Additional validation edge cases", () => {
     }
   });
 
-  test("levelReached of 14 (out of bounds) is rejected", async () => {
-    const data = validSaveData({ levelReached: 14 } as any);
+  test("levelReached of 20 (out of bounds) is rejected", async () => {
+    const data = validSaveData({ levelReached: 20 } as any);
     mockBackend.data["raptor_save_0"] = JSON.stringify(data);
     expect(await SaveSystem.load(0)).toBeNull();
     expect(await SaveSystem.hasSave(0)).toBe(false);
@@ -696,9 +696,9 @@ describe("Scenario: RaptorGame exposes hasSaveData getter", () => {
 // ════════════════════════════════════════════════════════════════
 
 describe("Scenario: SAVE_FORMAT_VERSION constant is exported from types", () => {
-  test("SAVE_FORMAT_VERSION is a number equal to 2", () => {
+  test("SAVE_FORMAT_VERSION is a number equal to 3", () => {
     expect(typeof SAVE_FORMAT_VERSION).toBe("number");
-    expect(SAVE_FORMAT_VERSION).toBe(2);
+    expect(SAVE_FORMAT_VERSION).toBe(3);
   });
 });
 

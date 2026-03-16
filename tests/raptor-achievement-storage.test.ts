@@ -247,11 +247,11 @@ describe("Scenario: Partially invalid stats fields fall back to defaults", () =>
     expect(loaded.playerStats.totalScore).toBe(0);
   });
 
-  test("highestWeaponTier > 3 falls back to default", async () => {
+  test("highestWeaponTier > 5 falls back to default", async () => {
     await AchievementStorage.save([], sampleStats());
     const raw = JSON.parse(mockBackend.data["raptor_achievements"]);
 
-    raw.playerStats.highestWeaponTier = 5;
+    raw.playerStats.highestWeaponTier = 6;
     delete raw.checksum;
     const payload = JSON.stringify(raw);
     raw.checksum = fnv1aHash(payload);
@@ -401,7 +401,7 @@ describe("Scenario: PlayerStatsTracker.deserialize() restores lifetime fields", 
       totalKills: -5,
       bossesDefeated: 1.5,
       totalScore: "not-a-number",
-      highestWeaponTier: 5,
+      highestWeaponTier: 6,
     } as unknown as PlayerStats);
 
     const stats = tracker.getStats();
