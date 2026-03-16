@@ -27,6 +27,7 @@ import { Explosion } from "./entities/Explosion";
 import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
 import { AchievementNotification } from "./rendering/AchievementNotification";
+import { AchievementGallery } from "./rendering/AchievementGallery";
 import { AssetLoader } from "./rendering/AssetLoader";
 import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rendering/SpriteSheet";
 import { ShipRenderer } from "./rendering/ShipRenderer";
@@ -129,6 +130,8 @@ export class RaptorGame implements IGame {
   private statsTracker = new PlayerStatsTracker();
   private achievementManager: AchievementManager;
   private achievementNotification: AchievementNotification;
+  private achievementGallery: AchievementGallery;
+  private achievementGalleryOpen = false;
   private achievementCheckTimer = 0;
   private skyGradientCanvas: HTMLCanvasElement | null = null;
   private cachedSkyGradient: [string, string] | null = null;
@@ -190,6 +193,7 @@ export class RaptorGame implements IGame {
     this.perfManager = new PerformanceManager();
     this.achievementManager = new AchievementManager(this.statsTracker);
     this.achievementNotification = new AchievementNotification();
+    this.achievementGallery = new AchievementGallery();
     this.achievementManager.onUnlock = (a) => {
       this.achievementNotification.show(a);
       this.saveAchievements();
@@ -498,6 +502,32 @@ export class RaptorGame implements IGame {
       return;
     }
 
+    if (this.achievementGalleryOpen) {
+      if (this.input.wasEscPressed) {
+        this.achievementGalleryOpen = false;
+        this.achievementGallery.hide();
+        this.input.consume();
+        return;
+      }
+      if (this.input.wasClicked) {
+        const result = this.achievementGallery.handleClick(
+          this.input.mouseX, this.input.mouseY, this.width, this.height,
+        );
+        if (result.action === "close") {
+          this.achievementGalleryOpen = false;
+          this.achievementGallery.hide();
+        }
+        this.input.consume();
+        return;
+      }
+      if (this.input.scrollDelta !== 0) {
+        this.achievementGallery.handleScroll(this.input.scrollDelta);
+      }
+      this.achievementGallery.update(0.016);
+      this.input.consume();
+      return;
+    }
+
     if (this.settingsOpen && this.input.wasEscPressed) {
       this.settingsOpen = false;
       this.input.consume();
@@ -524,6 +554,10 @@ export class RaptorGame implements IGame {
       case "menu":
         this.updateBackground(dt);
         if (this.input.wasClicked) {
+          if (this.hud.isMenuAchievementsButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+            this.openAchievementGallery();
+            break;
+          }
           if (this.hud.isPlayButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.audio.ensureContext();
             this.sound.play("menu_start");
@@ -641,7 +675,9 @@ export class RaptorGame implements IGame {
 
       case "paused":
         if (this.input.wasClicked) {
-          if (this.hud.isResumeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+          if (this.hud.isPauseAchievementsButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
+            this.openAchievementGallery();
+          } else if (this.hud.isResumeButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.state = "playing";
           } else if (this.hud.isPauseMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, this.height)) {
             this.audio.ensureContext();
@@ -712,6 +748,7 @@ export class RaptorGame implements IGame {
     const shouldHide =
       this.state === "playing" &&
       !this.settingsOpen &&
+      !this.achievementGalleryOpen &&
       !this.devConsole.isOpen;
 
     this.canvas.style.cursor = shouldHide ? "none" : "";
@@ -1476,6 +1513,13 @@ export class RaptorGame implements IGame {
     }).catch(() => {});
   }
 
+  private openAchievementGallery(): void {
+    const achievements = this.achievementManager.getAllAchievements();
+    const unlockDates = this.achievementManager.getUnlocked();
+    this.achievementGallery.show(achievements, unlockDates);
+    this.achievementGalleryOpen = true;
+  }
+
   private saveAchievements(): void {
     AchievementStorage.save(
       this.achievementManager.getUnlocked(),
@@ -1924,6 +1968,10 @@ export class RaptorGame implements IGame {
         this.audio.musicVolume, this.audio.sfxVolume,
         this.hasSaveData
       );
+    }
+
+    if (this.achievementGalleryOpen) {
+      this.achievementGallery.render(this.ctx, this.width, this.height);
     }
 
     this.achievementNotification.render(this.ctx, this.width, this.height);

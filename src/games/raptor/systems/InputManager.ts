@@ -16,6 +16,7 @@ export class InputManager {
   public weaponSlotPressed: number | null = null;
   public wasCyclePrevPressed = false;
   public wasCycleNextPressed = false;
+  public scrollDelta = 0;
 
   private canvas: HTMLCanvasElement;
   private logicalWidth: number;
@@ -85,6 +86,7 @@ export class InputManager {
     this.weaponSlotPressed = null;
     this.wasCyclePrevPressed = false;
     this.wasCycleNextPressed = false;
+    this.scrollDelta = 0;
   }
 
   destroy(): void {
@@ -201,6 +203,7 @@ export class InputManager {
 
   private onWheel(e: WheelEvent): void {
     e.preventDefault();
+    this.scrollDelta = e.deltaY;
     if (e.deltaY > 0) {
       this.wasCycleNextPressed = true;
     } else if (e.deltaY < 0) {
