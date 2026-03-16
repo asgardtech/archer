@@ -419,7 +419,9 @@ export interface BackgroundLayerConfig {
 
 export type LevelTheme =
   | "coastal" | "desert" | "mountain" | "arctic" | "fortress"
-  | "shipyard" | "wasteland" | "industrial" | "orbital" | "stronghold";
+  | "shipyard" | "wasteland" | "industrial" | "orbital" | "stronghold"
+  | "colony" | "asteroid" | "nebula" | "jungle" | "volcano"
+  | "ocean" | "tundra" | "ruins" | "megacity" | "dominion_base";
 
 export interface AmbientParticleConfig {
   color: string;
