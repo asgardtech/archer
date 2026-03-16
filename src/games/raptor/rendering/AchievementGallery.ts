@@ -1,5 +1,6 @@
 import type { AchievementCategory, AchievementDefinition, UnlockedAchievement } from "../types";
 import { formatRelativeDate } from "./formatDate";
+import { ICON_GLYPHS, FALLBACK_GLYPH } from "./iconGlyphs";
 
 interface AchievementEntry {
   definition: AchievementDefinition;
@@ -40,30 +41,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   progression: "PROGRESS",
   collection: "COLLECT",
   mastery: "MASTERY",
-};
-
-const ICON_GLYPHS: Record<string, string> = {
-  crosshair: "\u{1F3AF}",
-  skull: "\u{1F480}",
-  skull_fire: "\u{1F525}",
-  crown: "\u{1F451}",
-  explosion: "\u{1F4A5}",
-  shield: "\u{1F6E1}",
-  heart_crack: "\u{1F494}",
-  cat: "\u{1F431}",
-  wind: "\u{1F4A8}",
-  flag: "\u{1F3C1}",
-  map: "\u{1F5FA}",
-  trophy: "\u{1F3C6}",
-  star: "\u2B50",
-  gem: "\u{1F48E}",
-  zap: "\u26A1",
-  arsenal: "\u{1F52B}",
-  chevrons_up: "\u23EB",
-  bomb: "\u{1F4A3}",
-  bolt: "\u{1F329}",
-  rotate: "\u{1F504}",
-  timer: "\u23F1",
 };
 
 export class AchievementGallery {
@@ -343,7 +320,7 @@ export class AchievementGallery {
     ctx.textBaseline = "middle";
 
     if (unlocked) {
-      const glyph = ICON_GLYPHS[definition.icon] ?? "\u2753";
+      const glyph = ICON_GLYPHS[definition.icon] ?? FALLBACK_GLYPH;
       ctx.fillStyle = "#FFFFFF";
       ctx.fillText(glyph, iconX + 18, iconY);
     } else {
