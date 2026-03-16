@@ -2,7 +2,6 @@ import { Projectile, WEAPON_CONFIGS } from "../types";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
 import { PlasmaBolt } from "../entities/PlasmaBolt";
-import { Rocket } from "../entities/Rocket";
 import { LaserBeam } from "../entities/LaserBeam";
 import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
 import { Enemy, isBossVariant } from "../entities/Enemy";
@@ -167,20 +166,6 @@ export class CollisionSystem {
             }
           }
 
-          if (bullet instanceof Rocket) {
-            const cfg = WEAPON_CONFIGS["rocket"];
-            const splashDamage = Math.ceil(bullet.damage * cfg.splashDamageRatio);
-            const splashHits = this.applySplashDamage(enemy, enemies, cfg.splashRadius, splashDamage);
-            for (const sh of splashHits) {
-              hits.push({
-                bullet,
-                enemy: sh.enemy,
-                destroyed: sh.destroyed,
-                damage: splashDamage,
-                splash: true,
-              });
-            }
-          }
 
           if (!bullet.piercing) break;
         }
