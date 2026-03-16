@@ -1214,8 +1214,8 @@ export class RaptorGame implements IGame {
           this.spawnPowerUp(hit.enemy.pos.x, hit.enemy.pos.y);
         }
       }
-      const dead = this.player.takeDamage(50);
-      this.statsTracker.recordDamageTaken(50, this.player.armor);
+      const dead = this.player.takeDamage(100);
+      this.statsTracker.recordDamageTaken(100, this.player.armor);
       if (dead) {
         this.sound.play("player_destroy");
         this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
@@ -1243,7 +1243,7 @@ export class RaptorGame implements IGame {
           if (this.player.armor >= this.player.maxArmor) {
             this.player.lives++;
           } else {
-            this.player.armor = Math.min(this.player.maxArmor, this.player.armor + 50);
+            this.player.armor = Math.min(this.player.maxArmor, this.player.armor + 100);
           }
           break;
         case "shield-restore":
@@ -1284,7 +1284,7 @@ export class RaptorGame implements IGame {
           } else {
             this.player.shieldBattery = Math.min(
               this.player.maxShieldBattery,
-              this.player.shieldBattery + 50
+              this.player.shieldBattery + 100
             );
           }
           break;
@@ -1556,8 +1556,8 @@ export class RaptorGame implements IGame {
     this.player.lives = data.lives;
     this.player.bombs = data.bombs ?? 0;
     this.player.shieldBattery = data.shieldBattery ?? 0;
-    this.player.armor = data.armor ?? 100;
-    this.player.energy = data.energy ?? 100;
+    this.player.armor = data.armor ?? 200;
+    this.player.energy = data.energy ?? 200;
 
     if (data.weaponInventory) {
       const inv = new Map<WeaponType, number>();

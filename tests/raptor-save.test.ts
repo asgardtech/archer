@@ -696,9 +696,9 @@ describe("Scenario: RaptorGame exposes hasSaveData getter", () => {
 // ════════════════════════════════════════════════════════════════
 
 describe("Scenario: SAVE_FORMAT_VERSION constant is exported from types", () => {
-  test("SAVE_FORMAT_VERSION is a number equal to 3", () => {
+  test("SAVE_FORMAT_VERSION is a number equal to 4", () => {
     expect(typeof SAVE_FORMAT_VERSION).toBe("number");
-    expect(SAVE_FORMAT_VERSION).toBe(3);
+    expect(SAVE_FORMAT_VERSION).toBe(4);
   });
 });
 
@@ -718,8 +718,8 @@ describe("Scenario: SaveMigration interface is exported from types", () => {
   });
 });
 
-describe("Scenario: Loading a v1 save runs the v1→v2 migration", () => {
-  test("v1 save is migrated to current version with all fields preserved", async () => {
+describe("Scenario: Loading a v1 save runs the v1→v2→v3→v4 migration", () => {
+  test("v1 save is migrated to current version with HP values doubled", async () => {
     const v1Save = {
       version: 1,
       levelReached: 3,
@@ -744,9 +744,9 @@ describe("Scenario: Loading a v1 save runs the v1→v2 migration", () => {
     expect(loaded!.lives).toBe(2);
     expect(loaded!.weapon).toBe("laser");
     expect(loaded!.bombs).toBe(3);
-    expect(loaded!.shieldBattery).toBe(50);
-    expect(loaded!.armor).toBe(80);
-    expect(loaded!.energy).toBe(60);
+    expect(loaded!.shieldBattery).toBe(100);
+    expect(loaded!.armor).toBe(160);
+    expect(loaded!.energy).toBe(120);
     expect(loaded!.weaponTier).toBe(2);
     expect(loaded!.weaponInventory).toEqual({ "machine-gun": 1, "laser": 2 });
   });
@@ -842,7 +842,7 @@ describe("Scenario: hasSave with old and future versions", () => {
 });
 
 describe("Scenario: v1 saves with and without optional fields migrate correctly", () => {
-  test("v1 save with optional fields preserves them after migration", async () => {
+  test("v1 save with optional fields has HP values doubled after migration", async () => {
     const v1Save = {
       version: 1,
       levelReached: 2,
@@ -863,9 +863,9 @@ describe("Scenario: v1 saves with and without optional fields migrate correctly"
     expect(loaded).not.toBeNull();
     expect(loaded!.version).toBe(SAVE_FORMAT_VERSION);
     expect(loaded!.bombs).toBe(2);
-    expect(loaded!.shieldBattery).toBe(75);
-    expect(loaded!.armor).toBe(90);
-    expect(loaded!.energy).toBe(50);
+    expect(loaded!.shieldBattery).toBe(150);
+    expect(loaded!.armor).toBe(180);
+    expect(loaded!.energy).toBe(100);
     expect(loaded!.weaponTier).toBe(3);
     expect(loaded!.weaponInventory).toEqual({ "machine-gun": 1, "missile": 2 });
   });
@@ -1969,5 +1969,138 @@ describe("Scenario: Checksum warnings are logged appropriately", () => {
     );
 
     warnSpy.mockRestore();
+  });
+});
+
+// ════════════════════════════════════════════════════════════════
+// ISSUE 745: HP AND SHIELDS DOUBLED (v3 → v4 MIGRATION)
+// ════════════════════════════════════════════════════════════════
+
+describe("Scenario: Legacy v3 save is migrated correctly (v3→v4)", () => {
+  test("v3 save with armor 80, energy 60, shieldBattery 40 doubles to 160, 120, 80", async () => {
+    const v3Save = {
+      version: 3,
+      levelReached: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+      armor: 80,
+      energy: 60,
+      shieldBattery: 40,
+    };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(v3Save);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.version).toBe(4);
+    expect(loaded!.armor).toBe(160);
+    expect(loaded!.energy).toBe(120);
+    expect(loaded!.shieldBattery).toBe(80);
+  });
+
+  test("v3 save with max values (100) migrates to 200 without overflow", async () => {
+    const v3Save = {
+      version: 3,
+      levelReached: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+      armor: 100,
+      energy: 100,
+      shieldBattery: 100,
+    };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(v3Save);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.armor).toBe(200);
+    expect(loaded!.energy).toBe(200);
+    expect(loaded!.shieldBattery).toBe(200);
+  });
+
+  test("v3 save without HP fields migrates without errors", async () => {
+    const v3Save = {
+      version: 3,
+      levelReached: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+    };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(v3Save);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.version).toBe(4);
+    expect(loaded!.armor).toBeUndefined();
+    expect(loaded!.energy).toBeUndefined();
+    expect(loaded!.shieldBattery).toBeUndefined();
+  });
+});
+
+describe("Scenario: Player max values are doubled", () => {
+  test("player starts with 200 armor and 200 energy", () => {
+    const { Player } = require("../src/games/raptor/entities/Player");
+    const player = new Player(800, 600);
+    expect(player.armor).toBe(200);
+    expect(player.maxArmor).toBe(200);
+    expect(player.energy).toBe(200);
+    expect(player.maxEnergy).toBe(200);
+    expect(player.maxShieldBattery).toBe(200);
+  });
+
+  test("player reset restores to 200 armor and 200 energy", () => {
+    const { Player } = require("../src/games/raptor/entities/Player");
+    const player = new Player(800, 600);
+    player.armor = 50;
+    player.energy = 30;
+    player.reset(800, 600);
+    expect(player.armor).toBe(200);
+    expect(player.energy).toBe(200);
+  });
+});
+
+describe("Scenario: Save and load preserves new HP values", () => {
+  test("saving 150 armor and 120 energy round-trips correctly", async () => {
+    const data = validSaveData({ armor: 150, energy: 120 });
+    await SaveSystem.save(data, 0);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.armor).toBe(150);
+    expect(loaded!.energy).toBe(120);
+  });
+
+  test("saving 200 armor and 200 energy round-trips correctly", async () => {
+    const data = validSaveData({ armor: 200, energy: 200, shieldBattery: 200 });
+    await SaveSystem.save(data, 0);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.armor).toBe(200);
+    expect(loaded!.energy).toBe(200);
+    expect(loaded!.shieldBattery).toBe(200);
+  });
+});
+
+describe("Scenario: Enemy weapon damage values remain unchanged", () => {
+  test("standard enemy weapon deals 25 damage", () => {
+    const { ENEMY_WEAPON_CONFIGS } = require("../src/games/raptor/types");
+    expect(ENEMY_WEAPON_CONFIGS.standard.damage).toBe(25);
+  });
+
+  test("spread enemy weapon deals 15 damage", () => {
+    const { ENEMY_WEAPON_CONFIGS } = require("../src/games/raptor/types");
+    expect(ENEMY_WEAPON_CONFIGS.spread.damage).toBe(15);
+  });
+
+  test("missile enemy weapon deals 40 damage", () => {
+    const { ENEMY_WEAPON_CONFIGS } = require("../src/games/raptor/types");
+    expect(ENEMY_WEAPON_CONFIGS.missile.damage).toBe(40);
+  });
+
+  test("laser enemy weapon deals 10 DPS", () => {
+    const { ENEMY_WEAPON_CONFIGS } = require("../src/games/raptor/types");
+    expect(ENEMY_WEAPON_CONFIGS.laser.damage).toBe(10);
   });
 });

@@ -176,7 +176,7 @@ export const HUD_LEFT_PANEL_WIDTH = 60;
 export const HUD_RIGHT_PANEL_WIDTH = 60;
 export const HUD_TOP_BAR_HEIGHT = 44;
 
-export const SAVE_FORMAT_VERSION = 3;
+export const SAVE_FORMAT_VERSION = 4;
 
 export const MAX_WEAPON_TIER = 5;
 
@@ -202,11 +202,11 @@ export interface RaptorSaveData {
   savedAt: string;
   /** Mega bomb count at save point (0-5). */
   bombs?: number;
-  /** Shield battery HP at save point (0-100). */
+  /** Shield battery HP at save point (0-200). */
   shieldBattery?: number;
-  /** Hull armor HP at save point (0-100). */
+  /** Hull armor HP at save point (0-200). */
   armor?: number;
-  /** Energy level at save point (0-100). */
+  /** Energy level at save point (0-200). */
   energy?: number;
   /** @deprecated Kept for backward compat; use weaponInventory instead. */
   weaponTier?: number;

@@ -21,6 +21,17 @@ const MIGRATIONS: readonly SaveMigration[] = [
       return data;
     },
   },
+  {
+    fromVersion: 3,
+    toVersion: 4,
+    migrate(data) {
+      data.version = 4;
+      if (typeof data.armor === "number") data.armor = Math.min(200, data.armor * 2);
+      if (typeof data.energy === "number") data.energy = Math.min(200, data.energy * 2);
+      if (typeof data.shieldBattery === "number") data.shieldBattery = Math.min(200, data.shieldBattery * 2);
+      return data;
+    },
+  },
 ];
 
 export class SaveSystem {
@@ -306,20 +317,20 @@ export class SaveSystem {
     }
 
     if (d.shieldBattery !== undefined) {
-      if (typeof d.shieldBattery !== "number" || d.shieldBattery < 0 || d.shieldBattery > 100) {
+      if (typeof d.shieldBattery !== "number" || d.shieldBattery < 0 || d.shieldBattery > 200) {
         d.shieldBattery = 0;
       }
     }
 
     if (d.armor !== undefined) {
-      if (typeof d.armor !== "number" || d.armor < 0 || d.armor > 100) {
-        d.armor = 100;
+      if (typeof d.armor !== "number" || d.armor < 0 || d.armor > 200) {
+        d.armor = 200;
       }
     }
 
     if (d.energy !== undefined) {
-      if (typeof d.energy !== "number" || d.energy < 0 || d.energy > 100) {
-        d.energy = 100;
+      if (typeof d.energy !== "number" || d.energy < 0 || d.energy > 200) {
+        d.energy = 200;
       }
     }
 
