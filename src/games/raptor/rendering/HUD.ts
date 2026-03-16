@@ -9,6 +9,7 @@ const MUTE_BTN_SIZE = 36;
 const MUTE_BTN_MARGIN = 12;
 const SETTINGS_BTN_SIZE = 36;
 const RETRO_FONT = "'Press Start 2P', monospace";
+const TOUCH_HIT_PAD = 8;
 
 const SLIDER_TRACK_W = 220;
 const SLIDER_TRACK_H = 10;
@@ -196,11 +197,12 @@ export class HUD {
   isMuteButtonHit(clickX: number, clickY: number, canvasW: number, rightPanelWidth = 0): boolean {
     const x = canvasW - rightPanelWidth - MUTE_BTN_SIZE - MUTE_BTN_MARGIN;
     const y = MUTE_BTN_MARGIN;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
     return (
-      clickX >= x &&
-      clickX <= x + MUTE_BTN_SIZE &&
-      clickY >= y &&
-      clickY <= y + MUTE_BTN_SIZE
+      clickX >= x - p &&
+      clickX <= x + MUTE_BTN_SIZE + p &&
+      clickY >= y - p &&
+      clickY <= y + MUTE_BTN_SIZE + p
     );
   }
 
@@ -226,11 +228,12 @@ export class HUD {
   isSettingsButtonHit(clickX: number, clickY: number, canvasW: number, rightPanelWidth = 0): boolean {
     const x = canvasW - rightPanelWidth - MUTE_BTN_SIZE - MUTE_BTN_MARGIN - SETTINGS_BTN_SIZE - 6;
     const y = MUTE_BTN_MARGIN;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
     return (
-      clickX >= x &&
-      clickX <= x + SETTINGS_BTN_SIZE &&
-      clickY >= y &&
-      clickY <= y + SETTINGS_BTN_SIZE
+      clickX >= x - p &&
+      clickX <= x + SETTINGS_BTN_SIZE + p &&
+      clickY >= y - p &&
+      clickY <= y + SETTINGS_BTN_SIZE + p
     );
   }
 
@@ -600,7 +603,8 @@ export class HUD {
 
   isPlayButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getPlayButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   isContinueButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -624,7 +628,8 @@ export class HUD {
 
   isMenuAchievementsButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getMenuAchievementsButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   private renderMenu(ctx: CanvasRenderingContext2D, width: number, height: number, hasSave?: boolean): void {
@@ -960,8 +965,9 @@ export class HUD {
 
   isSlotCardHit(clickX: number, clickY: number, slotIndex: number, width: number, height: number): boolean {
     const card = this.getSlotCardRect(slotIndex, width, height);
-    return clickX >= card.x && clickX <= card.x + card.w
-        && clickY >= card.y && clickY <= card.y + card.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= card.x - p && clickX <= card.x + card.w + p
+        && clickY >= card.y - p && clickY <= card.y + card.h + p;
   }
 
   isSlotDeleteHit(clickX: number, clickY: number, slotIndex: number, width: number, height: number): boolean {
@@ -972,8 +978,9 @@ export class HUD {
 
   isBackButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getBackButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w
-        && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p
+        && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   isDeleteConfirmYesHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -2011,22 +2018,26 @@ export class HUD {
 
   isResumeButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getResumeButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   isQuitButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getQuitButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   isPauseMuteButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getPauseMuteButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   isPauseSettingsButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getPauseSettingsButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   renderPauseMenu(ctx: CanvasRenderingContext2D, width: number, height: number, muted: boolean): void {
