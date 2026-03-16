@@ -134,6 +134,16 @@ const EXPECTED_FILES: Record<string, string> = {
   level_8: "level_8_industrial.mp3",
   level_9: "level_9_orbital.mp3",
   level_10: "level_10_stronghold.mp3",
+  level_11: "level_11_colony.mp3",
+  level_12: "level_12_asteroid.mp3",
+  level_13: "level_13_nebula.mp3",
+  level_14: "level_14_jungle.mp3",
+  level_15: "level_15_volcano.mp3",
+  level_16: "level_16_ocean.mp3",
+  level_17: "level_17_tundra.mp3",
+  level_18: "level_18_ruins.mp3",
+  level_19: "level_19_megacity.mp3",
+  level_20: "level_20_dominion_base.mp3",
 };
 
 const EXPECTED_PATHS: Record<string, string> = {
@@ -142,6 +152,16 @@ const EXPECTED_PATHS: Record<string, string> = {
   level_8: "assets/raptor/audio/music/level_8_industrial.mp3",
   level_9: "assets/raptor/audio/music/level_9_orbital.mp3",
   level_10: "assets/raptor/audio/music/level_10_stronghold.mp3",
+  level_11: "assets/raptor/audio/music/level_11_colony.mp3",
+  level_12: "assets/raptor/audio/music/level_12_asteroid.mp3",
+  level_13: "assets/raptor/audio/music/level_13_nebula.mp3",
+  level_14: "assets/raptor/audio/music/level_14_jungle.mp3",
+  level_15: "assets/raptor/audio/music/level_15_volcano.mp3",
+  level_16: "assets/raptor/audio/music/level_16_ocean.mp3",
+  level_17: "assets/raptor/audio/music/level_17_tundra.mp3",
+  level_18: "assets/raptor/audio/music/level_18_ruins.mp3",
+  level_19: "assets/raptor/audio/music/level_19_megacity.mp3",
+  level_20: "assets/raptor/audio/music/level_20_dominion_base.mp3",
 };
 
 // MP3 sync word: first 11 bits set = 0xFF followed by 0xE0+ (or 0xFB for MPEG1 Layer3)
@@ -158,13 +178,23 @@ function isValidMp3Header(buf: Buffer): boolean {
 // Scenario: Music files exist for levels 6 through 10
 // ---------------------------------------------------------------------------
 
-describe("Scenario: Music files exist for levels 6 through 10", () => {
+describe("Scenario: Music files exist for levels 6 through 20", () => {
   test.each([
     ["level_6_shipyard.mp3"],
     ["level_7_wasteland.mp3"],
     ["level_8_industrial.mp3"],
     ["level_9_orbital.mp3"],
     ["level_10_stronghold.mp3"],
+    ["level_11_colony.mp3"],
+    ["level_12_asteroid.mp3"],
+    ["level_13_nebula.mp3"],
+    ["level_14_jungle.mp3"],
+    ["level_15_volcano.mp3"],
+    ["level_16_ocean.mp3"],
+    ["level_17_tundra.mp3"],
+    ["level_18_ruins.mp3"],
+    ["level_19_megacity.mp3"],
+    ["level_20_dominion_base.mp3"],
   ])("%s exists in public/assets/raptor/audio/music/", (filename) => {
     const filePath = path.join(MUSIC_DIR, filename);
     expect(fs.existsSync(filePath)).toBe(true);
@@ -176,6 +206,16 @@ describe("Scenario: Music files exist for levels 6 through 10", () => {
     ["level_8_industrial.mp3"],
     ["level_9_orbital.mp3"],
     ["level_10_stronghold.mp3"],
+    ["level_11_colony.mp3"],
+    ["level_12_asteroid.mp3"],
+    ["level_13_nebula.mp3"],
+    ["level_14_jungle.mp3"],
+    ["level_15_volcano.mp3"],
+    ["level_16_ocean.mp3"],
+    ["level_17_tundra.mp3"],
+    ["level_18_ruins.mp3"],
+    ["level_19_megacity.mp3"],
+    ["level_20_dominion_base.mp3"],
   ])("%s is a non-empty file", (filename) => {
     const filePath = path.join(MUSIC_DIR, filename);
     const stat = fs.statSync(filePath);
@@ -188,6 +228,16 @@ describe("Scenario: Music files exist for levels 6 through 10", () => {
     ["level_8_industrial.mp3"],
     ["level_9_orbital.mp3"],
     ["level_10_stronghold.mp3"],
+    ["level_11_colony.mp3"],
+    ["level_12_asteroid.mp3"],
+    ["level_13_nebula.mp3"],
+    ["level_14_jungle.mp3"],
+    ["level_15_volcano.mp3"],
+    ["level_16_ocean.mp3"],
+    ["level_17_tundra.mp3"],
+    ["level_18_ruins.mp3"],
+    ["level_19_megacity.mp3"],
+    ["level_20_dominion_base.mp3"],
   ])("%s has a valid MP3 header", (filename) => {
     const filePath = path.join(MUSIC_DIR, filename);
     const buf = Buffer.alloc(4);
@@ -211,13 +261,13 @@ describe("Scenario: Audio manifest includes level 6–10 music entries", () => {
     }
   );
 
-  test("AUDIO_MANIFEST.music contains all 11 music entries (menu + levels 1–10)", () => {
+  test("AUDIO_MANIFEST.music contains all 21 music entries (menu + levels 1–20)", () => {
     const keys = Object.keys(AUDIO_MANIFEST.music);
     expect(keys).toContain("menu");
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 20; i++) {
       expect(keys).toContain(`level_${i}`);
     }
-    expect(keys.length).toBe(11);
+    expect(keys.length).toBe(21);
   });
 });
 
@@ -242,8 +292,8 @@ describe("Scenario: Music keys follow the level_N naming convention", () => {
   );
 
   test("all levels defined in LEVELS array have corresponding manifest keys (or fall back to procedural)", () => {
-    expect(LEVELS.length).toBe(14);
-    for (let i = 0; i < 10; i++) {
+    expect(LEVELS.length).toBe(20);
+    for (let i = 0; i < 20; i++) {
       const key = `level_${i + 1}`;
       expect(AUDIO_MANIFEST.music).toHaveProperty(key);
     }
@@ -380,17 +430,17 @@ describe("Scenario: stopMusic covers all 10 levels", () => {
     teardownGlobalAudio();
   });
 
-  test("stopMusic calls stopBuffer for 'menu' and 'level_1' through 'level_12'", () => {
+  test("stopMusic calls stopBuffer for 'menu' and 'level_1' through 'level_20'", () => {
     const { audio, sound } = createAudioPair();
     const stopBufferSpy = jest.spyOn(audio, "stopBuffer");
 
     sound.stopMusic();
 
     expect(stopBufferSpy).toHaveBeenCalledWith("menu");
-    for (let i = 1; i <= 14; i++) {
+    for (let i = 1; i <= 20; i++) {
       expect(stopBufferSpy).toHaveBeenCalledWith(`level_${i}`);
     }
-    expect(stopBufferSpy).toHaveBeenCalledTimes(15); // menu + levels 1–14
+    expect(stopBufferSpy).toHaveBeenCalledTimes(21); // menu + levels 1–20
 
     sound.destroy();
   });
@@ -568,11 +618,11 @@ describe("Scenario: No music overlap between levels", () => {
 describe("Scenario: RaptorGame loads all manifest entries dynamically", () => {
   test("AUDIO_MANIFEST music entries are iterable via Object.entries", () => {
     const entries = Object.entries(AUDIO_MANIFEST.music);
-    expect(entries.length).toBe(11);
+    expect(entries.length).toBe(21);
 
     const keys = entries.map(([k]) => k);
     expect(keys).toContain("menu");
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 20; i++) {
       expect(keys).toContain(`level_${i}`);
     }
   });
@@ -610,9 +660,9 @@ describe("Scenario: Existing levels 1–5 music is preserved", () => {
 // Scenario: LEVELS array includes all 10 levels
 // ---------------------------------------------------------------------------
 
-describe("Scenario: LEVELS array covers all 14 levels", () => {
-  test("LEVELS has exactly 14 entries", () => {
-    expect(LEVELS.length).toBe(14);
+describe("Scenario: LEVELS array covers all 20 levels", () => {
+  test("LEVELS has exactly 20 entries", () => {
+    expect(LEVELS.length).toBe(20);
   });
 
   test.each([
@@ -646,7 +696,7 @@ describe("Scenario: SoundSystem.startMusic key derivation", () => {
   });
 
   test("startMusic with state 'playing' derives key as level_{level+1}", () => {
-    for (let levelIndex = 0; levelIndex < 10; levelIndex++) {
+    for (let levelIndex = 0; levelIndex < 20; levelIndex++) {
       const { audio, sound } = createAudioPair();
       const hasBufferSpy = jest.spyOn(audio, "hasBuffer");
 
