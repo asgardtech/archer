@@ -45,6 +45,11 @@ export interface ReflectedBulletHit {
   damage: number;
 }
 
+export interface ProjectileEnemyMissileHit {
+  projectile: Projectile;
+  missile: EnemyMissile;
+}
+
 export interface SplashHit {
   enemy: Enemy;
   destroyed: boolean;
@@ -313,6 +318,58 @@ export class CollisionSystem {
       }
     }
     return hits;
+  }
+
+  checkProjectilesEnemyMissiles(
+    projectiles: Projectile[],
+    enemyBullets: EnemyBullet[]
+  ): ProjectileEnemyMissileHit[] {
+    const hits: ProjectileEnemyMissileHit[] = [];
+
+    for (const eb of enemyBullets) {
+      if (!(eb instanceof EnemyMissile) || !eb.alive) continue;
+
+      for (const proj of projectiles) {
+        if (!proj.alive || proj instanceof Missile) continue;
+
+        if (this.aabb(proj.left, proj.top, proj.right, proj.bottom,
+                      eb.left, eb.top, eb.right, eb.bottom)) {
+          eb.alive = false;
+          if (!proj.piercing) {
+            proj.alive = false;
+          }
+          hits.push({ projectile: proj, missile: eb });
+          break;
+        }
+      }
+    }
+
+    return hits;
+  }
+
+  checkBeamEnemyMissiles(
+    beam: LaserBeam,
+    enemyBullets: EnemyBullet[],
+    dt: number
+  ): EnemyMissile[] {
+    if (!beam.active) return [];
+
+    const halfWidth = beam.beamWidth / 2;
+    const beamLeft = beam.pos.x - halfWidth;
+    const beamRight = beam.pos.x + halfWidth;
+    const destroyed: EnemyMissile[] = [];
+
+    for (const eb of enemyBullets) {
+      if (!(eb instanceof EnemyMissile) || !eb.alive) continue;
+      if (eb.pos.y > beam.pos.y) continue;
+
+      if (eb.right > beamLeft && eb.left < beamRight) {
+        eb.alive = false;
+        destroyed.push(eb);
+      }
+    }
+
+    return destroyed;
   }
 
   private aabb(
