@@ -7,10 +7,14 @@ import { IonBolt } from "../entities/IonBolt";
 import { TrackingBullet } from "../entities/TrackingBullet";
 import { Rocket } from "../entities/Rocket";
 import { LaserBeam } from "../entities/LaserBeam";
+import { AutoTurretDrone } from "../entities/AutoTurretDrone";
+import { Enemy } from "../entities/Enemy";
 import { PowerUpManager } from "./PowerUpManager";
 
 const MAX_PROJECTILES = 60;
 const LASER_SOUND_COOLDOWN = 0.1;
+
+const MAX_TURRET_DRONES = 4;
 
 export class WeaponSystem {
   public currentWeapon: WeaponType = "machine-gun";
@@ -18,6 +22,13 @@ export class WeaponSystem {
   private fireTimer = 0;
   private laserSoundTimer = 0;
   private chargeTimer = 0;
+  private turretDrones: AutoTurretDrone[] = [];
+
+  constructor() {
+    for (let i = 0; i < MAX_TURRET_DRONES; i++) {
+      this.turretDrones.push(new AutoTurretDrone((i / MAX_TURRET_DRONES) * Math.PI * 2));
+    }
+  }
 
   setWeapon(type: WeaponType): void {
     if (this.currentWeapon === type) return;
@@ -25,6 +36,13 @@ export class WeaponSystem {
     this.fireTimer = 0;
     this.chargeTimer = 0;
     this.laserBeam.active = type === "laser";
+    this.setTurretsActive(type === "auto-turret");
+  }
+
+  private setTurretsActive(active: boolean): void {
+    for (const drone of this.turretDrones) {
+      drone.active = active;
+    }
   }
 
   get chargeLevel(): number {
@@ -50,7 +68,8 @@ export class WeaponSystem {
     config: RaptorLevelConfig,
     powerUpManager: PowerUpManager,
     canvasWidth: number,
-    existingProjectiles: Projectile[]
+    existingProjectiles: Projectile[],
+    enemies?: Enemy[]
   ): { newProjectiles: Projectile[]; soundEvent: RaptorSoundEvent | null } {
     const weaponConfig = WEAPON_CONFIGS[this.currentWeapon];
     const tierConfig = this.getTierConfig(powerUpManager);
@@ -68,6 +87,35 @@ export class WeaponSystem {
 
     this.laserBeam.active = false;
     this.laserSoundTimer = 0;
+
+    if (this.currentWeapon === "auto-turret") {
+      this.setTurretsActive(player.alive);
+      const droneCount = tierConfig.projectileCount;
+      const tierDamage = weaponConfig.damage * tierConfig.damageMultiplier;
+      const fireRateMult = tierConfig.fireRateMultiplier;
+      const totalProjectiles = existingProjectiles.length;
+      let soundEvent: RaptorSoundEvent | null = null;
+
+      for (let i = 0; i < this.turretDrones.length; i++) {
+        const drone = this.turretDrones[i];
+        drone.active = i < droneCount && player.alive;
+        if (!drone.active) continue;
+
+        const result = drone.update(
+          dt, player.pos, enemies ?? [], fireRateMult,
+          rapidFire, spreadShot, tierDamage,
+          totalProjectiles + newProjectiles.length, MAX_PROJECTILES
+        );
+        for (const proj of result.projectiles) {
+          newProjectiles.push(proj);
+        }
+        if (result.fired) {
+          soundEvent = "turret_fire";
+        }
+      }
+
+      return { newProjectiles, soundEvent };
+    }
 
     const tierDamage = weaponConfig.damage * tierConfig.damageMultiplier;
 
@@ -298,6 +346,14 @@ export class WeaponSystem {
     this.laserBeam.render(ctx);
   }
 
+  renderTurrets(ctx: CanvasRenderingContext2D): void {
+    for (const drone of this.turretDrones) {
+      if (drone.active) {
+        drone.render(ctx);
+      }
+    }
+  }
+
   resetForNewLevel(): void {
     this.fireTimer = 0;
     this.laserSoundTimer = 0;
@@ -308,6 +364,7 @@ export class WeaponSystem {
     } else {
       this.laserBeam.active = false;
     }
+    this.setTurretsActive(this.currentWeapon === "auto-turret");
   }
 
   reset(): void {
@@ -316,5 +373,6 @@ export class WeaponSystem {
     this.laserSoundTimer = 0;
     this.chargeTimer = 0;
     this.laserBeam.reset();
+    this.setTurretsActive(false);
   }
 }

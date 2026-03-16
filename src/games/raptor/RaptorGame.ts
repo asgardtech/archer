@@ -932,7 +932,8 @@ export class RaptorGame implements IGame {
 
     const { newProjectiles, soundEvent } = this.weaponSystem.update(
       dt, this.player, config, this.powerUpManager,
-      this.gameAreaWidth + this.gameAreaX, this.projectiles
+      this.gameAreaWidth + this.gameAreaX, this.projectiles,
+      this.enemies
     );
 
     for (const proj of newProjectiles) {
@@ -1343,6 +1344,9 @@ export class RaptorGame implements IGame {
         case "weapon-autogun":
           this.handleWeaponPickup("auto-gun");
           break;
+        case "weapon-autoturret":
+          this.handleWeaponPickup("auto-turret");
+          break;
         case "weapon-rocket":
           this.handleWeaponPickup("rocket");
           break;
@@ -1524,6 +1528,7 @@ export class RaptorGame implements IGame {
     plasma: "weapon-plasma",
     "ion-cannon": "weapon-ion",
     "auto-gun": "weapon-autogun",
+    "auto-turret": "weapon-autoturret",
     rocket: "weapon-rocket",
   };
 
@@ -1992,6 +1997,7 @@ export class RaptorGame implements IGame {
       this.vfx.renderMuzzleFlashes(this.ctx);
 
       this.weaponSystem.renderLaser(this.ctx);
+      this.weaponSystem.renderTurrets(this.ctx);
 
       for (const pu of this.powerUps) {
         pu.render(this.ctx);

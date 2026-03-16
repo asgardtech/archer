@@ -34,6 +34,7 @@ export const AUDIO_MANIFEST: AudioAssetManifest = {
     ion_fire:           "assets/raptor/audio/sfx/ion_fire.mp3",
     ion_hit:            "assets/raptor/audio/sfx/ion_hit.mp3",
     rocket_fire:        "assets/raptor/audio/sfx/rocket_fire.mp3",
+    turret_fire:        "assets/raptor/audio/sfx/player_shoot.mp3",
     mega_bomb_fire:     "assets/raptor/audio/sfx/mega_bomb_fire.mp3",
     emp_burst:          "assets/raptor/audio/sfx/emp_burst.mp3",
     deflect:            "assets/raptor/audio/sfx/deflect.mp3",

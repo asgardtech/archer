@@ -1142,12 +1142,13 @@ describe("HUD Weapon Indicator", () => {
   });
 
   test("All WeaponType values are represented in WEAPON_CONFIGS", () => {
-    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(7);
+    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(8);
     expect(WEAPON_CONFIGS["machine-gun"]).toBeDefined();
     expect(WEAPON_CONFIGS["missile"]).toBeDefined();
     expect(WEAPON_CONFIGS["laser"]).toBeDefined();
     expect(WEAPON_CONFIGS["plasma"]).toBeDefined();
     expect(WEAPON_CONFIGS["ion-cannon"]).toBeDefined();
+    expect(WEAPON_CONFIGS["auto-turret"]).toBeDefined();
   });
 });
 
@@ -1555,8 +1556,8 @@ describe("Weapon Balance Validation", () => {
     expect(avgHomingDPS).toBeLessThanOrEqual(avgNonHomingDPS);
   });
 
-  test("All 7 weapon types have complete configs with splashDamageRatio", () => {
-    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(7);
+  test("All 8 weapon types have complete configs with splashDamageRatio", () => {
+    expect(Object.keys(WEAPON_CONFIGS)).toHaveLength(8);
     for (const cfg of Object.values(WEAPON_CONFIGS)) {
       expect(cfg.splashDamageRatio).toBeDefined();
       expect(typeof cfg.splashDamageRatio).toBe("number");
