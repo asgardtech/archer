@@ -1195,12 +1195,12 @@ describe("Scenario: Audio manifest covers all RaptorSoundEvent values", () => {
     expect(Object.keys(AUDIO_MANIFEST.sfx).length).toBe(32);
   });
 
-  test("AUDIO_MANIFEST.music has entries for menu and level_1 through level_10", () => {
+  test("AUDIO_MANIFEST.music has entries for menu and level_1 through level_20", () => {
     expect(AUDIO_MANIFEST.music.menu).toBeDefined();
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 20; i++) {
       expect(AUDIO_MANIFEST.music[`level_${i}`]).toBeDefined();
     }
-    expect(Object.keys(AUDIO_MANIFEST.music).length).toBe(11);
+    expect(Object.keys(AUDIO_MANIFEST.music).length).toBe(21);
   });
 });
 
@@ -1253,6 +1253,10 @@ describe("Scenario: Music track assets exist for menu and all levels", () => {
     "level_3_mountain.mp3", "level_4_arctic.mp3", "level_5_fortress.mp3",
     "level_6_shipyard.mp3", "level_7_wasteland.mp3", "level_8_industrial.mp3",
     "level_9_orbital.mp3", "level_10_stronghold.mp3",
+    "level_11_colony.mp3", "level_12_asteroid.mp3", "level_13_nebula.mp3",
+    "level_14_jungle.mp3", "level_15_volcano.mp3", "level_16_ocean.mp3",
+    "level_17_tundra.mp3", "level_18_ruins.mp3", "level_19_megacity.mp3",
+    "level_20_dominion_base.mp3",
   ];
 
   for (const file of expectedFiles) {
