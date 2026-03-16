@@ -1129,6 +1129,22 @@ export class RaptorGame implements IGame {
       }
     }
 
+    const missileInterceptHits = this.collisions.checkProjectilesEnemyMissiles(
+      this.projectiles, this.enemyBullets
+    );
+    for (const hit of missileInterceptHits) {
+      this.vfx.triggerExplosionFlash(hit.missile.pos.x, hit.missile.pos.y, 12);
+      this.sound.play("enemy_missile_hit");
+    }
+
+    const beamMissileKills = this.collisions.checkBeamEnemyMissiles(
+      this.weaponSystem.laserBeam, this.enemyBullets, dt
+    );
+    for (const missile of beamMissileKills) {
+      this.vfx.triggerExplosionFlash(missile.pos.x, missile.pos.y, 12);
+      this.sound.play("enemy_missile_hit");
+    }
+
     const bulletPlayerHits = this.collisions.checkEnemyBulletsPlayer(this.enemyBullets, this.player);
     for (const hit of bulletPlayerHits) {
       if (hit.reflected) {
