@@ -166,6 +166,10 @@ export class RaptorGame implements IGame {
 
     this.input = new InputManager(this.canvas, width, height);
     this._stateMachine = new MenuStateMachine("menu", () => this.input.consume());
+    this._stateMachine.onAsyncTimeout = () => {
+      this.slotLoadingInProgress = false;
+      this.hud.showErrorToast("Operation timed out. Please try again.");
+    };
     this.input.setPlayingStateCallback(() => this.state === "playing");
     this.devConsole = new DevConsole();
     this.commandRegistry = new CommandRegistry();
@@ -406,8 +410,7 @@ export class RaptorGame implements IGame {
 
     if (!this.input.wasClicked) return false;
 
-    if (this._stateMachine.isSettingsAllowed()) {
-      if (this.achievementGalleryOpen) return false;
+    if (this._stateMachine.isSettingsAllowed() && this.state !== "paused") {
       if (this.hud.deleteConfirmActive !== null) return false;
 
       if (this.hud.isSettingsButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
@@ -506,6 +509,9 @@ export class RaptorGame implements IGame {
       return;
     }
 
+    this._stateMachine.checkAsyncTimeout();
+    this.hud.updateErrorToast(dt);
+
     if (this.input.wasConsoleToggled) {
       this.devConsole.toggle();
       this.input.consume();
@@ -594,6 +600,7 @@ export class RaptorGame implements IGame {
                 this.slotData = [null, null, null];
                 this.slotDataLoaded = true;
                 this._stateMachine.setAsyncPending(false);
+                this.hud.showErrorToast("Failed to load save slots.");
               });
             }
           }
@@ -625,7 +632,10 @@ export class RaptorGame implements IGame {
                 this.slotData[confirmSlot] = null;
                 this.hud.setDeleteConfirm(null);
                 this.refreshSaveStatus().catch(console.error);
-              }).catch(console.error);
+              }).catch(e => {
+                console.error("[RaptorGame] Failed to delete save slot:", e);
+                this.hud.showErrorToast("Failed to delete save.");
+              });
             } else if (this.hud.isDeleteConfirmNoHit(mx, my, this.width, this.height)) {
               this.hud.setDeleteConfirm(null);
             }
@@ -658,6 +668,7 @@ export class RaptorGame implements IGame {
                   console.error("[RaptorGame] Failed to load save:", e);
                   this.slotLoadingInProgress = false;
                   this._stateMachine.setAsyncPending(false);
+                  this.hud.showErrorToast("Failed to load save data.");
                 });
               } else {
                 this.resetGame();
@@ -1647,13 +1658,13 @@ export class RaptorGame implements IGame {
     const briefingText = config.story?.briefing;
 
     if (!briefingText) {
-      this._stateMachine.forceState("playing");
+      this._stateMachine.transition("playing");
       this.sound.startMusic("playing", this.currentLevel);
       return;
     }
 
     this.storyRenderer.show([briefingText], "center", "pilot");
-    this._stateMachine.forceState("briefing");
+    this._stateMachine.transition("briefing");
   }
 
   private renderBriefingHeader(): void {
@@ -2044,6 +2055,7 @@ export class RaptorGame implements IGame {
     }
 
     this.achievementNotification.render(this.ctx, this.width, this.height);
+    this.hud.renderErrorToast(this.ctx, this.width, this.height);
 
     if (this.showFps) {
       const avgFrameTime = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;

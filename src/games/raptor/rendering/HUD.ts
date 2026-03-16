@@ -99,6 +99,9 @@ export class HUD {
   private wingmanSpeaker: SpeakerType = "pilot";
   private wingmanFlashTimer = 0;
 
+  private errorToastText = "";
+  private errorToastTimer = 0;
+
   constructor(isTouchDevice: boolean) {
     this.isTouchDevice = isTouchDevice;
     const offscreen = document.createElement("canvas");
@@ -164,6 +167,43 @@ export class HUD {
     this.wingmanText = cleanText;
     this.wingmanTimer = duration;
     this.wingmanFlashTimer = 0.3;
+  }
+
+  showErrorToast(text: string, duration = 3): void {
+    this.errorToastText = text;
+    this.errorToastTimer = duration;
+  }
+
+  updateErrorToast(dt: number): void {
+    if (this.errorToastTimer > 0) {
+      this.errorToastTimer = Math.max(0, this.errorToastTimer - dt);
+    }
+  }
+
+  renderErrorToast(ctx: CanvasRenderingContext2D, width: number, height: number): void {
+    if (this.errorToastTimer <= 0 || !this.errorToastText) return;
+
+    ctx.save();
+    const fadeAlpha = Math.min(1, this.errorToastTimer / 0.5);
+    ctx.globalAlpha = fadeAlpha;
+
+    const toastW = 320;
+    const toastH = 36;
+    const tx = (width - toastW) / 2;
+    const ty = height - 80;
+
+    ctx.fillStyle = "rgba(192, 57, 43, 0.9)";
+    ctx.beginPath();
+    ctx.roundRect(tx, ty, toastW, toastH, 8);
+    ctx.fill();
+
+    ctx.font = `7px ${RETRO_FONT}`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(this.errorToastText, tx + toastW / 2, ty + toastH / 2);
+
+    ctx.restore();
   }
 
   updateWingmanTimer(dt: number): void {
@@ -609,7 +649,8 @@ export class HUD {
 
   isContinueButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getContinueButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   isNewGameButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -972,8 +1013,9 @@ export class HUD {
 
   isSlotDeleteHit(clickX: number, clickY: number, slotIndex: number, width: number, height: number): boolean {
     const btn = this.getSlotDeleteButtonRect(slotIndex, width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w
-        && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p
+        && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   isBackButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -990,8 +1032,9 @@ export class HUD {
     const gap = 20;
     const yesX = rect.x + rect.w / 2 - btnW - gap / 2;
     const btnY = rect.y + rect.h - btnH - 16;
-    return clickX >= yesX && clickX <= yesX + btnW
-        && clickY >= btnY && clickY <= btnY + btnH;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= yesX - p && clickX <= yesX + btnW + p
+        && clickY >= btnY - p && clickY <= btnY + btnH + p;
   }
 
   isDeleteConfirmNoHit(clickX: number, clickY: number, width: number, height: number): boolean {
@@ -1001,8 +1044,9 @@ export class HUD {
     const gap = 20;
     const noX = rect.x + rect.w / 2 + gap / 2;
     const btnY = rect.y + rect.h - btnH - 16;
-    return clickX >= noX && clickX <= noX + btnW
-        && clickY >= btnY && clickY <= btnY + btnH;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= noX - p && clickX <= noX + btnW + p
+        && clickY >= btnY - p && clickY <= btnY + btnH + p;
   }
 
   // --- Pause menu (legacy block — overridden by methods below) ---
@@ -2004,7 +2048,8 @@ export class HUD {
 
   isPauseAchievementsButtonHit(clickX: number, clickY: number, width: number, height: number): boolean {
     const btn = this.getPauseAchievementsButtonRect(width, height);
-    return clickX >= btn.x && clickX <= btn.x + btn.w && clickY >= btn.y && clickY <= btn.y + btn.h;
+    const p = this.isTouchDevice ? TOUCH_HIT_PAD : 0;
+    return clickX >= btn.x - p && clickX <= btn.x + btn.w + p && clickY >= btn.y - p && clickY <= btn.y + btn.h + p;
   }
 
   private getQuitButtonRect(width: number, height: number) {
