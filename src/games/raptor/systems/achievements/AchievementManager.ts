@@ -119,9 +119,12 @@ export class AchievementManager {
     const condition = def.condition;
 
     if (condition.type === "stat_threshold") {
+      const target = condition.threshold!;
+      if (this.isUnlocked(id)) {
+        return { current: target, target, percentage: 100 };
+      }
       const stats = this.statsTracker.getStats();
       const current = resolveStat(condition.stat!, stats);
-      const target = condition.threshold!;
       const percentage = target > 0 ? Math.min(100, (current / target) * 100) : 100;
       return { current, target, percentage };
     }
