@@ -367,8 +367,8 @@ describe("Scenario: Additional validation edge cases", () => {
     expect(await SaveSystem.load(0)).toBeNull();
   });
 
-  test("levelReached values 5 through 9 are valid for the 10-level game", async () => {
-    for (let level = 5; level <= 9; level++) {
+  test("levelReached values 5 through 11 are valid for the 12-level game", async () => {
+    for (let level = 5; level <= 11; level++) {
       const data = validSaveData({ levelReached: level });
       await SaveSystem.save(data, 0);
       const loaded = await SaveSystem.load(0);
@@ -377,8 +377,8 @@ describe("Scenario: Additional validation edge cases", () => {
     }
   });
 
-  test("levelReached of 10 (out of bounds) is rejected", async () => {
-    const data = validSaveData({ levelReached: 10 } as any);
+  test("levelReached of 12 (out of bounds) is rejected", async () => {
+    const data = validSaveData({ levelReached: 12 } as any);
     mockBackend.data["raptor_save_0"] = JSON.stringify(data);
     expect(await SaveSystem.load(0)).toBeNull();
     expect(await SaveSystem.hasSave(0)).toBe(false);

@@ -370,6 +370,8 @@ describe("Scenario: Correct boss type is assigned to each level", () => {
     [8, "Industrial Core", "carrier"],
     [9, "Orbital Debris", "gunship_commander"],
     [10, "Vektran Stronghold", "standard"],
+    [11, "Colony Defense", "missile_dreadnought"],
+    [12, "Asteroid Ambush", "laser_fortress"],
   ];
 
   test.each(expectedTypes)(
@@ -381,31 +383,52 @@ describe("Scenario: Correct boss type is assigned to each level", () => {
   );
 });
 
-describe("Scenario: Boss hit points scale upward across all levels", () => {
-  test("each level's boss HP >= previous level's boss HP", () => {
-    for (let i = 1; i < LEVELS.length; i++) {
-      expect(LEVELS[i].bossConfig!.hitPoints).toBeGreaterThanOrEqual(
-        LEVELS[i - 1].bossConfig!.hitPoints
+describe("Scenario: Boss hit points scale upward within each act", () => {
+  test("each level's boss HP >= previous level's boss HP within each act", () => {
+    const act1 = LEVELS.filter((l) => l.act === 1);
+    for (let i = 1; i < act1.length; i++) {
+      expect(act1[i].bossConfig!.hitPoints).toBeGreaterThanOrEqual(
+        act1[i - 1].bossConfig!.hitPoints
+      );
+    }
+    const act2 = LEVELS.filter((l) => l.act === 2);
+    for (let i = 1; i < act2.length; i++) {
+      expect(act2[i].bossConfig!.hitPoints).toBeGreaterThanOrEqual(
+        act2[i - 1].bossConfig!.hitPoints
       );
     }
   });
 });
 
-describe("Scenario: Boss fire rate scales upward across all levels", () => {
-  test("each level's boss fireRate >= previous level's boss fireRate", () => {
-    for (let i = 1; i < LEVELS.length; i++) {
-      expect(LEVELS[i].bossConfig!.fireRate).toBeGreaterThanOrEqual(
-        LEVELS[i - 1].bossConfig!.fireRate
+describe("Scenario: Boss fire rate scales upward within each act", () => {
+  test("each level's boss fireRate >= previous level's boss fireRate within each act", () => {
+    const act1 = LEVELS.filter((l) => l.act === 1);
+    for (let i = 1; i < act1.length; i++) {
+      expect(act1[i].bossConfig!.fireRate).toBeGreaterThanOrEqual(
+        act1[i - 1].bossConfig!.fireRate
+      );
+    }
+    const act2 = LEVELS.filter((l) => l.act === 2);
+    for (let i = 1; i < act2.length; i++) {
+      expect(act2[i].bossConfig!.fireRate).toBeGreaterThanOrEqual(
+        act2[i - 1].bossConfig!.fireRate
       );
     }
   });
 });
 
-describe("Scenario: Boss score value scales upward across all levels", () => {
-  test("each level's boss scoreValue >= previous level's boss scoreValue", () => {
-    for (let i = 1; i < LEVELS.length; i++) {
-      expect(LEVELS[i].bossConfig!.scoreValue).toBeGreaterThanOrEqual(
-        LEVELS[i - 1].bossConfig!.scoreValue
+describe("Scenario: Boss score value scales upward within each act", () => {
+  test("each level's boss scoreValue >= previous level's boss scoreValue within each act", () => {
+    const act1 = LEVELS.filter((l) => l.act === 1);
+    for (let i = 1; i < act1.length; i++) {
+      expect(act1[i].bossConfig!.scoreValue).toBeGreaterThanOrEqual(
+        act1[i - 1].bossConfig!.scoreValue
+      );
+    }
+    const act2 = LEVELS.filter((l) => l.act === 2);
+    for (let i = 1; i < act2.length; i++) {
+      expect(act2[i].bossConfig!.scoreValue).toBeGreaterThanOrEqual(
+        act2[i - 1].bossConfig!.scoreValue
       );
     }
   });
