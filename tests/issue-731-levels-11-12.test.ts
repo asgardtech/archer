@@ -24,8 +24,8 @@ const VALID_SPEAKERS: SpeakerType[] = ["hq", "sensor", "wingman", "pilot"];
 
 describe("Feature: Level config structural integrity", () => {
   describe("Scenario: All 12 levels have required fields", () => {
-    test("LEVELS should have length 12", () => {
-      expect(LEVELS.length).toBe(12);
+    test("LEVELS should have length 14", () => {
+      expect(LEVELS.length).toBe(14);
     });
 
     test.each(LEVELS.map((l, i) => [i, l] as const))(
@@ -567,8 +567,8 @@ describe("Feature: Act 2 difficulty scaling", () => {
 
 describe("Feature: Existing test compatibility", () => {
   describe("Scenario: Level count tests are updated", () => {
-    test("LEVELS.length should be 12", () => {
-      expect(LEVELS.length).toBe(12);
+    test("LEVELS.length should be 14", () => {
+      expect(LEVELS.length).toBe(14);
     });
 
     test('level names should include "Colony Defense" and "Asteroid Ambush"', () => {
