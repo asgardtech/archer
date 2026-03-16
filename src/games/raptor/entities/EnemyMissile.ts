@@ -71,7 +71,7 @@ export class EnemyMissile extends EnemyBullet {
     ctx.translate(this.pos.x, this.pos.y);
     ctx.rotate(-this.angle);
 
-    ctx.fillStyle = "#ff8800";
+    ctx.fillStyle = this.fallbackColor;
     ctx.beginPath();
     ctx.moveTo(0, bodyLen / 2);
     ctx.lineTo(-r * 0.6, -bodyLen / 2);
@@ -80,7 +80,7 @@ export class EnemyMissile extends EnemyBullet {
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = "#ffcc44";
+    ctx.fillStyle = this.coreColor ?? "#ffcc44";
     ctx.beginPath();
     ctx.moveTo(0, bodyLen / 2);
     ctx.lineTo(-r * 0.3, 0);
@@ -88,8 +88,9 @@ export class EnemyMissile extends EnemyBullet {
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = "#ff4400";
-    ctx.shadowColor = "#ff4400";
+    const exhaustColor = this.glowColor ?? "#ff4400";
+    ctx.fillStyle = exhaustColor;
+    ctx.shadowColor = exhaustColor;
     ctx.shadowBlur = 6;
     const flicker = r * 0.6 + Math.sin(this.time * 30) * r * 0.4;
     ctx.beginPath();
