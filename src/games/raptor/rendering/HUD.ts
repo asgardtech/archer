@@ -45,6 +45,7 @@ const WEAPON_LABELS: Record<WeaponType, string> = {
   "plasma": "PLS",
   "ion-cannon": "ION",
   "auto-gun": "ATG",
+  "auto-turret": "TRT",
   "rocket": "RKT",
 };
 
@@ -55,6 +56,7 @@ const WEAPON_COLORS: Record<WeaponType, string> = {
   "plasma": "#8e44ad",
   "ion-cannon": "#00bcd4",
   "auto-gun": "#27ae60",
+  "auto-turret": "#00e676",
   "rocket": "#2c3e50",
 };
 

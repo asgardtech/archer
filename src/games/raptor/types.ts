@@ -124,6 +124,7 @@ export type RaptorPowerUpType =
   | "weapon-plasma"
   | "weapon-ion"
   | "weapon-autogun"
+  | "weapon-autoturret"
   | "weapon-rocket"
   | "mega-bomb"
   | "shield-battery"
@@ -163,12 +164,13 @@ export type RaptorSoundEvent =
   | "dodge"
   | "emp_burst"
   | "deflect"
+  | "turret_fire"
   | "achievement_unlock";
 
-export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun" | "rocket";
+export type WeaponType = "machine-gun" | "missile" | "laser" | "plasma" | "ion-cannon" | "auto-gun" | "rocket" | "auto-turret";
 
 export const WEAPON_SLOT_ORDER: WeaponType[] = [
-  "machine-gun", "rocket", "laser", "plasma", "ion-cannon", "auto-gun", "missile"
+  "machine-gun", "rocket", "laser", "plasma", "ion-cannon", "auto-gun", "auto-turret", "missile"
 ];
 
 export const HUD_BAR_HEIGHT = 48;
@@ -370,6 +372,26 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 1.2, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
       { damageMultiplier: 1.4, fireRateMultiplier: 1.6, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
       { damageMultiplier: 1.6, fireRateMultiplier: 1.8, projectileCount: 5, projectileSpread: 0.05, visualScale: 1 },
+    ],
+  },
+  "auto-turret": {
+    type: "auto-turret",
+    damage: 1,
+    fireRateMultiplier: 1.2,
+    projectileSpeed: 400,
+    piercing: false,
+    homing: true,
+    homingStrength: 2.5,
+    splashRadius: 0,
+    splashDamageRatio: 0,
+    rapidFireBonus: 1.6,
+    spreadShotBehavior: "multi-projectile",
+    tiers: [
+      { damageMultiplier: 1,   fireRateMultiplier: 1,   projectileCount: 2, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.3, fireRateMultiplier: 1.2, projectileCount: 2, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.3, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.6, fireRateMultiplier: 1.5, projectileCount: 3, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 1.8, fireRateMultiplier: 1.8, projectileCount: 4, projectileSpread: 0, visualScale: 1 },
     ],
   },
   "rocket": {
