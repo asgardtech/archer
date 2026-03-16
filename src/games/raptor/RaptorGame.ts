@@ -1,4 +1,4 @@
-import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS, MAX_WEAPON_TIER, WEAPON_SPEED_BONUS_THRESHOLD, WEAPON_SPEED_BONUS_PER_TYPE } from "./types";
+import { RaptorGameState, RaptorLevelConfig, Projectile, RaptorPowerUpType, WeaponType, RaptorSaveData, EnemyVariant, ENEMY_CONFIGS, ENEMY_WEAPON_CONFIGS, WEAPON_CONFIGS, SpeakerType, WEAPON_SLOT_ORDER, HUD_BAR_HEIGHT, HUD_LEFT_PANEL_WIDTH, HUD_RIGHT_PANEL_WIDTH, HUD_TOP_BAR_HEIGHT, SAVE_FORMAT_VERSION, MAX_SAVE_SLOTS, MAX_WEAPON_TIER, WEAPON_SPEED_BONUS_THRESHOLD, WEAPON_SPEED_BONUS_PER_TYPE } from "./types";
 import { MenuStateMachine } from "./systems/MenuStateMachine";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
@@ -1117,15 +1117,18 @@ export class RaptorGame implements IGame {
     }
 
     for (const proj of this.projectiles) {
+      const weaponCfg = WEAPON_CONFIGS[proj.sourceWeapon];
+      const homingEnemies = weaponCfg.homing ? this.enemies : undefined;
+
       if (proj instanceof TrackingBullet) {
-        proj.update(dt, this.width, this.height, this.enemies);
+        proj.update(dt, this.width, this.height, homingEnemies);
         const exhaust = proj.getExhaustPosition();
         this.vfx.addTrail(exhaust.x, exhaust.y, "rgba(168, 224, 108, 0.4)", 1.5);
       } else if (proj instanceof Bullet) {
         proj.update(dt, this.width);
         this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(255, 220, 0, 0.4)", 1.5);
       } else if (proj instanceof Missile) {
-        proj.update(dt, this.width, this.height, this.enemies);
+        proj.update(dt, this.width, this.height, homingEnemies);
         const exhaust = proj.getExhaustPosition();
         this.vfx.addMissileTrail(exhaust.x, exhaust.y, proj.heading);
       } else if (proj instanceof PlasmaBolt) {
@@ -1499,6 +1502,7 @@ export class RaptorGame implements IGame {
 
   private handleWeaponPickup(weaponType: WeaponType): void {
     const result = this.powerUpManager.setWeapon(weaponType);
+    this.weaponSystem.setWeapon(this.powerUpManager.currentWeapon);
     if (result === "switched") {
       this.sound.play("weapon_switch");
     } else if (result === "upgraded") {

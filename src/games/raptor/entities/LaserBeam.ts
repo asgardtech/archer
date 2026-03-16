@@ -31,6 +31,7 @@ export class LaserBeam {
     this.damage = 1 * tierDamageMultiplier;
   }
 
+  /** Always anchored to player x-position — never accepts enemy positions or tracking data. */
   updatePosition(playerX: number, playerTopY: number): void {
     this.pos.x = playerX;
     this.pos.y = playerTopY;

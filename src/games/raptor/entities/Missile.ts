@@ -1,4 +1,4 @@
-import { Vec2, Projectile } from "../types";
+import { Vec2, Projectile, WeaponType } from "../types";
 import { Enemy } from "./Enemy";
 
 const MISSILE_SPEED = 350;
@@ -10,6 +10,7 @@ export class Missile implements Projectile {
   public height = 14;
   public damage = 3;
   public piercing = false;
+  public sourceWeapon: WeaponType = "missile";
 
   private angle: number;
   private vx: number;

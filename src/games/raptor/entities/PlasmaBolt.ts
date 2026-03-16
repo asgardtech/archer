@@ -1,4 +1,4 @@
-import { Vec2, Projectile } from "../types";
+import { Vec2, Projectile, WeaponType } from "../types";
 
 const PLASMA_SPEED = 400;
 
@@ -9,6 +9,7 @@ export class PlasmaBolt implements Projectile {
   public height = 8;
   public damage = 2;
   public piercing = false;
+  public sourceWeapon: WeaponType = "plasma";
 
   private angle: number;
   private sprite: HTMLImageElement | null = null;

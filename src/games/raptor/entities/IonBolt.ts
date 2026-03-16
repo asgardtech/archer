@@ -1,4 +1,4 @@
-import { Vec2, Projectile } from "../types";
+import { Vec2, Projectile, WeaponType } from "../types";
 
 const ION_SPEED = 600;
 
@@ -7,6 +7,7 @@ export class IonBolt implements Projectile {
   public alive = true;
   public damage: number;
   public piercing = true;
+  public sourceWeapon: WeaponType = "ion-cannon";
   public width: number;
   public height: number;
   public chargeLevel: number;

@@ -107,6 +107,7 @@ export class WeaponSystem {
           totalProjectiles + newProjectiles.length, MAX_PROJECTILES
         );
         for (const proj of result.projectiles) {
+          proj.sourceWeapon = "auto-turret";
           newProjectiles.push(proj);
         }
         if (result.fired) {
@@ -291,6 +292,7 @@ export class WeaponSystem {
 
   private createBullet(x: number, y: number, angle = 0, damage?: number): Bullet {
     const b = new Bullet(x, y, angle);
+    b.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) b.damage = damage;
     return b;
   }
@@ -298,12 +300,14 @@ export class WeaponSystem {
   private createMissile(x: number, y: number, angle = 0, damage?: number): Missile {
     const config = WEAPON_CONFIGS["missile"];
     const m = new Missile(x, y, angle, config.homingStrength);
+    m.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) m.damage = damage;
     return m;
   }
 
   private createPlasmaBolt(x: number, y: number, angle = 0, damage?: number): PlasmaBolt {
     const p = new PlasmaBolt(x, y, angle);
+    p.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) p.damage = damage;
     return p;
   }
@@ -311,18 +315,21 @@ export class WeaponSystem {
   private createTrackingBullet(x: number, y: number, angle = 0, damage?: number): TrackingBullet {
     const config = WEAPON_CONFIGS["auto-gun"];
     const t = new TrackingBullet(x, y, angle, config.homingStrength);
+    t.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) t.damage = damage;
     return t;
   }
 
   private createRocket(x: number, y: number, angle = 0, damage?: number): Rocket {
     const r = new Rocket(x, y, angle);
+    r.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) r.damage = damage;
     return r;
   }
 
   private createIonBolt(x: number, y: number, chargeLevel: number, angle = 0, damage?: number): IonBolt {
     const bolt = new IonBolt(x, y, chargeLevel, angle);
+    bolt.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) bolt.damage = damage;
     return bolt;
   }

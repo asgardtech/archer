@@ -1,4 +1,4 @@
-import { Vec2, Projectile } from "../types";
+import { Vec2, Projectile, WeaponType } from "../types";
 
 const BULLET_SPEED = 500;
 
@@ -9,6 +9,7 @@ export class Bullet implements Projectile {
   public height = 10;
   public damage = 1;
   public piercing = false;
+  public sourceWeapon: WeaponType = "machine-gun";
 
   private angle: number;
   private sprite: HTMLImageElement | null = null;
