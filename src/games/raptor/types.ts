@@ -182,6 +182,9 @@ export const SAVE_FORMAT_VERSION = 4;
 
 export const MAX_WEAPON_TIER = 5;
 
+export const WEAPON_SPEED_BONUS_THRESHOLD = 5;
+export const WEAPON_SPEED_BONUS_PER_TYPE = 0.01;
+
 export const MAX_SAVE_SLOTS = 3;
 
 export interface SaveMigration {
