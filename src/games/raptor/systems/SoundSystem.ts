@@ -51,6 +51,7 @@ export class SoundSystem {
       case "plasma_hit": this.playPlasmaHit(); break;
       case "mega_bomb_fire": this.playMegaBombFire(); break;
       case "dodge": this.playDodge(); break;
+      case "achievement_unlock": this.playAchievementUnlock(); break;
     }
   }
 
@@ -250,6 +251,18 @@ export class SoundSystem {
       attack: 0.005, decay: 0.02, sustain: 0.3, release: 0.04,
     }, this.sfxNode);
     this.audio.playNoise(0.06, 5000, this.sfxNode);
+  }
+
+  private playAchievementUnlock(): void {
+    this.audio.playSequence([
+      { frequency: 659,  duration: 0.12, type: "triangle" },
+      { frequency: 831,  duration: 0.12, type: "triangle" },
+      { frequency: 988,  duration: 0.12, type: "triangle" },
+      { frequency: 1319, duration: 0.35, type: "triangle" },
+    ], 300, this.sfxNode);
+    this.audio.playToneSwept(2000, 4000, 0.15, "sine", {
+      attack: 0.005, decay: 0.02, sustain: 0.15, release: 0.05,
+    }, this.sfxNode);
   }
 
   private get musicNode(): AudioNode | undefined {

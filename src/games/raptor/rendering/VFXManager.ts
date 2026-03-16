@@ -42,6 +42,14 @@ interface MegaBombRing {
   elapsed: number;
 }
 
+interface AchievementFlash {
+  alpha: number;
+  duration: number;
+  elapsed: number;
+  width: number;
+  height: number;
+}
+
 interface EmpPulse {
   x: number;
   y: number;
@@ -76,6 +84,7 @@ export class VFXManager {
   private megaBombFlash: MegaBombFlash | null = null;
   private megaBombRing: MegaBombRing | null = null;
   private empPulse: EmpPulse | null = null;
+  private achievementFlash: AchievementFlash | null = null;
 
   constructor() {
     this.trailPool = new Array(TRAIL_CAPACITY);
@@ -116,6 +125,10 @@ export class VFXManager {
       duration: 0.3,
       elapsed: 0,
     };
+  }
+
+  triggerAchievementFlash(width: number, height: number): void {
+    this.achievementFlash = { alpha: 1, duration: 0.3, elapsed: 0, width, height };
   }
 
   triggerScreenShake(intensity: number, duration: number): void {
@@ -194,6 +207,16 @@ export class VFXManager {
         this.empPulse = null;
       }
     }
+
+    if (this.achievementFlash) {
+      this.achievementFlash.elapsed += dt;
+      this.achievementFlash.alpha = Math.max(
+        0, 1 - this.achievementFlash.elapsed / this.achievementFlash.duration
+      );
+      if (this.achievementFlash.elapsed >= this.achievementFlash.duration) {
+        this.achievementFlash = null;
+      }
+    }
   }
 
   applyPreRender(ctx: CanvasRenderingContext2D): void {
@@ -237,6 +260,20 @@ export class VFXManager {
       ctx.beginPath();
       ctx.arc(this.empPulse.x, this.empPulse.y, this.empPulse.radius, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
+    }
+
+    if (this.achievementFlash && this.achievementFlash.alpha > 0) {
+      ctx.save();
+      const a = this.achievementFlash;
+      const gradient = ctx.createRadialGradient(
+        a.width / 2, a.height / 2, Math.min(a.width, a.height) * 0.3,
+        a.width / 2, a.height / 2, Math.max(a.width, a.height) * 0.7
+      );
+      gradient.addColorStop(0, "rgba(255, 215, 0, 0)");
+      gradient.addColorStop(1, `rgba(255, 215, 0, ${a.alpha * 0.35})`);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, a.width, a.height);
       ctx.restore();
     }
 
@@ -369,5 +406,6 @@ export class VFXManager {
     this.megaBombFlash = null;
     this.megaBombRing = null;
     this.empPulse = null;
+    this.achievementFlash = null;
   }
 }

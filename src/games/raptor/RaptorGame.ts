@@ -195,6 +195,8 @@ export class RaptorGame implements IGame {
     this.achievementNotification = new AchievementNotification();
     this.achievementGallery = new AchievementGallery();
     this.achievementManager.onUnlock = (a) => {
+      this.sound.play("achievement_unlock");
+      this.vfx.triggerAchievementFlash(this.width, this.height);
       this.achievementNotification.show(a);
       this.saveAchievements();
     };
