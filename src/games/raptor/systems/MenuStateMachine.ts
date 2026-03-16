@@ -21,6 +21,10 @@ const SETTINGS_ALLOWED_STATES: Set<RaptorGameState> = new Set([
   "menu", "slot_select", "paused", "level_complete", "gameover", "victory",
 ]);
 
+const MUTE_ALLOWED_STATES: Set<RaptorGameState> = new Set([
+  "menu", "slot_select", "story_intro", "briefing", "paused", "level_complete", "gameover", "victory",
+]);
+
 export class MenuStateMachine {
   private _state: RaptorGameState;
   private _transitionPending = false;
@@ -96,5 +100,9 @@ export class MenuStateMachine {
 
   isSettingsAllowed(): boolean {
     return SETTINGS_ALLOWED_STATES.has(this._state) && !this._transitionPending;
+  }
+
+  isMuteAllowed(): boolean {
+    return MUTE_ALLOWED_STATES.has(this._state) && !this._transitionPending;
   }
 }

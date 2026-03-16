@@ -419,7 +419,9 @@ export class RaptorGame implements IGame {
         this.input.consume();
         return true;
       }
+    }
 
+    if (this._stateMachine.isMuteAllowed() && this.state !== "paused") {
       if (this.hud.isMuteButtonHit(this.input.mouseX, this.input.mouseY, this.width, HUD_RIGHT_PANEL_WIDTH)) {
         this.audio.ensureContext();
         this.audio.toggleMute();
@@ -642,6 +644,7 @@ export class RaptorGame implements IGame {
                 this.hud.setDeleteConfirm(null);
                 this.refreshSaveStatus().catch(console.error);
               }).catch(e => {
+                if (this.destroyed) return;
                 console.error("[RaptorGame] Failed to delete save slot:", e);
                 this.hud.showErrorToast("Failed to delete save.");
               });
@@ -668,7 +671,7 @@ export class RaptorGame implements IGame {
                 this._stateMachine.setAsyncPending(true);
                 this.continueGame().then(() => {
                   if (this.destroyed) return;
-                  this._stateMachine.transition("playing");
+                  this._stateMachine.forceState("playing");
                   this.sound.startMusic("playing", this.currentLevel);
                   this.slotLoadingInProgress = false;
                   this._stateMachine.setAsyncPending(false);
@@ -683,7 +686,7 @@ export class RaptorGame implements IGame {
                 this.resetGame();
                 const act = getActForLevel(0);
                 this.storyRenderer.show([act.opening.join(" ")], "center", "pilot");
-                this._stateMachine.transition("story_intro");
+                this._stateMachine.forceState("story_intro");
                 this.sound.startMusic("playing", 0);
               }
               break;
@@ -1670,13 +1673,13 @@ export class RaptorGame implements IGame {
     const briefingText = config.story?.briefing;
 
     if (!briefingText) {
-      this._stateMachine.transition("playing");
+      this._stateMachine.forceState("playing");
       this.sound.startMusic("playing", this.currentLevel);
       return;
     }
 
     this.storyRenderer.show([briefingText], "center", "pilot");
-    this._stateMachine.transition("briefing");
+    this._stateMachine.forceState("briefing");
   }
 
   private renderBriefingHeader(): void {
@@ -2041,8 +2044,10 @@ export class RaptorGame implements IGame {
       this.player.empCooldownFraction,
       this.player.energy
     );
-    if (this._stateMachine.isSettingsAllowed() && this.state !== "paused") {
+    if (this._stateMachine.isMuteAllowed() && this.state !== "paused") {
       this.hud.renderMuteButton(this.ctx, this.audio.muted, this.width, HUD_RIGHT_PANEL_WIDTH);
+    }
+    if (this._stateMachine.isSettingsAllowed() && this.state !== "paused") {
       this.hud.renderSettingsButton(this.ctx, this.width, HUD_RIGHT_PANEL_WIDTH);
     }
 
