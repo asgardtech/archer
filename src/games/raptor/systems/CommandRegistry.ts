@@ -162,7 +162,10 @@ export function registerWeaponCommands(registry: CommandRegistry): void {
           parts.push("BEAM");
         }
 
-        if (cfg.homing) parts.push("HOMING");
+        const invTierForHoming = inventory.get(name) ?? 1;
+        const tierIdxForHoming = Math.max(0, Math.min(MAX_WEAPON_TIER - 1, invTierForHoming - 1));
+        const tierHS = cfg.tiers[tierIdxForHoming].homingStrength ?? 0;
+        if (cfg.homing || tierHS > 0) parts.push(`HOMING(${tierHS > 0 ? tierHS.toFixed(1) : cfg.homingStrength.toFixed(1)})`);
         if (cfg.piercing) parts.push("PIERCING");
 
         const invTier = inventory.get(name);

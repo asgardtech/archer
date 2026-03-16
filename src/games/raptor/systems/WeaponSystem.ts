@@ -181,17 +181,18 @@ export class WeaponSystem {
         }
         soundEvent = "player_shoot";
       } else if (this.currentWeapon === "missile") {
+        const effectiveHomingStrength = tierConfig.homingStrength ?? weaponConfig.homingStrength;
         if (spreadShot) {
           this.spawnProjectilesWithSpread(
             tierConfig, player.pos.x, player.top,
             [-0.25, 0, 0.25],
-            (x, y, angle) => this.createMissile(x, y, angle, tierDamage),
+            (x, y, angle) => this.createMissile(x, y, angle, tierDamage, effectiveHomingStrength),
             newProjectiles
           );
         } else {
           this.spawnProjectiles(
             tierConfig, player.pos.x, player.top,
-            (x, y, angle) => this.createMissile(x, y, angle, tierDamage),
+            (x, y, angle) => this.createMissile(x, y, angle, tierDamage, effectiveHomingStrength),
             newProjectiles
           );
         }
@@ -297,9 +298,8 @@ export class WeaponSystem {
     return b;
   }
 
-  private createMissile(x: number, y: number, angle = 0, damage?: number): Missile {
-    const config = WEAPON_CONFIGS["missile"];
-    const m = new Missile(x, y, angle, config.homingStrength);
+  private createMissile(x: number, y: number, angle = 0, damage?: number, homingStrength?: number): Missile {
+    const m = new Missile(x, y, angle, homingStrength ?? 0);
     m.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) m.damage = damage;
     return m;

@@ -15,11 +15,11 @@ export class Missile implements Projectile {
   private angle: number;
   private vx: number;
   private vy: number;
-  private homingStrength: number;
+  public readonly homingStrength: number;
   private sprite: HTMLImageElement | null = null;
   private time = 0;
 
-  constructor(x: number, y: number, angle = 0, homingStrength = 1.8) {
+  constructor(x: number, y: number, angle = 0, homingStrength = 0) {
     this.pos = { x, y };
     this.angle = angle;
     this.homingStrength = homingStrength;
@@ -50,7 +50,7 @@ export class Missile implements Projectile {
     if (!this.alive) return;
     this.time += dt;
 
-    if (enemies && enemies.length > 0) {
+    if (this.homingStrength > 0 && enemies && enemies.length > 0) {
       const target = this.findNearestEnemy(enemies);
       if (target) {
         const desiredAngle = Math.atan2(target.pos.x - this.pos.x, -(target.pos.y - this.pos.y));

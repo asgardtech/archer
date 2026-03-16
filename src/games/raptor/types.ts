@@ -235,6 +235,7 @@ export interface WeaponTierConfig {
   projectileCount: number;
   projectileSpread: number;
   visualScale: number;
+  homingStrength?: number;
 }
 
 export interface WeaponConfig {
@@ -282,8 +283,8 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     fireRateMultiplier: 0.35,
     projectileSpeed: 350,
     piercing: false,
-    homing: true,
-    homingStrength: 1.8,
+    homing: false,
+    homingStrength: 0,
     splashRadius: 30,
     splashDamageRatio: 0.4,
     rapidFireBonus: 1.3,
@@ -291,9 +292,9 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
     tiers: [
       TIER_1,
       { damageMultiplier: 1.33, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1 },
-      { damageMultiplier: 1.33, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1 },
-      { damageMultiplier: 1.67, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1 },
-      { damageMultiplier: 2.0, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0.12, visualScale: 1 },
+      { damageMultiplier: 1.33, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1, homingStrength: 1.0 },
+      { damageMultiplier: 1.67, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1, homingStrength: 1.4 },
+      { damageMultiplier: 2.0, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0.12, visualScale: 1, homingStrength: 1.8 },
     ],
   },
   "laser": {

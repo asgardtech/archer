@@ -1117,10 +1117,9 @@ export class RaptorGame implements IGame {
     }
 
     for (const proj of this.projectiles) {
-      const weaponCfg = WEAPON_CONFIGS[proj.sourceWeapon];
-      const homingEnemies = weaponCfg.homing ? this.enemies : undefined;
-
       if (proj instanceof TrackingBullet) {
+        const weaponCfg = WEAPON_CONFIGS[proj.sourceWeapon];
+        const homingEnemies = weaponCfg.homing ? this.enemies : undefined;
         proj.update(dt, this.width, this.height, homingEnemies);
         const exhaust = proj.getExhaustPosition();
         this.vfx.addTrail(exhaust.x, exhaust.y, "rgba(168, 224, 108, 0.4)", 1.5);
@@ -1128,7 +1127,8 @@ export class RaptorGame implements IGame {
         proj.update(dt, this.width);
         this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(255, 220, 0, 0.4)", 1.5);
       } else if (proj instanceof Missile) {
-        proj.update(dt, this.width, this.height, homingEnemies);
+        const missileHomingEnemies = (proj as Missile).homingStrength > 0 ? this.enemies : undefined;
+        proj.update(dt, this.width, this.height, missileHomingEnemies);
         const exhaust = proj.getExhaustPosition();
         this.vfx.addMissileTrail(exhaust.x, exhaust.y, proj.heading);
       } else if (proj instanceof PlasmaBolt) {
