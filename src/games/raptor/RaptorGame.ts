@@ -48,6 +48,7 @@ import { AchievementStorage } from "./systems/achievements/AchievementStorage";
 const DT_CAP = 0.1;
 const MAX_ENEMY_BULLETS = 30;
 const MAX_EXPLOSIONS = 20;
+const BOSS_EXPLOSION_DELAY = 1.5;
 
 interface Star {
   x: number;
@@ -127,6 +128,7 @@ export class RaptorGame implements IGame {
   private dpr = 1;
   private enemyLaserHitSoundCooldown = 0;
   private levelElapsed = 0;
+  private bossDefeatedTimer = 0;
   private nextStoryMessageIndex = 0;
   private perfManager: PerformanceManager;
   private statsTracker = new PlayerStatsTracker();
@@ -1284,6 +1286,7 @@ export class RaptorGame implements IGame {
       if (isBossVariant(hit.enemy.variant)) {
         this.sound.play("boss_destroy");
         this.spawner.markBossDefeated();
+        this.bossDefeatedTimer = BOSS_EXPLOSION_DELAY;
         this.vfx.triggerScreenShake(10, 0.5);
       } else {
         this.sound.play("enemy_destroy");
@@ -1397,7 +1400,11 @@ export class RaptorGame implements IGame {
       return;
     }
 
-    if (this.spawner.isLevelComplete && this.enemies.length === 0) {
+    if (this.bossDefeatedTimer > 0) {
+      this.bossDefeatedTimer -= dt;
+    }
+
+    if (this.spawner.isLevelComplete && this.enemies.length === 0 && this.bossDefeatedTimer <= 0) {
       this.totalScore += this.score;
       this.statsTracker.updateScore(this.score, this.totalScore);
       this.statsTracker.recordLevelComplete(this.currentLevel, this.levelElapsed, 0);
@@ -1466,6 +1473,7 @@ export class RaptorGame implements IGame {
     if (isBossVariant(enemy.variant)) {
       this.sound.play("boss_destroy");
       this.spawner.markBossDefeated();
+      this.bossDefeatedTimer = BOSS_EXPLOSION_DELAY;
       this.vfx.triggerScreenShake(10, 0.5);
     } else if (enemy.variant === "juggernaut") {
       this.sound.play("enemy_destroy");
@@ -1813,6 +1821,7 @@ export class RaptorGame implements IGame {
     if (this.thrustSheet) this.player.setThrustSheet(this.thrustSheet);
 
     this.levelElapsed = 0;
+    this.bossDefeatedTimer = 0;
     this.achievementCheckTimer = 0;
     this.nextStoryMessageIndex = 0;
     this.hud.setCompletionText(null);
