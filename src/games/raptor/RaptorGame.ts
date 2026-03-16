@@ -26,6 +26,7 @@ import { EnemyMissile } from "./entities/EnemyMissile";
 import { Explosion } from "./entities/Explosion";
 import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
+import { AchievementNotification } from "./rendering/AchievementNotification";
 import { AssetLoader } from "./rendering/AssetLoader";
 import { SpriteSheet, generateExplosionSheet, generateThrustSheet } from "./rendering/SpriteSheet";
 import { ShipRenderer } from "./rendering/ShipRenderer";
@@ -127,6 +128,7 @@ export class RaptorGame implements IGame {
   private perfManager: PerformanceManager;
   private statsTracker = new PlayerStatsTracker();
   private achievementManager: AchievementManager;
+  private achievementNotification: AchievementNotification;
   private achievementCheckTimer = 0;
   private skyGradientCanvas: HTMLCanvasElement | null = null;
   private cachedSkyGradient: [string, string] | null = null;
@@ -187,7 +189,11 @@ export class RaptorGame implements IGame {
 
     this.perfManager = new PerformanceManager();
     this.achievementManager = new AchievementManager(this.statsTracker);
-    this.achievementManager.onUnlock = (_a) => { this.saveAchievements(); };
+    this.achievementNotification = new AchievementNotification();
+    this.achievementManager.onUnlock = (a) => {
+      this.achievementNotification.show(a);
+      this.saveAchievements();
+    };
     this.initStars(60);
     this.setupResize();
   }
@@ -731,6 +737,7 @@ export class RaptorGame implements IGame {
       this.achievementManager.checkAchievements();
     }
     this.hud.updateWingmanTimer(dt);
+    this.achievementNotification.update(dt);
     this.input.updateFromKeyboard(dt, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
     this.player.update(dt, this.input.targetX, this.input.targetY, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY);
     if (this.player.alive) {
@@ -1918,6 +1925,8 @@ export class RaptorGame implements IGame {
         this.hasSaveData
       );
     }
+
+    this.achievementNotification.render(this.ctx, this.width, this.height);
 
     if (this.showFps) {
       const avgFrameTime = this.frameTimes.reduce((a, b) => a + b, 0) / this.frameTimes.length;
