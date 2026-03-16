@@ -1,0 +1,25 @@
+export const ICON_GLYPHS: Record<string, string> = {
+  crosshair: "\u{1F3AF}",
+  skull: "\u{1F480}",
+  skull_fire: "\u{1F525}",
+  crown: "\u{1F451}",
+  explosion: "\u{1F4A5}",
+  shield: "\u{1F6E1}",
+  heart_crack: "\u{1F494}",
+  cat: "\u{1F431}",
+  wind: "\u{1F4A8}",
+  flag: "\u{1F3C1}",
+  map: "\u{1F5FA}",
+  trophy: "\u{1F3C6}",
+  star: "\u2B50",
+  gem: "\u{1F48E}",
+  zap: "\u26A1",
+  arsenal: "\u{1F52B}",
+  chevrons_up: "\u23EB",
+  bomb: "\u{1F4A3}",
+  bolt: "\u{1F329}",
+  rotate: "\u{1F504}",
+  timer: "\u23F1",
+};
+
+export const FALLBACK_GLYPH = "\u2753";

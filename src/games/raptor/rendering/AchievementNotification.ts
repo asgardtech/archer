@@ -1,5 +1,6 @@
 import type { AchievementDefinition } from "../types";
 import { HUD_TOP_BAR_HEIGHT, HUD_RIGHT_PANEL_WIDTH } from "../types";
+import { ICON_GLYPHS, FALLBACK_GLYPH } from "./iconGlyphs";
 
 type NotificationPhase = "idle" | "sliding_in" | "holding" | "sliding_out";
 
@@ -121,8 +122,9 @@ export class AchievementNotification {
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
     ctx.fillStyle = "#FFFFFF";
+    const glyph = ICON_GLYPHS[this.current.icon] ?? FALLBACK_GLYPH;
     ctx.fillText(
-      this.current.icon,
+      glyph,
       drawX + 10 + iconSize / 2,
       topY + PANEL_HEIGHT / 2,
     );
