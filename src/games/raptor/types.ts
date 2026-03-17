@@ -28,7 +28,8 @@ export type EnemyVariant =
   | "gunship" | "cruiser"
   | "destroyer" | "juggernaut"
   | "stealth" | "minelayer"
-  | "wasp" | "phantom" | "needle" | "locust" | "glider" | "spark";
+  | "wasp" | "phantom" | "needle" | "locust" | "glider" | "spark"
+  | "sentinel" | "lancer" | "ravager" | "wraith" | "corsair" | "vulture";
 
 export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser" | "chain" | "charge_beam" | "scatter" | "shockwave";
 
@@ -200,6 +201,12 @@ export const ENEMY_PROJECTILE_SKINS: Partial<Record<EnemyVariant, ProjectileSkin
   locust:           { fallbackColor: "#aaaa44", coreColor: "#cccc88", glowColor: "#bbbb66" },
   glider:           { fallbackColor: "#88aacc", coreColor: "#bbccee", glowColor: "#99bbdd" },
   spark:            { fallbackColor: "#44eeff", coreColor: "#88ffff", glowColor: "#66eeff" },
+  sentinel:         { fallbackColor: "#66aacc", coreColor: "#aaccee", glowColor: "#88bbdd" },
+  lancer:           { fallbackColor: "#ff9944", coreColor: "#ffcc88", glowColor: "#ffbb66" },
+  ravager:          { fallbackColor: "#ff4444", coreColor: "#ff8888", glowColor: "#ff6666" },
+  wraith:           { fallbackColor: "#8844cc", coreColor: "#bb88ee", glowColor: "#aa66dd" },
+  corsair:          { fallbackColor: "#99aabb", coreColor: "#bbccdd", glowColor: "#aabbcc" },
+  vulture:          { fallbackColor: "#aa6633", coreColor: "#cc9966", glowColor: "#bb7744" },
 };
 
 export interface EnemyConfig {
@@ -894,6 +901,66 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     width: 16,
     height: 16,
     weaponType: "chain",
+  },
+  sentinel: {
+    variant: "sentinel",
+    hitPoints: 3,
+    speed: 80,
+    scoreValue: 45,
+    fireRate: 0.6,
+    width: 30,
+    height: 30,
+    weaponType: "standard",
+  },
+  lancer: {
+    variant: "lancer",
+    hitPoints: 2,
+    speed: 60,
+    scoreValue: 30,
+    fireRate: 0.8,
+    width: 24,
+    height: 28,
+    weaponType: "standard",
+  },
+  ravager: {
+    variant: "ravager",
+    hitPoints: 3,
+    speed: 130,
+    scoreValue: 40,
+    fireRate: 0.7,
+    width: 36,
+    height: 28,
+    weaponType: "spread",
+  },
+  wraith: {
+    variant: "wraith",
+    hitPoints: 3,
+    speed: 140,
+    scoreValue: 50,
+    fireRate: 0.5,
+    width: 26,
+    height: 26,
+    weaponType: "standard",
+  },
+  corsair: {
+    variant: "corsair",
+    hitPoints: 3,
+    speed: 180,
+    scoreValue: 45,
+    fireRate: 0.5,
+    width: 32,
+    height: 30,
+    weaponType: "missile",
+  },
+  vulture: {
+    variant: "vulture",
+    hitPoints: 2,
+    speed: 160,
+    scoreValue: 35,
+    fireRate: 0.6,
+    width: 26,
+    height: 22,
+    weaponType: "standard",
   },
 };
 

@@ -73,6 +73,22 @@ export interface SplashHit {
 
 const BOSS_HIT_FLASH_COOLDOWN = 0.15;
 
+function getAuraDamageMultiplier(target: Enemy, enemies: Enemy[]): number {
+  if (target.variant === "sentinel") return 1.0;
+  const r2 = Enemy.SENTINEL_AURA_RADIUS * Enemy.SENTINEL_AURA_RADIUS;
+  for (const enemy of enemies) {
+    if (!enemy.alive || enemy.variant !== "sentinel") continue;
+    const dx = enemy.pos.x - target.pos.x;
+    const dy = enemy.pos.y - target.pos.y;
+    if (dx * dx + dy * dy <= r2) {
+      return 0.5;
+    }
+  }
+  return 1.0;
+}
+
+export { getAuraDamageMultiplier };
+
 export class CollisionSystem {
   private hitFlashTimers: Map<Enemy, number> = new Map();
   private enemyGrid: SpatialGrid<Enemy>;
@@ -109,14 +125,17 @@ export class CollisionSystem {
         const canFlash = !this.hitFlashTimers.has(enemy) ||
           this.hitFlashTimers.get(enemy)! <= 0;
 
+        const auraMult = getAuraDamageMultiplier(enemy, enemies);
+        const effectiveBeamDmg = Math.max(1, Math.floor(beam.damage * auraMult));
+
         if (isBossVariant(enemy.variant) && !canFlash) {
-          enemy.hitPoints -= beam.damage;
+          enemy.hitPoints -= effectiveBeamDmg;
           if (enemy.hitPoints <= 0) {
             enemy.hitPoints = 0;
             enemy.alive = false;
           }
         } else {
-          enemy.hit(beam.damage);
+          enemy.hit(effectiveBeamDmg);
         }
         hitEnemies.push(enemy);
 
@@ -147,11 +166,13 @@ export class CollisionSystem {
         if (!enemy.alive) continue;
         if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
                       enemy.left, enemy.top, enemy.right, enemy.bottom)) {
-          const destroyed = enemy.hit(bullet.damage);
+          const auraMult = getAuraDamageMultiplier(enemy, enemies);
+          const effectiveDamage = Math.max(1, Math.floor(bullet.damage * auraMult));
+          const destroyed = enemy.hit(effectiveDamage);
           if (!bullet.piercing) {
             bullet.alive = false;
           }
-          hits.push({ bullet, enemy, destroyed, damage: bullet.damage });
+          hits.push({ bullet, enemy, destroyed, damage: effectiveDamage });
 
           if (bullet instanceof Missile) {
             const cfg = WEAPON_CONFIGS["missile"];
@@ -203,7 +224,9 @@ export class CollisionSystem {
       const dx = enemy.pos.x - origin.pos.x;
       const dy = enemy.pos.y - origin.pos.y;
       if (dx * dx + dy * dy <= r2) {
-        const destroyed = enemy.hit(splashDamage);
+        const auraMult = getAuraDamageMultiplier(enemy, enemies);
+        const effectiveSplash = Math.max(1, Math.floor(splashDamage * auraMult));
+        const destroyed = enemy.hit(effectiveSplash);
         splashHits.push({ enemy, destroyed });
       }
     }

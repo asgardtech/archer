@@ -3,7 +3,7 @@ import { MenuStateMachine } from "./systems/MenuStateMachine";
 import { detectSpeaker } from "./rendering/StoryRenderer";
 import { InputManager } from "./systems/InputManager";
 import { DevConsole } from "./systems/DevConsole";
-import { CollisionSystem } from "./systems/CollisionSystem";
+import { CollisionSystem, getAuraDamageMultiplier } from "./systems/CollisionSystem";
 import { EnemySpawner } from "./systems/EnemySpawner";
 import { PowerUpManager } from "./systems/PowerUpManager";
 import { SoundSystem } from "./systems/SoundSystem";
@@ -909,7 +909,9 @@ export class RaptorGame implements IGame {
       this.vfx.triggerScreenShake(12, 0.6);
       for (const enemy of this.enemies) {
         if (enemy.alive) {
-          const destroyed = enemy.hit(10);
+          const auraMult = getAuraDamageMultiplier(enemy, this.enemies);
+          const bombDamage = Math.max(1, Math.floor(10 * auraMult));
+          const destroyed = enemy.hit(bombDamage);
           if (destroyed) {
             this.handleEnemyDestroyed(enemy, config);
           }
