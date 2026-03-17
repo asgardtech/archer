@@ -942,6 +942,20 @@ export class Enemy {
         || this.variant === "colossus" || this.variant === "leviathan") {
       this.renderHPBar(ctx, x, y);
     }
+
+    if (this.variant === "warden" && this.barrierHP > 0) {
+      const barrierY = y + this.height / 2 + 10;
+      const opacity = this.barrierHP / this.barrierMaxHP;
+      ctx.fillStyle = `rgba(85, 204, 255, ${0.3 * opacity})`;
+      ctx.fillRect(x - this.barrierWidth / 2, barrierY - this.barrierHeight / 2,
+        this.barrierWidth, this.barrierHeight);
+      ctx.strokeStyle = `rgba(85, 204, 255, ${0.8 * opacity})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - this.barrierWidth / 2, barrierY);
+      ctx.lineTo(x + this.barrierWidth / 2, barrierY);
+      ctx.stroke();
+    }
   }
 
   private renderHPBar(ctx: CanvasRenderingContext2D, x: number, y: number): void {
@@ -1691,8 +1705,6 @@ export class Enemy {
     ctx.beginPath();
     ctx.arc(x, y - hh * 0.15, 5, 0, Math.PI * 2);
     ctx.fill();
-
-    this.renderHPBar(ctx, x, y);
   }
 
   private renderBastion(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {

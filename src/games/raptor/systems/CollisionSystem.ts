@@ -93,6 +93,7 @@ export class CollisionSystem {
   private hitFlashTimers: Map<Enemy, number> = new Map();
   private enemyGrid: SpatialGrid<Enemy>;
   private queryBuffer: Enemy[] = [];
+  private activeBarriers: { x: number; y: number; width: number; height: number }[] = [];
 
   constructor(width = 800, height = 600) {
     this.enemyGrid = new SpatialGrid<Enemy>(width, height, 8, 6);
@@ -122,6 +123,17 @@ export class CollisionSystem {
       if (enemy.pos.y > beam.pos.y) continue;
 
       if (enemy.right > beamLeft && enemy.left < beamRight) {
+        let blockedByBarrier = false;
+        for (const barrier of this.activeBarriers) {
+          const bLeft = barrier.x - barrier.width / 2;
+          const bRight = barrier.x + barrier.width / 2;
+          if (enemy.right > bLeft && enemy.left < bRight && enemy.pos.y < barrier.y) {
+            blockedByBarrier = true;
+            break;
+          }
+        }
+        if (blockedByBarrier) continue;
+
         const canFlash = !this.hitFlashTimers.has(enemy) ||
           this.hitFlashTimers.get(enemy)! <= 0;
 
@@ -262,7 +274,8 @@ export class CollisionSystem {
     }
   }
 
-  checkBeamBarrierBlock(beam: LaserBeam, enemies: Enemy[]): void {
+  checkBeamBarrierBlock(beam: LaserBeam, enemies: Enemy[], dt: number): void {
+    this.activeBarriers.length = 0;
     if (!beam.active) return;
 
     for (const enemy of enemies) {
@@ -276,8 +289,9 @@ export class CollisionSystem {
       const bLeft = barrier.x - barrier.width / 2;
       const bRight = barrier.x + barrier.width / 2;
 
-      if (beamRight > bLeft && beamLeft < bRight && barrier.y > beam.pos.y) {
-        enemy.barrierHP = Math.max(0, enemy.barrierHP - beam.damage * 0.016);
+      if (beamRight > bLeft && beamLeft < bRight && barrier.y < beam.pos.y) {
+        enemy.barrierHP = Math.max(0, enemy.barrierHP - beam.damage * dt);
+        this.activeBarriers.push(barrier);
       }
     }
   }

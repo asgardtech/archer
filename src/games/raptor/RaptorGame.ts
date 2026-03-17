@@ -962,6 +962,7 @@ export class RaptorGame implements IGame {
       this.sound.play(soundEvent);
     }
 
+    this.collisions.checkBeamBarrierBlock(this.weaponSystem.laserBeam, this.enemies, dt);
     const laserHits = this.collisions.checkBeamEnemies(
       this.weaponSystem.laserBeam, this.enemies, dt
     );
@@ -1207,7 +1208,6 @@ export class RaptorGame implements IGame {
     }
 
     this.collisions.checkBarrierAbsorption(this.projectiles, this.enemies);
-    this.collisions.checkBeamBarrierBlock(this.weaponSystem.laserBeam, this.enemies);
 
     const enemyHits = this.collisions.checkBulletsEnemies(this.projectiles, this.enemies);
     for (const hit of enemyHits) {
