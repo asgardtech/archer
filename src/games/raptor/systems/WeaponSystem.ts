@@ -69,7 +69,8 @@ export class WeaponSystem {
     powerUpManager: PowerUpManager,
     canvasWidth: number,
     existingProjectiles: Projectile[],
-    enemies?: Enemy[]
+    enemies?: Enemy[],
+    externalFireRateMultiplier?: number
   ): { newProjectiles: Projectile[]; soundEvent: RaptorSoundEvent | null } {
     const weaponConfig = WEAPON_CONFIGS[this.currentWeapon];
     const tierConfig = this.getTierConfig(powerUpManager);
@@ -120,11 +121,13 @@ export class WeaponSystem {
 
     const tierDamage = weaponConfig.damage * tierConfig.damageMultiplier;
 
+    const extMult = externalFireRateMultiplier ?? 1.0;
+
     if (this.currentWeapon === "ion-cannon") {
       const maxCharge = weaponConfig.chargeTime ?? 2.0;
       const effectiveMaxCharge = rapidFire
-        ? maxCharge / (weaponConfig.rapidFireBonus * tierConfig.fireRateMultiplier)
-        : maxCharge / tierConfig.fireRateMultiplier;
+        ? maxCharge / (weaponConfig.rapidFireBonus * tierConfig.fireRateMultiplier * extMult)
+        : maxCharge / (tierConfig.fireRateMultiplier * extMult);
 
       this.chargeTimer = Math.min(this.chargeTimer + dt, effectiveMaxCharge);
 
@@ -154,7 +157,7 @@ export class WeaponSystem {
 
     const rapidMultiplier = rapidFire ? weaponConfig.rapidFireBonus : 1;
     const baseFireRate = config.autoFireRate * weaponConfig.fireRateMultiplier * tierConfig.fireRateMultiplier;
-    const fireRate = baseFireRate * rapidMultiplier;
+    const fireRate = baseFireRate * rapidMultiplier * extMult;
 
     if (fireRate <= 0) return { newProjectiles, soundEvent };
 

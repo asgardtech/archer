@@ -947,10 +947,25 @@ export class RaptorGame implements IGame {
 
     this.weaponSystem.setWeapon(this.powerUpManager.currentWeapon);
 
+    let jammerActive = false;
+    if (this.powerUpManager.currentWeapon !== "laser") {
+      for (const enemy of this.enemies) {
+        if (enemy.isJammerActive()) {
+          const dx = this.player.pos.x - enemy.pos.x;
+          const dy = this.player.pos.y - enemy.pos.y;
+          if (Math.sqrt(dx * dx + dy * dy) <= Enemy.JAMMER_FIELD_RADIUS) {
+            jammerActive = true;
+            break;
+          }
+        }
+      }
+    }
+    const externalFireRateMultiplier = jammerActive ? (1.0 - Enemy.JAMMER_FIRE_RATE_PENALTY) : 1.0;
+
     const { newProjectiles, soundEvent } = this.weaponSystem.update(
       dt, this.player, config, this.powerUpManager,
       this.gameAreaWidth + this.gameAreaX, this.projectiles,
-      this.enemies
+      this.enemies, externalFireRateMultiplier
     );
 
     for (const proj of newProjectiles) {
@@ -1021,7 +1036,7 @@ export class RaptorGame implements IGame {
     this.storyRenderer.update(dt);
 
     for (const enemy of this.enemies) {
-      enemy.update(dt, this.gameAreaHeight, this.player.pos.x, this.gameAreaWidth, this.gameAreaX, this.gameAreaY);
+      enemy.update(dt, this.gameAreaHeight, this.player.pos.x, this.gameAreaWidth, this.gameAreaX, this.gameAreaY, this.player.pos.y);
 
       if (enemy.canFire()) {
         const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
@@ -1247,6 +1262,55 @@ export class RaptorGame implements IGame {
           }
         }
       }
+
+      if (enemy.variant === "healer" && enemy.alive) {
+        const healResult = enemy.updateHealerLogicWithDt(this.enemies, dt);
+        if (healResult) {
+          this.vfx.addHealParticle(enemy.pos, { x: healResult.targetX, y: healResult.targetY });
+        }
+      }
+
+      if (enemy.variant === "teleporter" && enemy.alive) {
+        const flashPositions = enemy.consumeTeleportFlash();
+        if (flashPositions) {
+          this.vfx.addTeleportFlash(flashPositions.departX, flashPositions.departY);
+          this.vfx.addTeleportFlash(flashPositions.arriveX, flashPositions.arriveY);
+        }
+
+        if (enemy.hasTeleporterBurst()) {
+          if (this.enemyBullets.length < MAX_ENEMY_BULLETS) {
+            enemy.consumeTeleporterBurstTick();
+            const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
+            for (const eb of result.bullets) {
+              const sprite = this.assets.getOptional(eb.spriteKey);
+              if (sprite) eb.setSprite(sprite);
+              this.enemyBullets.push(eb);
+            }
+            if (result.soundEvent) {
+              this.sound.play(result.soundEvent);
+            }
+          }
+        }
+      }
+
+      if (enemy.variant === "kamikaze" && !enemy.alive && enemy.isKamikazeSelfDestructed()) {
+        this.addExplosion(new Explosion(enemy.pos.x, enemy.pos.y, 2));
+        const dx = this.player.pos.x - enemy.pos.x;
+        const dy = this.player.pos.y - enemy.pos.y;
+        if (Math.sqrt(dx * dx + dy * dy) <= 40) {
+          const dead = this.player.takeDamage(50);
+          if (dead) {
+            this.sound.play("player_destroy");
+            this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
+            this.vfx.triggerScreenShake(8, 0.4);
+            this.weaponSystem.laserBeam.active = false;
+          } else {
+            this.sound.play("player_hit");
+            this.vfx.triggerScreenShake(4, 0.2);
+          }
+        }
+        enemy.kamikazeSelfDestructed = false;
+      }
     }
 
     const laserSoundEvents = this.enemyWeaponSystem.updateLasers(dt, this.player.pos.x);
@@ -1470,7 +1534,8 @@ export class RaptorGame implements IGame {
     const enemyPlayerHits = this.collisions.checkPlayerEnemies(this.player, this.enemies);
     for (const hit of enemyPlayerHits) {
       const explosionSize = (isBossVariant(hit.enemy.variant) || hit.enemy.variant === "juggernaut") ? 3
-        : (hit.enemy.variant === "bomber" || hit.enemy.variant === "gunship" || hit.enemy.variant === "cruiser" || hit.enemy.variant === "destroyer" || hit.enemy.variant === "minelayer") ? 2
+        : (hit.enemy.variant === "bomber" || hit.enemy.variant === "gunship" || hit.enemy.variant === "cruiser" || hit.enemy.variant === "destroyer" || hit.enemy.variant === "minelayer"
+          || hit.enemy.variant === "kamikaze") ? 2
         : 1;
       this.addExplosion(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
       this.score += hit.enemy.scoreValue;
@@ -1478,6 +1543,16 @@ export class RaptorGame implements IGame {
       this.statsTracker.updateScore(this.score, this.totalScore + this.score);
       this.achievementManager.fireEvent("ram_kill");
       this.achievementManager.checkAchievements();
+
+      if (hit.enemy.variant === "splitter") {
+        const spawnData = hit.enemy.getSplitterChildSpawnData();
+        const child1 = new Enemy(spawnData.x1, spawnData.y1, "splitter_minor");
+        const child2 = new Enemy(spawnData.x2, spawnData.y2, "splitter_minor");
+        this.assignEnemySprite(child1);
+        this.assignEnemySprite(child2);
+        this.enemies.push(child1, child2);
+      }
+
       if (isBossVariant(hit.enemy.variant)) {
         this.sound.play("boss_destroy");
         this.spawner.markBossDefeated();
@@ -1668,9 +1743,36 @@ export class RaptorGame implements IGame {
         || enemy.variant === "colossus" || enemy.variant === "titan" || enemy.variant === "leviathan") ? 3
       : (enemy.variant === "bomber" || enemy.variant === "gunship" || enemy.variant === "cruiser"
         || enemy.variant === "destroyer" || enemy.variant === "minelayer"
-        || enemy.variant === "bastion" || enemy.variant === "siege_engine" || enemy.variant === "warden") ? 2
+        || enemy.variant === "bastion" || enemy.variant === "siege_engine" || enemy.variant === "warden"
+        || enemy.variant === "kamikaze") ? 2
       : 1;
     this.addExplosion(new Explosion(enemy.pos.x, enemy.pos.y, explosionSize));
+
+    if (enemy.variant === "splitter") {
+      const spawnData = enemy.getSplitterChildSpawnData();
+      const child1 = new Enemy(spawnData.x1, spawnData.y1, "splitter_minor");
+      const child2 = new Enemy(spawnData.x2, spawnData.y2, "splitter_minor");
+      this.assignEnemySprite(child1);
+      this.assignEnemySprite(child2);
+      this.enemies.push(child1, child2);
+    }
+
+    if (enemy.variant === "kamikaze" && enemy.getKamikazePhase() === "diving") {
+      const dx = this.player.pos.x - enemy.pos.x;
+      const dy = this.player.pos.y - enemy.pos.y;
+      if (Math.sqrt(dx * dx + dy * dy) <= 40) {
+        const dead = this.player.takeDamage(50);
+        if (dead) {
+          this.sound.play("player_destroy");
+          this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
+          this.vfx.triggerScreenShake(8, 0.4);
+          this.weaponSystem.laserBeam.active = false;
+        } else {
+          this.sound.play("player_hit");
+          this.vfx.triggerScreenShake(4, 0.2);
+        }
+      }
+    }
 
     if (enemy.variant === "leviathan") {
       for (const drone of enemy.leviathanSpawnedDrones) {
@@ -1843,6 +1945,13 @@ export class RaptorGame implements IGame {
       boss_behemoth: "enemy_boss_behemoth",
       boss_architect: "enemy_boss_architect",
       boss_swarm_queen: "enemy_boss_swarm_queen",
+      splitter: "enemy_splitter",
+      splitter_minor: "enemy_splitter_minor",
+      healer: "enemy_healer",
+      teleporter: "enemy_teleporter",
+      mimic: "enemy_mimic",
+      kamikaze: "enemy_kamikaze",
+      jammer: "enemy_jammer",
     };
     const key = spriteMap[enemy.variant];
     if (key) {

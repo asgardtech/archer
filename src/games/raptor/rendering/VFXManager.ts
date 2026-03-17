@@ -377,6 +377,29 @@ export class VFXManager {
     this.muzzleFlashes.push({ x, y, radius, alpha: 1, duration: 0.12, elapsed: 0 });
   }
 
+  addHealParticle(from: { x: number; y: number }, to: { x: number; y: number }): void {
+    const steps = 4;
+    for (let i = 0; i < steps; i++) {
+      const t = i / steps;
+      const px = from.x + (to.x - from.x) * t + (Math.random() - 0.5) * 6;
+      const py = from.y + (to.y - from.y) * t + (Math.random() - 0.5) * 6;
+      this.writeTrail(px, py, 0.7, 1.5 + Math.random(), "rgba(100, 255, 130, 0.8)");
+    }
+  }
+
+  addTeleportFlash(x: number, y: number): void {
+    this.muzzleFlashes.push({ x, y, radius: 18, alpha: 1, duration: 0.1, elapsed: 0 });
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const dist = 8 + Math.random() * 6;
+      this.writeTrail(
+        x + Math.cos(angle) * dist,
+        y + Math.sin(angle) * dist,
+        0.8, 2, "rgba(170, 68, 255, 0.8)"
+      );
+    }
+  }
+
   triggerTierUpFlash(x: number, y: number): void {
     const particleCount = 12;
     for (let i = 0; i < particleCount; i++) {
