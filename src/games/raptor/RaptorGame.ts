@@ -96,6 +96,7 @@ export class RaptorGame implements IGame {
   private player: Player;
   private projectiles: Projectile[] = [];
   private enemies: Enemy[] = [];
+  private _gravityWellSpeedFactor = 1.0;
   private enemyBullets: EnemyBullet[] = [];
   private shockwaves: EnemyShockwave[] = [];
   private explosions: Explosion[] = [];
@@ -853,7 +854,8 @@ export class RaptorGame implements IGame {
       ? 1 + weaponTypeCount * WEAPON_SPEED_BONUS_PER_TYPE
       : 1;
 
-    this.player.update(dt, this.input.targetX, this.input.targetY, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY, speedMultiplier);
+    this.player.update(dt, this.input.targetX, this.input.targetY, this.gameAreaWidth, this.gameAreaHeight, this.gameAreaX, this.gameAreaY, speedMultiplier * this._gravityWellSpeedFactor);
+    this._gravityWellSpeedFactor = 1.0;
     if (this.player.alive) {
       this.vfx.addEngineTrail(this.player.pos.x, this.player.pos.y + this.player.height / 2, ShipRenderer.getEngineSpacing(this.player.width));
     }
@@ -1116,6 +1118,28 @@ export class RaptorGame implements IGame {
         }
       }
 
+      if (enemy.variant === "boss_shadow" && enemy.canFire() && enemy.shadowAmbushReady) {
+        enemy.shadowAmbushReady = false;
+        enemy.initiateShadowBurst();
+      }
+
+      if (enemy.variant === "boss_shadow" && enemy.hasShadowBurst()) {
+        if (this.enemyBullets.length < MAX_ENEMY_BULLETS) {
+          const { offsetX, offsetY } = enemy.consumeShadowBurstTick();
+          const result = this.enemyWeaponSystem.fireMissileFrom(
+            enemy, this.player.pos.x, this.player.pos.y, offsetX, offsetY
+          );
+          for (const eb of result.bullets) {
+            const sprite = this.assets.getOptional(eb.spriteKey);
+            if (sprite) eb.setSprite(sprite);
+            this.enemyBullets.push(eb);
+          }
+          if (result.soundEvent) {
+            this.sound.play(result.soundEvent);
+          }
+        }
+      }
+
       if (enemy.variant === "boss_carrier" && enemy.shouldSpawnDrones()) {
         const MAX_ACTIVE_DRONES = 8;
         const activeDrones = this.enemies.filter(
@@ -1156,11 +1180,11 @@ export class RaptorGame implements IGame {
         const activeDrones = enemy.mothershipSpawnedDrones.filter(d => d.alive).length;
         const maxDrones = 8;
         if (activeDrones < maxDrones) {
-          const spawnVariant = enemy.getDroneSpawnVariant();
           const spawnPositions = enemy.getDroneSpawnPositions();
           const desiredCount = enemy.getDroneSpawnCount();
           const spawnCount = Math.min(desiredCount, maxDrones - activeDrones);
           for (let i = 0; i < spawnCount; i++) {
+            const spawnVariant = enemy.getDroneSpawnVariantForIndex(i);
             const spawnPos = spawnPositions[i % spawnPositions.length];
             const drone = new Enemy(spawnPos.x, spawnPos.y, spawnVariant);
             this.assignEnemySprite(drone);
@@ -1197,7 +1221,7 @@ export class RaptorGame implements IGame {
         }
       }
 
-      if (enemy.variant === "boss_architect") {
+      if (enemy.variant === "boss_architect" && enemy.alive) {
         const wells = enemy.getArchitectGravityWells();
         for (const well of wells) {
           const dx = well.x - this.player.pos.x;
@@ -1207,6 +1231,7 @@ export class RaptorGame implements IGame {
             const pullStrength = well.strength * dt * (1 - dist / well.radius);
             this.player.pos.x += (dx / dist) * pullStrength;
             this.player.pos.y += (dy / dist) * pullStrength;
+            this._gravityWellSpeedFactor = 0.6;
           }
         }
       }

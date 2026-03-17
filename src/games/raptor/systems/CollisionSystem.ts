@@ -150,7 +150,18 @@ export class CollisionSystem {
           effectiveBeamDmg = Math.floor(effectiveBeamDmg * 2.0);
         }
         if (enemy.variant === "boss_hydra") {
-          if (!enemy.isHydraVulnerable()) {
+          const podPositions = enemy.getHydraPodPositions();
+          const podRadius = 10;
+          let hitPod = false;
+          for (let pi = 0; pi < podPositions.length; pi++) {
+            if (!enemy.isHydraPodAlive(pi)) continue;
+            const pp = podPositions[pi];
+            if (pp.x + podRadius > beamLeft && pp.x - podRadius < beamRight && pp.y < beam.pos.y) {
+              enemy.hitHydraPod(pi, effectiveBeamDmg);
+              hitPod = true;
+            }
+          }
+          if (!hitPod && !enemy.isHydraVulnerable()) {
             const anyPodAlive = enemy.isHydraPodAlive(0) || enemy.isHydraPodAlive(1) || enemy.isHydraPodAlive(2);
             if (anyPodAlive) {
               effectiveBeamDmg = Math.max(1, Math.floor(effectiveBeamDmg * 0.5));
@@ -223,10 +234,10 @@ export class CollisionSystem {
               const pdx = bx - podPositions[pi].x;
               const pdy = by - podPositions[pi].y;
               if (Math.abs(pdx) < 10 && Math.abs(pdy) < 10) {
-                enemy.hitHydraPod(pi, effectiveDamage);
+                const podDestroyed = enemy.hitHydraPod(pi, effectiveDamage);
                 hitPod = true;
                 if (!bullet.piercing) bullet.alive = false;
-                hits.push({ bullet, enemy, destroyed: false, damage: effectiveDamage });
+                hits.push({ bullet, enemy, destroyed: podDestroyed, damage: effectiveDamage });
                 break;
               }
             }

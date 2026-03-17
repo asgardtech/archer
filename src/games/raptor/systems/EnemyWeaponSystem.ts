@@ -279,7 +279,7 @@ export class EnemyWeaponSystem {
 
   // --- Boss-specific fire methods ---
 
-  fireHydraPods(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
+  private fireHydraPods(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
     const allBullets: EnemyBullet[] = [];
     let soundEvent: RaptorSoundEvent | null = null;
     let laserActivated = false;
@@ -358,7 +358,7 @@ export class EnemyWeaponSystem {
     return { bullets: allBullets, soundEvent, laserActivated: laserActivated || undefined };
   }
 
-  fireShadowAmbush(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
+  private fireShadowAmbush(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
     enemy.shadowAmbushReady = false;
     const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];
     const config = ENEMY_WEAPON_CONFIGS["standard"];

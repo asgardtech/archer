@@ -149,6 +149,9 @@ export class Enemy {
   private hydraPodRegenerated: [boolean, boolean, boolean] = [false, false, false];
   private hydraVulnerabilityTimer = 0;
   private hydraVulnerable = false;
+  private hydraOrbitAngle = 0;
+  private readonly HYDRA_ORBIT_RADIUS = 35;
+  private readonly HYDRA_ORBIT_SPEED = 0.8;
 
   // Shadow — stealth command vessel
   private shadowPhase: "entering" | "visible" | "cloaking" | "cloaked" | "decloaking" = "entering";
@@ -158,6 +161,11 @@ export class Enemy {
   private shadowDashTargetX = 0;
   private shadowDashActive = false;
   public shadowAmbushReady = false;
+  private shadowBurstRemaining = 0;
+  private shadowBurstTimer = 0;
+  private shadowBurstSpreadIndex = 0;
+  private readonly SHADOW_BURST_COUNT = 3;
+  private readonly SHADOW_BURST_INTERVAL = 0.12;
   private readonly SHADOW_VISIBLE_DURATION = 4.0;
   private readonly SHADOW_CLOAK_DURATION = 3.0;
   private readonly SHADOW_DASH_INTERVAL = 3.0;
@@ -422,6 +430,7 @@ export class Enemy {
         this.pos.x += Math.sin(this.time * 0.3) * 30 * dt;
         this.pos.y = hParkY + Math.cos(this.time * 0.2) * 8;
         this.pos.x = Math.max(hMargin, Math.min(hCw - hMargin, this.pos.x));
+        this.hydraOrbitAngle += this.HYDRA_ORBIT_SPEED * dt;
 
         for (let i = 0; i < 3; i++) {
           if (!this.hydraPodAlive[i]) {
@@ -469,6 +478,10 @@ export class Enemy {
       } else if (this.shadowPhase === "visible") {
         this.shadowCycleTimer += dt;
         this.shadowCloakAlpha = 1.0;
+
+        if (this.shadowBurstRemaining > 0) {
+          this.shadowBurstTimer -= dt;
+        }
 
         this.shadowDashTimer += dt;
         if (this.shadowDashTimer >= this.SHADOW_DASH_INTERVAL) {
@@ -1059,6 +1072,25 @@ export class Enemy {
     return { offsetX, offsetY: this.height * 0.3 };
   }
 
+  public initiateShadowBurst(): void {
+    this.shadowBurstRemaining = this.SHADOW_BURST_COUNT;
+    this.shadowBurstTimer = 0;
+    this.shadowBurstSpreadIndex = 0;
+  }
+
+  public hasShadowBurst(): boolean {
+    return this.shadowBurstRemaining > 0 && this.shadowBurstTimer <= 0;
+  }
+
+  public consumeShadowBurstTick(): { offsetX: number; offsetY: number } {
+    this.shadowBurstRemaining--;
+    this.shadowBurstTimer = this.SHADOW_BURST_INTERVAL;
+    const spreadOffsets = [-12, 0, 12];
+    const offsetX = spreadOffsets[this.shadowBurstSpreadIndex % spreadOffsets.length];
+    this.shadowBurstSpreadIndex++;
+    return { offsetX, offsetY: this.height * 0.3 };
+  }
+
   public toggleFortressPhase(): void {
     this.fortressAttackPhase = this.fortressAttackPhase === "A" ? "B" : "A";
   }
@@ -1102,6 +1134,14 @@ export class Enemy {
     if (this.variant === "boss_swarm_queen") return "locust";
     this.droneWaveVariantToggle = !this.droneWaveVariantToggle;
     return this.droneWaveVariantToggle ? "swarmer" : "drone";
+  }
+
+  public getDroneSpawnVariantForIndex(index: number): EnemyVariant {
+    if (this.variant === "boss_mothership") {
+      if (this.mothershipCurrentPhase === 1) return "drone";
+      return index < 2 ? "swarmer" : "drone";
+    }
+    return this.getDroneSpawnVariant();
   }
 
   public getDroneSpawnCount(): number {
@@ -1150,11 +1190,15 @@ export class Enemy {
   }
 
   public getHydraPodPositions(): Vec2[] {
-    return [
-      { x: this.pos.x - 30, y: this.pos.y + 10 },
-      { x: this.pos.x + 30, y: this.pos.y + 10 },
-      { x: this.pos.x, y: this.pos.y - 25 },
-    ];
+    const r = this.HYDRA_ORBIT_RADIUS;
+    const baseAngles = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3];
+    return baseAngles.map(base => {
+      const angle = base + this.hydraOrbitAngle;
+      return {
+        x: this.pos.x + Math.cos(angle) * r,
+        y: this.pos.y + Math.sin(angle) * r,
+      };
+    });
   }
 
   public getHydraPodWeapons(): EnemyWeaponType[] {
