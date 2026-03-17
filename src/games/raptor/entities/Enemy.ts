@@ -208,6 +208,8 @@ export class Enemy {
 
   // Splitter
   private splitterWeaveTime = 0;
+  private splitterBaseX = 0;
+  private splitterBaseXInitialized = false;
 
   // Healer
   private healerHealTimer = 0;
@@ -1051,8 +1053,12 @@ export class Enemy {
 
       this.leviathanSpawnedDrones = this.leviathanSpawnedDrones.filter(d => d.alive);
     } else if (this.variant === "splitter") {
+      if (!this.splitterBaseXInitialized) {
+        this.splitterBaseX = this.pos.x;
+        this.splitterBaseXInitialized = true;
+      }
       this.splitterWeaveTime += dt;
-      this.pos.x += Math.sin(this.splitterWeaveTime * 1.5 * Math.PI * 2) * 30 * dt * Math.PI * 2 * 1.5;
+      this.pos.x = this.splitterBaseX + Math.sin(this.splitterWeaveTime * 1.5 * Math.PI * 2) * 30;
       this.pos.y += this.vel.y * dt;
     } else if (this.variant === "splitter_minor") {
       this.pos.y += this.vel.y * dt;
@@ -1108,6 +1114,9 @@ export class Enemy {
         this.kamikazeLockTimer += dt;
         if (this.kamikazeLockTimer >= this.KAMIKAZE_LOCK_DELAY) {
           this.kamikazePhase = "locked";
+        }
+        if (this.pos.y > offsetY + canvasHeight + 50) {
+          this.alive = false;
         }
       } else if (this.kamikazePhase === "locked") {
         this.kamikazeTargetPos = { x: targetX ?? this.pos.x, y: targetY ?? (offsetY + canvasHeight * 0.85) };
