@@ -29,6 +29,11 @@ export class Enemy {
   private readonly CLOAK_VISIBLE_DURATION = 2.0;
   private readonly CLOAK_HIDDEN_DURATION = 1.5;
 
+  private phantomTimer = 0;
+  private phantomVisible = true;
+  private readonly PHANTOM_VISIBLE_DURATION = 0.8;
+  private readonly PHANTOM_HIDDEN_DURATION = 0.6;
+
   private mineTimer = 0;
   private readonly MINE_DROP_INTERVAL = 2.0;
   private minelayerDirection = 0;
@@ -303,6 +308,39 @@ export class Enemy {
       ) {
         this.alive = false;
       }
+    } else if (this.variant === "wasp") {
+      this.pos.x += Math.sin(this.time * 6) * 80 * dt;
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "phantom") {
+      this.pos.y += this.vel.y * dt;
+
+      this.phantomTimer += dt;
+      if (this.phantomVisible) {
+        if (this.phantomTimer >= this.PHANTOM_VISIBLE_DURATION) {
+          this.phantomVisible = false;
+          this.phantomTimer = 0;
+        }
+      } else {
+        if (this.phantomTimer >= this.PHANTOM_HIDDEN_DURATION) {
+          this.phantomVisible = true;
+          this.phantomTimer = 0;
+        }
+      }
+    } else if (this.variant === "needle") {
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "locust") {
+      this.pos.x += (Math.random() - 0.5) * 30 * dt;
+      if (targetX !== undefined) {
+        const dx = targetX - this.pos.x;
+        this.pos.x += dx * 0.5 * dt;
+      }
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "glider") {
+      this.pos.x += Math.sin(this.time * 1.5) * 100 * dt;
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "spark") {
+      this.pos.x += (Math.random() - 0.5) * 60 * dt;
+      this.pos.y += this.vel.y * dt;
     } else {
       this.pos.y += this.vel.y * dt;
     }
@@ -322,6 +360,7 @@ export class Enemy {
 
   canFire(): boolean {
     if (this.variant === "stealth" && !this.cloakVisible) return false;
+    if (this.variant === "phantom" && !this.phantomVisible) return false;
     return this.fireRate > 0 && this.fireCooldown <= 0 && this.alive;
   }
 
@@ -464,6 +503,24 @@ export class Enemy {
         case "minelayer":
           this.renderMinelayer(ctx, x, y, isFlashing);
           break;
+        case "wasp":
+          this.renderWasp(ctx, x, y, isFlashing);
+          break;
+        case "phantom":
+          this.renderPhantom(ctx, x, y, isFlashing);
+          break;
+        case "needle":
+          this.renderNeedle(ctx, x, y, isFlashing);
+          break;
+        case "locust":
+          this.renderLocust(ctx, x, y, isFlashing);
+          break;
+        case "glider":
+          this.renderGlider(ctx, x, y, isFlashing);
+          break;
+        case "spark":
+          this.renderSpark(ctx, x, y, isFlashing);
+          break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
           break;
@@ -498,6 +555,9 @@ export class Enemy {
 
     if (this.variant === "stealth" && !this.cloakVisible && !flash) {
       ctx.globalAlpha = 0.1;
+    }
+    if (this.variant === "phantom" && !this.phantomVisible && !flash) {
+      ctx.globalAlpha = 0.05;
     }
 
     if (flash) {
@@ -694,6 +754,12 @@ export class Enemy {
     juggernaut: "#cc3333",
     stealth: "#9966cc",
     minelayer: "#9966cc",
+    wasp: "#aacc22",
+    phantom: "#7744dd",
+    needle: "#ff2222",
+    locust: "#889933",
+    glider: "#aabbcc",
+    spark: "#44ddff",
   };
 
   private renderGunship(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
@@ -882,6 +948,178 @@ export class Enemy {
     ctx.fillStyle = flash ? "#cccccc" : "#777733";
     ctx.beginPath();
     ctx.arc(x, y - hh * 0.2, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderWasp(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#aacc22";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw, y - hh);
+    ctx.lineTo(x + hw, y - hh);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#88aa11";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.4, y - hh * 0.2);
+    ctx.lineTo(x - hw * 1.1, y - hh * 0.8);
+    ctx.moveTo(x + hw * 0.4, y - hh * 0.2);
+    ctx.lineTo(x + hw * 1.1, y - hh * 0.8);
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#ccee44";
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderPhantom(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    if (!this.phantomVisible && !flash) {
+      ctx.globalAlpha = 0.05;
+    }
+
+    const pulse = 0.7 + Math.sin(this.time * 4) * 0.3;
+    ctx.fillStyle = flash ? "#ffffff" : `rgba(119, 68, 221, ${pulse})`;
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw, y);
+    ctx.lineTo(x, y + hh);
+    ctx.lineTo(x - hw, y);
+    ctx.closePath();
+    ctx.fill();
+
+    if (this.phantomVisible && !flash) {
+      ctx.strokeStyle = `rgba(170, 120, 255, ${0.3 + Math.sin(this.time * 6) * 0.3})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, hw * 0.9, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = flash ? "#cccccc" : "#aa88ee";
+    ctx.beginPath();
+    ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+  }
+
+  private renderNeedle(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#ff2222";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.4, y - hh * 0.3);
+    ctx.lineTo(x - hw * 0.3, y - hh);
+    ctx.lineTo(x + hw * 0.3, y - hh);
+    ctx.lineTo(x + hw * 0.4, y - hh * 0.3);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#ffcccc" : "#ff8844";
+    ctx.beginPath();
+    ctx.arc(x, y + hh - 2, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderLocust(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const r = this.width / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#889933";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#667722";
+    ctx.lineWidth = 1.5;
+    const nubLen = r * 0.7;
+    ctx.beginPath();
+    ctx.moveTo(x - r * 0.5, y - r * 0.5);
+    ctx.lineTo(x - r * 0.5 - nubLen * 0.7, y - r * 0.5 - nubLen * 0.7);
+    ctx.moveTo(x + r * 0.5, y - r * 0.5);
+    ctx.lineTo(x + r * 0.5 + nubLen * 0.7, y - r * 0.5 - nubLen * 0.7);
+    ctx.moveTo(x - r * 0.5, y + r * 0.5);
+    ctx.lineTo(x - r * 0.5 - nubLen * 0.7, y + r * 0.5 + nubLen * 0.7);
+    ctx.moveTo(x + r * 0.5, y + r * 0.5);
+    ctx.lineTo(x + r * 0.5 + nubLen * 0.7, y + r * 0.5 + nubLen * 0.7);
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#aabb55";
+    ctx.beginPath();
+    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderGlider(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#aabbcc";
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.quadraticCurveTo(x + hw * 0.3, y - hh * 0.3, x + hw, y + hh * 0.3);
+    ctx.lineTo(x + hw * 0.6, y + hh);
+    ctx.lineTo(x, y + hh * 0.5);
+    ctx.lineTo(x - hw * 0.6, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.3);
+    ctx.quadraticCurveTo(x - hw * 0.3, y - hh * 0.3, x, y - hh);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#8899aa";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#99aabb";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.1, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderSpark(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const r = this.width / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#44ddff";
+    ctx.beginPath();
+    const sides = 8;
+    for (let i = 0; i < sides; i++) {
+      const angle = (Math.PI * 2 / sides) * i - Math.PI / 2;
+      const px = x + r * Math.cos(angle);
+      const py = y + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#88eeff";
+    ctx.lineWidth = 1;
+    const arcCount = 3;
+    for (let i = 0; i < arcCount; i++) {
+      const angle = this.time * (3 + i) + i * 2.1;
+      const startX = x + Math.cos(angle) * r * 0.6;
+      const startY = y + Math.sin(angle) * r * 0.6;
+      const endX = x + Math.cos(angle + 0.8) * r * 1.3;
+      const endY = y + Math.sin(angle + 0.8) * r * 1.3;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = flash ? "#cccccc" : "#aaeeff";
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
     ctx.fill();
   }
 
