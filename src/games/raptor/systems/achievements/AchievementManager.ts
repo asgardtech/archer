@@ -8,7 +8,7 @@ export type AchievementEventType =
   | "no_damage_level"
   | "armor_below_10pct"
   | "level_complete"
-  | "weapon_tier_5"
+  | "weapon_tier_max"
   | "bombs_at_max"
   | "level_under_2min";
 

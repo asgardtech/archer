@@ -91,9 +91,33 @@ export class WeaponSystem {
     if (this.currentWeapon === "laser") {
       this.laserBeam.active = player.alive;
       this.laserBeam.setModifiers(rapidFire, spreadShot, tierConfig.visualScale, tierConfig.damageMultiplier, weaponConfig.rapidFireBonus);
+      this.laserBeam.trackingSpeed = 1.5 + (powerUpManager.weaponTier - 1) * 0.3;
       this.laserTurret.config.offsetY = -player.height * 0.35;
       const turretTip = this.laserTurret.getBarrelTip(player.pos.x, player.pos.y);
       this.laserBeam.updatePosition(turretTip.x, turretTip.y);
+
+      if (enemies && enemies.length > 0) {
+        let nearestEnemy: Enemy | null = null;
+        let minDist = Infinity;
+        for (const enemy of enemies) {
+          if (!enemy.alive || enemy.pos.y >= player.pos.y) continue;
+          const dx = enemy.pos.x - player.pos.x;
+          const dy = enemy.pos.y - player.pos.y;
+          const dist = dx * dx + dy * dy;
+          if (dist < minDist) {
+            minDist = dist;
+            nearestEnemy = enemy;
+          }
+        }
+        if (nearestEnemy) {
+          this.laserBeam.setTarget(nearestEnemy.pos.x, nearestEnemy.pos.y);
+        } else {
+          this.laserBeam.clearTarget();
+        }
+      } else {
+        this.laserBeam.clearTarget();
+      }
+
       return { newProjectiles: [], soundEvent: null };
     }
 
@@ -116,7 +140,8 @@ export class WeaponSystem {
         const result = drone.update(
           dt, player.pos, enemies ?? [], fireRateMult,
           rapidFire, spreadShot, tierDamage,
-          totalProjectiles + newProjectiles.length, MAX_PROJECTILES
+          totalProjectiles + newProjectiles.length, MAX_PROJECTILES,
+          tierConfig.homingStrength
         );
         for (const proj of result.projectiles) {
           proj.sourceWeapon = "auto-turret";
@@ -144,18 +169,19 @@ export class WeaponSystem {
 
       if (this.chargeTimer >= effectiveMaxCharge && existingProjectiles.length < MAX_PROJECTILES) {
         const chargeLevel = 1.0;
+        const ionHomingStr = tierConfig.homingStrength ?? 0;
         if (spreadShot) {
           for (let i = 0; i < tierConfig.projectileCount; i++) {
             const offset = tierConfig.projectileCount > 1
               ? (i - (tierConfig.projectileCount - 1) / 2) * tierConfig.projectileSpread
               : 0;
-            newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, -0.1 + offset, tierDamage));
-            newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, 0.1 + offset, tierDamage));
+            newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, -0.1 + offset, tierDamage, ionHomingStr));
+            newProjectiles.push(this.createIonBolt(player.pos.x, player.top, chargeLevel, 0.1 + offset, tierDamage, ionHomingStr));
           }
         } else {
           this.spawnProjectiles(
             tierConfig, player.pos.x, player.top,
-            (x, y, angle) => this.createIonBolt(x, y, chargeLevel, angle, tierDamage),
+            (x, y, angle) => this.createIonBolt(x, y, chargeLevel, angle, tierDamage, ionHomingStr),
             newProjectiles
           );
         }
@@ -179,17 +205,18 @@ export class WeaponSystem {
       this.fireTimer -= fireInterval;
 
       if (this.currentWeapon === "machine-gun") {
+        const homingStr = tierConfig.homingStrength ?? 0;
         if (spreadShot) {
           this.spawnProjectilesWithSpread(
             tierConfig, player.pos.x, player.top,
             [-0.2, 0, 0.2],
-            (x, y, angle) => this.createBullet(x, y, angle, tierDamage),
+            (x, y, angle) => this.createBullet(x, y, angle, tierDamage, homingStr),
             newProjectiles
           );
         } else {
           this.spawnProjectiles(
             tierConfig, player.pos.x, player.top,
-            (x, y, angle) => this.createBullet(x, y, angle, tierDamage),
+            (x, y, angle) => this.createBullet(x, y, angle, tierDamage, homingStr),
             newProjectiles
           );
         }
@@ -212,22 +239,24 @@ export class WeaponSystem {
         }
         soundEvent = "missile_fire";
       } else if (this.currentWeapon === "plasma") {
+        const homingStr = tierConfig.homingStrength ?? 0;
         if (spreadShot) {
           this.spawnProjectilesWithSpread(
             tierConfig, player.pos.x, player.top,
             [-0.2, 0, 0.2],
-            (x, y, angle) => this.createPlasmaBolt(x, y, angle, tierDamage),
+            (x, y, angle) => this.createPlasmaBolt(x, y, angle, tierDamage, homingStr),
             newProjectiles
           );
         } else {
           this.spawnProjectiles(
             tierConfig, player.pos.x, player.top,
-            (x, y, angle) => this.createPlasmaBolt(x, y, angle, tierDamage),
+            (x, y, angle) => this.createPlasmaBolt(x, y, angle, tierDamage, homingStr),
             newProjectiles
           );
         }
         soundEvent = "plasma_fire";
       } else if (this.currentWeapon === "auto-gun") {
+        const autoGunHomingStr = tierConfig.homingStrength ?? weaponConfig.homingStrength;
         if (spreadShot) {
           const baseOffsets = [-12, -4, 4, 12];
           for (let t = 0; t < tierConfig.projectileCount; t++) {
@@ -235,7 +264,7 @@ export class WeaponSystem {
               ? (t - (tierConfig.projectileCount - 1) / 2) * tierConfig.projectileSpread
               : 0;
             for (const xOff of baseOffsets) {
-              const b = this.createTrackingBullet(player.pos.x + xOff, player.top, tierOffset, tierDamage);
+              const b = this.createTrackingBullet(player.pos.x + xOff, player.top, tierOffset, tierDamage, autoGunHomingStr);
               newProjectiles.push(b);
             }
           }
@@ -246,24 +275,25 @@ export class WeaponSystem {
               ? (t - (tierConfig.projectileCount - 1) / 2) * tierConfig.projectileSpread
               : 0;
             for (const xOff of baseOffsets) {
-              const b = this.createTrackingBullet(player.pos.x + xOff, player.top, tierOffset, tierDamage);
+              const b = this.createTrackingBullet(player.pos.x + xOff, player.top, tierOffset, tierDamage, autoGunHomingStr);
               newProjectiles.push(b);
             }
           }
         }
         soundEvent = "player_shoot";
       } else if (this.currentWeapon === "rocket") {
+        const homingStr = tierConfig.homingStrength ?? 0;
         if (spreadShot) {
           this.spawnProjectilesWithSpread(
             tierConfig, player.pos.x, player.top,
             [-0.15, 0, 0.15],
-            (x, y, angle) => this.createRocket(x, y, angle, tierDamage),
+            (x, y, angle) => this.createRocket(x, y, angle, tierDamage, homingStr),
             newProjectiles
           );
         } else {
           this.spawnProjectiles(
             tierConfig, player.pos.x, player.top,
-            (x, y, angle) => this.createRocket(x, y, angle, tierDamage),
+            (x, y, angle) => this.createRocket(x, y, angle, tierDamage, homingStr),
             newProjectiles
           );
         }
@@ -305,8 +335,8 @@ export class WeaponSystem {
     }
   }
 
-  private createBullet(x: number, y: number, angle = 0, damage?: number): Bullet {
-    const b = new Bullet(x, y, angle);
+  private createBullet(x: number, y: number, angle = 0, damage?: number, homingStrength = 0): Bullet {
+    const b = new Bullet(x, y, angle, homingStrength);
     b.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) b.damage = damage;
     return b;
@@ -319,30 +349,30 @@ export class WeaponSystem {
     return m;
   }
 
-  private createPlasmaBolt(x: number, y: number, angle = 0, damage?: number): PlasmaBolt {
-    const p = new PlasmaBolt(x, y, angle);
+  private createPlasmaBolt(x: number, y: number, angle = 0, damage?: number, homingStrength = 0): PlasmaBolt {
+    const p = new PlasmaBolt(x, y, angle, homingStrength);
     p.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) p.damage = damage;
     return p;
   }
 
-  private createTrackingBullet(x: number, y: number, angle = 0, damage?: number): TrackingBullet {
+  private createTrackingBullet(x: number, y: number, angle = 0, damage?: number, homingStrength?: number): TrackingBullet {
     const config = WEAPON_CONFIGS["auto-gun"];
-    const t = new TrackingBullet(x, y, angle, config.homingStrength);
+    const t = new TrackingBullet(x, y, angle, homingStrength ?? config.homingStrength);
     t.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) t.damage = damage;
     return t;
   }
 
-  private createRocket(x: number, y: number, angle = 0, damage?: number): Rocket {
-    const r = new Rocket(x, y, angle);
+  private createRocket(x: number, y: number, angle = 0, damage?: number, homingStrength = 0): Rocket {
+    const r = new Rocket(x, y, angle, homingStrength);
     r.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) r.damage = damage;
     return r;
   }
 
-  private createIonBolt(x: number, y: number, chargeLevel: number, angle = 0, damage?: number): IonBolt {
-    const bolt = new IonBolt(x, y, chargeLevel, angle);
+  private createIonBolt(x: number, y: number, chargeLevel: number, angle = 0, damage?: number, homingStrength = 0): IonBolt {
+    const bolt = new IonBolt(x, y, chargeLevel, angle, homingStrength);
     bolt.sourceWeapon = this.currentWeapon;
     if (damage !== undefined) bolt.damage = damage;
     return bolt;

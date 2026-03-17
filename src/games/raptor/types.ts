@@ -321,9 +321,9 @@ export const HUD_LEFT_PANEL_WIDTH = 60;
 export const HUD_RIGHT_PANEL_WIDTH = 60;
 export const HUD_TOP_BAR_HEIGHT = 44;
 
-export const SAVE_FORMAT_VERSION = 4;
+export const SAVE_FORMAT_VERSION = 5;
 
-export const MAX_WEAPON_TIER = 5;
+export const MAX_WEAPON_TIER = 10;
 
 export const WEAPON_SPEED_BONUS_THRESHOLD = 5;
 export const WEAPON_SPEED_BONUS_PER_TYPE = 0.01;
@@ -399,7 +399,8 @@ export interface WeaponConfig {
   rapidFireBonus: number;
   spreadShotBehavior: "multi-projectile" | "wider-beam";
   chargeTime?: number;
-  tiers: [WeaponTierConfig, WeaponTierConfig, WeaponTierConfig, WeaponTierConfig, WeaponTierConfig];
+  tiers: [WeaponTierConfig, WeaponTierConfig, WeaponTierConfig, WeaponTierConfig, WeaponTierConfig,
+          WeaponTierConfig, WeaponTierConfig, WeaponTierConfig, WeaponTierConfig, WeaponTierConfig];
 }
 
 const TIER_1: WeaponTierConfig = { damageMultiplier: 1, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1 };
@@ -423,6 +424,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 1, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.1, visualScale: 1 },
       { damageMultiplier: 1, fireRateMultiplier: 1.6, projectileCount: 3, projectileSpread: 0.1, visualScale: 1 },
       { damageMultiplier: 1, fireRateMultiplier: 1.6, projectileCount: 5, projectileSpread: 0.08, visualScale: 1 },
+      { damageMultiplier: 1, fireRateMultiplier: 1.8, projectileCount: 5, projectileSpread: 0.08, visualScale: 1, homingStrength: 0.8 },
+      { damageMultiplier: 1, fireRateMultiplier: 2.0, projectileCount: 7, projectileSpread: 0.06, visualScale: 1, homingStrength: 1.0 },
+      { damageMultiplier: 1.2, fireRateMultiplier: 2.0, projectileCount: 7, projectileSpread: 0.06, visualScale: 1, homingStrength: 1.2 },
+      { damageMultiplier: 1.2, fireRateMultiplier: 2.2, projectileCount: 9, projectileSpread: 0.05, visualScale: 1, homingStrength: 1.4 },
+      { damageMultiplier: 1.5, fireRateMultiplier: 2.5, projectileCount: 9, projectileSpread: 0.05, visualScale: 1, homingStrength: 1.8 },
     ],
   },
   "missile": {
@@ -443,6 +449,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 1.33, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1, homingStrength: 1.0 },
       { damageMultiplier: 1.67, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.15, visualScale: 1, homingStrength: 1.4 },
       { damageMultiplier: 2.0, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0.12, visualScale: 1, homingStrength: 1.8 },
+      { damageMultiplier: 2.5, fireRateMultiplier: 1.4, projectileCount: 3, projectileSpread: 0.12, visualScale: 1, homingStrength: 2.2 },
+      { damageMultiplier: 3.0, fireRateMultiplier: 1.4, projectileCount: 4, projectileSpread: 0.10, visualScale: 1, homingStrength: 2.5 },
+      { damageMultiplier: 3.5, fireRateMultiplier: 1.6, projectileCount: 4, projectileSpread: 0.10, visualScale: 1, homingStrength: 2.8 },
+      { damageMultiplier: 4.0, fireRateMultiplier: 1.8, projectileCount: 5, projectileSpread: 0.08, visualScale: 1, homingStrength: 3.0 },
+      { damageMultiplier: 5.0, fireRateMultiplier: 2.0, projectileCount: 5, projectileSpread: 0.08, visualScale: 1, homingStrength: 3.5 },
     ],
   },
   "laser": {
@@ -463,6 +474,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 2.0, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 1.67 },
       { damageMultiplier: 2.5, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 2.0 },
       { damageMultiplier: 3.0, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 2.5 },
+      { damageMultiplier: 3.5, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 2.8 },
+      { damageMultiplier: 4.0, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 3.2 },
+      { damageMultiplier: 4.5, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 3.5 },
+      { damageMultiplier: 5.0, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 4.0 },
+      { damageMultiplier: 6.0, fireRateMultiplier: 1, projectileCount: 1, projectileSpread: 0, visualScale: 5.0 },
     ],
   },
   "plasma": {
@@ -483,6 +499,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 1.5, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.12, visualScale: 1 },
       { damageMultiplier: 2.0, fireRateMultiplier: 1, projectileCount: 3, projectileSpread: 0.1, visualScale: 1 },
       { damageMultiplier: 2.5, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0.1, visualScale: 1.25 },
+      { damageMultiplier: 3.0, fireRateMultiplier: 1.3, projectileCount: 4, projectileSpread: 0.08, visualScale: 1.25, homingStrength: 0.8 },
+      { damageMultiplier: 3.5, fireRateMultiplier: 1.4, projectileCount: 4, projectileSpread: 0.08, visualScale: 1.25, homingStrength: 1.0 },
+      { damageMultiplier: 4.0, fireRateMultiplier: 1.5, projectileCount: 5, projectileSpread: 0.06, visualScale: 1.5, homingStrength: 1.2 },
+      { damageMultiplier: 4.5, fireRateMultiplier: 1.6, projectileCount: 5, projectileSpread: 0.06, visualScale: 1.5, homingStrength: 1.5 },
+      { damageMultiplier: 5.0, fireRateMultiplier: 1.8, projectileCount: 6, projectileSpread: 0.05, visualScale: 1.75, homingStrength: 2.0 },
     ],
   },
   "ion-cannon": {
@@ -504,6 +525,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 1.8, fireRateMultiplier: 1.4, projectileCount: 1, projectileSpread: 0, visualScale: 1.3 },
       { damageMultiplier: 2.0, fireRateMultiplier: 1.6, projectileCount: 2, projectileSpread: 0.08, visualScale: 1.3 },
       { damageMultiplier: 2.5, fireRateMultiplier: 1.8, projectileCount: 2, projectileSpread: 0.08, visualScale: 1.5 },
+      { damageMultiplier: 3.0, fireRateMultiplier: 2.0, projectileCount: 3, projectileSpread: 0.06, visualScale: 1.5, homingStrength: 0.6 },
+      { damageMultiplier: 3.5, fireRateMultiplier: 2.2, projectileCount: 3, projectileSpread: 0.06, visualScale: 1.5, homingStrength: 0.8 },
+      { damageMultiplier: 4.0, fireRateMultiplier: 2.4, projectileCount: 3, projectileSpread: 0.06, visualScale: 1.7, homingStrength: 1.0 },
+      { damageMultiplier: 4.5, fireRateMultiplier: 2.6, projectileCount: 4, projectileSpread: 0.05, visualScale: 1.7, homingStrength: 1.2 },
+      { damageMultiplier: 5.0, fireRateMultiplier: 3.0, projectileCount: 4, projectileSpread: 0.05, visualScale: 2.0, homingStrength: 1.5 },
     ],
   },
   "auto-gun": {
@@ -524,6 +550,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 1.2, fireRateMultiplier: 1.3, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
       { damageMultiplier: 1.4, fireRateMultiplier: 1.6, projectileCount: 3, projectileSpread: 0.06, visualScale: 1 },
       { damageMultiplier: 1.6, fireRateMultiplier: 1.8, projectileCount: 5, projectileSpread: 0.05, visualScale: 1 },
+      { damageMultiplier: 1.8, fireRateMultiplier: 2.0, projectileCount: 5, projectileSpread: 0.05, visualScale: 1, homingStrength: 2.5 },
+      { damageMultiplier: 2.0, fireRateMultiplier: 2.2, projectileCount: 7, projectileSpread: 0.04, visualScale: 1, homingStrength: 2.8 },
+      { damageMultiplier: 2.2, fireRateMultiplier: 2.4, projectileCount: 7, projectileSpread: 0.04, visualScale: 1, homingStrength: 3.0 },
+      { damageMultiplier: 2.5, fireRateMultiplier: 2.6, projectileCount: 9, projectileSpread: 0.03, visualScale: 1, homingStrength: 3.2 },
+      { damageMultiplier: 3.0, fireRateMultiplier: 3.0, projectileCount: 9, projectileSpread: 0.03, visualScale: 1, homingStrength: 3.5 },
     ],
   },
   "auto-turret": {
@@ -544,6 +575,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 1.3, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1.6, fireRateMultiplier: 1.5, projectileCount: 3, projectileSpread: 0, visualScale: 1 },
       { damageMultiplier: 1.8, fireRateMultiplier: 1.8, projectileCount: 4, projectileSpread: 0, visualScale: 1 },
+      { damageMultiplier: 2.0, fireRateMultiplier: 2.0, projectileCount: 5, projectileSpread: 0, visualScale: 1, homingStrength: 3.0 },
+      { damageMultiplier: 2.2, fireRateMultiplier: 2.2, projectileCount: 5, projectileSpread: 0, visualScale: 1, homingStrength: 3.2 },
+      { damageMultiplier: 2.5, fireRateMultiplier: 2.5, projectileCount: 6, projectileSpread: 0, visualScale: 1, homingStrength: 3.5 },
+      { damageMultiplier: 2.8, fireRateMultiplier: 2.8, projectileCount: 6, projectileSpread: 0, visualScale: 1, homingStrength: 3.8 },
+      { damageMultiplier: 3.0, fireRateMultiplier: 3.0, projectileCount: 8, projectileSpread: 0, visualScale: 1, homingStrength: 4.0 },
     ],
   },
   "rocket": {
@@ -564,6 +600,11 @@ export const WEAPON_CONFIGS: Record<WeaponType, WeaponConfig> = {
       { damageMultiplier: 1.4, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.1, visualScale: 1 },
       { damageMultiplier: 1.8, fireRateMultiplier: 1, projectileCount: 2, projectileSpread: 0.1, visualScale: 1 },
       { damageMultiplier: 2.0, fireRateMultiplier: 1.2, projectileCount: 3, projectileSpread: 0.08, visualScale: 1.1 },
+      { damageMultiplier: 2.5, fireRateMultiplier: 1.4, projectileCount: 3, projectileSpread: 0.08, visualScale: 1.1, homingStrength: 0.8 },
+      { damageMultiplier: 3.0, fireRateMultiplier: 1.5, projectileCount: 4, projectileSpread: 0.06, visualScale: 1.2, homingStrength: 1.0 },
+      { damageMultiplier: 3.5, fireRateMultiplier: 1.6, projectileCount: 4, projectileSpread: 0.06, visualScale: 1.2, homingStrength: 1.2 },
+      { damageMultiplier: 4.0, fireRateMultiplier: 1.8, projectileCount: 5, projectileSpread: 0.05, visualScale: 1.3, homingStrength: 1.5 },
+      { damageMultiplier: 5.0, fireRateMultiplier: 2.0, projectileCount: 5, projectileSpread: 0.05, visualScale: 1.4, homingStrength: 2.0 },
     ],
   },
 };

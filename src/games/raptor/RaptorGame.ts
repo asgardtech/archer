@@ -1339,7 +1339,8 @@ export class RaptorGame implements IGame {
         const exhaust = proj.getExhaustPosition();
         this.vfx.addTrail(exhaust.x, exhaust.y, "rgba(168, 224, 108, 0.4)", 1.5);
       } else if (proj instanceof Bullet) {
-        proj.update(dt, this.width);
+        const homingEnemies = proj.homingStrength > 0 ? this.enemies : undefined;
+        proj.update(dt, this.width, this.height, homingEnemies);
         this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(255, 220, 0, 0.4)", 1.5);
       } else if (proj instanceof Missile) {
         const missileHomingEnemies = (proj as Missile).homingStrength > 0 ? this.enemies : undefined;
@@ -1347,13 +1348,16 @@ export class RaptorGame implements IGame {
         const exhaust = proj.getExhaustPosition();
         this.vfx.addMissileTrail(exhaust.x, exhaust.y, proj.heading);
       } else if (proj instanceof PlasmaBolt) {
-        proj.update(dt, this.width);
+        const homingEnemies = proj.homingStrength > 0 ? this.enemies : undefined;
+        proj.update(dt, this.width, this.height, homingEnemies);
         this.vfx.addPlasmaTrail(proj.pos.x, proj.pos.y + 3);
       } else if (proj instanceof IonBolt) {
-        proj.update(dt, this.width);
+        const homingEnemies = proj.homingStrength > 0 ? this.enemies : undefined;
+        proj.update(dt, this.width, this.height, homingEnemies);
         this.vfx.addTrail(proj.pos.x, proj.pos.y + 4, "rgba(0, 188, 212, 0.5)", 2);
       } else if (proj instanceof Rocket) {
-        proj.update(dt, this.width, this.height);
+        const homingEnemies = proj.homingStrength > 0 ? this.enemies : undefined;
+        proj.update(dt, this.width, this.height, homingEnemies);
         const exhaust = proj.getExhaustPosition();
         this.vfx.addRocketTrail(exhaust.x, exhaust.y, proj.heading);
       }
@@ -1838,7 +1842,7 @@ export class RaptorGame implements IGame {
     }
     this.statsTracker.recordWeaponUpgrade(weaponType, this.powerUpManager.weaponTier);
     if (this.powerUpManager.weaponTier >= MAX_WEAPON_TIER) {
-      this.achievementManager.fireEvent("weapon_tier_5");
+      this.achievementManager.fireEvent("weapon_tier_max");
     }
     this.achievementManager.checkAchievements();
   }
