@@ -9,17 +9,35 @@ const TURRET_SIZE = 12;
 const BARREL_LENGTH = 10;
 const BASE_FIRE_INTERVAL = 0.6;
 
+const DRONE_MAX_HP = 50;
+
 export class AutoTurretDrone {
   public pos: Vec2 = { x: 0, y: 0 };
   public angle = 0;
   public facingAngle = -Math.PI / 2;
   public active = false;
+  public hp = DRONE_MAX_HP;
+  public maxHp = DRONE_MAX_HP;
 
   private fireTimer = 0;
   private glowPhase = 0;
 
   constructor(public angleOffset: number) {
     this.angle = angleOffset;
+  }
+
+  takeDamage(amount: number): boolean {
+    this.hp -= amount;
+    if (this.hp <= 0) {
+      this.hp = 0;
+      this.active = false;
+      return true;
+    }
+    return false;
+  }
+
+  resetHp(): void {
+    this.hp = this.maxHp;
   }
 
   update(

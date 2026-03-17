@@ -349,6 +349,10 @@ export class WeaponSystem {
     return null;
   }
 
+  getActiveTurretDrones(): AutoTurretDrone[] {
+    return this.turretDrones.filter(d => d.active);
+  }
+
   renderLaser(ctx: CanvasRenderingContext2D): void {
     this.laserBeam.render(ctx);
   }

@@ -25,6 +25,8 @@ import { Rocket } from "./entities/Rocket";
 import { Enemy, isBossVariant } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
 import { EnemyMissile } from "./entities/EnemyMissile";
+import { EnemyShockwave } from "./entities/EnemyShockwave";
+import { EnemyChainBolt } from "./entities/EnemyChainBolt";
 import { Explosion } from "./entities/Explosion";
 import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
@@ -95,6 +97,7 @@ export class RaptorGame implements IGame {
   private projectiles: Projectile[] = [];
   private enemies: Enemy[] = [];
   private enemyBullets: EnemyBullet[] = [];
+  private shockwaves: EnemyShockwave[] = [];
   private explosions: Explosion[] = [];
   private powerUps: PowerUp[] = [];
 
@@ -890,7 +893,9 @@ export class RaptorGame implements IGame {
       const fired = this.player.emp();
       if (fired) {
         this.enemyBullets.length = 0;
+        this.shockwaves.length = 0;
         this.enemyWeaponSystem.resetLasers();
+        this.enemyWeaponSystem.resetChargeBeams();
         this.vfx.triggerEmpPulse(this.player.pos.x, this.player.pos.y, Math.max(this.width, this.height));
         this.sound.play("emp_burst");
         this.statsTracker.recordEmp();
@@ -1038,6 +1043,25 @@ export class RaptorGame implements IGame {
             }
             enemy.resetFireCooldown(totalCycle * enemy.fireRate);
           }
+        } else if (enemy.weaponType === "charge_beam") {
+          const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
+          if (result.chargeBeamActivated) {
+            const totalCycle = (weaponConfig.beamWarmupDuration ?? 1.2)
+              + (weaponConfig.beamActiveDuration ?? 0.4)
+              + (weaponConfig.beamCooldownDuration ?? 4.0);
+            enemy.resetFireCooldown(totalCycle * enemy.fireRate);
+          }
+        } else if (enemy.weaponType === "shockwave") {
+          const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
+          if (result.shockwave) {
+            this.shockwaves.push(result.shockwave);
+            enemy.resetFireCooldown(
+              (1 / config.enemyFireRateMultiplier) * (1 / weaponConfig.fireRateMultiplier)
+            );
+            if (result.soundEvent) {
+              this.sound.play(result.soundEvent);
+            }
+          }
         } else if (this.enemyBullets.length + weaponConfig.projectileCount <= MAX_ENEMY_BULLETS) {
           const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
           for (const eb of result.bullets) {
@@ -1114,6 +1138,15 @@ export class RaptorGame implements IGame {
     const laserSoundEvents = this.enemyWeaponSystem.updateLasers(dt, this.player.pos.x);
     for (const evt of laserSoundEvents) {
       this.sound.play(evt);
+    }
+
+    const chargeBeamSoundEvents = this.enemyWeaponSystem.updateChargeBeams(dt, this.player.pos.x);
+    for (const evt of chargeBeamSoundEvents) {
+      this.sound.play(evt);
+    }
+
+    for (const sw of this.shockwaves) {
+      sw.update(dt);
     }
 
     for (const proj of this.projectiles) {
@@ -1242,6 +1275,21 @@ export class RaptorGame implements IGame {
           this.achievementManager.fireEvent("armor_below_10pct");
         }
       }
+
+      if (!hit.reflected && hit.bullet instanceof EnemyChainBolt) {
+        const arcTargets = this.weaponSystem.getActiveTurretDrones();
+        const arcHits = this.collisions.checkChainArc(
+          hit.bullet, this.player.pos, arcTargets
+        );
+        for (const arcHit of arcHits) {
+          this.vfx.triggerExplosionFlash(arcHit.target.pos.x, arcHit.target.pos.y, 8);
+          const destroyed = arcHit.target.takeDamage?.(arcHit.damage);
+          if (destroyed) {
+            this.vfx.triggerExplosionFlash(arcHit.target.pos.x, arcHit.target.pos.y, 14);
+            this.sound.play("enemy_destroy");
+          }
+        }
+      }
     }
 
     const reflectedHits = this.collisions.checkReflectedBulletsEnemies(this.enemyBullets, this.enemies);
@@ -1258,8 +1306,12 @@ export class RaptorGame implements IGame {
     }
 
     this.enemyLaserHitSoundCooldown = Math.max(0, this.enemyLaserHitSoundCooldown - dt);
+    const allActiveBeams = [
+      ...this.enemyWeaponSystem.getActiveLasers(),
+      ...this.enemyWeaponSystem.getActiveChargeBeams(),
+    ];
     const beamHits = this.collisions.checkEnemyBeamPlayer(
-      this.enemyWeaponSystem.getActiveLasers(), this.player, this.height, dt
+      allActiveBeams, this.player, this.height, dt
     );
     for (const hit of beamHits) {
       const dead = this.player.takeDamage(hit.damage);
@@ -1275,6 +1327,24 @@ export class RaptorGame implements IGame {
           this.vfx.triggerScreenShake(1, 0.05);
           this.enemyLaserHitSoundCooldown = 0.15;
         }
+        if (this.player.armor > 0 && this.player.armor < this.player.maxArmor * 0.1) {
+          this.achievementManager.fireEvent("armor_below_10pct");
+        }
+      }
+    }
+
+    const shockwaveHits = this.collisions.checkShockwavePlayer(this.shockwaves, this.player);
+    for (const hit of shockwaveHits) {
+      const dead = this.player.takeDamage(hit.damage);
+      this.statsTracker.recordDamageTaken(hit.damage, this.player.armor);
+      if (dead) {
+        this.sound.play("player_destroy");
+        this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
+        this.vfx.triggerScreenShake(8, 0.4);
+        this.weaponSystem.laserBeam.active = false;
+      } else {
+        this.sound.play("player_hit");
+        this.vfx.triggerScreenShake(3, 0.15);
         if (this.player.armor > 0 && this.player.armor < this.player.maxArmor * 0.1) {
           this.achievementManager.fireEvent("armor_below_10pct");
         }
@@ -1390,6 +1460,7 @@ export class RaptorGame implements IGame {
     RaptorGame.compactAlive(this.projectiles);
     RaptorGame.compactAlive(this.enemies);
     RaptorGame.compactAlive(this.enemyBullets);
+    RaptorGame.compactAlive(this.shockwaves);
     RaptorGame.compactAlive(this.explosions);
     RaptorGame.compactAlive(this.powerUps);
 
@@ -1430,9 +1501,11 @@ export class RaptorGame implements IGame {
 
       this.projectiles = [];
       this.enemyBullets = [];
+      this.shockwaves = [];
       this.powerUps = [];
       this.weaponSystem.laserBeam.active = false;
       this.enemyWeaponSystem.resetLasers();
+      this.enemyWeaponSystem.resetChargeBeams();
       this.sound.stopMusic();
 
       if (this.currentLevel >= LEVELS.length - 1) {
@@ -1813,11 +1886,13 @@ export class RaptorGame implements IGame {
     this.projectiles = [];
     this.enemies = [];
     this.enemyBullets = [];
+    this.shockwaves = [];
     this.explosions = [];
     this.powerUps = [];
     this.player.reset(this.gameAreaWidth, this.gameAreaHeight, fullReset, this.gameAreaX, this.gameAreaY);
 
     this.enemyWeaponSystem.resetLasers();
+    this.enemyWeaponSystem.resetChargeBeams();
 
     if (fullReset) {
       this.weaponSystem.reset();
@@ -2015,6 +2090,10 @@ export class RaptorGame implements IGame {
       this.vfx.renderTrails(this.ctx);
       this.vfx.renderMuzzleFlashes(this.ctx);
 
+      for (const sw of this.shockwaves) {
+        sw.render(this.ctx);
+      }
+
       this.weaponSystem.renderLaser(this.ctx);
       this.weaponSystem.renderTurrets(this.ctx);
 
@@ -2031,6 +2110,9 @@ export class RaptorGame implements IGame {
         eb.render(this.ctx);
       }
       for (const beam of this.enemyWeaponSystem.getActiveLasers()) {
+        beam.render(this.ctx, this.height);
+      }
+      for (const beam of this.enemyWeaponSystem.getActiveChargeBeams()) {
         beam.render(this.ctx, this.height);
       }
       for (const exp of this.explosions) {

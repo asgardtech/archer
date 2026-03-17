@@ -29,7 +29,7 @@ export type EnemyVariant =
   | "destroyer" | "juggernaut"
   | "stealth" | "minelayer";
 
-export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser";
+export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser" | "chain" | "charge_beam" | "scatter" | "shockwave";
 
 export type BossType = "standard" | "gunship_commander" | "missile_dreadnought" | "laser_fortress" | "carrier";
 
@@ -48,6 +48,17 @@ export interface EnemyWeaponConfig {
   beamCooldownDuration?: number;
   beamWidth?: number;
   beamTrackingSpeed?: number;
+  expansionSpeed?: number;
+  maxRadius?: number;
+}
+
+export interface BeamLike {
+  readonly isActive: boolean;
+  readonly originX: number;
+  readonly originY: number;
+  readonly beamX: number;
+  readonly beamWidth: number;
+  readonly damage: number;
 }
 
 export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = {
@@ -99,6 +110,57 @@ export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = 
     beamCooldownDuration: 3.0,
     beamWidth: 8,
     beamTrackingSpeed: 40,
+  },
+  chain: {
+    type: "chain",
+    damage: 20,
+    projectileSpeed: 350,
+    projectileCount: 1,
+    spreadAngle: 0,
+    homing: false,
+    homingStrength: 0,
+    fireRateMultiplier: 0.8,
+    spriteKey: "bullet_enemy_chain",
+  },
+  charge_beam: {
+    type: "charge_beam",
+    damage: 35,
+    projectileSpeed: 0,
+    projectileCount: 1,
+    spreadAngle: 0,
+    homing: false,
+    homingStrength: 0,
+    fireRateMultiplier: 1.0,
+    spriteKey: "beam_enemy_charge",
+    beamWarmupDuration: 1.2,
+    beamActiveDuration: 0.4,
+    beamCooldownDuration: 4.0,
+    beamWidth: 14,
+    beamTrackingSpeed: 20,
+  },
+  scatter: {
+    type: "scatter",
+    damage: 10,
+    projectileSpeed: 250,
+    projectileCount: 6,
+    spreadAngle: 1.2,
+    homing: false,
+    homingStrength: 0,
+    fireRateMultiplier: 0.5,
+    spriteKey: "bullet_enemy_scatter",
+  },
+  shockwave: {
+    type: "shockwave",
+    damage: 15,
+    projectileSpeed: 0,
+    projectileCount: 0,
+    spreadAngle: 0,
+    homing: false,
+    homingStrength: 0,
+    fireRateMultiplier: 0.3,
+    spriteKey: "shockwave_enemy",
+    expansionSpeed: 200,
+    maxRadius: 150,
   },
 };
 
@@ -188,6 +250,10 @@ export type RaptorSoundEvent =
   | "enemy_laser_fire"
   | "enemy_missile_hit"
   | "enemy_laser_hit"
+  | "enemy_chain_fire"
+  | "enemy_charge_fire"
+  | "enemy_scatter_fire"
+  | "enemy_shockwave_fire"
   | "plasma_fire"
   | "plasma_hit"
   | "ion_fire"

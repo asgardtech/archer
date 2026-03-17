@@ -1,9 +1,10 @@
-import { Projectile, WEAPON_CONFIGS } from "../types";
+import { Projectile, WEAPON_CONFIGS, BeamLike } from "../types";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
 import { PlasmaBolt } from "../entities/PlasmaBolt";
 import { LaserBeam } from "../entities/LaserBeam";
-import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
+import { EnemyShockwave } from "../entities/EnemyShockwave";
+import { EnemyChainBolt } from "../entities/EnemyChainBolt";
 import { Enemy, isBossVariant } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { EnemyMissile } from "../entities/EnemyMissile";
@@ -33,7 +34,23 @@ export interface PowerUpPlayerHit {
 }
 
 export interface EnemyBeamPlayerHit {
-  beam: EnemyLaserBeam;
+  beam: BeamLike;
+  damage: number;
+}
+
+export interface ShockwavePlayerHit {
+  shockwave: EnemyShockwave;
+  damage: number;
+}
+
+export interface ChainArcTarget {
+  pos: { x: number; y: number };
+  active: boolean;
+  takeDamage?: (amount: number) => boolean;
+}
+
+export interface ChainArcHit {
+  target: ChainArcTarget;
   damage: number;
 }
 
@@ -275,7 +292,7 @@ export class CollisionSystem {
   }
 
   checkEnemyBeamPlayer(
-    beams: EnemyLaserBeam[],
+    beams: BeamLike[],
     player: Player,
     canvasHeight: number,
     dt: number
@@ -355,6 +372,54 @@ export class CollisionSystem {
     }
 
     return destroyed;
+  }
+
+  checkChainArc(
+    bolt: EnemyChainBolt,
+    playerPos: { x: number; y: number },
+    targets: ChainArcTarget[],
+    arcRange = 120
+  ): ChainArcHit[] {
+    const hits: ChainArcHit[] = [];
+    const arcDamage = bolt.damage * bolt.arcDamageRatio;
+    const r2 = arcRange * arcRange;
+
+    for (const target of targets) {
+      if (!target.active) continue;
+      const dx = target.pos.x - playerPos.x;
+      const dy = target.pos.y - playerPos.y;
+      if (dx * dx + dy * dy <= r2) {
+        hits.push({ target, damage: arcDamage });
+      }
+    }
+    return hits;
+  }
+
+  checkShockwavePlayer(
+    shockwaves: EnemyShockwave[],
+    player: Player
+  ): ShockwavePlayerHit[] {
+    if (!player.alive || player.isInvincible) return [];
+
+    const hits: ShockwavePlayerHit[] = [];
+    const playerCenterX = (player.left + player.right) / 2;
+    const playerCenterY = (player.top + player.bottom) / 2;
+
+    for (const shockwave of shockwaves) {
+      if (!shockwave.alive || shockwave.hasHitPlayer) continue;
+
+      const dx = playerCenterX - shockwave.origin.x;
+      const dy = playerCenterY - shockwave.origin.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const innerEdge = shockwave.currentRadius - shockwave.ringWidth / 2;
+      const outerEdge = shockwave.currentRadius + shockwave.ringWidth / 2;
+
+      if (dist >= innerEdge && dist <= outerEdge) {
+        shockwave.hasHitPlayer = true;
+        hits.push({ shockwave, damage: shockwave.damage });
+      }
+    }
+    return hits;
   }
 
   private aabb(
