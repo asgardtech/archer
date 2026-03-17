@@ -1068,6 +1068,7 @@ export class RaptorGame implements IGame {
             }
           }
         } else if (this.enemyBullets.length + weaponConfig.projectileCount <= MAX_ENEMY_BULLETS) {
+          const wasShadowAmbush = enemy.variant === "boss_shadow" && enemy.shadowAmbushReady;
           const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
           for (const eb of result.bullets) {
             const sprite = this.assets.getOptional(eb.spriteKey);
@@ -1081,6 +1082,9 @@ export class RaptorGame implements IGame {
             if (result.soundEvent) {
               this.sound.play(result.soundEvent);
             }
+          }
+          if (enemy.variant === "boss_shadow" && !wasShadowAmbush && result.bullets.length > 0) {
+            enemy.initiateShadowBurst();
           }
         }
       }
@@ -1118,15 +1122,10 @@ export class RaptorGame implements IGame {
         }
       }
 
-      if (enemy.variant === "boss_shadow" && enemy.canFire() && enemy.shadowAmbushReady) {
-        enemy.shadowAmbushReady = false;
-        enemy.initiateShadowBurst();
-      }
-
       if (enemy.variant === "boss_shadow" && enemy.hasShadowBurst()) {
         if (this.enemyBullets.length < MAX_ENEMY_BULLETS) {
           const { offsetX, offsetY } = enemy.consumeShadowBurstTick();
-          const result = this.enemyWeaponSystem.fireMissileFrom(
+          const result = this.enemyWeaponSystem.fireStandardFrom(
             enemy, this.player.pos.x, this.player.pos.y, offsetX, offsetY
           );
           for (const eb of result.bullets) {

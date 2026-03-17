@@ -533,6 +533,28 @@ export class EnemyWeaponSystem {
     };
   }
 
+  fireStandardFrom(enemy: Enemy, targetX: number, targetY: number, offsetX: number, offsetY: number): EnemyFireResult {
+    const config = ENEMY_WEAPON_CONFIGS["standard"];
+    const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];
+    const bullet = new EnemyBullet(
+      enemy.pos.x + offsetX,
+      enemy.bottom + offsetY,
+      targetX, targetY,
+      {
+        damage: config.damage,
+        speed: config.projectileSpeed,
+        spriteKey: skin?.spriteKey ?? config.spriteKey,
+        fallbackColor: skin?.fallbackColor,
+        glowColor: skin?.glowColor,
+        coreColor: skin?.coreColor,
+      }
+    );
+    return {
+      bullets: [bullet],
+      soundEvent: WEAPON_SOUND_MAP["standard"],
+    };
+  }
+
   fireMissileFrom(enemy: Enemy, targetX: number, targetY: number, offsetX: number, offsetY: number): EnemyFireResult {
     const config = ENEMY_WEAPON_CONFIGS["missile"];
     const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];

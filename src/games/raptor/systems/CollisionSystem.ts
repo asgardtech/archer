@@ -234,10 +234,10 @@ export class CollisionSystem {
               const pdx = bx - podPositions[pi].x;
               const pdy = by - podPositions[pi].y;
               if (Math.abs(pdx) < 10 && Math.abs(pdy) < 10) {
-                const podDestroyed = enemy.hitHydraPod(pi, effectiveDamage);
+                enemy.hitHydraPod(pi, effectiveDamage);
                 hitPod = true;
                 if (!bullet.piercing) bullet.alive = false;
-                hits.push({ bullet, enemy, destroyed: podDestroyed, damage: effectiveDamage });
+                hits.push({ bullet, enemy, destroyed: false, damage: effectiveDamage });
                 break;
               }
             }

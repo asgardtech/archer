@@ -164,7 +164,7 @@ export class Enemy {
   private shadowBurstRemaining = 0;
   private shadowBurstTimer = 0;
   private shadowBurstSpreadIndex = 0;
-  private readonly SHADOW_BURST_COUNT = 3;
+  private readonly SHADOW_BURST_COUNT = 2;
   private readonly SHADOW_BURST_INTERVAL = 0.12;
   private readonly SHADOW_VISIBLE_DURATION = 4.0;
   private readonly SHADOW_CLOAK_DURATION = 3.0;
@@ -1074,7 +1074,7 @@ export class Enemy {
 
   public initiateShadowBurst(): void {
     this.shadowBurstRemaining = this.SHADOW_BURST_COUNT;
-    this.shadowBurstTimer = 0;
+    this.shadowBurstTimer = this.SHADOW_BURST_INTERVAL;
     this.shadowBurstSpreadIndex = 0;
   }
 
@@ -1085,7 +1085,7 @@ export class Enemy {
   public consumeShadowBurstTick(): { offsetX: number; offsetY: number } {
     this.shadowBurstRemaining--;
     this.shadowBurstTimer = this.SHADOW_BURST_INTERVAL;
-    const spreadOffsets = [-12, 0, 12];
+    const spreadOffsets = [-12, 12];
     const offsetX = spreadOffsets[this.shadowBurstSpreadIndex % spreadOffsets.length];
     this.shadowBurstSpreadIndex++;
     return { offsetX, offsetY: this.height * 0.3 };
