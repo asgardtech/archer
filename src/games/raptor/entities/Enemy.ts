@@ -15,7 +15,7 @@ export class Enemy {
   public fireCooldown: number;
   public width: number;
   public height: number;
-  public readonly weaponType: EnemyWeaponType;
+  public weaponType: EnemyWeaponType;
   public alive = true;
 
   private flashTimer = 0;
@@ -91,6 +91,38 @@ export class Enemy {
   private vultureOrbitAngle = 0;
   private vultureCenterX = 0;
   private vultureCenterY = 0;
+
+  // Titan — weapon-switching warship
+  private titanWeaponTimer = 0;
+  private readonly TITAN_WEAPON_SWITCH_INTERVAL = 4.0;
+  private titanPhase: "entering" | "drifting" = "entering";
+
+  // Bastion — stationary turret platform
+  private bastionPhase: "entering" | "deployed" = "entering";
+  private bastionDeployY = 0;
+  private bastionTurretAngle = 0;
+
+  // Siege Engine — long-range artillery
+  private siegePhase: "entering" | "positioned" = "entering";
+
+  // Warden — barrier generator
+  private wardenPhase: "entering" | "patrolling" = "entering";
+  private wardenPatrolDirection: 1 | -1 = 1;
+  public barrierHP = 20;
+  public barrierMaxHP = 20;
+  public readonly barrierRegenRate = 2;
+  public readonly barrierWidth = 120;
+  public readonly barrierHeight = 6;
+
+  // Leviathan — drone mothership
+  private leviathanPhase: "entering" | "patrolling" | "deploying" = "entering";
+  private leviathanDroneTimer = 0;
+  private leviathanDeployPauseTimer = 0;
+  private leviathanDroneSpawnReady = false;
+  private readonly LEVIATHAN_DRONE_INTERVAL = 6.0;
+  private readonly LEVIATHAN_DEPLOY_PAUSE = 0.8;
+  public leviathanSpawnedDrones: Enemy[] = [];
+  private readonly LEVIATHAN_MAX_DRONES = 6;
 
   private burstRemaining = 0;
   private burstTimer = 0;
@@ -470,6 +502,125 @@ export class Enemy {
         this.pos.x = this.vultureCenterX + radiusX * Math.cos(this.vultureOrbitAngle);
         this.pos.y = this.vultureCenterY + radiusY * Math.sin(this.vultureOrbitAngle);
       }
+    } else if (this.variant === "titan") {
+      const cw = canvasWidth ?? 800;
+      const margin = offsetX + 40;
+      const parkY = offsetY + canvasHeight * 0.2;
+
+      if (this.titanPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= parkY) {
+          this.pos.y = parkY;
+          this.titanPhase = "drifting";
+        }
+      } else {
+        this.pos.x += Math.sin(this.time * 0.4) * 60 * dt;
+        this.pos.y = parkY + Math.sin(this.time * 0.6) * 4;
+        this.pos.x = Math.max(margin, Math.min(offsetX + cw - margin, this.pos.x));
+      }
+
+      this.titanWeaponTimer += dt;
+      if (this.titanWeaponTimer >= this.TITAN_WEAPON_SWITCH_INTERVAL) {
+        this.titanWeaponTimer = 0;
+        this.weaponType = this.weaponType === "spread" ? "missile" : "spread";
+      }
+    } else if (this.variant === "bastion") {
+      if (this.bastionPhase === "entering") {
+        if (this.bastionDeployY === 0) {
+          this.bastionDeployY = offsetY + canvasHeight * (0.15 + Math.random() * 0.2);
+        }
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= this.bastionDeployY) {
+          this.pos.y = this.bastionDeployY;
+          this.bastionPhase = "deployed";
+        }
+      } else {
+        if (targetX !== undefined) {
+          this.bastionTurretAngle = Math.atan2(
+            (canvasHeight + offsetY) - this.pos.y,
+            targetX - this.pos.x
+          );
+        }
+      }
+    } else if (this.variant === "siege_engine") {
+      const cw = canvasWidth ?? 800;
+      const margin = offsetX + 40;
+      const parkY = offsetY + canvasHeight * 0.15;
+
+      if (this.siegePhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= parkY) {
+          this.pos.y = parkY;
+          this.siegePhase = "positioned";
+        }
+      } else {
+        this.pos.x += Math.sin(this.time * 0.2) * 30 * dt;
+        this.pos.y = parkY + Math.sin(this.time * 0.3) * 3;
+        this.pos.x = Math.max(margin, Math.min(offsetX + cw - margin, this.pos.x));
+      }
+    } else if (this.variant === "colossus") {
+      this.pos.y += this.vel.y * dt;
+      if (targetX !== undefined) {
+        const dx = targetX - this.pos.x;
+        this.pos.x += dx * 0.3 * dt;
+      }
+    } else if (this.variant === "warden") {
+      const cw = canvasWidth ?? 800;
+      const margin = offsetX + 40;
+      const parkY = offsetY + canvasHeight * 0.25;
+
+      if (this.wardenPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= parkY) {
+          this.pos.y = parkY;
+          this.wardenPhase = "patrolling";
+          this.wardenPatrolDirection = this.pos.x > offsetX + cw / 2 ? -1 : 1;
+        }
+      } else {
+        this.pos.x += this.wardenPatrolDirection * 50 * dt;
+        this.pos.y = parkY + Math.sin(this.time * 0.5) * 3;
+
+        if (this.pos.x >= offsetX + cw - margin) {
+          this.pos.x = offsetX + cw - margin;
+          this.wardenPatrolDirection = -1;
+        } else if (this.pos.x <= margin) {
+          this.pos.x = margin;
+          this.wardenPatrolDirection = 1;
+        }
+      }
+      this.barrierHP = Math.min(this.barrierMaxHP, this.barrierHP + this.barrierRegenRate * dt);
+    } else if (this.variant === "leviathan") {
+      const cw = canvasWidth ?? 800;
+      const margin = offsetX + 50;
+      const parkY = offsetY + canvasHeight * 0.22;
+
+      if (this.leviathanPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= parkY) {
+          this.pos.y = parkY;
+          this.leviathanPhase = "patrolling";
+        }
+      } else if (this.leviathanPhase === "patrolling") {
+        this.pos.x += Math.sin(this.time * 0.35) * 40 * dt;
+        this.pos.y = parkY + Math.sin(this.time * 0.25) * 4;
+        this.pos.x = Math.max(margin, Math.min(offsetX + cw - margin, this.pos.x));
+
+        this.leviathanDroneTimer += dt;
+        if (this.leviathanDroneTimer >= this.LEVIATHAN_DRONE_INTERVAL) {
+          this.leviathanDroneTimer = 0;
+          this.leviathanPhase = "deploying";
+          this.leviathanDeployPauseTimer = this.LEVIATHAN_DEPLOY_PAUSE;
+          this.leviathanDroneSpawnReady = true;
+        }
+      } else if (this.leviathanPhase === "deploying") {
+        this.pos.y = parkY + Math.sin(this.time * 0.25) * 4;
+        this.leviathanDeployPauseTimer -= dt;
+        if (this.leviathanDeployPauseTimer <= 0) {
+          this.leviathanPhase = "patrolling";
+        }
+      }
+
+      this.leviathanSpawnedDrones = this.leviathanSpawnedDrones.filter(d => d.alive);
     } else {
       this.pos.y += this.vel.y * dt;
     }
@@ -483,6 +634,9 @@ export class Enemy {
       this.variant !== "juggernaut" && this.variant !== "minelayer" &&
       this.variant !== "sentinel" && this.variant !== "corsair" &&
       this.variant !== "vulture" &&
+      this.variant !== "titan" && this.variant !== "bastion" &&
+      this.variant !== "siege_engine" && this.variant !== "colossus" &&
+      this.variant !== "warden" && this.variant !== "leviathan" &&
       this.pos.y > offsetY + canvasHeight + 50
     ) {
       this.alive = false;
@@ -533,13 +687,21 @@ export class Enemy {
   }
 
   public shouldSpawnDrones(): boolean {
-    if (this.variant !== "boss_carrier") return false;
-    if (!this.droneSpawnReady) return false;
-    this.droneSpawnReady = false;
-    return true;
+    if (this.variant === "boss_carrier") {
+      if (!this.droneSpawnReady) return false;
+      this.droneSpawnReady = false;
+      return true;
+    }
+    if (this.variant === "leviathan") {
+      if (!this.leviathanDroneSpawnReady) return false;
+      this.leviathanDroneSpawnReady = false;
+      return true;
+    }
+    return false;
   }
 
   public getDroneSpawnVariant(): EnemyVariant {
+    if (this.variant === "leviathan") return "drone";
     this.droneWaveVariantToggle = !this.droneWaveVariantToggle;
     return this.droneWaveVariantToggle ? "swarmer" : "drone";
   }
@@ -553,7 +715,8 @@ export class Enemy {
   }
 
   public get isDeploying(): boolean {
-    return this.variant === "boss_carrier" && this.carrierPhase === "deploying";
+    return (this.variant === "boss_carrier" && this.carrierPhase === "deploying")
+      || (this.variant === "leviathan" && this.leviathanPhase === "deploying");
   }
 
   hit(damage = 1): boolean {
@@ -689,6 +852,24 @@ export class Enemy {
         case "vulture":
           this.renderVulture(ctx, x, y, isFlashing);
           break;
+        case "titan":
+          this.renderTitan(ctx, x, y, isFlashing);
+          break;
+        case "bastion":
+          this.renderBastion(ctx, x, y, isFlashing);
+          break;
+        case "siege_engine":
+          this.renderSiegeEngine(ctx, x, y, isFlashing);
+          break;
+        case "colossus":
+          this.renderColossus(ctx, x, y, isFlashing);
+          break;
+        case "warden":
+          this.renderWarden(ctx, x, y, isFlashing);
+          break;
+        case "leviathan":
+          this.renderLeviathan(ctx, x, y, isFlashing);
+          break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
           break;
@@ -756,7 +937,9 @@ export class Enemy {
       }
     }
 
-    if (isBossVariant(this.variant) || this.variant === "cruiser" || this.variant === "destroyer" || this.variant === "juggernaut") {
+    if (isBossVariant(this.variant) || this.variant === "cruiser" || this.variant === "destroyer"
+        || this.variant === "juggernaut" || this.variant === "bastion"
+        || this.variant === "colossus" || this.variant === "leviathan") {
       this.renderHPBar(ctx, x, y);
     }
   }
@@ -934,6 +1117,12 @@ export class Enemy {
     wraith: "#6633aa",
     corsair: "#778899",
     vulture: "#774422",
+    titan: "#556677",
+    bastion: "#555555",
+    siege_engine: "#336633",
+    colossus: "#444455",
+    warden: "#3366aa",
+    leviathan: "#445533",
   };
 
   private renderGunship(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
@@ -1464,6 +1653,260 @@ export class Enemy {
     ctx.beginPath();
     ctx.arc(x, y, 2, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  private renderTitan(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#556677";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.4, y + hh * 0.6);
+    ctx.lineTo(x - hw, y + hh * 0.1);
+    ctx.lineTo(x - hw, y - hh * 0.4);
+    ctx.lineTo(x - hw * 0.5, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.4);
+    ctx.lineTo(x + hw, y + hh * 0.1);
+    ctx.lineTo(x + hw * 0.4, y + hh * 0.6);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#778899";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const activeColor = this.weaponType === "spread" ? "#ff6644" : "#44aaff";
+    const portGlow = flash ? "#cccccc" : activeColor;
+    ctx.fillStyle = portGlow;
+    ctx.fillRect(x - hw * 0.85 - 2, y - hh * 0.1, 5, 6);
+    ctx.fillRect(x + hw * 0.85 - 3, y - hh * 0.1, 5, 6);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#cc4422";
+    ctx.fillRect(x - hw * 0.3, y + hh * 0.3, hw * 0.15, hh * 0.3);
+    ctx.fillRect(x + hw * 0.15, y + hh * 0.3, hw * 0.15, hh * 0.3);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#445566";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.15, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderBastion(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#555555";
+    ctx.beginPath();
+    const sides = 8;
+    for (let i = 0; i < sides; i++) {
+      const angle = (Math.PI * 2 / sides) * i - Math.PI / 2;
+      const px = x + hw * Math.cos(angle);
+      const py = y + hh * 0.8 * Math.sin(angle);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#777777";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(this.bastionTurretAngle);
+    ctx.fillStyle = flash ? "#cccccc" : "#cc8833";
+    ctx.fillRect(-3, -hh * 0.6, 6, hh * 0.6);
+    ctx.fillStyle = flash ? "#cccccc" : "#aa6622";
+    ctx.beginPath();
+    ctx.arc(0, 0, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderSiegeEngine(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#336633";
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.3, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.2);
+    ctx.lineTo(x - hw * 0.8, y - hh * 0.5);
+    ctx.lineTo(x - hw * 0.3, y - hh);
+    ctx.lineTo(x + hw * 0.3, y - hh);
+    ctx.lineTo(x + hw * 0.8, y - hh * 0.5);
+    ctx.lineTo(x + hw, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.3, y + hh);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#448844";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#224422";
+    ctx.fillRect(x - 4, y - hh * 0.5, 8, hh * 1.2);
+
+    const chargeGlow = 0.4 + Math.sin(this.time * 4) * 0.3;
+    ctx.fillStyle = flash ? "#cccccc" : `rgba(100, 220, 100, ${chargeGlow})`;
+    ctx.beginPath();
+    ctx.arc(x, y + hh, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderColossus(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = "rgba(68, 68, 85, 0.15)";
+    ctx.beginPath();
+    ctx.arc(x, y, hw * 1.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#ffffff" : "#444455";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.4, y + hh * 0.7);
+    ctx.lineTo(x - hw, y + hh * 0.2);
+    ctx.lineTo(x - hw, y - hh * 0.4);
+    ctx.lineTo(x - hw * 0.5, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.4);
+    ctx.lineTo(x + hw, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.4, y + hh * 0.7);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#666677";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#555566";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.8, y - hh * 0.15);
+    ctx.lineTo(x + hw * 0.8, y - hh * 0.15);
+    ctx.moveTo(x - hw * 0.7, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.7, y + hh * 0.2);
+    ctx.stroke();
+
+    const seamGlow = 0.3 + Math.sin(this.time * 2) * 0.2;
+    ctx.strokeStyle = flash ? "#cccccc" : `rgba(100, 100, 200, ${seamGlow})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.6, y);
+    ctx.lineTo(x + hw * 0.6, y);
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#333344";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.1, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  private renderWarden(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#3366aa";
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh * 0.5);
+    ctx.lineTo(x + hw, y);
+    ctx.lineTo(x + hw * 0.5, y + hh * 0.5);
+    ctx.lineTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.5, y + hh * 0.5);
+    ctx.lineTo(x - hw, y);
+    ctx.lineTo(x - hw * 0.5, y - hh * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#4488cc";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#55ccff";
+    ctx.fillRect(x - hw - 3, y - 2, 6, 4);
+    ctx.fillRect(x + hw - 3, y - 2, 6, 4);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#224477";
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (this.barrierHP > 0) {
+      const barrierY = y + hh + 10;
+      const opacity = this.barrierHP / this.barrierMaxHP;
+      ctx.fillStyle = `rgba(85, 204, 255, ${0.3 * opacity})`;
+      ctx.fillRect(x - this.barrierWidth / 2, barrierY - this.barrierHeight / 2,
+        this.barrierWidth, this.barrierHeight);
+      ctx.strokeStyle = `rgba(85, 204, 255, ${0.8 * opacity})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - this.barrierWidth / 2, barrierY);
+      ctx.lineTo(x + this.barrierWidth / 2, barrierY);
+      ctx.stroke();
+    }
+  }
+
+  private renderLeviathan(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#445533";
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.35, y - hh);
+    ctx.lineTo(x + hw * 0.35, y - hh);
+    ctx.lineTo(x + hw * 0.7, y - hh * 0.5);
+    ctx.lineTo(x + hw, y - hh * 0.1);
+    ctx.lineTo(x + hw, y + hh * 0.5);
+    ctx.lineTo(x + hw * 0.5, y + hh);
+    ctx.lineTo(x - hw * 0.5, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.5);
+    ctx.lineTo(x - hw, y - hh * 0.1);
+    ctx.lineTo(x - hw * 0.7, y - hh * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#5a6b44";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    const bayGlow = this.leviathanPhase === "deploying"
+      || (this.leviathanDroneTimer > this.LEVIATHAN_DRONE_INTERVAL - 1.0);
+    const bayPulse = 0.5 + Math.sin(this.time * 6) * 0.5;
+    const bayColor = flash ? "#cccccc"
+      : bayGlow ? `rgba(204, 170, 34, ${0.5 + bayPulse * 0.5})` : "#556644";
+
+    ctx.fillStyle = bayColor;
+    ctx.fillRect(x - hw * 0.9 - 2, y + hh * 0.05, 8, 10);
+    ctx.fillRect(x + hw * 0.9 - 6, y + hh * 0.05, 8, 10);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#667755";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.2, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.renderHPBar(ctx, x, y);
+  }
+
+  public getBarrierRect(): { x: number; y: number; width: number; height: number } | null {
+    if (this.variant !== "warden" || this.barrierHP <= 0) return null;
+    return {
+      x: this.pos.x,
+      y: this.pos.y + this.height / 2 + 10,
+      width: this.barrierWidth,
+      height: this.barrierHeight,
+    };
   }
 
   private renderFallbackShape(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {

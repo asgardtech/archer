@@ -29,7 +29,8 @@ export type EnemyVariant =
   | "destroyer" | "juggernaut"
   | "stealth" | "minelayer"
   | "wasp" | "phantom" | "needle" | "locust" | "glider" | "spark"
-  | "sentinel" | "lancer" | "ravager" | "wraith" | "corsair" | "vulture";
+  | "sentinel" | "lancer" | "ravager" | "wraith" | "corsair" | "vulture"
+  | "titan" | "bastion" | "siege_engine" | "colossus" | "warden" | "leviathan";
 
 export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser" | "chain" | "charge_beam" | "scatter" | "shockwave";
 
@@ -207,6 +208,12 @@ export const ENEMY_PROJECTILE_SKINS: Partial<Record<EnemyVariant, ProjectileSkin
   wraith:           { fallbackColor: "#8844cc", coreColor: "#bb88ee", glowColor: "#aa66dd" },
   corsair:          { fallbackColor: "#99aabb", coreColor: "#bbccdd", glowColor: "#aabbcc" },
   vulture:          { fallbackColor: "#aa6633", coreColor: "#cc9966", glowColor: "#bb7744" },
+  titan:            { fallbackColor: "#778899", coreColor: "#aabbcc", glowColor: "#8899aa" },
+  bastion:          { fallbackColor: "#aa8833", coreColor: "#ccaa66", glowColor: "#bb9944" },
+  siege_engine:     { fallbackColor: "#55aa55", coreColor: "#88cc88", glowColor: "#66bb66" },
+  colossus:         { fallbackColor: "#5555aa", coreColor: "#8888cc", glowColor: "#6666bb" },
+  warden:           { fallbackColor: "#4488dd", coreColor: "#88bbff", glowColor: "#66aaee" },
+  leviathan:        { fallbackColor: "#667744", coreColor: "#99aa77", glowColor: "#778855" },
 };
 
 export interface EnemyConfig {
@@ -961,6 +968,67 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     width: 26,
     height: 22,
     weaponType: "standard",
+  },
+  titan: {
+    variant: "titan",
+    hitPoints: 8,
+    speed: 40,
+    scoreValue: 120,
+    fireRate: 0.8,
+    width: 52,
+    height: 48,
+    weaponType: "spread",
+  },
+  bastion: {
+    variant: "bastion",
+    hitPoints: 10,
+    speed: 60,
+    scoreValue: 100,
+    fireRate: 1.5,
+    width: 40,
+    height: 32,
+    weaponType: "standard",
+  },
+  siege_engine: {
+    variant: "siege_engine",
+    hitPoints: 7,
+    speed: 35,
+    scoreValue: 90,
+    fireRate: 0.3,
+    width: 44,
+    height: 40,
+    weaponType: "charge_beam",
+  },
+  colossus: {
+    variant: "colossus",
+    hitPoints: 15,
+    speed: 25,
+    scoreValue: 200,
+    fireRate: 0.6,
+    width: 60,
+    height: 56,
+    weaponType: "missile",
+    projectileDamageMultiplier: 1.5,
+  },
+  warden: {
+    variant: "warden",
+    hitPoints: 6,
+    speed: 50,
+    scoreValue: 80,
+    fireRate: 0.5,
+    width: 38,
+    height: 36,
+    weaponType: "missile",
+  },
+  leviathan: {
+    variant: "leviathan",
+    hitPoints: 10,
+    speed: 35,
+    scoreValue: 130,
+    fireRate: 0.5,
+    width: 56,
+    height: 48,
+    weaponType: "spread",
   },
 };
 
