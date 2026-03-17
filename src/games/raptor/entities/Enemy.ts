@@ -1298,11 +1298,6 @@ export class Enemy {
   }
 
   private renderSentinel(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
-    ctx.fillStyle = "rgba(100, 200, 220, 0.12)";
-    ctx.beginPath();
-    ctx.arc(x, y, Enemy.SENTINEL_AURA_RADIUS, 0, Math.PI * 2);
-    ctx.fill();
-
     const r = this.width / 2;
     ctx.fillStyle = flash ? "#ffffff" : "#4488aa";
     ctx.beginPath();
