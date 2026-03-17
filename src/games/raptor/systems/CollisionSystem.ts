@@ -4,6 +4,7 @@ import { Missile } from "../entities/Missile";
 import { PlasmaBolt } from "../entities/PlasmaBolt";
 import { LaserBeam } from "../entities/LaserBeam";
 import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
+import { EnemyShockwave } from "../entities/EnemyShockwave";
 import { Enemy, isBossVariant } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { EnemyMissile } from "../entities/EnemyMissile";
@@ -32,8 +33,22 @@ export interface PowerUpPlayerHit {
   powerUp: PowerUp;
 }
 
+export interface BeamLike {
+  readonly isActive: boolean;
+  readonly originX: number;
+  readonly originY: number;
+  readonly beamX: number;
+  readonly beamWidth: number;
+  readonly damage: number;
+}
+
 export interface EnemyBeamPlayerHit {
-  beam: EnemyLaserBeam;
+  beam: BeamLike;
+  damage: number;
+}
+
+export interface ShockwavePlayerHit {
+  shockwave: EnemyShockwave;
   damage: number;
 }
 
@@ -275,7 +290,7 @@ export class CollisionSystem {
   }
 
   checkEnemyBeamPlayer(
-    beams: EnemyLaserBeam[],
+    beams: BeamLike[],
     player: Player,
     canvasHeight: number,
     dt: number
@@ -355,6 +370,33 @@ export class CollisionSystem {
     }
 
     return destroyed;
+  }
+
+  checkShockwavePlayer(
+    shockwaves: EnemyShockwave[],
+    player: Player
+  ): ShockwavePlayerHit[] {
+    if (!player.alive || player.isInvincible) return [];
+
+    const hits: ShockwavePlayerHit[] = [];
+    const playerCenterX = (player.left + player.right) / 2;
+    const playerCenterY = (player.top + player.bottom) / 2;
+
+    for (const shockwave of shockwaves) {
+      if (!shockwave.alive || shockwave.hasHitPlayer) continue;
+
+      const dx = playerCenterX - shockwave.origin.x;
+      const dy = playerCenterY - shockwave.origin.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const innerEdge = shockwave.currentRadius - shockwave.ringWidth / 2;
+      const outerEdge = shockwave.currentRadius + shockwave.ringWidth / 2;
+
+      if (dist >= innerEdge && dist <= outerEdge) {
+        shockwave.hasHitPlayer = true;
+        hits.push({ shockwave, damage: shockwave.damage });
+      }
+    }
+    return hits;
   }
 
   private aabb(
