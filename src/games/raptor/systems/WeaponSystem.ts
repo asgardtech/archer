@@ -8,6 +8,7 @@ import { TrackingBullet } from "../entities/TrackingBullet";
 import { Rocket } from "../entities/Rocket";
 import { LaserBeam } from "../entities/LaserBeam";
 import { AutoTurretDrone } from "../entities/AutoTurretDrone";
+import { TurretMount } from "../entities/TurretMount";
 import { Enemy } from "../entities/Enemy";
 import { PowerUpManager } from "./PowerUpManager";
 
@@ -19,6 +20,14 @@ const MAX_TURRET_DRONES = 4;
 export class WeaponSystem {
   public currentWeapon: WeaponType = "machine-gun";
   public laserBeam: LaserBeam = new LaserBeam();
+  public laserTurret: TurretMount = new TurretMount({
+    offsetX: 0,
+    offsetY: -22.4,
+    barrelLength: 8,
+    baseRadius: 4,
+    color: "rgba(0, 150, 255, 0.8)",
+    barrelColor: "rgba(100, 200, 255, 0.9)",
+  });
   private fireTimer = 0;
   private laserSoundTimer = 0;
   private chargeTimer = 0;
@@ -82,7 +91,9 @@ export class WeaponSystem {
     if (this.currentWeapon === "laser") {
       this.laserBeam.active = player.alive;
       this.laserBeam.setModifiers(rapidFire, spreadShot, tierConfig.visualScale, tierConfig.damageMultiplier, weaponConfig.rapidFireBonus);
-      this.laserBeam.updatePosition(player.pos.x, player.top);
+      this.laserTurret.config.offsetY = -player.height * 0.35;
+      const turretTip = this.laserTurret.getBarrelTip(player.pos.x, player.pos.y);
+      this.laserBeam.updatePosition(turretTip.x, turretTip.y);
       return { newProjectiles: [], soundEvent: null };
     }
 
@@ -358,6 +369,10 @@ export class WeaponSystem {
 
   renderLaser(ctx: CanvasRenderingContext2D): void {
     this.laserBeam.render(ctx);
+  }
+
+  get isLaserActive(): boolean {
+    return this.currentWeapon === "laser" && this.laserBeam.active;
   }
 
   renderTurrets(ctx: CanvasRenderingContext2D): void {

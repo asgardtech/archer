@@ -1,3 +1,5 @@
+import { TurretMount } from "../entities/TurretMount";
+
 export interface ShipRenderState {
   thrustLevel: number;
   bankAngle: number;
@@ -5,6 +7,7 @@ export interface ShipRenderState {
   panelLightFlicker: number;
   heatShimmer: number;
   damageLevel: number;
+  laserTurret?: TurretMount;
 }
 
 const HULL_PRIMARY = "#4a5a56";
@@ -65,6 +68,10 @@ export class ShipRenderer {
     this.renderRunningLights(ctx, x, y, hw, hh, state.runningLightPhase);
     this.renderPanelWarningLight(ctx, x, y, hw, hh, state.panelLightFlicker);
     this.renderHeatShimmer(ctx, x, y, hw, hh, state.heatShimmer);
+
+    if (state.laserTurret) {
+      state.laserTurret.render(ctx, x, y, 1.0);
+    }
 
     if (state.damageLevel > 0.5) {
       this.renderDamageOverlay(ctx, x, y, hw, hh, state.damageLevel);
