@@ -607,7 +607,9 @@ export type LevelTheme =
   | "coastal" | "desert" | "mountain" | "arctic" | "fortress"
   | "shipyard" | "wasteland" | "industrial" | "orbital" | "stronghold"
   | "colony" | "asteroid" | "nebula" | "jungle" | "volcano"
-  | "ocean" | "tundra" | "ruins" | "megacity" | "dominion_base";
+  | "ocean" | "tundra" | "ruins" | "megacity" | "dominion_base"
+  | "void_station" | "dark_nebula" | "hive_world" | "crystal_caves" | "forge_world"
+  | "nexus_array" | "architect_temple" | "warp_corridor" | "titan_graveyard" | "final_void";
 
 export interface AmbientParticleConfig {
   color: string;
