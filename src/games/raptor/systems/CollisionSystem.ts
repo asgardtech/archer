@@ -111,12 +111,12 @@ export class CollisionSystem {
     const cosA = Math.cos(beam.currentAngle);
     const dx = entityX - beam.pos.x;
     const dy = entityY - beam.pos.y;
-    const alongBeam = -dx * sinA + dy * cosA;
+    const alongBeam = dx * sinA - dy * cosA;
     const perpBeam = dx * cosA + dy * sinA;
     const halfWidth = beam.beamWidth / 2;
     const entityRadius = Math.max(entityHalfW, entityHalfH);
 
-    return (alongBeam < entityRadius) && (Math.abs(perpBeam) < halfWidth + entityRadius);
+    return (alongBeam > -entityRadius) && (Math.abs(perpBeam) < halfWidth + entityRadius);
   }
 
   checkBeamEnemies(beam: LaserBeam, enemies: Enemy[], dt: number): Enemy[] {
@@ -179,7 +179,7 @@ export class CollisionSystem {
           for (let pi = 0; pi < podPositions.length; pi++) {
             if (!enemy.isHydraPodAlive(pi)) continue;
             const pp = podPositions[pi];
-            if (pp.x + podRadius > beamLeft && pp.x - podRadius < beamRight && pp.y < beam.pos.y) {
+            if (pp.y < beam.pos.y && this.beamHitsEntity(beam, pp.x, pp.y, podRadius, podRadius)) {
               enemy.hitHydraPod(pi, effectiveBeamDmg);
               hitPod = true;
             }

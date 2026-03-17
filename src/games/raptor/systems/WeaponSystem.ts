@@ -140,7 +140,8 @@ export class WeaponSystem {
         const result = drone.update(
           dt, player.pos, enemies ?? [], fireRateMult,
           rapidFire, spreadShot, tierDamage,
-          totalProjectiles + newProjectiles.length, MAX_PROJECTILES
+          totalProjectiles + newProjectiles.length, MAX_PROJECTILES,
+          tierConfig.homingStrength
         );
         for (const proj of result.projectiles) {
           proj.sourceWeapon = "auto-turret";

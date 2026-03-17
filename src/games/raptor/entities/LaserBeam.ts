@@ -65,14 +65,6 @@ export class LaserBeam {
     this.currentAngle += Math.max(-maxTurn, Math.min(maxTurn, angleDiff));
   }
 
-  getBeamEndpoint(): Vec2 {
-    const beamLength = this.pos.y + 50;
-    return {
-      x: this.pos.x + Math.sin(this.currentAngle) * beamLength,
-      y: this.pos.y - Math.cos(this.currentAngle) * beamLength,
-    };
-  }
-
   update(dt: number): boolean {
     if (!this.active) {
       this.tickTimer = 0;

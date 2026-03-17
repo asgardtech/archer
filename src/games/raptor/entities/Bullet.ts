@@ -15,7 +15,7 @@ export class Bullet implements Projectile {
   private angle: number;
   private vx: number;
   private vy: number;
-  private homingStrength: number;
+  public readonly homingStrength: number;
   private sprite: HTMLImageElement | null = null;
 
   constructor(x: number, y: number, angle = 0, homingStrength = 0) {

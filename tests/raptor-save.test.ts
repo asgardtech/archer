@@ -2084,6 +2084,93 @@ describe("Scenario: Legacy v3 save is migrated correctly (v3→v4)", () => {
   });
 });
 
+// ════════════════════════════════════════════════════════════════
+// ISSUE 783: v4 → v5 MIGRATION & TIER >5 SAVES
+// ════════════════════════════════════════════════════════════════
+
+describe("Scenario: v4 save with tier-5 weapons migrates to v5 correctly", () => {
+  test("v4 save with weaponTier 5 remains at tier 5 after migration", async () => {
+    const v4Save = {
+      version: 4,
+      levelReached: 3,
+      totalScore: 1200,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+      weaponTier: 5,
+      weaponInventory: { "machine-gun": 5, "laser": 3 },
+    };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(v4Save);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.version).toBe(SAVE_FORMAT_VERSION);
+    expect(loaded!.weaponTier).toBe(5);
+    expect(loaded!.weaponInventory).toEqual({ "machine-gun": 5, "laser": 3 });
+  });
+
+  test("v4 save without weapon fields migrates cleanly to v5", async () => {
+    const v4Save = {
+      version: 4,
+      levelReached: 2,
+      totalScore: 500,
+      lives: 2,
+      weapon: "machine-gun",
+      savedAt: "2026-03-10T12:00:00.000Z",
+    };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(v4Save);
+
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.version).toBe(SAVE_FORMAT_VERSION);
+    expect(loaded!.weaponTier).toBeUndefined();
+    expect(loaded!.weaponInventory).toBeUndefined();
+  });
+});
+
+describe("Scenario: Save validation accepts weapon tiers 1 through 10", () => {
+  test("weaponTier 6 is accepted", async () => {
+    const data = validSaveData({ weaponTier: 6 });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.weaponTier).toBe(6);
+  });
+
+  test("weaponTier 10 is accepted", async () => {
+    const data = validSaveData({ weaponTier: 10 });
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.weaponTier).toBe(10);
+  });
+
+  test("weaponTier 11 is rejected", async () => {
+    const data = { ...validSaveData(), weaponTier: 11 };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).toBeNull();
+  });
+
+  test("weaponInventory with tier 8 values round-trips correctly", async () => {
+    const data = validSaveData({
+      weaponInventory: { "machine-gun": 8, "missile": 10, "laser": 6 },
+    });
+    await SaveSystem.save(data, 0);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.weaponInventory).toEqual({ "machine-gun": 8, "missile": 10, "laser": 6 });
+  });
+
+  test("weaponInventory with tier 11 value is sanitized out", async () => {
+    const data = { ...validSaveData(), weaponInventory: { "machine-gun": 11 } };
+    mockBackend.data["raptor_save_0"] = JSON.stringify(data);
+    const loaded = await SaveSystem.load(0);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.weaponInventory).toEqual({});
+  });
+});
+
 describe("Scenario: Player max values are doubled", () => {
   test("player starts with 200 armor and 200 energy", () => {
     const { Player } = require("../src/games/raptor/entities/Player");

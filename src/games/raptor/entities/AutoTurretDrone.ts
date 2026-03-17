@@ -49,7 +49,8 @@ export class AutoTurretDrone {
     spreadShot: boolean,
     tierDamage: number,
     existingProjectileCount: number,
-    maxProjectiles: number
+    maxProjectiles: number,
+    tierHomingStrength?: number
   ): { projectiles: TrackingBullet[]; fired: boolean } {
     this.angle += ORBIT_SPEED * dt;
     this.pos.x = playerPos.x + Math.cos(this.angle) * ORBIT_RADIUS;
@@ -84,15 +85,17 @@ export class AutoTurretDrone {
       );
       const trackingAngle = Math.PI / 2 - bulletAngle;
 
+      const homing = tierHomingStrength ?? config.homingStrength;
+
       if (spreadShot) {
         const fanAngles = [-0.15, 0, 0.15];
         for (const offset of fanAngles) {
-          const b = new TrackingBullet(this.pos.x, this.pos.y, trackingAngle + offset, config.homingStrength);
+          const b = new TrackingBullet(this.pos.x, this.pos.y, trackingAngle + offset, homing);
           b.damage = tierDamage;
           projectiles.push(b);
         }
       } else {
-        const b = new TrackingBullet(this.pos.x, this.pos.y, trackingAngle, config.homingStrength);
+        const b = new TrackingBullet(this.pos.x, this.pos.y, trackingAngle, homing);
         b.damage = tierDamage;
         projectiles.push(b);
       }

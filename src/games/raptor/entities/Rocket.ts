@@ -15,7 +15,7 @@ export class Rocket implements Projectile {
   private angle: number;
   private vx: number;
   private vy: number;
-  private homingStrength: number;
+  public readonly homingStrength: number;
   private sprite: HTMLImageElement | null = null;
   private time = 0;
 
