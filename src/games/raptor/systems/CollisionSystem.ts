@@ -1,4 +1,4 @@
-import { Projectile, WEAPON_CONFIGS } from "../types";
+import { Projectile, WEAPON_CONFIGS, BeamLike } from "../types";
 import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
 import { PlasmaBolt } from "../entities/PlasmaBolt";
@@ -33,15 +33,6 @@ export interface PowerUpPlayerHit {
   powerUp: PowerUp;
 }
 
-export interface BeamLike {
-  readonly isActive: boolean;
-  readonly originX: number;
-  readonly originY: number;
-  readonly beamX: number;
-  readonly beamWidth: number;
-  readonly damage: number;
-}
-
 export interface EnemyBeamPlayerHit {
   beam: BeamLike;
   damage: number;
@@ -55,6 +46,7 @@ export interface ShockwavePlayerHit {
 export interface ChainArcTarget {
   pos: { x: number; y: number };
   active: boolean;
+  takeDamage?: (amount: number) => boolean;
 }
 
 export interface ChainArcHit {

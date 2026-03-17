@@ -52,6 +52,15 @@ export interface EnemyWeaponConfig {
   maxRadius?: number;
 }
 
+export interface BeamLike {
+  readonly isActive: boolean;
+  readonly originX: number;
+  readonly originY: number;
+  readonly beamX: number;
+  readonly beamWidth: number;
+  readonly damage: number;
+}
+
 export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = {
   standard: {
     type: "standard",
@@ -121,7 +130,7 @@ export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = 
     spreadAngle: 0,
     homing: false,
     homingStrength: 0,
-    fireRateMultiplier: 0.0,
+    fireRateMultiplier: 1.0,
     spriteKey: "beam_enemy_charge",
     beamWarmupDuration: 1.2,
     beamActiveDuration: 0.4,

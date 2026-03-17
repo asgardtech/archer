@@ -1283,6 +1283,11 @@ export class RaptorGame implements IGame {
         );
         for (const arcHit of arcHits) {
           this.vfx.triggerExplosionFlash(arcHit.target.pos.x, arcHit.target.pos.y, 8);
+          const destroyed = arcHit.target.takeDamage?.(arcHit.damage);
+          if (destroyed) {
+            this.vfx.triggerExplosionFlash(arcHit.target.pos.x, arcHit.target.pos.y, 14);
+            this.sound.play("enemy_destroy");
+          }
         }
       }
     }

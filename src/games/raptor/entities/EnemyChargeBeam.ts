@@ -1,3 +1,5 @@
+import { BeamLike } from "../types";
+
 export type EnemyChargeBeamPhase = "idle" | "warmup" | "active" | "cooldown";
 
 export interface EnemyChargeBeamConfig {
@@ -9,7 +11,7 @@ export interface EnemyChargeBeamConfig {
   damage: number;
 }
 
-export class EnemyChargeBeam {
+export class EnemyChargeBeam implements BeamLike {
   phase: EnemyChargeBeamPhase = "idle";
   beamX = 0;
   originX = 0;
