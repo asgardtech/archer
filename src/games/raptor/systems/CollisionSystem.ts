@@ -149,6 +149,7 @@ export class CollisionSystem {
         if (enemy.variant === "boss_architect" && enemy.isArchitectExposed()) {
           effectiveBeamDmg = Math.floor(effectiveBeamDmg * 2.0);
         }
+        let skipCoreDamage = false;
         if (enemy.variant === "boss_hydra") {
           const podPositions = enemy.getHydraPodPositions();
           const podRadius = 10;
@@ -161,7 +162,9 @@ export class CollisionSystem {
               hitPod = true;
             }
           }
-          if (!hitPod && !enemy.isHydraVulnerable()) {
+          if (hitPod) {
+            skipCoreDamage = true;
+          } else if (!enemy.isHydraVulnerable()) {
             const anyPodAlive = enemy.isHydraPodAlive(0) || enemy.isHydraPodAlive(1) || enemy.isHydraPodAlive(2);
             if (anyPodAlive) {
               effectiveBeamDmg = Math.max(1, Math.floor(effectiveBeamDmg * 0.5));
@@ -169,14 +172,16 @@ export class CollisionSystem {
           }
         }
 
-        if (isBossVariant(enemy.variant) && !canFlash) {
-          enemy.hitPoints -= effectiveBeamDmg;
-          if (enemy.hitPoints <= 0) {
-            enemy.hitPoints = 0;
-            enemy.alive = false;
+        if (!skipCoreDamage) {
+          if (isBossVariant(enemy.variant) && !canFlash) {
+            enemy.hitPoints -= effectiveBeamDmg;
+            if (enemy.hitPoints <= 0) {
+              enemy.hitPoints = 0;
+              enemy.alive = false;
+            }
+          } else {
+            enemy.hit(effectiveBeamDmg);
           }
-        } else {
-          enemy.hit(effectiveBeamDmg);
         }
         hitEnemies.push(enemy);
 
