@@ -332,6 +332,9 @@ export const MAX_SAVE_SLOTS = 3;
 
 export const MIN_ENEMY_RENDER_SIZE = 24;
 
+/** Global multiplier applied to all ship movement speeds (enemy & player). */
+export const SHIP_SPEED_SCALE = 0.85;
+
 export interface SaveMigration {
   readonly fromVersion: number;
   readonly toVersion: number;
