@@ -1,8 +1,8 @@
-import { Vec2 } from "../types";
+import { Vec2, SHIP_SPEED_SCALE } from "../types";
 import { SpriteSheet } from "../rendering/SpriteSheet";
 import { ShipRenderer, ShipRenderState } from "../rendering/ShipRenderer";
 
-export const BASE_MOVE_SPEED = 500;
+export const BASE_MOVE_SPEED = 500 * SHIP_SPEED_SCALE;
 const MOVE_SPEED = BASE_MOVE_SPEED;
 const INVINCIBILITY_DURATION = 2.0;
 const HITBOX_INSET_X = 4;

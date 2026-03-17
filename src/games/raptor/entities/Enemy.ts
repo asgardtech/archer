@@ -1,4 +1,4 @@
-import { Vec2, EnemyVariant, EnemyConfig, EnemyWeaponType, GravityWell, ENEMY_CONFIGS } from "../types";
+import { Vec2, EnemyVariant, EnemyConfig, EnemyWeaponType, GravityWell, ENEMY_CONFIGS, SHIP_SPEED_SCALE } from "../types";
 
 export function isBossVariant(variant: EnemyVariant): boolean {
   return variant === "boss" || variant === "boss_gunship" || variant === "boss_dreadnought"
@@ -262,7 +262,7 @@ export class Enemy {
     this.height = config.height;
     this.weaponType = config.weaponType ?? "standard";
 
-    const actualSpeed = speed ?? config.speed;
+    const actualSpeed = (speed ?? config.speed) * SHIP_SPEED_SCALE;
     this.pos = { x, y };
     this.vel = { x: 0, y: actualSpeed };
   }
@@ -921,14 +921,14 @@ export class Enemy {
             (this.pos.x - this.vultureCenterX) / radiusX
           );
         } else {
-          const speed = 160 * dt;
+          const speed = 160 * SHIP_SPEED_SCALE * dt;
           this.pos.x += (dx / dist) * speed;
           this.pos.y += (dy / dist) * speed;
         }
       } else {
         const radiusX = vCw * 0.3;
         const radiusY = canvasHeight * 0.2;
-        const angularSpeed = 160 / Math.max(radiusX, radiusY);
+        const angularSpeed = (160 * SHIP_SPEED_SCALE) / Math.max(radiusX, radiusY);
         this.vultureOrbitAngle += angularSpeed * dt * (1 + 0.2 * Math.sin(this.time));
         this.pos.x = this.vultureCenterX + radiusX * Math.cos(this.vultureOrbitAngle);
         this.pos.y = this.vultureCenterY + radiusY * Math.sin(this.vultureOrbitAngle);
