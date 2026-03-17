@@ -62,6 +62,36 @@ export class Enemy {
   private readonly DRONE_SPAWN_INTERVAL = 5.5;
   private readonly CARRIER_DEPLOY_PAUSE = 0.8;
 
+  // Sentinel
+  private sentinelPhase: "entering" | "hovering" = "entering";
+  public static readonly SENTINEL_AURA_RADIUS = 60;
+
+  // Lancer
+  private lancerPhase: "drifting" | "charging" = "drifting";
+  private lancerDriftTimer = 0;
+  private lancerChargeTimer = 0;
+  private lancerTargetX = 0;
+  private readonly LANCER_DRIFT_INTERVAL = 3.0;
+  private readonly LANCER_CHARGE_DURATION = 0.5;
+
+  // Wraith
+  private wraithTeleportsRemaining = 3;
+  private wraithInvulnTimer = 0;
+  private wraithCanvasWidth = 800;
+  private wraithOffsetX = 0;
+  private readonly WRAITH_INVULN_DURATION = 0.15;
+
+  // Corsair
+  private corsairPhase: "entering" | "strafing" = "entering";
+  private corsairStrafeDirection: 1 | -1 = 1;
+  private corsairBaseY = 0;
+
+  // Vulture
+  private vulturePhase: "entering" | "orbiting" = "entering";
+  private vultureOrbitAngle = 0;
+  private vultureCenterX = 0;
+  private vultureCenterY = 0;
+
   private burstRemaining = 0;
   private burstTimer = 0;
   private burstSpreadIndex = 0;
@@ -341,6 +371,105 @@ export class Enemy {
     } else if (this.variant === "spark") {
       this.pos.x += (Math.random() - 0.5) * 60 * dt;
       this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "sentinel") {
+      const sentinelParkY = offsetY + canvasHeight * 0.3;
+      if (this.sentinelPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= sentinelParkY) {
+          this.pos.y = sentinelParkY;
+          this.sentinelPhase = "hovering";
+        }
+      } else {
+        this.pos.y = sentinelParkY + Math.sin(this.time * 2) * 3;
+      }
+    } else if (this.variant === "lancer") {
+      if (this.lancerPhase === "drifting") {
+        this.pos.y += this.vel.y * dt;
+        this.lancerDriftTimer += dt;
+        if (this.lancerDriftTimer >= this.LANCER_DRIFT_INTERVAL) {
+          this.lancerDriftTimer = 0;
+          this.lancerPhase = "charging";
+          this.lancerChargeTimer = this.LANCER_CHARGE_DURATION;
+          this.lancerTargetX = targetX ?? this.pos.x;
+        }
+      } else {
+        const chargeSpeed = this.vel.y * 3;
+        this.pos.y += chargeSpeed * dt;
+        const dx = this.lancerTargetX - this.pos.x;
+        this.pos.x += dx * 4 * dt;
+        this.lancerChargeTimer -= dt;
+        if (this.lancerChargeTimer <= 0) {
+          this.lancerPhase = "drifting";
+        }
+      }
+    } else if (this.variant === "ravager" && targetX !== undefined) {
+      const dx = targetX - this.pos.x;
+      this.pos.x += dx * 1.0 * dt;
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "wraith") {
+      this.pos.y += this.vel.y * dt;
+      if (this.wraithInvulnTimer > 0) {
+        this.wraithInvulnTimer -= dt;
+      }
+      this.wraithCanvasWidth = canvasWidth ?? 800;
+      this.wraithOffsetX = offsetX;
+    } else if (this.variant === "corsair") {
+      const cw = canvasWidth ?? 800;
+      const corsairParkY = offsetY + canvasHeight * 0.25;
+      const corsairMargin = 40;
+
+      if (this.corsairPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= corsairParkY) {
+          this.pos.y = corsairParkY;
+          this.corsairBaseY = corsairParkY;
+          this.corsairPhase = "strafing";
+          this.corsairStrafeDirection = this.pos.x > offsetX + cw / 2 ? -1 : 1;
+        }
+      } else {
+        this.pos.x += this.corsairStrafeDirection * 180 * dt;
+        this.pos.y = this.corsairBaseY + Math.sin(this.time * 2) * 3;
+
+        if (this.pos.x >= offsetX + cw - corsairMargin) {
+          this.pos.x = offsetX + cw - corsairMargin;
+          this.corsairStrafeDirection = -1;
+        } else if (this.pos.x <= offsetX + corsairMargin) {
+          this.pos.x = offsetX + corsairMargin;
+          this.corsairStrafeDirection = 1;
+        }
+      }
+    } else if (this.variant === "vulture") {
+      const vCw = canvasWidth ?? 800;
+
+      if (this.vulturePhase === "entering") {
+        this.vultureCenterX = offsetX + vCw / 2;
+        this.vultureCenterY = offsetY + canvasHeight * 0.4;
+        const radiusX = vCw * 0.3;
+        const radiusY = canvasHeight * 0.2;
+
+        const dx = this.vultureCenterX - this.pos.x;
+        const dy = this.vultureCenterY - this.pos.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 20) {
+          this.vulturePhase = "orbiting";
+          this.vultureOrbitAngle = Math.atan2(
+            (this.pos.y - this.vultureCenterY) / radiusY,
+            (this.pos.x - this.vultureCenterX) / radiusX
+          );
+        } else {
+          const speed = 160 * dt;
+          this.pos.x += (dx / dist) * speed;
+          this.pos.y += (dy / dist) * speed;
+        }
+      } else {
+        const radiusX = vCw * 0.3;
+        const radiusY = canvasHeight * 0.2;
+        const angularSpeed = 160 / Math.max(radiusX, radiusY);
+        this.vultureOrbitAngle += angularSpeed * dt * (1 + 0.2 * Math.sin(this.time));
+        this.pos.x = this.vultureCenterX + radiusX * Math.cos(this.vultureOrbitAngle);
+        this.pos.y = this.vultureCenterY + radiusY * Math.sin(this.vultureOrbitAngle);
+      }
     } else {
       this.pos.y += this.vel.y * dt;
     }
@@ -352,6 +481,8 @@ export class Enemy {
     if (
       !isBossVariant(this.variant) && this.variant !== "destroyer" &&
       this.variant !== "juggernaut" && this.variant !== "minelayer" &&
+      this.variant !== "sentinel" && this.variant !== "corsair" &&
+      this.variant !== "vulture" &&
       this.pos.y > offsetY + canvasHeight + 50
     ) {
       this.alive = false;
@@ -361,6 +492,7 @@ export class Enemy {
   canFire(): boolean {
     if (this.variant === "stealth" && !this.cloakVisible) return false;
     if (this.variant === "phantom" && !this.phantomVisible) return false;
+    if (this.variant === "lancer" && this.lancerPhase !== "charging") return false;
     return this.fireRate > 0 && this.fireCooldown <= 0 && this.alive;
   }
 
@@ -426,6 +558,9 @@ export class Enemy {
 
   hit(damage = 1): boolean {
     if (!this.alive) return false;
+
+    if (this.variant === "wraith" && this.wraithInvulnTimer > 0) return false;
+
     this.hitPoints -= damage;
     this.flashTimer = 0.08;
     if (this.hitPoints <= 0) {
@@ -433,6 +568,14 @@ export class Enemy {
       this.alive = false;
       return true;
     }
+
+    if (this.variant === "wraith" && this.wraithTeleportsRemaining > 0) {
+      this.wraithTeleportsRemaining--;
+      this.wraithInvulnTimer = this.WRAITH_INVULN_DURATION;
+      const margin = 40;
+      this.pos.x = this.wraithOffsetX + margin + Math.random() * (this.wraithCanvasWidth - margin * 2);
+    }
+
     return false;
   }
 
@@ -444,6 +587,13 @@ export class Enemy {
     const isFlashing = this.flashTimer > 0;
 
     ctx.save();
+
+    if (this.variant === "sentinel") {
+      ctx.fillStyle = "rgba(100, 200, 220, 0.12)";
+      ctx.beginPath();
+      ctx.arc(x, y, Enemy.SENTINEL_AURA_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     if (this.sprite) {
       this.renderSpriteVariant(ctx, x, y, isFlashing);
@@ -520,6 +670,24 @@ export class Enemy {
           break;
         case "spark":
           this.renderSpark(ctx, x, y, isFlashing);
+          break;
+        case "sentinel":
+          this.renderSentinel(ctx, x, y, isFlashing);
+          break;
+        case "lancer":
+          this.renderLancer(ctx, x, y, isFlashing);
+          break;
+        case "ravager":
+          this.renderRavager(ctx, x, y, isFlashing);
+          break;
+        case "wraith":
+          this.renderWraith(ctx, x, y, isFlashing);
+          break;
+        case "corsair":
+          this.renderCorsair(ctx, x, y, isFlashing);
+          break;
+        case "vulture":
+          this.renderVulture(ctx, x, y, isFlashing);
           break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
@@ -760,6 +928,12 @@ export class Enemy {
     locust: "#889933",
     glider: "#aabbcc",
     spark: "#44ddff",
+    sentinel: "#4488aa",
+    lancer: "#dd7722",
+    ravager: "#bb3333",
+    wraith: "#6633aa",
+    corsair: "#778899",
+    vulture: "#774422",
   };
 
   private renderGunship(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
@@ -1118,6 +1292,175 @@ export class Enemy {
     }
 
     ctx.fillStyle = flash ? "#cccccc" : "#aaeeff";
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderSentinel(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const r = this.width / 2;
+    ctx.fillStyle = flash ? "#ffffff" : "#4488aa";
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI / 2;
+      const px = x + r * Math.cos(angle);
+      const py = y + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#66aacc";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y - this.height * 0.15, this.width * 0.35, 0, Math.PI, true);
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#336688";
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderLancer(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#dd7722";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh);
+    ctx.lineTo(x - hw, y - hh * 0.3);
+    ctx.lineTo(x - hw * 0.4, y - hh);
+    ctx.lineTo(x, y - hh * 0.6);
+    ctx.lineTo(x + hw * 0.4, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.3);
+    ctx.closePath();
+    ctx.fill();
+
+    const exhaustAlpha = this.lancerPhase === "charging" ? 0.9 : 0.4;
+    ctx.fillStyle = `rgba(255, 160, 50, ${exhaustAlpha})`;
+    ctx.fillRect(x - hw * 0.3, y - hh - 4, hw * 0.6, 4);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#995511";
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderRavager(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#bb3333";
+    ctx.beginPath();
+    ctx.moveTo(x, y + hh * 0.7);
+    ctx.lineTo(x - hw * 0.4, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.2);
+    ctx.lineTo(x - hw, y - hh * 0.5);
+    ctx.lineTo(x - hw * 0.5, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.5);
+    ctx.lineTo(x + hw, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.4, y + hh);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#ff4444";
+    ctx.fillRect(x - hw - 3, y - 3, 6, 6);
+    ctx.fillRect(x + hw - 3, y - 3, 6, 6);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#882222";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.2, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderWraith(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    if (this.wraithInvulnTimer > 0 && !flash) {
+      ctx.globalAlpha = 0.2;
+    }
+
+    const pulse = 0.6 + Math.sin(this.time * 3) * 0.4;
+    ctx.fillStyle = flash ? "#ffffff" : `rgba(102, 51, 170, ${pulse})`;
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw, y);
+    ctx.lineTo(x + hw * 0.3, y + hh * 0.6);
+    ctx.lineTo(x, y + hh);
+    ctx.lineTo(x - hw * 0.3, y + hh * 0.6);
+    ctx.lineTo(x - hw, y);
+    ctx.closePath();
+    ctx.fill();
+
+    if (!flash) {
+      ctx.strokeStyle = `rgba(170, 100, 255, ${0.2 + Math.sin(this.time * 5) * 0.2})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = flash ? "#cccccc" : "#aa88ee";
+    ctx.beginPath();
+    ctx.arc(x, y - hh * 0.1, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+  }
+
+  private renderCorsair(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#778899";
+    ctx.beginPath();
+    ctx.moveTo(x - hw * 0.3, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.3);
+    ctx.lineTo(x - hw * 0.8, y - hh);
+    ctx.lineTo(x + hw * 0.5, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.4);
+    ctx.lineTo(x + hw, y + hh * 0.5);
+    ctx.lineTo(x + hw * 0.5, y + hh);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#cc6622";
+    ctx.fillRect(x + hw * 0.5, y - hh * 0.6, hw * 0.4, hh * 0.5);
+
+    ctx.fillStyle = flash ? "#cccccc" : "#556677";
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderVulture(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#774422";
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw * 0.3, y - hh * 0.3);
+    ctx.lineTo(x + hw, y + hh * 0.2);
+    ctx.lineTo(x + hw * 0.7, y + hh);
+    ctx.lineTo(x, y + hh * 0.5);
+    ctx.lineTo(x - hw * 0.7, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.2);
+    ctx.lineTo(x - hw * 0.3, y - hh * 0.3);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#ff2222";
+    ctx.beginPath();
+    ctx.arc(x - hw * 0.25, y - hh * 0.15, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + hw * 0.25, y - hh * 0.15, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#cccccc" : "#553311";
     ctx.beginPath();
     ctx.arc(x, y, 2, 0, Math.PI * 2);
     ctx.fill();
