@@ -330,6 +330,8 @@ export const WEAPON_SPEED_BONUS_PER_TYPE = 0.01;
 
 export const MAX_SAVE_SLOTS = 3;
 
+export const MIN_ENEMY_RENDER_SIZE = 24;
+
 export interface SaveMigration {
   readonly fromVersion: number;
   readonly toVersion: number;
@@ -701,8 +703,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 180,
     scoreValue: 10,
     fireRate: 0,
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
   },
   fighter: {
     variant: "fighter",
@@ -750,8 +752,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 250,
     scoreValue: 15,
     fireRate: 0.5,
-    width: 22,
-    height: 22,
+    width: 26,
+    height: 26,
     weaponType: "standard",
   },
   dart: {
@@ -760,8 +762,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 300,
     scoreValue: 12,
     fireRate: 0,
-    width: 18,
-    height: 20,
+    width: 24,
+    height: 26,
   },
   drone: {
     variant: "drone",
@@ -769,8 +771,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 160,
     scoreValue: 8,
     fireRate: 0.3,
-    width: 16,
-    height: 16,
+    width: 24,
+    height: 24,
     weaponType: "standard",
   },
   swarmer: {
@@ -779,8 +781,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 170,
     scoreValue: 12,
     fireRate: 0.4,
-    width: 18,
-    height: 18,
+    width: 24,
+    height: 24,
     weaponType: "standard",
   },
   gunship: {
@@ -878,8 +880,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 220,
     scoreValue: 14,
     fireRate: 1.0,
-    width: 20,
-    height: 20,
+    width: 26,
+    height: 26,
     weaponType: "standard",
   },
   phantom: {
@@ -888,8 +890,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 200,
     scoreValue: 18,
     fireRate: 0.6,
-    width: 22,
-    height: 22,
+    width: 26,
+    height: 26,
     weaponType: "standard",
   },
   needle: {
@@ -898,8 +900,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 350,
     scoreValue: 8,
     fireRate: 0,
-    width: 12,
-    height: 22,
+    width: 18,
+    height: 28,
     collisionDamage: 200,
   },
   locust: {
@@ -908,8 +910,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 190,
     scoreValue: 5,
     fireRate: 0.3,
-    width: 14,
-    height: 14,
+    width: 20,
+    height: 20,
     weaponType: "standard",
     projectileDamageMultiplier: 0.5,
   },
@@ -920,7 +922,7 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     scoreValue: 12,
     fireRate: 0.5,
     width: 28,
-    height: 16,
+    height: 18,
     weaponType: "standard",
   },
   spark: {
@@ -929,8 +931,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 170,
     scoreValue: 15,
     fireRate: 0.4,
-    width: 16,
-    height: 16,
+    width: 24,
+    height: 24,
     weaponType: "chain",
   },
   sentinel: {
@@ -949,8 +951,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 60,
     scoreValue: 30,
     fireRate: 0.8,
-    width: 24,
-    height: 28,
+    width: 28,
+    height: 32,
     weaponType: "standard",
   },
   ravager: {
@@ -1130,8 +1132,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 160,
     scoreValue: 8,
     fireRate: 0,
-    width: 12,
-    height: 12,
+    width: 18,
+    height: 18,
   },
   healer: {
     variant: "healer",
@@ -1139,8 +1141,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 90,
     scoreValue: 55,
     fireRate: 0.3,
-    width: 24,
-    height: 24,
+    width: 26,
+    height: 26,
     weaponType: "standard",
   },
   teleporter: {
@@ -1149,8 +1151,8 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     speed: 0,
     scoreValue: 40,
     fireRate: 0,
-    width: 22,
-    height: 22,
+    width: 26,
+    height: 26,
     weaponType: "standard",
   },
   mimic: {
