@@ -27,7 +27,8 @@ export type EnemyVariant =
   | "interceptor" | "dart" | "drone" | "swarmer"
   | "gunship" | "cruiser"
   | "destroyer" | "juggernaut"
-  | "stealth" | "minelayer";
+  | "stealth" | "minelayer"
+  | "wasp" | "phantom" | "needle" | "locust" | "glider" | "spark";
 
 export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser" | "chain" | "charge_beam" | "scatter" | "shockwave";
 
@@ -194,6 +195,11 @@ export const ENEMY_PROJECTILE_SKINS: Partial<Record<EnemyVariant, ProjectileSkin
   boss_gunship: { fallbackColor: "#5577ff", coreColor: "#99aaff", glowColor: "#7799ff" },
   boss_dreadnought: { fallbackColor: "#ff44aa", coreColor: "#ff88cc", glowColor: "#ff66bb" },
   boss_fortress:    { fallbackColor: "#00ccff", coreColor: "#88eeff", glowColor: "#66ddff" },
+  wasp:             { fallbackColor: "#ccff44", coreColor: "#eeff88", glowColor: "#ddff66" },
+  phantom:          { fallbackColor: "#9966ff", coreColor: "#ccaaff", glowColor: "#bb88ff" },
+  locust:           { fallbackColor: "#aaaa44", coreColor: "#cccc88", glowColor: "#bbbb66" },
+  glider:           { fallbackColor: "#88aacc", coreColor: "#bbccee", glowColor: "#99bbdd" },
+  spark:            { fallbackColor: "#44eeff", coreColor: "#88ffff", glowColor: "#66eeff" },
 };
 
 export interface EnemyConfig {
@@ -206,6 +212,8 @@ export interface EnemyConfig {
   height: number;
   weaponType?: EnemyWeaponType;
   projectileSkin?: ProjectileSkin;
+  collisionDamage?: number;
+  projectileDamageMultiplier?: number;
 }
 
 export type RaptorPowerUpType =
@@ -825,6 +833,67 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     width: 84,
     height: 70,
     weaponType: "standard",
+  },
+  wasp: {
+    variant: "wasp",
+    hitPoints: 1,
+    speed: 220,
+    scoreValue: 14,
+    fireRate: 1.0,
+    width: 20,
+    height: 20,
+    weaponType: "standard",
+  },
+  phantom: {
+    variant: "phantom",
+    hitPoints: 1,
+    speed: 200,
+    scoreValue: 18,
+    fireRate: 0.6,
+    width: 22,
+    height: 22,
+    weaponType: "standard",
+  },
+  needle: {
+    variant: "needle",
+    hitPoints: 1,
+    speed: 350,
+    scoreValue: 8,
+    fireRate: 0,
+    width: 12,
+    height: 22,
+    collisionDamage: 200,
+  },
+  locust: {
+    variant: "locust",
+    hitPoints: 1,
+    speed: 190,
+    scoreValue: 5,
+    fireRate: 0.3,
+    width: 14,
+    height: 14,
+    weaponType: "standard",
+    projectileDamageMultiplier: 0.5,
+  },
+  glider: {
+    variant: "glider",
+    hitPoints: 1,
+    speed: 100,
+    scoreValue: 12,
+    fireRate: 0.5,
+    width: 28,
+    height: 16,
+    weaponType: "standard",
+  },
+  spark: {
+    variant: "spark",
+    hitPoints: 1,
+    speed: 170,
+    scoreValue: 15,
+    fireRate: 0.4,
+    width: 16,
+    height: 16,
+    weaponType: "chain",
   },
 };
 

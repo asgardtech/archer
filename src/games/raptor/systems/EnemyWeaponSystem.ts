@@ -1,4 +1,4 @@
-import { EnemyWeaponType, ENEMY_WEAPON_CONFIGS, ENEMY_PROJECTILE_SKINS, RaptorSoundEvent } from "../types";
+import { EnemyWeaponType, ENEMY_WEAPON_CONFIGS, ENEMY_PROJECTILE_SKINS, ENEMY_CONFIGS, RaptorSoundEvent } from "../types";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { EnemyMissile } from "../entities/EnemyMissile";
 import { EnemyLaserBeam, EnemyLaserBeamConfig } from "../entities/EnemyLaserBeam";
@@ -34,32 +34,52 @@ export class EnemyWeaponSystem {
     const weaponType = enemy.weaponType;
     const config = ENEMY_WEAPON_CONFIGS[weaponType];
 
+    let result: EnemyFireResult;
+
     if (!config) {
       console.warn(`[EnemyWeaponSystem] Unknown weapon type "${weaponType}", falling back to standard`);
-      return this.fireStandard(enemy, targetX, targetY);
+      result = this.fireStandard(enemy, targetX, targetY);
+    } else {
+      switch (weaponType) {
+        case "standard":
+          result = this.fireStandard(enemy, targetX, targetY);
+          break;
+        case "spread":
+          result = this.fireSpread(enemy, targetX, targetY);
+          break;
+        case "missile":
+          result = this.fireMissile(enemy, targetX, targetY);
+          break;
+        case "laser":
+          result = this.fireLaser(enemy, targetX);
+          break;
+        case "chain":
+          result = this.fireChain(enemy, targetX, targetY);
+          break;
+        case "charge_beam":
+          result = this.fireChargeBeam(enemy, targetX);
+          break;
+        case "scatter":
+          result = this.fireScatter(enemy, targetX, targetY);
+          break;
+        case "shockwave":
+          result = this.fireShockwave(enemy);
+          break;
+        default:
+          console.warn(`[EnemyWeaponSystem] Unhandled weapon type "${weaponType}", falling back to standard`);
+          result = this.fireStandard(enemy, targetX, targetY);
+          break;
+      }
     }
 
-    switch (weaponType) {
-      case "standard":
-        return this.fireStandard(enemy, targetX, targetY);
-      case "spread":
-        return this.fireSpread(enemy, targetX, targetY);
-      case "missile":
-        return this.fireMissile(enemy, targetX, targetY);
-      case "laser":
-        return this.fireLaser(enemy, targetX);
-      case "chain":
-        return this.fireChain(enemy, targetX, targetY);
-      case "charge_beam":
-        return this.fireChargeBeam(enemy, targetX);
-      case "scatter":
-        return this.fireScatter(enemy, targetX, targetY);
-      case "shockwave":
-        return this.fireShockwave(enemy);
-      default:
-        console.warn(`[EnemyWeaponSystem] Unhandled weapon type "${weaponType}", falling back to standard`);
-        return this.fireStandard(enemy, targetX, targetY);
+    const dmgMult = ENEMY_CONFIGS[enemy.variant].projectileDamageMultiplier;
+    if (dmgMult !== undefined && dmgMult !== 1.0) {
+      for (const bullet of result.bullets) {
+        bullet.damage *= dmgMult;
+      }
     }
+
+    return result;
   }
 
   fireLaser(enemy: Enemy, playerX: number): EnemyFireResult {

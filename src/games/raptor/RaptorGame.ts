@@ -1373,8 +1373,9 @@ export class RaptorGame implements IGame {
           this.spawnPowerUp(hit.enemy.pos.x, hit.enemy.pos.y);
         }
       }
-      const dead = this.player.takeDamage(100);
-      this.statsTracker.recordDamageTaken(100, this.player.armor);
+      const collisionDmg = ENEMY_CONFIGS[hit.enemy.variant].collisionDamage ?? 100;
+      const dead = this.player.takeDamage(collisionDmg);
+      this.statsTracker.recordDamageTaken(collisionDmg, this.player.armor);
       if (dead) {
         this.sound.play("player_destroy");
         this.addExplosion(new Explosion(this.player.pos.x, this.player.pos.y, 3));
@@ -1672,6 +1673,12 @@ export class RaptorGame implements IGame {
       juggernaut: "enemy_juggernaut",
       stealth: "enemy_stealth",
       minelayer: "enemy_minelayer",
+      wasp: "enemy_wasp",
+      phantom: "enemy_phantom",
+      needle: "enemy_needle",
+      locust: "enemy_locust",
+      glider: "enemy_glider",
+      spark: "enemy_spark",
     };
     const key = spriteMap[enemy.variant];
     if (key) {
