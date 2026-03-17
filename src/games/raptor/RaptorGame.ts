@@ -1546,8 +1546,8 @@ export class RaptorGame implements IGame {
 
       if (hit.enemy.variant === "splitter") {
         const spawnData = hit.enemy.getSplitterChildSpawnData();
-        const child1 = new Enemy(spawnData.x1, spawnData.y1, "splitter_minor", spawnData.speed);
-        const child2 = new Enemy(spawnData.x2, spawnData.y2, "splitter_minor", spawnData.speed);
+        const child1 = new Enemy(spawnData.x1, spawnData.y1, "splitter_minor");
+        const child2 = new Enemy(spawnData.x2, spawnData.y2, "splitter_minor");
         this.assignEnemySprite(child1);
         this.assignEnemySprite(child2);
         this.enemies.push(child1, child2);
@@ -1750,8 +1750,8 @@ export class RaptorGame implements IGame {
 
     if (enemy.variant === "splitter") {
       const spawnData = enemy.getSplitterChildSpawnData();
-      const child1 = new Enemy(spawnData.x1, spawnData.y1, "splitter_minor", spawnData.speed);
-      const child2 = new Enemy(spawnData.x2, spawnData.y2, "splitter_minor", spawnData.speed);
+      const child1 = new Enemy(spawnData.x1, spawnData.y1, "splitter_minor");
+      const child2 = new Enemy(spawnData.x2, spawnData.y2, "splitter_minor");
       this.assignEnemySprite(child1);
       this.assignEnemySprite(child2);
       this.enemies.push(child1, child2);

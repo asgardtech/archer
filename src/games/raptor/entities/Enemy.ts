@@ -1388,11 +1388,10 @@ export class Enemy {
   public getQueenSpawnedLocusts(): Enemy[] { return this.queenSpawnedLocusts; }
 
   // --- Splitter accessors ---
-  public getSplitterChildSpawnData(): { x1: number; y1: number; x2: number; y2: number; speed: number } {
+  public getSplitterChildSpawnData(): { x1: number; y1: number; x2: number; y2: number } {
     return {
       x1: this.pos.x - 15, y1: this.pos.y,
       x2: this.pos.x + 15, y2: this.pos.y,
-      speed: this.vel.y,
     };
   }
 
