@@ -30,11 +30,13 @@ export type EnemyVariant =
   | "stealth" | "minelayer"
   | "wasp" | "phantom" | "needle" | "locust" | "glider" | "spark"
   | "sentinel" | "lancer" | "ravager" | "wraith" | "corsair" | "vulture"
-  | "titan" | "bastion" | "siege_engine" | "colossus" | "warden" | "leviathan";
+  | "titan" | "bastion" | "siege_engine" | "colossus" | "warden" | "leviathan"
+  | "boss_mothership" | "boss_hydra" | "boss_shadow" | "boss_behemoth" | "boss_architect" | "boss_swarm_queen";
 
 export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser" | "chain" | "charge_beam" | "scatter" | "shockwave";
 
-export type BossType = "standard" | "gunship_commander" | "missile_dreadnought" | "laser_fortress" | "carrier";
+export type BossType = "standard" | "gunship_commander" | "missile_dreadnought" | "laser_fortress" | "carrier"
+  | "mothership" | "hydra" | "shadow_commander" | "behemoth" | "architect" | "swarm_queen";
 
 export interface EnemyWeaponConfig {
   type: EnemyWeaponType;
@@ -214,7 +216,21 @@ export const ENEMY_PROJECTILE_SKINS: Partial<Record<EnemyVariant, ProjectileSkin
   colossus:         { fallbackColor: "#5555aa", coreColor: "#8888cc", glowColor: "#6666bb" },
   warden:           { fallbackColor: "#4488dd", coreColor: "#88bbff", glowColor: "#66aaee" },
   leviathan:        { fallbackColor: "#667744", coreColor: "#99aa77", glowColor: "#778855" },
+  boss_mothership:  { fallbackColor: "#334466", coreColor: "#667799", glowColor: "#4d6688" },
+  boss_hydra:       { fallbackColor: "#556666", coreColor: "#889999", glowColor: "#667777" },
+  boss_shadow:      { fallbackColor: "#2a2a3a", coreColor: "#55556a", glowColor: "#3d3d55" },
+  boss_behemoth:    { fallbackColor: "#444455", coreColor: "#777788", glowColor: "#555566" },
+  boss_architect:   { fallbackColor: "#228888", coreColor: "#55bbbb", glowColor: "#33aa9a" },
+  boss_swarm_queen: { fallbackColor: "#447733", coreColor: "#77aa66", glowColor: "#558844" },
 };
+
+export interface GravityWell {
+  x: number;
+  y: number;
+  timeRemaining: number;
+  strength: number;
+  radius: number;
+}
 
 export interface EnemyConfig {
   variant: EnemyVariant;
@@ -1029,6 +1045,66 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     width: 56,
     height: 48,
     weaponType: "spread",
+  },
+  boss_mothership: {
+    variant: "boss_mothership",
+    hitPoints: 120,
+    speed: 25,
+    scoreValue: 3000,
+    fireRate: 1.0,
+    width: 96,
+    height: 80,
+    weaponType: "spread",
+  },
+  boss_hydra: {
+    variant: "boss_hydra",
+    hitPoints: 50,
+    speed: 20,
+    scoreValue: 2500,
+    fireRate: 1.2,
+    width: 88,
+    height: 72,
+    weaponType: "spread",
+  },
+  boss_shadow: {
+    variant: "boss_shadow",
+    hitPoints: 80,
+    speed: 60,
+    scoreValue: 2000,
+    fireRate: 1.0,
+    width: 72,
+    height: 60,
+    weaponType: "standard",
+  },
+  boss_behemoth: {
+    variant: "boss_behemoth",
+    hitPoints: 150,
+    speed: 15,
+    scoreValue: 3500,
+    fireRate: 0.8,
+    width: 84,
+    height: 70,
+    weaponType: "missile",
+  },
+  boss_architect: {
+    variant: "boss_architect",
+    hitPoints: 180,
+    speed: 15,
+    scoreValue: 4000,
+    fireRate: 0.5,
+    width: 80,
+    height: 76,
+    weaponType: "charge_beam",
+  },
+  boss_swarm_queen: {
+    variant: "boss_swarm_queen",
+    hitPoints: 100,
+    speed: 30,
+    scoreValue: 2200,
+    fireRate: 0.6,
+    width: 76,
+    height: 64,
+    weaponType: "scatter",
   },
 };
 

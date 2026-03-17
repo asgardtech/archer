@@ -31,6 +31,13 @@ export class EnemyWeaponSystem {
   private chargeBeamMap: Map<Enemy, EnemyChargeBeam[]> = new Map();
 
   fire(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
+    if (enemy.variant === "boss_hydra") {
+      return this.fireHydraPods(enemy, targetX, targetY);
+    }
+    if (enemy.variant === "boss_shadow" && enemy.shadowAmbushReady) {
+      return this.fireShadowAmbush(enemy, targetX, targetY);
+    }
+
     const weaponType = enemy.weaponType;
     const config = ENEMY_WEAPON_CONFIGS[weaponType];
 
@@ -268,6 +275,118 @@ export class EnemyWeaponSystem {
       for (const beam of beams) beam.reset();
     }
     this.chargeBeamMap.clear();
+  }
+
+  // --- Boss-specific fire methods ---
+
+  fireHydraPods(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
+    const allBullets: EnemyBullet[] = [];
+    let soundEvent: RaptorSoundEvent | null = null;
+    let laserActivated = false;
+
+    const podPositions = enemy.getHydraPodPositions();
+    const podWeapons = enemy.getHydraPodWeapons();
+
+    for (let i = 0; i < 3; i++) {
+      if (!enemy.isHydraPodAlive(i)) continue;
+
+      const px = podPositions[i].x;
+      const py = podPositions[i].y;
+      const podWeapon = podWeapons[i];
+      const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];
+
+      if (podWeapon === "spread") {
+        const config = ENEMY_WEAPON_CONFIGS["spread"];
+        const dx = targetX - px;
+        const dy = targetY - py;
+        const baseAngle = Math.atan2(dx, dy);
+        const count = config.projectileCount;
+        for (let j = 0; j < count; j++) {
+          const angleOffset = (j - (count - 1) / 2) * config.spreadAngle;
+          const angle = baseAngle + angleOffset;
+          const dist = 1000;
+          const bTargetX = px + Math.sin(angle) * dist;
+          const bTargetY = py + Math.cos(angle) * dist;
+          allBullets.push(new EnemyBullet(px, py, bTargetX, bTargetY, {
+            damage: config.damage,
+            speed: config.projectileSpeed,
+            radius: 3,
+            spriteKey: skin?.spriteKey ?? config.spriteKey,
+            fallbackColor: skin?.fallbackColor ?? "#ff8800",
+            glowColor: skin?.glowColor,
+            coreColor: skin?.coreColor,
+          }));
+        }
+        soundEvent = WEAPON_SOUND_MAP["spread"];
+      } else if (podWeapon === "missile") {
+        const config = ENEMY_WEAPON_CONFIGS["missile"];
+        allBullets.push(new EnemyMissile(px, py, targetX, targetY, {
+          damage: config.damage,
+          speed: config.projectileSpeed,
+          homing: config.homing,
+          homingStrength: config.homingStrength,
+          spriteKey: skin?.spriteKey ?? config.spriteKey,
+          fallbackColor: skin?.fallbackColor,
+          glowColor: skin?.glowColor,
+          coreColor: skin?.coreColor,
+          radius: 7,
+        }));
+        soundEvent = WEAPON_SOUND_MAP["missile"];
+      } else if (podWeapon === "laser") {
+        let beams = this.laserBeams.get(enemy);
+        if (!beams) {
+          const lConfig = ENEMY_WEAPON_CONFIGS["laser"];
+          const beamConfig: EnemyLaserBeamConfig = {
+            warmupDuration: lConfig.beamWarmupDuration ?? 0.5,
+            activeDuration: lConfig.beamActiveDuration ?? 2.5,
+            cooldownDuration: lConfig.beamCooldownDuration ?? 3.0,
+            beamWidth: lConfig.beamWidth ?? 8,
+            trackingSpeed: lConfig.beamTrackingSpeed ?? 40,
+            damage: lConfig.damage,
+          };
+          beams = [new EnemyLaserBeam(beamConfig)];
+          this.laserBeams.set(enemy, beams);
+        }
+        const beam = beams[0];
+        if (beam.canFire) {
+          beam.activate(px, py, targetX);
+          laserActivated = true;
+        }
+      }
+    }
+
+    return { bullets: allBullets, soundEvent, laserActivated: laserActivated || undefined };
+  }
+
+  fireShadowAmbush(enemy: Enemy, targetX: number, targetY: number): EnemyFireResult {
+    enemy.shadowAmbushReady = false;
+    const skin = ENEMY_PROJECTILE_SKINS[enemy.variant];
+    const config = ENEMY_WEAPON_CONFIGS["standard"];
+    const dx = targetX - enemy.pos.x;
+    const dy = targetY - enemy.bottom;
+    const baseAngle = Math.atan2(dx, dy);
+    const fanSpread = 1.2;
+    const count = 5;
+    const bullets: EnemyBullet[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const angleOffset = (i - (count - 1) / 2) * (fanSpread / (count - 1));
+      const angle = baseAngle + angleOffset;
+      const dist = 1000;
+      const bTargetX = enemy.pos.x + Math.sin(angle) * dist;
+      const bTargetY = enemy.bottom + Math.cos(angle) * dist;
+
+      bullets.push(new EnemyBullet(enemy.pos.x, enemy.bottom, bTargetX, bTargetY, {
+        damage: config.damage,
+        speed: config.projectileSpeed,
+        spriteKey: skin?.spriteKey ?? config.spriteKey,
+        fallbackColor: skin?.fallbackColor,
+        glowColor: skin?.glowColor,
+        coreColor: skin?.coreColor,
+      }));
+    }
+
+    return { bullets, soundEvent: WEAPON_SOUND_MAP["standard"] };
   }
 
   // --- New fire methods ---

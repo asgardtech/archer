@@ -1151,6 +1151,78 @@ export class RaptorGame implements IGame {
           }
         }
       }
+
+      if (enemy.variant === "boss_mothership" && enemy.shouldSpawnDrones()) {
+        const activeDrones = enemy.mothershipSpawnedDrones.filter(d => d.alive).length;
+        const maxDrones = 8;
+        if (activeDrones < maxDrones) {
+          const spawnVariant = enemy.getDroneSpawnVariant();
+          const spawnPositions = enemy.getDroneSpawnPositions();
+          const desiredCount = enemy.getDroneSpawnCount();
+          const spawnCount = Math.min(desiredCount, maxDrones - activeDrones);
+          for (let i = 0; i < spawnCount; i++) {
+            const spawnPos = spawnPositions[i % spawnPositions.length];
+            const drone = new Enemy(spawnPos.x, spawnPos.y, spawnVariant);
+            this.assignEnemySprite(drone);
+            this.enemies.push(drone);
+            enemy.mothershipSpawnedDrones.push(drone);
+          }
+        }
+      }
+
+      if (enemy.variant === "boss_architect" && enemy.shouldSpawnDrones()) {
+        const spawnPositions = enemy.getDroneSpawnPositions();
+        const spawnCount = enemy.getDroneSpawnCount();
+        for (let i = 0; i < spawnCount; i++) {
+          const spawnPos = spawnPositions[i % spawnPositions.length];
+          const drone = new Enemy(spawnPos.x, spawnPos.y, "drone");
+          this.assignEnemySprite(drone);
+          this.enemies.push(drone);
+          enemy.architectSpawnedFragments.push(drone);
+        }
+      }
+
+      if (enemy.variant === "boss_swarm_queen" && enemy.shouldSpawnDrones()) {
+        const spawnVariant = enemy.getDroneSpawnVariant();
+        const spawnPositions = enemy.getDroneSpawnPositions();
+        const desiredCount = enemy.getDroneSpawnCount();
+        const currentLocusts = enemy.queenSpawnedLocusts.filter(d => d.alive).length;
+        const spawnCount = Math.min(desiredCount, 12 - currentLocusts);
+        for (let i = 0; i < spawnCount; i++) {
+          const spawnPos = spawnPositions[i % spawnPositions.length];
+          const drone = new Enemy(spawnPos.x, spawnPos.y, spawnVariant);
+          this.assignEnemySprite(drone);
+          this.enemies.push(drone);
+          enemy.queenSpawnedLocusts.push(drone);
+        }
+      }
+
+      if (enemy.variant === "boss_architect") {
+        const wells = enemy.getArchitectGravityWells();
+        for (const well of wells) {
+          const dx = well.x - this.player.pos.x;
+          const dy = well.y - this.player.pos.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < well.radius && dist > 0) {
+            const pullStrength = well.strength * dt * (1 - dist / well.radius);
+            this.player.pos.x += (dx / dist) * pullStrength;
+            this.player.pos.y += (dy / dist) * pullStrength;
+          }
+        }
+      }
+
+      if (enemy.variant === "boss_swarm_queen" && enemy.queenSwarmResponseActive) {
+        for (const locust of enemy.queenSpawnedLocusts) {
+          if (!locust.alive) continue;
+          const dx = this.player.pos.x - locust.pos.x;
+          const dy = this.player.pos.y - locust.pos.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist > 0) {
+            locust.pos.x += (dx / dist) * 200 * dt;
+            locust.pos.y += (dy / dist) * 200 * dt;
+          }
+        }
+      }
     }
 
     const laserSoundEvents = this.enemyWeaponSystem.updateLasers(dt, this.player.pos.x);
@@ -1585,6 +1657,24 @@ export class RaptorGame implements IGame {
       }
     }
 
+    if (enemy.variant === "boss_swarm_queen") {
+      for (const locust of enemy.queenSpawnedLocusts) {
+        if (locust.alive) {
+          locust.alive = false;
+          this.addExplosion(new Explosion(locust.pos.x, locust.pos.y, 1));
+        }
+      }
+    }
+
+    if (enemy.variant === "boss_mothership") {
+      for (const drone of enemy.mothershipSpawnedDrones) {
+        if (drone.alive) {
+          drone.alive = false;
+          this.addExplosion(new Explosion(drone.pos.x, drone.pos.y, 1));
+        }
+      }
+    }
+
     if (isBossVariant(enemy.variant)) {
       this.sound.play("boss_destroy");
       this.spawner.markBossDefeated();
@@ -1723,6 +1813,12 @@ export class RaptorGame implements IGame {
       colossus: "enemy_colossus",
       warden: "enemy_warden",
       leviathan: "enemy_leviathan",
+      boss_mothership: "enemy_boss_mothership",
+      boss_hydra: "enemy_boss_hydra",
+      boss_shadow: "enemy_boss_shadow",
+      boss_behemoth: "enemy_boss_behemoth",
+      boss_architect: "enemy_boss_architect",
+      boss_swarm_queen: "enemy_boss_swarm_queen",
     };
     const key = spriteMap[enemy.variant];
     if (key) {

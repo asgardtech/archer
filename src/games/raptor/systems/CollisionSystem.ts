@@ -138,7 +138,25 @@ export class CollisionSystem {
           this.hitFlashTimers.get(enemy)! <= 0;
 
         const auraMult = getAuraDamageMultiplier(enemy, enemies);
-        const effectiveBeamDmg = Math.max(1, Math.floor(beam.damage * auraMult));
+        let effectiveBeamDmg = Math.max(1, Math.floor(beam.damage * auraMult));
+
+        if (enemy.variant === "boss_shadow" && enemy.isShadowCloaked()) {
+          effectiveBeamDmg = Math.max(1, Math.floor(effectiveBeamDmg * 0.25));
+        }
+        if (enemy.variant === "boss_behemoth" && enemy.isBehemothShielded()) {
+          effectiveBeamDmg = Math.max(1, Math.floor(effectiveBeamDmg * 0.25));
+        }
+        if (enemy.variant === "boss_architect" && enemy.isArchitectExposed()) {
+          effectiveBeamDmg = Math.floor(effectiveBeamDmg * 2.0);
+        }
+        if (enemy.variant === "boss_hydra") {
+          if (!enemy.isHydraVulnerable()) {
+            const anyPodAlive = enemy.isHydraPodAlive(0) || enemy.isHydraPodAlive(1) || enemy.isHydraPodAlive(2);
+            if (anyPodAlive) {
+              effectiveBeamDmg = Math.max(1, Math.floor(effectiveBeamDmg * 0.5));
+            }
+          }
+        }
 
         if (isBossVariant(enemy.variant) && !canFlash) {
           enemy.hitPoints -= effectiveBeamDmg;
@@ -184,6 +202,43 @@ export class CollisionSystem {
             const projCenterY = (bullet.top + bullet.bottom) / 2;
             if (projCenterY < enemy.pos.y) {
               effectiveDamage = Math.max(1, Math.floor(effectiveDamage * 0.5));
+            }
+          }
+          if (enemy.variant === "boss_shadow" && enemy.isShadowCloaked()) {
+            effectiveDamage = Math.max(1, Math.floor(effectiveDamage * 0.25));
+          }
+          if (enemy.variant === "boss_behemoth" && enemy.isBehemothShielded()) {
+            effectiveDamage = Math.max(1, Math.floor(effectiveDamage * 0.25));
+          }
+          if (enemy.variant === "boss_architect" && enemy.isArchitectExposed()) {
+            effectiveDamage = Math.floor(effectiveDamage * 2.0);
+          }
+          if (enemy.variant === "boss_hydra") {
+            const podPositions = enemy.getHydraPodPositions();
+            let hitPod = false;
+            const bx = (bullet.left + bullet.right) / 2;
+            const by = (bullet.top + bullet.bottom) / 2;
+            for (let pi = 0; pi < 3; pi++) {
+              if (!enemy.isHydraPodAlive(pi)) continue;
+              const pdx = bx - podPositions[pi].x;
+              const pdy = by - podPositions[pi].y;
+              if (Math.abs(pdx) < 10 && Math.abs(pdy) < 10) {
+                enemy.hitHydraPod(pi, effectiveDamage);
+                hitPod = true;
+                if (!bullet.piercing) bullet.alive = false;
+                hits.push({ bullet, enemy, destroyed: false, damage: effectiveDamage });
+                break;
+              }
+            }
+            if (hitPod) {
+              if (!bullet.piercing) break;
+              continue;
+            }
+            if (!enemy.isHydraVulnerable()) {
+              const anyPodAlive = enemy.isHydraPodAlive(0) || enemy.isHydraPodAlive(1) || enemy.isHydraPodAlive(2);
+              if (anyPodAlive) {
+                effectiveDamage = Math.max(1, Math.floor(effectiveDamage * 0.5));
+              }
             }
           }
           const destroyed = enemy.hit(effectiveDamage);
