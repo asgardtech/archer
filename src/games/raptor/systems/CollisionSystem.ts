@@ -3,8 +3,8 @@ import { Bullet } from "../entities/Bullet";
 import { Missile } from "../entities/Missile";
 import { PlasmaBolt } from "../entities/PlasmaBolt";
 import { LaserBeam } from "../entities/LaserBeam";
-import { EnemyLaserBeam } from "../entities/EnemyLaserBeam";
 import { EnemyShockwave } from "../entities/EnemyShockwave";
+import { EnemyChainBolt } from "../entities/EnemyChainBolt";
 import { Enemy, isBossVariant } from "../entities/Enemy";
 import { EnemyBullet } from "../entities/EnemyBullet";
 import { EnemyMissile } from "../entities/EnemyMissile";
@@ -49,6 +49,16 @@ export interface EnemyBeamPlayerHit {
 
 export interface ShockwavePlayerHit {
   shockwave: EnemyShockwave;
+  damage: number;
+}
+
+export interface ChainArcTarget {
+  pos: { x: number; y: number };
+  active: boolean;
+}
+
+export interface ChainArcHit {
+  target: ChainArcTarget;
   damage: number;
 }
 
@@ -370,6 +380,27 @@ export class CollisionSystem {
     }
 
     return destroyed;
+  }
+
+  checkChainArc(
+    bolt: EnemyChainBolt,
+    playerPos: { x: number; y: number },
+    targets: ChainArcTarget[],
+    arcRange = 120
+  ): ChainArcHit[] {
+    const hits: ChainArcHit[] = [];
+    const arcDamage = bolt.damage * bolt.arcDamageRatio;
+    const r2 = arcRange * arcRange;
+
+    for (const target of targets) {
+      if (!target.active) continue;
+      const dx = target.pos.x - playerPos.x;
+      const dy = target.pos.y - playerPos.y;
+      if (dx * dx + dy * dy <= r2) {
+        hits.push({ target, damage: arcDamage });
+      }
+    }
+    return hits;
   }
 
   checkShockwavePlayer(

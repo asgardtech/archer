@@ -26,6 +26,7 @@ import { Enemy, isBossVariant } from "./entities/Enemy";
 import { EnemyBullet } from "./entities/EnemyBullet";
 import { EnemyMissile } from "./entities/EnemyMissile";
 import { EnemyShockwave } from "./entities/EnemyShockwave";
+import { EnemyChainBolt } from "./entities/EnemyChainBolt";
 import { Explosion } from "./entities/Explosion";
 import { PowerUp, POWERUP_SPRITE_KEYS } from "./entities/PowerUp";
 import { HUD } from "./rendering/HUD";
@@ -1272,6 +1273,16 @@ export class RaptorGame implements IGame {
         }
         if (this.player.armor > 0 && this.player.armor < this.player.maxArmor * 0.1) {
           this.achievementManager.fireEvent("armor_below_10pct");
+        }
+      }
+
+      if (!hit.reflected && hit.bullet instanceof EnemyChainBolt) {
+        const arcTargets = this.weaponSystem.getActiveTurretDrones();
+        const arcHits = this.collisions.checkChainArc(
+          hit.bullet, this.player.pos, arcTargets
+        );
+        for (const arcHit of arcHits) {
+          this.vfx.triggerExplosionFlash(arcHit.target.pos.x, arcHit.target.pos.y, 8);
         }
       }
     }

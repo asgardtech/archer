@@ -36,18 +36,23 @@ export class EnemyChainBolt extends EnemyBullet {
     }
   }
 
+  override update(dt: number, canvasWidth: number, canvasHeight: number, playerPos?: { x: number; y: number }): void {
+    super.update(dt, canvasWidth, canvasHeight, playerPos);
+    if (!this.alive) return;
+
+    this.offsetTimer += dt;
+    if (this.offsetTimer >= 0.05) {
+      this.offsetTimer = 0;
+      this.regenerateOffsets();
+    }
+  }
+
   override render(ctx: CanvasRenderingContext2D): void {
     if (!this.alive) return;
 
     if (this.sprite) {
       super.render(ctx);
       return;
-    }
-
-    this.offsetTimer += 1;
-    if (this.offsetTimer >= 3) {
-      this.offsetTimer = 0;
-      this.regenerateOffsets();
     }
 
     ctx.save();
