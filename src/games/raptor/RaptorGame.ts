@@ -1036,7 +1036,7 @@ export class RaptorGame implements IGame {
     this.storyRenderer.update(dt);
 
     for (const enemy of this.enemies) {
-      enemy.update(dt, this.gameAreaHeight, this.player.pos.x, this.gameAreaWidth, this.gameAreaX, this.gameAreaY);
+      enemy.update(dt, this.gameAreaHeight, this.player.pos.x, this.gameAreaWidth, this.gameAreaX, this.gameAreaY, this.player.pos.y);
 
       if (enemy.canFire()) {
         const weaponConfig = ENEMY_WEAPON_CONFIGS[enemy.weaponType];
@@ -1270,17 +1270,25 @@ export class RaptorGame implements IGame {
         }
       }
 
-      if (enemy.variant === "teleporter" && enemy.alive && enemy.hasTeleporterBurst()) {
-        if (this.enemyBullets.length < MAX_ENEMY_BULLETS) {
-          enemy.consumeTeleporterBurstTick();
-          const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
-          for (const eb of result.bullets) {
-            const sprite = this.assets.getOptional(eb.spriteKey);
-            if (sprite) eb.setSprite(sprite);
-            this.enemyBullets.push(eb);
-          }
-          if (result.soundEvent) {
-            this.sound.play(result.soundEvent);
+      if (enemy.variant === "teleporter" && enemy.alive) {
+        const flashPositions = enemy.consumeTeleportFlash();
+        if (flashPositions) {
+          this.vfx.addTeleportFlash(flashPositions.departX, flashPositions.departY);
+          this.vfx.addTeleportFlash(flashPositions.arriveX, flashPositions.arriveY);
+        }
+
+        if (enemy.hasTeleporterBurst()) {
+          if (this.enemyBullets.length < MAX_ENEMY_BULLETS) {
+            enemy.consumeTeleporterBurstTick();
+            const result = this.enemyWeaponSystem.fire(enemy, this.player.pos.x, this.player.pos.y);
+            for (const eb of result.bullets) {
+              const sprite = this.assets.getOptional(eb.spriteKey);
+              if (sprite) eb.setSprite(sprite);
+              this.enemyBullets.push(eb);
+            }
+            if (result.soundEvent) {
+              this.sound.play(result.soundEvent);
+            }
           }
         }
       }
@@ -1526,7 +1534,8 @@ export class RaptorGame implements IGame {
     const enemyPlayerHits = this.collisions.checkPlayerEnemies(this.player, this.enemies);
     for (const hit of enemyPlayerHits) {
       const explosionSize = (isBossVariant(hit.enemy.variant) || hit.enemy.variant === "juggernaut") ? 3
-        : (hit.enemy.variant === "bomber" || hit.enemy.variant === "gunship" || hit.enemy.variant === "cruiser" || hit.enemy.variant === "destroyer" || hit.enemy.variant === "minelayer") ? 2
+        : (hit.enemy.variant === "bomber" || hit.enemy.variant === "gunship" || hit.enemy.variant === "cruiser" || hit.enemy.variant === "destroyer" || hit.enemy.variant === "minelayer"
+          || hit.enemy.variant === "kamikaze") ? 2
         : 1;
       this.addExplosion(new Explosion(hit.enemy.pos.x, hit.enemy.pos.y, explosionSize));
       this.score += hit.enemy.scoreValue;
@@ -1534,6 +1543,16 @@ export class RaptorGame implements IGame {
       this.statsTracker.updateScore(this.score, this.totalScore + this.score);
       this.achievementManager.fireEvent("ram_kill");
       this.achievementManager.checkAchievements();
+
+      if (hit.enemy.variant === "splitter") {
+        const spawnData = hit.enemy.getSplitterChildSpawnData();
+        const child1 = new Enemy(spawnData.x1, spawnData.y1, "splitter_minor", spawnData.speed);
+        const child2 = new Enemy(spawnData.x2, spawnData.y2, "splitter_minor", spawnData.speed);
+        this.assignEnemySprite(child1);
+        this.assignEnemySprite(child2);
+        this.enemies.push(child1, child2);
+      }
+
       if (isBossVariant(hit.enemy.variant)) {
         this.sound.play("boss_destroy");
         this.spawner.markBossDefeated();
@@ -1738,7 +1757,7 @@ export class RaptorGame implements IGame {
       this.enemies.push(child1, child2);
     }
 
-    if (enemy.variant === "kamikaze") {
+    if (enemy.variant === "kamikaze" && enemy.getKamikazePhase() === "diving") {
       const dx = this.player.pos.x - enemy.pos.x;
       const dy = this.player.pos.y - enemy.pos.y;
       if (Math.sqrt(dx * dx + dy * dy) <= 40) {

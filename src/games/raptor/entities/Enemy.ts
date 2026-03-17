@@ -224,6 +224,7 @@ export class Enemy {
   private readonly TELEPORTER_FLASH_DURATION = 0.1;
   private teleporterBurstRemaining = 0;
   private teleporterBurstTimer = 0;
+  private teleporterPendingFlash: { departX: number; departY: number; arriveX: number; arriveY: number } | null = null;
 
   // Mimic
   private mimicSmoothedX = 0;
@@ -273,7 +274,7 @@ export class Enemy {
   get top(): number { return this.pos.y - this.height / 2; }
   get bottom(): number { return this.pos.y + this.height / 2; }
 
-  update(dt: number, canvasHeight: number, targetX?: number, canvasWidth?: number, offsetX = 0, offsetY = 0): void {
+  update(dt: number, canvasHeight: number, targetX?: number, canvasWidth?: number, offsetX = 0, offsetY = 0, targetY?: number): void {
     if (!this.alive) return;
     this.time += dt;
 
@@ -1065,6 +1066,8 @@ export class Enemy {
       }
 
       if (this.teleporterBlinkTimer <= 0) {
+        const departX = this.pos.x;
+        const departY = this.pos.y;
         const cw = canvasWidth ?? 800;
         const margin = 30;
         this.pos.x = offsetX + margin + Math.random() * (cw - margin * 2);
@@ -1072,6 +1075,7 @@ export class Enemy {
         this.teleporterBlinkTimer = this.TELEPORTER_BLINK_INTERVAL;
         this.teleporterPostBlinkFireTimer = this.TELEPORTER_POST_BLINK_FIRE_DELAY;
         this.teleporterFlashTimer = this.TELEPORTER_FLASH_DURATION;
+        this.teleporterPendingFlash = { departX, departY, arriveX: this.pos.x, arriveY: this.pos.y };
       }
 
       if (this.teleporterPostBlinkFireTimer > 0) {
@@ -1106,7 +1110,7 @@ export class Enemy {
           this.kamikazePhase = "locked";
         }
       } else if (this.kamikazePhase === "locked") {
-        this.kamikazeTargetPos = { x: targetX ?? this.pos.x, y: (offsetY + canvasHeight) * 0.85 };
+        this.kamikazeTargetPos = { x: targetX ?? this.pos.x, y: targetY ?? (offsetY + canvasHeight * 0.85) };
         this.kamikazePhase = "diving";
       } else if (this.kamikazePhase === "diving") {
         this.kamikazeCurrentSpeed = Math.min(
@@ -1134,7 +1138,7 @@ export class Enemy {
       }
     } else if (this.variant === "jammer") {
       const cw = canvasWidth ?? 800;
-      const margin = offsetX + 40;
+      const margin = 40;
 
       if (this.jammerPhase === "entering") {
         this.pos.y += this.vel.y * dt;
@@ -1151,8 +1155,8 @@ export class Enemy {
         if (this.pos.x >= offsetX + cw - margin) {
           this.pos.x = offsetX + cw - margin;
           this.jammerDriftDirection = -1;
-        } else if (this.pos.x <= margin) {
-          this.pos.x = margin;
+        } else if (this.pos.x <= offsetX + margin) {
+          this.pos.x = offsetX + margin;
           this.jammerDriftDirection = 1;
         }
       }
@@ -1439,6 +1443,12 @@ export class Enemy {
   public getTeleporterFlashAlpha(): number {
     if (this.teleporterFlashTimer <= 0) return 0;
     return this.teleporterFlashTimer / this.TELEPORTER_FLASH_DURATION;
+  }
+
+  public consumeTeleportFlash(): { departX: number; departY: number; arriveX: number; arriveY: number } | null {
+    const flash = this.teleporterPendingFlash;
+    this.teleporterPendingFlash = null;
+    return flash;
   }
 
   // --- Kamikaze accessors ---
