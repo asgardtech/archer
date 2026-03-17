@@ -962,6 +962,7 @@ export class RaptorGame implements IGame {
       this.sound.play(soundEvent);
     }
 
+    this.collisions.checkBeamBarrierBlock(this.weaponSystem.laserBeam, this.enemies, dt);
     const laserHits = this.collisions.checkBeamEnemies(
       this.weaponSystem.laserBeam, this.enemies, dt
     );
@@ -1135,6 +1136,21 @@ export class RaptorGame implements IGame {
           }
         }
       }
+
+      if (enemy.variant === "leviathan" && enemy.shouldSpawnDrones()) {
+        const activeDrones = enemy.leviathanSpawnedDrones.filter(d => d.alive).length;
+        if (activeDrones < 6) {
+          const spawnPositions = enemy.getDroneSpawnPositions();
+          const spawnCount = Math.min(2, 6 - activeDrones);
+          for (let i = 0; i < spawnCount; i++) {
+            const spawnPos = spawnPositions[i % spawnPositions.length];
+            const drone = new Enemy(spawnPos.x, spawnPos.y, "drone");
+            this.assignEnemySprite(drone);
+            this.enemies.push(drone);
+            enemy.leviathanSpawnedDrones.push(drone);
+          }
+        }
+      }
     }
 
     const laserSoundEvents = this.enemyWeaponSystem.updateLasers(dt, this.player.pos.x);
@@ -1190,6 +1206,8 @@ export class RaptorGame implements IGame {
     for (const pu of this.powerUps) {
       pu.update(dt, this.gameAreaHeight + this.gameAreaY);
     }
+
+    this.collisions.checkBarrierAbsorption(this.projectiles, this.enemies);
 
     const enemyHits = this.collisions.checkBulletsEnemies(this.projectiles, this.enemies);
     for (const hit of enemyHits) {
@@ -1550,10 +1568,22 @@ export class RaptorGame implements IGame {
     this.score += enemy.scoreValue;
     this.statsTracker.recordKill(enemy.variant, enemy.scoreValue, isBossVariant(enemy.variant));
     this.statsTracker.updateScore(this.score, this.totalScore + this.score);
-    const explosionSize = (isBossVariant(enemy.variant) || enemy.variant === "juggernaut") ? 3
-      : (enemy.variant === "bomber" || enemy.variant === "gunship" || enemy.variant === "cruiser" || enemy.variant === "destroyer" || enemy.variant === "minelayer") ? 2
+    const explosionSize = (isBossVariant(enemy.variant) || enemy.variant === "juggernaut"
+        || enemy.variant === "colossus" || enemy.variant === "titan" || enemy.variant === "leviathan") ? 3
+      : (enemy.variant === "bomber" || enemy.variant === "gunship" || enemy.variant === "cruiser"
+        || enemy.variant === "destroyer" || enemy.variant === "minelayer"
+        || enemy.variant === "bastion" || enemy.variant === "siege_engine" || enemy.variant === "warden") ? 2
       : 1;
     this.addExplosion(new Explosion(enemy.pos.x, enemy.pos.y, explosionSize));
+
+    if (enemy.variant === "leviathan") {
+      for (const drone of enemy.leviathanSpawnedDrones) {
+        if (drone.alive) {
+          drone.alive = false;
+          this.addExplosion(new Explosion(drone.pos.x, drone.pos.y, 1));
+        }
+      }
+    }
 
     if (isBossVariant(enemy.variant)) {
       this.sound.play("boss_destroy");
@@ -1681,6 +1711,18 @@ export class RaptorGame implements IGame {
       locust: "enemy_locust",
       glider: "enemy_glider",
       spark: "enemy_spark",
+      sentinel: "enemy_sentinel",
+      lancer: "enemy_lancer",
+      ravager: "enemy_ravager",
+      wraith: "enemy_wraith",
+      corsair: "enemy_corsair",
+      vulture: "enemy_vulture",
+      titan: "enemy_titan",
+      bastion: "enemy_bastion",
+      siege_engine: "enemy_siege_engine",
+      colossus: "enemy_colossus",
+      warden: "enemy_warden",
+      leviathan: "enemy_leviathan",
     };
     const key = spriteMap[enemy.variant];
     if (key) {

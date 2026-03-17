@@ -93,6 +93,7 @@ export class CollisionSystem {
   private hitFlashTimers: Map<Enemy, number> = new Map();
   private enemyGrid: SpatialGrid<Enemy>;
   private queryBuffer: Enemy[] = [];
+  private activeBarriers: { x: number; y: number; width: number; height: number }[] = [];
 
   constructor(width = 800, height = 600) {
     this.enemyGrid = new SpatialGrid<Enemy>(width, height, 8, 6);
@@ -122,6 +123,17 @@ export class CollisionSystem {
       if (enemy.pos.y > beam.pos.y) continue;
 
       if (enemy.right > beamLeft && enemy.left < beamRight) {
+        let blockedByBarrier = false;
+        for (const barrier of this.activeBarriers) {
+          const bLeft = barrier.x - barrier.width / 2;
+          const bRight = barrier.x + barrier.width / 2;
+          if (enemy.right > bLeft && enemy.left < bRight && enemy.pos.y < barrier.y) {
+            blockedByBarrier = true;
+            break;
+          }
+        }
+        if (blockedByBarrier) continue;
+
         const canFlash = !this.hitFlashTimers.has(enemy) ||
           this.hitFlashTimers.get(enemy)! <= 0;
 
@@ -167,7 +179,13 @@ export class CollisionSystem {
         if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
                       enemy.left, enemy.top, enemy.right, enemy.bottom)) {
           const auraMult = getAuraDamageMultiplier(enemy, enemies);
-          const effectiveDamage = Math.max(1, Math.floor(bullet.damage * auraMult));
+          let effectiveDamage = Math.max(1, Math.floor(bullet.damage * auraMult));
+          if (enemy.variant === "colossus") {
+            const projCenterY = (bullet.top + bullet.bottom) / 2;
+            if (projCenterY < enemy.pos.y) {
+              effectiveDamage = Math.max(1, Math.floor(effectiveDamage * 0.5));
+            }
+          }
           const destroyed = enemy.hit(effectiveDamage);
           if (!bullet.piercing) {
             bullet.alive = false;
@@ -232,6 +250,50 @@ export class CollisionSystem {
     }
 
     return splashHits;
+  }
+
+  checkBarrierAbsorption(bullets: Projectile[], enemies: Enemy[]): void {
+    for (const enemy of enemies) {
+      if (!enemy.alive || enemy.variant !== "warden") continue;
+      const barrier = enemy.getBarrierRect();
+      if (!barrier) continue;
+
+      const bLeft = barrier.x - barrier.width / 2;
+      const bRight = barrier.x + barrier.width / 2;
+      const bTop = barrier.y - barrier.height / 2;
+      const bBottom = barrier.y + barrier.height / 2;
+
+      for (const bullet of bullets) {
+        if (!bullet.alive) continue;
+        if (this.aabb(bullet.left, bullet.top, bullet.right, bullet.bottom,
+                      bLeft, bTop, bRight, bBottom)) {
+          enemy.barrierHP = Math.max(0, enemy.barrierHP - bullet.damage);
+          bullet.alive = false;
+        }
+      }
+    }
+  }
+
+  checkBeamBarrierBlock(beam: LaserBeam, enemies: Enemy[], dt: number): void {
+    this.activeBarriers.length = 0;
+    if (!beam.active) return;
+
+    for (const enemy of enemies) {
+      if (!enemy.alive || enemy.variant !== "warden") continue;
+      const barrier = enemy.getBarrierRect();
+      if (!barrier) continue;
+
+      const halfWidth = beam.beamWidth / 2;
+      const beamLeft = beam.pos.x - halfWidth;
+      const beamRight = beam.pos.x + halfWidth;
+      const bLeft = barrier.x - barrier.width / 2;
+      const bRight = barrier.x + barrier.width / 2;
+
+      if (beamRight > bLeft && beamLeft < bRight && barrier.y < beam.pos.y) {
+        enemy.barrierHP = Math.max(0, enemy.barrierHP - beam.damage * dt);
+        this.activeBarriers.push(barrier);
+      }
+    }
   }
 
   checkEnemyBulletsPlayer(bullets: EnemyBullet[], player: Player): EnemyBulletPlayerHit[] {
