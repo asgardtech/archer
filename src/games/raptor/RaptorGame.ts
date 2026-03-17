@@ -968,6 +968,10 @@ export class RaptorGame implements IGame {
       this.enemies, externalFireRateMultiplier
     );
 
+    this.player.activeLaserTurret = this.weaponSystem.isLaserActive
+      ? this.weaponSystem.laserTurret
+      : null;
+
     for (const proj of newProjectiles) {
       this.assignProjectileSprite(proj);
       this.projectiles.push(proj);

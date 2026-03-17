@@ -180,6 +180,7 @@ function createMockContext(): CanvasRenderingContext2D & { _paths: RecordedPath[
     closePath: jest.fn(() => { paths.push({ points: [...current], closed: true, filled: false }); }),
     fill: jest.fn(() => { if (paths.length > 0) paths[paths.length - 1].filled = true; }),
     stroke: jest.fn(),
+    arc: jest.fn(),
     set fillStyle(_v: string) {},
     set strokeStyle(_v: string) {},
     set lineWidth(_v: number) {},

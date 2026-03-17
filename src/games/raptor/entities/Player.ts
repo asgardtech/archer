@@ -1,6 +1,7 @@
 import { Vec2, SHIP_SPEED_SCALE } from "../types";
 import { SpriteSheet } from "../rendering/SpriteSheet";
 import { ShipRenderer, ShipRenderState } from "../rendering/ShipRenderer";
+import { TurretMount } from "./TurretMount";
 
 export const BASE_MOVE_SPEED = 500 * SHIP_SPEED_SCALE;
 const MOVE_SPEED = BASE_MOVE_SPEED;
@@ -271,6 +272,8 @@ export class Player {
     }
   }
 
+  public activeLaserTurret: TurretMount | null = null;
+
   render(ctx: CanvasRenderingContext2D): void {
     if (!this.alive) return;
 
@@ -345,6 +348,7 @@ export class Player {
       panelLightFlicker: this.panelLightOn ? 0.3 : 0.8,
       heatShimmer: Math.sin(ShipRenderer.frameTime * 0.01) * 0.5 + 0.5,
       damageLevel: 1 - this.armor / this.maxArmor,
+      laserTurret: this.activeLaserTurret ?? undefined,
     };
 
     this.shipRenderer.render(

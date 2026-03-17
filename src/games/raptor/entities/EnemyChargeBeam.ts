@@ -1,4 +1,5 @@
 import { BeamLike } from "../types";
+import { TurretMount, TurretMountConfig } from "./TurretMount";
 
 export type EnemyChargeBeamPhase = "idle" | "warmup" | "active" | "cooldown";
 
@@ -9,7 +10,17 @@ export interface EnemyChargeBeamConfig {
   beamWidth: number;
   trackingSpeed: number;
   damage: number;
+  turret?: TurretMountConfig;
 }
+
+const DEFAULT_CHARGE_TURRET: TurretMountConfig = {
+  offsetX: 0,
+  offsetY: 0,
+  barrelLength: 10,
+  baseRadius: 5,
+  color: "rgba(100, 180, 255, 0.8)",
+  barrelColor: "rgba(160, 220, 255, 0.9)",
+};
 
 export class EnemyChargeBeam implements BeamLike {
   phase: EnemyChargeBeamPhase = "idle";
@@ -18,6 +29,7 @@ export class EnemyChargeBeam implements BeamLike {
   originY = 0;
   beamWidth: number;
   damage: number;
+  public turret: TurretMount;
 
   private phaseTimer = 0;
   private config: EnemyChargeBeamConfig;
@@ -29,6 +41,7 @@ export class EnemyChargeBeam implements BeamLike {
     this.config = config;
     this.beamWidth = config.beamWidth;
     this.damage = config.damage;
+    this.turret = new TurretMount(config.turret ?? DEFAULT_CHARGE_TURRET);
   }
 
   activate(enemyX: number, enemyBottomY: number, targetX: number): void {
@@ -87,10 +100,21 @@ export class EnemyChargeBeam implements BeamLike {
     }
   }
 
+  private updateTurretAngle(canvasHeight: number): void {
+    const dx = this.beamX - this.originX;
+    const dy = canvasHeight - this.originY;
+    this.turret.angle = Math.atan2(dy, dx);
+  }
+
   render(ctx: CanvasRenderingContext2D, canvasHeight: number): void {
     if (this.phase === "warmup") {
+      this.updateTurretAngle(canvasHeight);
+      const progress = 1 - (this.phaseTimer / this.config.warmupDuration);
+      this.turret.render(ctx, this.originX, this.originY, 0.3 + progress * 0.7);
       this.renderCharging(ctx);
     } else if (this.phase === "active") {
+      this.updateTurretAngle(canvasHeight);
+      this.turret.render(ctx, this.originX, this.originY, 1.0);
       this.renderBeam(ctx, canvasHeight);
     }
   }

@@ -1,3 +1,5 @@
+import { TurretMount, TurretMountConfig } from "./TurretMount";
+
 export type EnemyLaserPhase = "idle" | "warmup" | "active" | "cooldown";
 
 export interface EnemyLaserBeamConfig {
@@ -7,7 +9,17 @@ export interface EnemyLaserBeamConfig {
   beamWidth: number;
   trackingSpeed: number;
   damage: number;
+  turret?: TurretMountConfig;
 }
+
+const DEFAULT_ENEMY_TURRET: TurretMountConfig = {
+  offsetX: 0,
+  offsetY: 0,
+  barrelLength: 8,
+  baseRadius: 4,
+  color: "rgba(255, 120, 20, 0.8)",
+  barrelColor: "rgba(255, 180, 80, 0.9)",
+};
 
 export class EnemyLaserBeam {
   phase: EnemyLaserPhase = "idle";
@@ -17,6 +29,7 @@ export class EnemyLaserBeam {
   beamWidth: number;
   damage: number;
   fixedTarget = false;
+  public turret: TurretMount;
 
   private phaseTimer = 0;
   private config: EnemyLaserBeamConfig;
@@ -28,6 +41,7 @@ export class EnemyLaserBeam {
     this.config = config;
     this.beamWidth = config.beamWidth;
     this.damage = config.damage;
+    this.turret = new TurretMount(config.turret ?? DEFAULT_ENEMY_TURRET);
   }
 
   activate(enemyX: number, enemyBottomY: number, targetX: number, fixedTarget = false): void {
@@ -93,10 +107,21 @@ export class EnemyLaserBeam {
     }
   }
 
+  private updateTurretAngle(canvasHeight: number): void {
+    const dx = this.beamX - this.originX;
+    const dy = canvasHeight - this.originY;
+    this.turret.angle = Math.atan2(dy, dx);
+  }
+
   render(ctx: CanvasRenderingContext2D, canvasHeight: number): void {
     if (this.phase === "warmup") {
+      this.updateTurretAngle(canvasHeight);
+      const progress = 1 - (this.phaseTimer / this.config.warmupDuration);
+      this.turret.render(ctx, this.originX, this.originY, 0.3 + progress * 0.7);
       this.renderWarning(ctx, canvasHeight);
     } else if (this.phase === "active") {
+      this.updateTurretAngle(canvasHeight);
+      this.turret.render(ctx, this.originX, this.originY, 1.0);
       this.renderBeam(ctx, canvasHeight);
     }
   }
