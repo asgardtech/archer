@@ -922,7 +922,7 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     scoreValue: 12,
     fireRate: 0.5,
     width: 28,
-    height: 16,
+    height: 18,
     weaponType: "standard",
   },
   spark: {
