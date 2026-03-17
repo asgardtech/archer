@@ -1,4 +1,5 @@
 import { Vec2, Projectile, WeaponType } from "../types";
+import { Enemy } from "./Enemy";
 
 const ION_SPEED = 600;
 
@@ -13,16 +14,22 @@ export class IonBolt implements Projectile {
   public chargeLevel: number;
 
   private angle: number;
+  private vx: number;
+  private vy: number;
+  private homingStrength: number;
   private sprite: HTMLImageElement | null = null;
   private time = 0;
 
-  constructor(x: number, y: number, chargeLevel: number, angle = 0) {
+  constructor(x: number, y: number, chargeLevel: number, angle = 0, homingStrength = 0) {
     this.pos = { x, y };
     this.chargeLevel = Math.max(0, Math.min(1, chargeLevel));
     this.angle = angle;
+    this.homingStrength = homingStrength;
     this.damage = 2 + this.chargeLevel * 3;
     this.width = 6 + this.chargeLevel * 6;
     this.height = 10 + this.chargeLevel * 6;
+    this.vx = Math.sin(angle) * ION_SPEED;
+    this.vy = -Math.cos(angle) * ION_SPEED;
   }
 
   setSprite(sprite: HTMLImageElement): void {
@@ -34,15 +41,52 @@ export class IonBolt implements Projectile {
   get top(): number { return this.pos.y - this.height / 2; }
   get bottom(): number { return this.pos.y + this.height / 2; }
 
-  update(dt: number, canvasWidth = 800, _canvasHeight?: number, _enemies?: unknown[]): void {
+  update(dt: number, canvasWidth = 800, canvasHeight = 600, enemies?: Enemy[]): void {
     if (!this.alive) return;
     this.time += dt;
-    this.pos.x += Math.sin(this.angle) * ION_SPEED * dt;
-    this.pos.y -= Math.cos(this.angle) * ION_SPEED * dt;
 
-    if (this.pos.y < -20 || this.pos.x < -20 || this.pos.x > canvasWidth + 20) {
+    if (this.homingStrength > 0 && enemies && enemies.length > 0) {
+      const target = this.findNearestEnemy(enemies);
+      if (target) {
+        const desiredAngle = Math.atan2(
+          target.pos.x - this.pos.x,
+          -(target.pos.y - this.pos.y)
+        );
+        let angleDiff = desiredAngle - this.angle;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+        const maxTurn = this.homingStrength * dt;
+        this.angle += Math.max(-maxTurn, Math.min(maxTurn, angleDiff));
+      }
+    }
+
+    this.vx = Math.sin(this.angle) * ION_SPEED;
+    this.vy = -Math.cos(this.angle) * ION_SPEED;
+
+    this.pos.x += this.vx * dt;
+    this.pos.y += this.vy * dt;
+
+    if (this.pos.y < -20 || this.pos.x < -20 || this.pos.x > canvasWidth + 20 || this.pos.y > canvasHeight + 20) {
       this.alive = false;
     }
+  }
+
+  private findNearestEnemy(enemies: Enemy[]): Enemy | null {
+    let nearest: Enemy | null = null;
+    let minDist = Infinity;
+
+    for (const enemy of enemies) {
+      if (!enemy.alive) continue;
+      const dx = enemy.pos.x - this.pos.x;
+      const dy = enemy.pos.y - this.pos.y;
+      const dist = dx * dx + dy * dy;
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = enemy;
+      }
+    }
+    return nearest;
   }
 
   render(ctx: CanvasRenderingContext2D): void {

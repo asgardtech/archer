@@ -140,10 +140,10 @@ export const ACHIEVEMENT_DEFINITIONS: readonly Readonly<AchievementDefinition>[]
   {
     id: "max_tier",
     name: "Max Tier",
-    description: "Upgrade any weapon to tier 5.",
+    description: "Upgrade any weapon to tier 10.",
     icon: "chevrons_up",
     category: "collection",
-    condition: { type: "single_event", eventType: "weapon_tier_5" },
+    condition: { type: "single_event", eventType: "weapon_tier_max" },
   },
   {
     id: "bomb_hoarder",

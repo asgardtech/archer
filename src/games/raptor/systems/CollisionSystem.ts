@@ -99,6 +99,26 @@ export class CollisionSystem {
     this.enemyGrid = new SpatialGrid<Enemy>(width, height, 8, 6);
   }
 
+  private beamHitsEntity(beam: LaserBeam, entityX: number, entityY: number, entityHalfW: number, entityHalfH: number): boolean {
+    if (Math.abs(beam.currentAngle) < 0.001) {
+      const halfWidth = beam.beamWidth / 2;
+      const beamLeft = beam.pos.x - halfWidth;
+      const beamRight = beam.pos.x + halfWidth;
+      return (entityX + entityHalfW > beamLeft && entityX - entityHalfW < beamRight);
+    }
+
+    const sinA = Math.sin(beam.currentAngle);
+    const cosA = Math.cos(beam.currentAngle);
+    const dx = entityX - beam.pos.x;
+    const dy = entityY - beam.pos.y;
+    const alongBeam = -dx * sinA + dy * cosA;
+    const perpBeam = dx * cosA + dy * sinA;
+    const halfWidth = beam.beamWidth / 2;
+    const entityRadius = Math.max(entityHalfW, entityHalfH);
+
+    return (alongBeam < entityRadius) && (Math.abs(perpBeam) < halfWidth + entityRadius);
+  }
+
   checkBeamEnemies(beam: LaserBeam, enemies: Enemy[], dt: number): Enemy[] {
     for (const [enemy, timer] of this.hitFlashTimers.entries()) {
       if (!enemy.alive) {
@@ -122,7 +142,9 @@ export class CollisionSystem {
       if (!enemy.alive) continue;
       if (enemy.pos.y > beam.pos.y) continue;
 
-      if (enemy.right > beamLeft && enemy.left < beamRight) {
+      const enemyHalfW = (enemy.right - enemy.left) / 2;
+      const enemyHalfH = (enemy.bottom - enemy.top) / 2;
+      if (this.beamHitsEntity(beam, enemy.pos.x, enemy.pos.y, enemyHalfW, enemyHalfH)) {
         let blockedByBarrier = false;
         for (const barrier of this.activeBarriers) {
           const bLeft = barrier.x - barrier.width / 2;
@@ -354,13 +376,10 @@ export class CollisionSystem {
       const barrier = enemy.getBarrierRect();
       if (!barrier) continue;
 
-      const halfWidth = beam.beamWidth / 2;
-      const beamLeft = beam.pos.x - halfWidth;
-      const beamRight = beam.pos.x + halfWidth;
-      const bLeft = barrier.x - barrier.width / 2;
-      const bRight = barrier.x + barrier.width / 2;
-
-      if (beamRight > bLeft && beamLeft < bRight && barrier.y < beam.pos.y) {
+      if (barrier.y >= beam.pos.y) continue;
+      const barrierHalfW = barrier.width / 2;
+      const barrierHalfH = barrier.height / 2;
+      if (this.beamHitsEntity(beam, barrier.x, barrier.y, barrierHalfW, barrierHalfH)) {
         enemy.barrierHP = Math.max(0, enemy.barrierHP - beam.damage * dt);
         this.activeBarriers.push(barrier);
       }
@@ -512,16 +531,15 @@ export class CollisionSystem {
   ): EnemyMissile[] {
     if (!beam.active) return [];
 
-    const halfWidth = beam.beamWidth / 2;
-    const beamLeft = beam.pos.x - halfWidth;
-    const beamRight = beam.pos.x + halfWidth;
     const destroyed: EnemyMissile[] = [];
 
     for (const eb of enemyBullets) {
       if (!(eb instanceof EnemyMissile) || !eb.alive) continue;
       if (eb.pos.y > beam.pos.y) continue;
 
-      if (eb.right > beamLeft && eb.left < beamRight) {
+      const ebHalfW = (eb.right - eb.left) / 2;
+      const ebHalfH = (eb.bottom - eb.top) / 2;
+      if (this.beamHitsEntity(beam, eb.pos.x, eb.pos.y, ebHalfW, ebHalfH)) {
         eb.alive = false;
         destroyed.push(eb);
       }

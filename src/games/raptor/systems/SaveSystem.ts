@@ -2,7 +2,7 @@ import { RaptorSaveData, WeaponType, SAVE_FORMAT_VERSION, SaveMigration, MAX_SAV
 import { LEVELS } from "../levels";
 import { getStorageBackend } from "../../../shared/storage";
 
-const VALID_WEAPONS: WeaponType[] = ["machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun", "rocket"];
+const VALID_WEAPONS: WeaponType[] = ["machine-gun", "missile", "laser", "plasma", "ion-cannon", "auto-gun", "rocket", "auto-turret"];
 
 const MIGRATIONS: readonly SaveMigration[] = [
   {
@@ -29,6 +29,14 @@ const MIGRATIONS: readonly SaveMigration[] = [
       if (typeof data.armor === "number") data.armor = Math.min(200, data.armor * 2);
       if (typeof data.energy === "number") data.energy = Math.min(200, data.energy * 2);
       if (typeof data.shieldBattery === "number") data.shieldBattery = Math.min(200, data.shieldBattery * 2);
+      return data;
+    },
+  },
+  {
+    fromVersion: 4,
+    toVersion: 5,
+    migrate(data) {
+      data.version = 5;
       return data;
     },
   },

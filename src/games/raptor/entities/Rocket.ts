@@ -1,4 +1,5 @@
 import { Vec2, Projectile, WeaponType } from "../types";
+import { Enemy } from "./Enemy";
 
 const ROCKET_SPEED = 450;
 
@@ -14,12 +15,14 @@ export class Rocket implements Projectile {
   private angle: number;
   private vx: number;
   private vy: number;
+  private homingStrength: number;
   private sprite: HTMLImageElement | null = null;
   private time = 0;
 
-  constructor(x: number, y: number, angle = 0) {
+  constructor(x: number, y: number, angle = 0, homingStrength = 0) {
     this.pos = { x, y };
     this.angle = angle;
+    this.homingStrength = homingStrength;
     this.vx = Math.sin(angle) * ROCKET_SPEED;
     this.vy = -Math.cos(angle) * ROCKET_SPEED;
   }
@@ -43,9 +46,28 @@ export class Rocket implements Projectile {
     };
   }
 
-  update(dt: number, canvasWidth = 800, canvasHeight = 600): void {
+  update(dt: number, canvasWidth = 800, canvasHeight = 600, enemies?: Enemy[]): void {
     if (!this.alive) return;
     this.time += dt;
+
+    if (this.homingStrength > 0 && enemies && enemies.length > 0) {
+      const target = this.findNearestEnemy(enemies);
+      if (target) {
+        const desiredAngle = Math.atan2(
+          target.pos.x - this.pos.x,
+          -(target.pos.y - this.pos.y)
+        );
+        let angleDiff = desiredAngle - this.angle;
+        while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+        while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+        const maxTurn = this.homingStrength * dt;
+        this.angle += Math.max(-maxTurn, Math.min(maxTurn, angleDiff));
+      }
+    }
+
+    this.vx = Math.sin(this.angle) * ROCKET_SPEED;
+    this.vy = -Math.cos(this.angle) * ROCKET_SPEED;
 
     this.pos.x += this.vx * dt;
     this.pos.y += this.vy * dt;
@@ -56,6 +78,23 @@ export class Rocket implements Projectile {
     ) {
       this.alive = false;
     }
+  }
+
+  private findNearestEnemy(enemies: Enemy[]): Enemy | null {
+    let nearest: Enemy | null = null;
+    let minDist = Infinity;
+
+    for (const enemy of enemies) {
+      if (!enemy.alive) continue;
+      const dx = enemy.pos.x - this.pos.x;
+      const dy = enemy.pos.y - this.pos.y;
+      const dist = dx * dx + dy * dy;
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = enemy;
+      }
+    }
+    return nearest;
   }
 
   render(ctx: CanvasRenderingContext2D): void {
@@ -81,7 +120,6 @@ export class Rocket implements Projectile {
     ctx.translate(this.pos.x, this.pos.y);
     ctx.rotate(this.angle);
 
-    // Dark olive/green rocket body
     ctx.fillStyle = "#3d5c2e";
     ctx.beginPath();
     ctx.moveTo(0, -this.height / 2);
@@ -92,7 +130,6 @@ export class Rocket implements Projectile {
     ctx.closePath();
     ctx.fill();
 
-    // Orange nose tip
     ctx.fillStyle = "#ffaa33";
     ctx.beginPath();
     ctx.moveTo(0, -this.height / 2);
@@ -101,12 +138,10 @@ export class Rocket implements Projectile {
     ctx.closePath();
     ctx.fill();
 
-    // Fins
     ctx.fillStyle = "#2e4a20";
     ctx.fillRect(-this.width / 2 - 2, this.height / 4, 4, this.height / 4);
     ctx.fillRect(this.width / 2 - 2, this.height / 4, 4, this.height / 4);
 
-    // Flickering exhaust flame
     ctx.fillStyle = "#ff4400";
     ctx.shadowColor = "#ff4400";
     ctx.shadowBlur = 8;

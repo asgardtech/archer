@@ -1838,7 +1838,7 @@ export class RaptorGame implements IGame {
     }
     this.statsTracker.recordWeaponUpgrade(weaponType, this.powerUpManager.weaponTier);
     if (this.powerUpManager.weaponTier >= MAX_WEAPON_TIER) {
-      this.achievementManager.fireEvent("weapon_tier_5");
+      this.achievementManager.fireEvent("weapon_tier_max");
     }
     this.achievementManager.checkAchievements();
   }

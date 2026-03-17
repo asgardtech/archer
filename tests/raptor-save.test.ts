@@ -696,9 +696,9 @@ describe("Scenario: RaptorGame exposes hasSaveData getter", () => {
 // ════════════════════════════════════════════════════════════════
 
 describe("Scenario: SAVE_FORMAT_VERSION constant is exported from types", () => {
-  test("SAVE_FORMAT_VERSION is a number equal to 4", () => {
+  test("SAVE_FORMAT_VERSION is a number equal to 5", () => {
     expect(typeof SAVE_FORMAT_VERSION).toBe("number");
-    expect(SAVE_FORMAT_VERSION).toBe(4);
+    expect(SAVE_FORMAT_VERSION).toBe(5);
   });
 });
 
@@ -2037,7 +2037,7 @@ describe("Scenario: Legacy v3 save is migrated correctly (v3→v4)", () => {
 
     const loaded = await SaveSystem.load(0);
     expect(loaded).not.toBeNull();
-    expect(loaded!.version).toBe(4);
+    expect(loaded!.version).toBe(5);
     expect(loaded!.armor).toBe(160);
     expect(loaded!.energy).toBe(120);
     expect(loaded!.shieldBattery).toBe(80);
@@ -2077,7 +2077,7 @@ describe("Scenario: Legacy v3 save is migrated correctly (v3→v4)", () => {
 
     const loaded = await SaveSystem.load(0);
     expect(loaded).not.toBeNull();
-    expect(loaded!.version).toBe(4);
+    expect(loaded!.version).toBe(5);
     expect(loaded!.armor).toBeUndefined();
     expect(loaded!.energy).toBeUndefined();
     expect(loaded!.shieldBattery).toBeUndefined();
