@@ -31,7 +31,8 @@ export type EnemyVariant =
   | "wasp" | "phantom" | "needle" | "locust" | "glider" | "spark"
   | "sentinel" | "lancer" | "ravager" | "wraith" | "corsair" | "vulture"
   | "titan" | "bastion" | "siege_engine" | "colossus" | "warden" | "leviathan"
-  | "boss_mothership" | "boss_hydra" | "boss_shadow" | "boss_behemoth" | "boss_architect" | "boss_swarm_queen";
+  | "boss_mothership" | "boss_hydra" | "boss_shadow" | "boss_behemoth" | "boss_architect" | "boss_swarm_queen"
+  | "splitter" | "splitter_minor" | "healer" | "teleporter" | "mimic" | "kamikaze" | "jammer";
 
 export type EnemyWeaponType = "standard" | "spread" | "missile" | "laser" | "chain" | "charge_beam" | "scatter" | "shockwave";
 
@@ -222,6 +223,11 @@ export const ENEMY_PROJECTILE_SKINS: Partial<Record<EnemyVariant, ProjectileSkin
   boss_behemoth:    { fallbackColor: "#444455", coreColor: "#777788", glowColor: "#555566" },
   boss_architect:   { fallbackColor: "#228888", coreColor: "#55bbbb", glowColor: "#33aa9a" },
   boss_swarm_queen: { fallbackColor: "#447733", coreColor: "#77aa66", glowColor: "#558844" },
+  splitter:    { fallbackColor: "#44ddbb", coreColor: "#88ffdd", glowColor: "#66eecc" },
+  healer:      { fallbackColor: "#66dd88", coreColor: "#aaffcc", glowColor: "#88eebb" },
+  teleporter:  { fallbackColor: "#cc66ff", coreColor: "#ee99ff", glowColor: "#dd88ff" },
+  mimic:       { fallbackColor: "#bbbbdd", coreColor: "#ddddef", glowColor: "#ccccee" },
+  jammer:      { fallbackColor: "#888866", coreColor: "#aaaa88", glowColor: "#999977" },
 };
 
 export interface GravityWell {
@@ -1105,6 +1111,75 @@ export const ENEMY_CONFIGS: Record<EnemyVariant, EnemyConfig> = {
     width: 76,
     height: 64,
     weaponType: "scatter",
+  },
+  splitter: {
+    variant: "splitter",
+    hitPoints: 3,
+    speed: 120,
+    scoreValue: 35,
+    fireRate: 0.5,
+    width: 28,
+    height: 26,
+    weaponType: "standard",
+  },
+  splitter_minor: {
+    variant: "splitter_minor",
+    hitPoints: 1,
+    speed: 160,
+    scoreValue: 8,
+    fireRate: 0,
+    width: 12,
+    height: 12,
+  },
+  healer: {
+    variant: "healer",
+    hitPoints: 2,
+    speed: 90,
+    scoreValue: 55,
+    fireRate: 0.3,
+    width: 24,
+    height: 24,
+    weaponType: "standard",
+  },
+  teleporter: {
+    variant: "teleporter",
+    hitPoints: 2,
+    speed: 0,
+    scoreValue: 40,
+    fireRate: 0,
+    width: 22,
+    height: 22,
+    weaponType: "standard",
+  },
+  mimic: {
+    variant: "mimic",
+    hitPoints: 2,
+    speed: 0,
+    scoreValue: 45,
+    fireRate: 0.7,
+    width: 26,
+    height: 26,
+    weaponType: "standard",
+  },
+  kamikaze: {
+    variant: "kamikaze",
+    hitPoints: 2,
+    speed: 100,
+    scoreValue: 25,
+    fireRate: 0,
+    width: 26,
+    height: 30,
+    collisionDamage: 200,
+  },
+  jammer: {
+    variant: "jammer",
+    hitPoints: 2,
+    speed: 80,
+    scoreValue: 50,
+    fireRate: 0.4,
+    width: 34,
+    height: 26,
+    weaponType: "standard",
   },
 };
 

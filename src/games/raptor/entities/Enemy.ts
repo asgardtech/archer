@@ -206,6 +206,47 @@ export class Enemy {
   private readonly BURST_COUNT = 4;
   private readonly BURST_INTERVAL = 0.15;
 
+  // Splitter
+  private splitterWeaveTime = 0;
+
+  // Healer
+  private healerHealTimer = 0;
+  private readonly HEALER_HEAL_INTERVAL = 2.0;
+  private readonly HEALER_HEAL_RANGE = 80;
+  private readonly HEALER_GRAVITATE_RANGE = 100;
+
+  // Teleporter
+  private teleporterBlinkTimer = 2.5;
+  private teleporterPostBlinkFireTimer = -1;
+  private teleporterFlashTimer = 0;
+  private readonly TELEPORTER_BLINK_INTERVAL = 2.5;
+  private readonly TELEPORTER_POST_BLINK_FIRE_DELAY = 0.1;
+  private readonly TELEPORTER_FLASH_DURATION = 0.1;
+  private teleporterBurstRemaining = 0;
+  private teleporterBurstTimer = 0;
+
+  // Mimic
+  private mimicSmoothedX = 0;
+  private mimicBaseY = 0;
+  private mimicInitialized = false;
+
+  // Kamikaze
+  private kamikazePhase: "approaching" | "locked" | "diving" = "approaching";
+  private kamikazeLockTimer = 0;
+  private kamikazeTargetPos: Vec2 = { x: 0, y: 0 };
+  private kamikazeCurrentSpeed = 100;
+  private readonly KAMIKAZE_LOCK_DELAY = 1.5;
+  private readonly KAMIKAZE_ACCELERATION = 150;
+  private readonly KAMIKAZE_MAX_SPEED = 400;
+  public kamikazeSelfDestructed = false;
+
+  // Jammer
+  private jammerPhase: "entering" | "drifting" = "entering";
+  private jammerDriftDirection: 1 | -1 = 1;
+  private jammerDeployY = 0;
+  public static readonly JAMMER_FIELD_RADIUS = 120;
+  public static readonly JAMMER_FIRE_RATE_PENALTY = 0.3;
+
   constructor(x: number, y: number, variant: EnemyVariant, speed?: number, overrideConfig?: Partial<EnemyConfig>) {
     const config = { ...ENEMY_CONFIGS[variant], ...overrideConfig };
     this.variant = variant;
@@ -1008,6 +1049,113 @@ export class Enemy {
       }
 
       this.leviathanSpawnedDrones = this.leviathanSpawnedDrones.filter(d => d.alive);
+    } else if (this.variant === "splitter") {
+      this.splitterWeaveTime += dt;
+      this.pos.x += Math.sin(this.splitterWeaveTime * 1.5 * Math.PI * 2) * 30 * dt * Math.PI * 2 * 1.5;
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "splitter_minor") {
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "healer") {
+      this.pos.y += this.vel.y * dt;
+    } else if (this.variant === "teleporter") {
+      this.teleporterBlinkTimer -= dt;
+
+      if (this.teleporterFlashTimer > 0) {
+        this.teleporterFlashTimer -= dt;
+      }
+
+      if (this.teleporterBlinkTimer <= 0) {
+        const cw = canvasWidth ?? 800;
+        const margin = 30;
+        this.pos.x = offsetX + margin + Math.random() * (cw - margin * 2);
+        this.pos.y = offsetY + margin + Math.random() * (canvasHeight * 0.6 - margin);
+        this.teleporterBlinkTimer = this.TELEPORTER_BLINK_INTERVAL;
+        this.teleporterPostBlinkFireTimer = this.TELEPORTER_POST_BLINK_FIRE_DELAY;
+        this.teleporterFlashTimer = this.TELEPORTER_FLASH_DURATION;
+      }
+
+      if (this.teleporterPostBlinkFireTimer > 0) {
+        this.teleporterPostBlinkFireTimer -= dt;
+        if (this.teleporterPostBlinkFireTimer <= 0) {
+          this.teleporterBurstRemaining = 2;
+          this.teleporterBurstTimer = 0;
+        }
+      }
+
+      if (this.teleporterBurstRemaining > 0) {
+        this.teleporterBurstTimer -= dt;
+      }
+    } else if (this.variant === "mimic") {
+      const cw = canvasWidth ?? 800;
+      const playerX = targetX ?? (offsetX + cw / 2);
+
+      if (!this.mimicInitialized) {
+        this.mimicInitialized = true;
+        this.mimicSmoothedX = playerX;
+        this.mimicBaseY = offsetY + canvasHeight * 0.2;
+      }
+
+      this.mimicSmoothedX += (playerX - this.mimicSmoothedX) * (1 - Math.exp(-dt / 0.3));
+      this.pos.x = this.mimicSmoothedX;
+      this.pos.y = this.mimicBaseY + Math.sin(this.time * 1.5) * 20;
+    } else if (this.variant === "kamikaze") {
+      if (this.kamikazePhase === "approaching") {
+        this.pos.y += this.vel.y * dt;
+        this.kamikazeLockTimer += dt;
+        if (this.kamikazeLockTimer >= this.KAMIKAZE_LOCK_DELAY) {
+          this.kamikazePhase = "locked";
+        }
+      } else if (this.kamikazePhase === "locked") {
+        this.kamikazeTargetPos = { x: targetX ?? this.pos.x, y: (offsetY + canvasHeight) * 0.85 };
+        this.kamikazePhase = "diving";
+      } else if (this.kamikazePhase === "diving") {
+        this.kamikazeCurrentSpeed = Math.min(
+          this.kamikazeCurrentSpeed + this.KAMIKAZE_ACCELERATION * dt,
+          this.KAMIKAZE_MAX_SPEED
+        );
+        const dx = this.kamikazeTargetPos.x - this.pos.x;
+        const dy = this.kamikazeTargetPos.y - this.pos.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 5) {
+          this.kamikazeSelfDestructed = true;
+          this.alive = false;
+        } else {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          this.pos.x += nx * this.kamikazeCurrentSpeed * dt;
+          this.pos.y += ny * this.kamikazeCurrentSpeed * dt;
+        }
+
+        if (this.pos.y > offsetY + canvasHeight + 50 || this.pos.x < offsetX - 50 ||
+            this.pos.x > offsetX + (canvasWidth ?? 800) + 50) {
+          this.alive = false;
+        }
+      }
+    } else if (this.variant === "jammer") {
+      const cw = canvasWidth ?? 800;
+      const margin = offsetX + 40;
+
+      if (this.jammerPhase === "entering") {
+        this.pos.y += this.vel.y * dt;
+        if (this.pos.y >= offsetY + canvasHeight * 0.3) {
+          this.pos.y = offsetY + canvasHeight * 0.3;
+          this.jammerDeployY = this.pos.y;
+          this.jammerPhase = "drifting";
+          this.jammerDriftDirection = this.pos.x > offsetX + cw / 2 ? -1 : 1;
+        }
+      } else {
+        this.pos.x += this.jammerDriftDirection * 40 * dt;
+        this.pos.y = this.jammerDeployY + Math.sin(this.time * 0.5) * 8;
+
+        if (this.pos.x >= offsetX + cw - margin) {
+          this.pos.x = offsetX + cw - margin;
+          this.jammerDriftDirection = -1;
+        } else if (this.pos.x <= margin) {
+          this.pos.x = margin;
+          this.jammerDriftDirection = 1;
+        }
+      }
     } else {
       this.pos.y += this.vel.y * dt;
     }
@@ -1026,6 +1174,8 @@ export class Enemy {
       this.variant !== "titan" && this.variant !== "bastion" &&
       this.variant !== "siege_engine" && this.variant !== "colossus" &&
       this.variant !== "warden" && this.variant !== "leviathan" &&
+      this.variant !== "teleporter" && this.variant !== "mimic" &&
+      this.variant !== "jammer" && this.variant !== "kamikaze" &&
       this.pos.y > offsetY + canvasHeight + 50
     ) {
       this.alive = false;
@@ -1037,6 +1187,7 @@ export class Enemy {
     if (this.variant === "phantom" && !this.phantomVisible) return false;
     if (this.variant === "lancer" && this.lancerPhase !== "charging") return false;
     if (this.variant === "boss_shadow" && (this.shadowPhase === "cloaked" || this.shadowPhase === "cloaking")) return false;
+    if (this.variant === "teleporter") return false;
     return this.fireRate > 0 && this.fireCooldown <= 0 && this.alive;
   }
 
@@ -1223,6 +1374,82 @@ export class Enemy {
   // --- Swarm Queen accessors ---
   public getQueenSpawnedLocusts(): Enemy[] { return this.queenSpawnedLocusts; }
 
+  // --- Splitter accessors ---
+  public getSplitterChildSpawnData(): { x1: number; y1: number; x2: number; y2: number; speed: number } {
+    return {
+      x1: this.pos.x - 15, y1: this.pos.y,
+      x2: this.pos.x + 15, y2: this.pos.y,
+      speed: this.vel.y,
+    };
+  }
+
+  // --- Healer methods ---
+  public updateHealerLogicWithDt(enemies: Enemy[], dt: number): { targetX: number; targetY: number } | null {
+    if (!this.alive || this.variant !== "healer") return null;
+
+    let nearestDamaged: Enemy | null = null;
+    let nearestDist = Infinity;
+
+    for (const other of enemies) {
+      if (other === this || !other.alive || isBossVariant(other.variant)) continue;
+      if (other.hitPoints >= other.maxHitPoints) continue;
+      const dx = other.pos.x - this.pos.x;
+      const dy = other.pos.y - this.pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestDamaged = other;
+      }
+    }
+
+    if (nearestDamaged && nearestDist <= this.HEALER_GRAVITATE_RANGE) {
+      const dx = nearestDamaged.pos.x - this.pos.x;
+      const dy = nearestDamaged.pos.y - this.pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 1) {
+        this.pos.x += (dx / dist) * 30 * dt;
+        this.pos.y += (dy / dist) * 30 * dt;
+      }
+    }
+
+    if (nearestDamaged && nearestDist <= this.HEALER_HEAL_RANGE) {
+      this.healerHealTimer += dt;
+      if (this.healerHealTimer >= this.HEALER_HEAL_INTERVAL) {
+        this.healerHealTimer -= this.HEALER_HEAL_INTERVAL;
+        nearestDamaged.hitPoints = Math.min(nearestDamaged.hitPoints + 1, nearestDamaged.maxHitPoints);
+        return { targetX: nearestDamaged.pos.x, targetY: nearestDamaged.pos.y };
+      }
+    } else {
+      this.healerHealTimer = 0;
+    }
+
+    return null;
+  }
+
+  // --- Teleporter accessors ---
+  public hasTeleporterBurst(): boolean {
+    return this.teleporterBurstRemaining > 0 && this.teleporterBurstTimer <= 0;
+  }
+
+  public consumeTeleporterBurstTick(): void {
+    this.teleporterBurstRemaining--;
+    this.teleporterBurstTimer = 0.08;
+  }
+
+  public getTeleporterFlashAlpha(): number {
+    if (this.teleporterFlashTimer <= 0) return 0;
+    return this.teleporterFlashTimer / this.TELEPORTER_FLASH_DURATION;
+  }
+
+  // --- Kamikaze accessors ---
+  public isKamikazeSelfDestructed(): boolean { return this.kamikazeSelfDestructed; }
+  public getKamikazePhase(): string { return this.kamikazePhase; }
+
+  // --- Jammer accessors ---
+  public isJammerActive(): boolean {
+    return this.variant === "jammer" && this.alive && this.jammerPhase === "drifting";
+  }
+
   hit(damage = 1): boolean {
     if (!this.alive) return false;
 
@@ -1396,6 +1623,27 @@ export class Enemy {
           break;
         case "boss_swarm_queen":
           this.renderBossSwarmQueen(ctx, x, y, isFlashing);
+          break;
+        case "splitter":
+          this.renderSplitter(ctx, x, y, isFlashing);
+          break;
+        case "splitter_minor":
+          this.renderSplitterMinor(ctx, x, y, isFlashing);
+          break;
+        case "healer":
+          this.renderHealer(ctx, x, y, isFlashing);
+          break;
+        case "teleporter":
+          this.renderTeleporter(ctx, x, y, isFlashing);
+          break;
+        case "mimic":
+          this.renderMimic(ctx, x, y, isFlashing);
+          break;
+        case "kamikaze":
+          this.renderKamikaze(ctx, x, y, isFlashing);
+          break;
+        case "jammer":
+          this.renderJammer(ctx, x, y, isFlashing);
           break;
         default:
           this.renderFallbackShape(ctx, x, y, isFlashing);
@@ -1667,6 +1915,13 @@ export class Enemy {
     colossus: "#444455",
     warden: "#3366aa",
     leviathan: "#445533",
+    splitter: "#22ccaa",
+    splitter_minor: "#1a9980",
+    healer: "#44cc66",
+    teleporter: "#aa44ff",
+    mimic: "#ccccdd",
+    kamikaze: "#cc3300",
+    jammer: "#666644",
   };
 
   private renderGunship(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
@@ -2829,6 +3084,248 @@ export class Enemy {
       width: this.barrierWidth,
       height: this.barrierHeight,
     };
+  }
+
+  private renderSplitter(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#22ccaa";
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.quadraticCurveTo(x + hw, y - hh * 0.3, x + hw * 0.7, y + hh);
+    ctx.lineTo(x - hw * 0.7, y + hh);
+    ctx.quadraticCurveTo(x - hw, y - hh * 0.3, x, y - hh);
+    ctx.closePath();
+    ctx.fill();
+
+    if (!flash) {
+      ctx.strokeStyle = "#88ffdd";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x - hw * 0.3, y - hh * 0.2);
+      ctx.lineTo(x + hw * 0.3, y + hh * 0.5);
+      ctx.moveTo(x + hw * 0.3, y - hh * 0.2);
+      ctx.lineTo(x - hw * 0.3, y + hh * 0.5);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#66eecc";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.quadraticCurveTo(x + hw, y - hh * 0.3, x + hw * 0.7, y + hh);
+    ctx.lineTo(x - hw * 0.7, y + hh);
+    ctx.quadraticCurveTo(x - hw, y - hh * 0.3, x, y - hh);
+    ctx.stroke();
+  }
+
+  private renderSplitterMinor(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    ctx.fillStyle = flash ? "#ffffff" : "#1a9980";
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw, y + hh);
+    ctx.lineTo(x - hw, y + hh);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  private renderHealer(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const r = this.width / 2;
+    const pulse = 0.3 + Math.sin(this.time * 3) * 0.15;
+
+    if (!flash) {
+      ctx.fillStyle = `rgba(68, 204, 102, ${pulse})`;
+      ctx.beginPath();
+      ctx.arc(x, y, r + 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = flash ? "#ffffff" : "#44cc66";
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#66ee88";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = flash ? "#dddddd" : "#ffffff";
+    const crossW = r * 0.35;
+    const crossH = r * 0.7;
+    ctx.fillRect(x - crossW / 2, y - crossH / 2, crossW, crossH);
+    ctx.fillRect(x - crossH / 2, y - crossW / 2, crossH, crossW);
+  }
+
+  private renderTeleporter(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+    const flashAlpha = this.getTeleporterFlashAlpha();
+
+    if (flashAlpha > 0 && !flash) {
+      ctx.fillStyle = `rgba(170, 68, 255, ${flashAlpha * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(x, y, hw * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (!flash) {
+      ctx.strokeStyle = `rgba(170, 68, 255, ${0.3 + Math.sin(this.time * 4) * 0.15})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, hw + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = flash ? "#ffffff" : "#aa44ff";
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw, y);
+    ctx.lineTo(x + hw * 0.6, y + hh);
+    ctx.lineTo(x - hw * 0.6, y + hh);
+    ctx.lineTo(x - hw, y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = flash ? "#dddddd" : "#dd88ff";
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  private renderMimic(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    if (!flash) {
+      const shimmer = 0.15 + Math.sin(this.time * 5) * 0.08;
+      ctx.fillStyle = `rgba(200, 200, 255, ${shimmer})`;
+      ctx.beginPath();
+      ctx.arc(x, y, hw + 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = flash ? "#ffffff" : "#ccccdd";
+    ctx.beginPath();
+    ctx.moveTo(x - hw, y - hh);
+    ctx.lineTo(x + hw, y - hh);
+    ctx.lineTo(x, y + hh);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = flash ? "#cccccc" : "#ddddef";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    if (!flash) {
+      ctx.fillStyle = "#eeeeff";
+      ctx.beginPath();
+      ctx.arc(x, y - hh * 0.2, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  private renderKamikaze(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+    const glowIntensity = this.kamikazePhase === "diving"
+      ? 0.5 + Math.sin(this.time * 10) * 0.3
+      : 0.2;
+
+    if (!flash) {
+      ctx.fillStyle = `rgba(255, 136, 0, ${glowIntensity})`;
+      ctx.beginPath();
+      ctx.arc(x, y - hh * 0.6, hw * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = flash ? "#ffffff" : "#cc3300";
+    ctx.beginPath();
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw * 0.6, y - hh * 0.3);
+    ctx.lineTo(x + hw, y + hh * 0.3);
+    ctx.lineTo(x + hw * 0.7, y + hh);
+    ctx.lineTo(x - hw * 0.7, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.3);
+    ctx.lineTo(x - hw * 0.6, y - hh * 0.3);
+    ctx.closePath();
+    ctx.fill();
+
+    if (!flash) {
+      const noseBrightness = this.kamikazePhase === "diving" ? "#ffcc44" : "#ff8800";
+      ctx.fillStyle = noseBrightness;
+      ctx.beginPath();
+      ctx.moveTo(x, y - hh);
+      ctx.lineTo(x + hw * 0.3, y - hh * 0.3);
+      ctx.lineTo(x - hw * 0.3, y - hh * 0.3);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if (!flash && this.kamikazePhase === "diving") {
+      ctx.fillStyle = `rgba(255, 200, 50, ${0.3 + Math.random() * 0.2})`;
+      ctx.beginPath();
+      ctx.moveTo(x - hw * 0.3, y + hh);
+      ctx.lineTo(x, y + hh + 8 + Math.random() * 4);
+      ctx.lineTo(x + hw * 0.3, y + hh);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  private renderJammer(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
+    const hw = this.width / 2;
+    const hh = this.height / 2;
+
+    if (!flash && this.jammerPhase === "drifting") {
+      const ringCount = 3;
+      for (let i = 0; i < ringCount; i++) {
+        const phase = (this.time * 2 + i * 0.8) % 2.4;
+        const radius = Enemy.JAMMER_FIELD_RADIUS * (phase / 2.4);
+        const alpha = Math.max(0, 0.2 * (1 - phase / 2.4));
+        ctx.strokeStyle = `rgba(255, 60, 60, ${alpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.fillStyle = flash ? "#ffffff" : "#666644";
+    ctx.beginPath();
+    ctx.moveTo(x - hw, y - hh * 0.3);
+    ctx.lineTo(x - hw * 0.8, y - hh);
+    ctx.lineTo(x + hw * 0.8, y - hh);
+    ctx.lineTo(x + hw, y - hh * 0.3);
+    ctx.lineTo(x + hw, y + hh * 0.5);
+    ctx.lineTo(x + hw * 0.6, y + hh);
+    ctx.lineTo(x - hw * 0.6, y + hh);
+    ctx.lineTo(x - hw, y + hh * 0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    if (!flash) {
+      ctx.strokeStyle = "#888866";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x - hw * 0.5, y - hh);
+      ctx.lineTo(x - hw * 0.5, y - hh - 5);
+      ctx.moveTo(x, y - hh);
+      ctx.lineTo(x, y - hh - 7);
+      ctx.moveTo(x + hw * 0.5, y - hh);
+      ctx.lineTo(x + hw * 0.5, y - hh - 5);
+      ctx.stroke();
+
+      ctx.fillStyle = this.jammerPhase === "drifting"
+        ? `rgba(255, 60, 60, ${0.5 + Math.sin(this.time * 4) * 0.3})`
+        : "#555533";
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   private renderFallbackShape(ctx: CanvasRenderingContext2D, x: number, y: number, flash: boolean): void {
