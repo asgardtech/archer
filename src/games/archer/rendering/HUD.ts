@@ -170,12 +170,18 @@ export class HUD {
 
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.font = "22px sans-serif";
-    ctx.fillText(this.isTouchDevice ? "Tap to Start" : "Click to Start", w / 2, h / 2 + 30);
+    ctx.fillText(
+      this.isTouchDevice ? "Tap to Start" : "Click or Space to Start",
+      w / 2,
+      h / 2 + 30
+    );
 
     ctx.fillStyle = "rgba(255,255,255,0.4)";
     ctx.font = "16px sans-serif";
     ctx.fillText(
-      this.isTouchDevice ? "Tap to aim & shoot" : "Aim with mouse \u2022 Click to shoot",
+      this.isTouchDevice
+        ? "Tap to aim & shoot"
+        : "Aim with mouse \u2022 Click or Space to shoot",
       w / 2, h / 2 + 70
     );
 

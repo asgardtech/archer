@@ -15,6 +15,7 @@ export class InputManager {
   private boundTouchStart: (e: TouchEvent) => void;
   private boundTouchMove: (e: TouchEvent) => void;
   private boundTouchEnd: (e: TouchEvent) => void;
+  private boundKeyDown: (e: KeyboardEvent) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -27,6 +28,9 @@ export class InputManager {
     this.boundTouchStart = (e) => this.onTouchStart(e);
     this.boundTouchMove = (e) => this.onTouchMove(e);
     this.boundTouchEnd = (e) => this.onTouchEnd(e);
+    this.boundKeyDown = (e) => this.onKeyDown(e);
+
+    window.addEventListener("keydown", this.boundKeyDown);
 
     canvas.addEventListener("mousemove", this.boundMouseMove);
     canvas.addEventListener("mousedown", this.boundMouseDown);
@@ -48,6 +52,14 @@ export class InputManager {
     this.canvas.removeEventListener("touchstart", this.boundTouchStart);
     this.canvas.removeEventListener("touchmove", this.boundTouchMove);
     this.canvas.removeEventListener("touchend", this.boundTouchEnd);
+    window.removeEventListener("keydown", this.boundKeyDown);
+  }
+
+  private onKeyDown(e: KeyboardEvent): void {
+    if (e.code !== "Space") return;
+    if (e.repeat) return;
+    e.preventDefault();
+    this.wasClicked = true;
   }
 
   private toCanvasCoords(clientX: number, clientY: number): Vec2 {
