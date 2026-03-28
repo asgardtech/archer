@@ -21,7 +21,8 @@
     "icons:generate": "ts-node --project scripts/tsconfig.json scripts/generate-icons.ts",
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version",
-    "version:major": "npm version major --no-git-tag-version"
+    "version:major": "npm version major --no-git-tag-version",
+    "sprites:act2": "node scripts/generate-act2-sprites.js"
   },
   "keywords": [
     "game",
