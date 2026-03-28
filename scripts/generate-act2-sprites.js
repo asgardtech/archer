@@ -27,9 +27,13 @@ function setPixel(png, x, y, r, g, b, a) {
 }
 
 function fillRect(png, x1, y1, w, h, r, g, b, a = 255) {
-  for (let dy = 0; dy < h; dy++) {
-    for (let dx = 0; dx < w; dx++) {
-      setPixel(png, x1 + dx, y1 + dy, r, g, b, a);
+  const x0 = w < 0 ? x1 + w + 1 : x1;
+  const y0 = h < 0 ? y1 + h + 1 : y1;
+  const aw = Math.abs(w);
+  const ah = Math.abs(h);
+  for (let dy = 0; dy < ah; dy++) {
+    for (let dx = 0; dx < aw; dx++) {
+      setPixel(png, x0 + dx, y0 + dy, r, g, b, a);
     }
   }
 }
@@ -72,17 +76,13 @@ function drawLine(png, x0, y0, x1, y1, r, g, b, a = 255, thickness = 1) {
 }
 
 function fillPolygon(png, points, r, g, b, a = 255) {
-  let minY = SIZE, maxY = 0, minX = SIZE, maxX = 0;
-  for (const [px, py] of points) {
+  let minY = SIZE, maxY = 0;
+  for (const [, py] of points) {
     if (py < minY) minY = py;
     if (py > maxY) maxY = py;
-    if (px < minX) minX = px;
-    if (px > maxX) maxX = px;
   }
   minY = Math.max(0, Math.floor(minY));
   maxY = Math.min(SIZE - 1, Math.ceil(maxY));
-  minX = Math.max(0, Math.floor(minX));
-  maxX = Math.min(SIZE - 1, Math.ceil(maxX));
 
   for (let y = minY; y <= maxY; y++) {
     const intersections = [];
@@ -96,9 +96,7 @@ function fillPolygon(png, points, r, g, b, a = 255) {
     }
     intersections.sort((a, b) => a - b);
     for (let i = 0; i < intersections.length - 1; i += 2) {
-      const startX = Math.max(minX, Math.ceil(intersections[i]));
-      const endX = Math.min(maxX, Math.floor(intersections[i + 1]));
-      for (let x = startX; x <= endX; x++) {
+      for (let x = Math.ceil(intersections[i]); x <= Math.floor(intersections[i + 1]); x++) {
         setPixel(png, x, y, r, g, b, a);
       }
     }
