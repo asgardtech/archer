@@ -744,6 +744,684 @@ function generateVulture() {
 }
 
 // ═══════════════════════════════════════════════
+// HEAVY ENEMIES (Act 2) — 6-15 HP, large ships
+// ═══════════════════════════════════════════════
+
+function generateTitan() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Broad angular hull — #556677
+  fillPolygon(png, [
+    [cx, cy + 32],
+    [cx - 18, cy + 22],
+    [cx - 38, cy + 4],
+    [cx - 38, cy - 16],
+    [cx - 22, cy - 36],
+    [cx + 22, cy - 36],
+    [cx + 38, cy - 16],
+    [cx + 38, cy + 4],
+    [cx + 18, cy + 22],
+  ], 0x55, 0x66, 0x77);
+
+  // Inner plating — darker
+  fillPolygon(png, [
+    [cx, cy + 24],
+    [cx - 12, cy + 16],
+    [cx - 28, cy + 2],
+    [cx - 28, cy - 12],
+    [cx - 16, cy - 28],
+    [cx + 16, cy - 28],
+    [cx + 28, cy - 12],
+    [cx + 28, cy + 2],
+    [cx + 12, cy + 16],
+  ], 0x44, 0x55, 0x66);
+
+  // Armor edge highlight
+  drawLine(png, cx - 38, cy - 16, cx - 22, cy - 36, 0x77, 0x88, 0x99, 180, 2);
+  drawLine(png, cx + 38, cy - 16, cx + 22, cy - 36, 0x77, 0x88, 0x99, 180, 2);
+  drawLine(png, cx - 38, cy + 4, cx - 38, cy - 16, 0x77, 0x88, 0x99, 160, 2);
+  drawLine(png, cx + 38, cy + 4, cx + 38, cy - 16, 0x77, 0x88, 0x99, 160, 2);
+
+  // Weapon ports on sides — spread weapon (#ff6644)
+  fillRect(png, cx - 38, cy - 6, 7, 8, 0xff, 0x66, 0x44);
+  fillRect(png, cx + 31, cy - 6, 7, 8, 0xff, 0x66, 0x44);
+  fillRect(png, cx - 36, cy - 4, 3, 4, 0xff, 0x99, 0x77);
+  fillRect(png, cx + 33, cy - 4, 3, 4, 0xff, 0x99, 0x77);
+
+  // Engine exhaust vents
+  fillRect(png, cx - 10, cy + 16, 6, 10, 0xcc, 0x44, 0x22);
+  fillRect(png, cx + 4, cy + 16, 6, 10, 0xcc, 0x44, 0x22);
+  fillEllipse(png, cx - 7, cy + 28, 5, 3, 0xff, 0x88, 0x44, 180);
+  fillEllipse(png, cx + 7, cy + 28, 5, 3, 0xff, 0x88, 0x44, 180);
+
+  // Panel lines
+  drawLine(png, cx - 28, cy - 4, cx + 28, cy - 4, 0x44, 0x55, 0x66, 120, 1);
+  drawLine(png, cx - 24, cy + 8, cx + 24, cy + 8, 0x44, 0x55, 0x66, 100, 1);
+  drawLine(png, cx, cy - 30, cx, cy + 22, 0x44, 0x55, 0x66, 100, 1);
+
+  // Cockpit
+  fillCircle(png, cx, cy - 8, 7, 0x44, 0x55, 0x66);
+  fillCircle(png, cx, cy - 8, 5, 0xaa, 0xbb, 0xcc);
+  fillCircle(png, cx, cy - 8, 3, 0xcc, 0xdd, 0xee);
+
+  savePNG(png, "enemy_titan.png");
+}
+
+function generateBastion() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Octagonal fortress body — #555555
+  const sides = 8;
+  const r = 30;
+  const octPoints = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = (Math.PI * 2 / sides) * i - Math.PI / 2;
+    octPoints.push([cx + r * Math.cos(angle), cy + r * 0.8 * Math.sin(angle)]);
+  }
+  fillPolygon(png, octPoints, 0x55, 0x55, 0x55);
+
+  // Inner octagon
+  const innerOctPoints = [];
+  for (let i = 0; i < sides; i++) {
+    const angle = (Math.PI * 2 / sides) * i - Math.PI / 2;
+    innerOctPoints.push([cx + (r - 8) * Math.cos(angle), cy + (r - 8) * 0.8 * Math.sin(angle)]);
+  }
+  fillPolygon(png, innerOctPoints, 0x44, 0x44, 0x44);
+
+  // Armor edge highlights
+  for (let i = 0; i < sides; i++) {
+    const [x1, y1] = octPoints[i];
+    const [x2, y2] = octPoints[(i + 1) % sides];
+    drawLine(png, x1, y1, x2, y2, 0x77, 0x77, 0x77, 180, 2);
+  }
+
+  // Turret barrel (pointing up = towards player)
+  fillRect(png, cx - 3, cy - r * 0.8 - 12, 6, r * 0.8, 0xcc, 0x88, 0x33);
+  fillRect(png, cx - 2, cy - r * 0.8 - 10, 4, r * 0.8 - 4, 0xaa, 0x66, 0x22);
+
+  // Turret base
+  fillCircle(png, cx, cy, 8, 0xaa, 0x66, 0x22);
+  fillCircle(png, cx, cy, 5, 0xcc, 0x88, 0x33);
+  fillCircle(png, cx, cy, 3, 0xdd, 0xaa, 0x55);
+
+  // Armor rivets at edges
+  for (let i = 0; i < sides; i++) {
+    const angle = (Math.PI * 2 / sides) * i - Math.PI / 2;
+    const rx = cx + (r - 4) * Math.cos(angle);
+    const ry = cy + (r - 4) * 0.8 * Math.sin(angle);
+    fillCircle(png, rx, ry, 2, 0x66, 0x66, 0x66);
+  }
+
+  savePNG(png, "enemy_bastion.png");
+}
+
+function generateSiegeEngine() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Angular armored hull — #336633
+  fillPolygon(png, [
+    [cx - 14, cy + 34],
+    [cx - 36, cy + 8],
+    [cx - 30, cy - 18],
+    [cx - 14, cy - 36],
+    [cx + 14, cy - 36],
+    [cx + 30, cy - 18],
+    [cx + 36, cy + 8],
+    [cx + 14, cy + 34],
+  ], 0x33, 0x66, 0x33);
+
+  // Inner hull plating
+  fillPolygon(png, [
+    [cx - 10, cy + 26],
+    [cx - 26, cy + 6],
+    [cx - 22, cy - 14],
+    [cx - 10, cy - 28],
+    [cx + 10, cy - 28],
+    [cx + 22, cy - 14],
+    [cx + 26, cy + 6],
+    [cx + 10, cy + 26],
+  ], 0x22, 0x44, 0x22);
+
+  // Armor edge highlight
+  drawLine(png, cx - 36, cy + 8, cx - 30, cy - 18, 0x44, 0x88, 0x44, 160, 2);
+  drawLine(png, cx + 36, cy + 8, cx + 30, cy - 18, 0x44, 0x88, 0x44, 160, 2);
+
+  // Central charge beam cannon
+  fillRect(png, cx - 5, cy - 20, 10, 44, 0x22, 0x44, 0x22);
+  fillRect(png, cx - 3, cy - 16, 6, 36, 0x33, 0x55, 0x33);
+
+  // Charge glow at barrel tip
+  fillCircle(png, cx, cy + 34, 7, 0x66, 0xdd, 0x66, 200);
+  fillCircle(png, cx, cy + 34, 5, 0x88, 0xee, 0x88, 160);
+  fillCircle(png, cx, cy + 34, 3, 0xaa, 0xff, 0xaa);
+
+  // Panel lines
+  drawLine(png, cx - 24, cy - 4, cx + 24, cy - 4, 0x22, 0x44, 0x22, 120, 1);
+  drawLine(png, cx - 20, cy + 12, cx + 20, cy + 12, 0x22, 0x44, 0x22, 100, 1);
+
+  // Engine exhaust
+  fillEllipse(png, cx - 10, cy - 36, 6, 4, 0x44, 0xcc, 0x44, 180);
+  fillEllipse(png, cx + 10, cy - 36, 6, 4, 0x44, 0xcc, 0x44, 180);
+
+  // Cockpit
+  fillCircle(png, cx, cy - 10, 5, 0x44, 0x88, 0x44);
+  fillCircle(png, cx, cy - 10, 3, 0x66, 0xbb, 0x66);
+
+  savePNG(png, "enemy_siege_engine.png");
+}
+
+function generateColossus() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Massive hull with presence aura — #444455
+  fillCircle(png, cx, cy, 40, 0x44, 0x44, 0x55, 25);
+
+  // Main hull
+  fillPolygon(png, [
+    [cx, cy + 36],
+    [cx - 18, cy + 28],
+    [cx - 38, cy + 8],
+    [cx - 38, cy - 16],
+    [cx - 22, cy - 36],
+    [cx + 22, cy - 36],
+    [cx + 38, cy - 16],
+    [cx + 38, cy + 8],
+    [cx + 18, cy + 28],
+  ], 0x44, 0x44, 0x55);
+
+  // Inner plating
+  fillPolygon(png, [
+    [cx, cy + 28],
+    [cx - 14, cy + 22],
+    [cx - 30, cy + 6],
+    [cx - 30, cy - 12],
+    [cx - 18, cy - 28],
+    [cx + 18, cy - 28],
+    [cx + 30, cy - 12],
+    [cx + 30, cy + 6],
+    [cx + 14, cy + 22],
+  ], 0x33, 0x33, 0x44);
+
+  // Hull edge highlights
+  drawLine(png, cx - 38, cy - 16, cx - 22, cy - 36, 0x66, 0x66, 0x77, 180, 2);
+  drawLine(png, cx + 38, cy - 16, cx + 22, cy - 36, 0x66, 0x66, 0x77, 180, 2);
+
+  // Armor seam lines
+  drawLine(png, cx - 30, cy - 6, cx + 30, cy - 6, 0x55, 0x55, 0x66, 140, 1);
+  drawLine(png, cx - 26, cy + 10, cx + 26, cy + 10, 0x55, 0x55, 0x66, 120, 1);
+
+  // Energy seam (pulsing blue)
+  drawLine(png, cx - 24, cy + 2, cx + 24, cy + 2, 0x66, 0x66, 0xcc, 160, 2);
+
+  // Cockpit
+  fillCircle(png, cx, cy - 6, 9, 0x33, 0x33, 0x44);
+  fillCircle(png, cx, cy - 6, 6, 0x55, 0x55, 0x77);
+  fillCircle(png, cx, cy - 6, 3, 0x88, 0x88, 0xcc);
+
+  // Missile pods
+  fillRect(png, cx - 40, cy - 8, 6, 12, 0x55, 0x55, 0x66);
+  fillRect(png, cx + 34, cy - 8, 6, 12, 0x55, 0x55, 0x66);
+  fillCircle(png, cx - 37, cy - 4, 2, 0xaa, 0x44, 0x22);
+  fillCircle(png, cx - 37, cy + 2, 2, 0xaa, 0x44, 0x22);
+  fillCircle(png, cx + 37, cy - 4, 2, 0xaa, 0x44, 0x22);
+  fillCircle(png, cx + 37, cy + 2, 2, 0xaa, 0x44, 0x22);
+
+  // Engine exhaust
+  fillEllipse(png, cx - 12, cy + 32, 6, 4, 0xff, 0x66, 0x00, 180);
+  fillEllipse(png, cx, cy + 34, 5, 3, 0xff, 0x88, 0x22, 160);
+  fillEllipse(png, cx + 12, cy + 32, 6, 4, 0xff, 0x66, 0x00, 180);
+
+  savePNG(png, "enemy_colossus.png");
+}
+
+function generateWarden() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Diamond-octagon shape — #3366aa
+  fillPolygon(png, [
+    [cx, cy - 30],
+    [cx + 16, cy - 16],
+    [cx + 30, cy],
+    [cx + 16, cy + 16],
+    [cx, cy + 30],
+    [cx - 16, cy + 16],
+    [cx - 30, cy],
+    [cx - 16, cy - 16],
+  ], 0x33, 0x66, 0xaa);
+
+  // Inner hull
+  fillPolygon(png, [
+    [cx, cy - 22],
+    [cx + 12, cy - 12],
+    [cx + 22, cy],
+    [cx + 12, cy + 12],
+    [cx, cy + 22],
+    [cx - 12, cy + 12],
+    [cx - 22, cy],
+    [cx - 12, cy - 12],
+  ], 0x22, 0x44, 0x77);
+
+  // Edge highlights
+  drawLine(png, cx, cy - 30, cx + 16, cy - 16, 0x44, 0x88, 0xcc, 180, 2);
+  drawLine(png, cx, cy - 30, cx - 16, cy - 16, 0x44, 0x88, 0xcc, 180, 2);
+
+  // Shield emitter pods on sides
+  fillRect(png, cx - 34, cy - 3, 8, 6, 0x55, 0xcc, 0xff);
+  fillRect(png, cx + 26, cy - 3, 8, 6, 0x55, 0xcc, 0xff);
+  fillRect(png, cx - 32, cy - 1, 4, 2, 0xaa, 0xee, 0xff);
+  fillRect(png, cx + 28, cy - 1, 4, 2, 0xaa, 0xee, 0xff);
+
+  // Cockpit
+  fillCircle(png, cx, cy, 6, 0x22, 0x44, 0x77);
+  fillCircle(png, cx, cy, 4, 0x44, 0x88, 0xcc);
+
+  // Panel lines
+  drawLine(png, cx - 20, cy, cx + 20, cy, 0x22, 0x44, 0x77, 100, 1);
+  drawLine(png, cx, cy - 20, cx, cy + 20, 0x22, 0x44, 0x77, 100, 1);
+
+  // Barrier field representation below ship
+  fillRect(png, cx - 26, cy + 34, 52, 4, 0x55, 0xcc, 0xff, 100);
+  drawLine(png, cx - 26, cy + 36, cx + 26, cy + 36, 0x55, 0xcc, 0xff, 200, 2);
+
+  savePNG(png, "enemy_warden.png");
+}
+
+function generateLeviathan() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Broad carrier hull — #445533
+  fillPolygon(png, [
+    [cx - 16, cy - 36],
+    [cx + 16, cy - 36],
+    [cx + 28, cy - 20],
+    [cx + 38, cy - 4],
+    [cx + 38, cy + 18],
+    [cx + 22, cy + 36],
+    [cx - 22, cy + 36],
+    [cx - 38, cy + 18],
+    [cx - 38, cy - 4],
+    [cx - 28, cy - 20],
+  ], 0x44, 0x55, 0x33);
+
+  // Inner plating
+  fillPolygon(png, [
+    [cx - 12, cy - 28],
+    [cx + 12, cy - 28],
+    [cx + 22, cy - 14],
+    [cx + 30, cy - 2],
+    [cx + 30, cy + 14],
+    [cx + 18, cy + 28],
+    [cx - 18, cy + 28],
+    [cx - 30, cy + 14],
+    [cx - 30, cy - 2],
+    [cx - 22, cy - 14],
+  ], 0x33, 0x44, 0x22);
+
+  // Edge highlights
+  drawLine(png, cx - 38, cy - 4, cx - 28, cy - 20, 0x5a, 0x6b, 0x44, 160, 2);
+  drawLine(png, cx + 38, cy - 4, cx + 28, cy - 20, 0x5a, 0x6b, 0x44, 160, 2);
+
+  // Drone deployment bays (sides) — glowing amber
+  fillRect(png, cx - 40, cy + 2, 10, 14, 0xcc, 0xaa, 0x22, 200);
+  fillRect(png, cx + 30, cy + 2, 10, 14, 0xcc, 0xaa, 0x22, 200);
+  fillRect(png, cx - 38, cy + 4, 6, 10, 0x55, 0x66, 0x44);
+  fillRect(png, cx + 32, cy + 4, 6, 10, 0x55, 0x66, 0x44);
+
+  // Bay glow accent
+  fillCircle(png, cx - 35, cy + 9, 3, 0xff, 0xcc, 0x44, 180);
+  fillCircle(png, cx + 35, cy + 9, 3, 0xff, 0xcc, 0x44, 180);
+
+  // Panel lines
+  drawLine(png, cx - 24, cy - 6, cx + 24, cy - 6, 0x33, 0x44, 0x22, 120, 1);
+  drawLine(png, cx - 20, cy + 10, cx + 20, cy + 10, 0x33, 0x44, 0x22, 100, 1);
+  drawLine(png, cx, cy - 28, cx, cy + 24, 0x33, 0x44, 0x22, 100, 1);
+
+  // Cockpit
+  fillCircle(png, cx, cy - 10, 7, 0x66, 0x77, 0x55);
+  fillCircle(png, cx, cy - 10, 4, 0x88, 0x99, 0x66);
+
+  // Engine exhaust at rear
+  fillEllipse(png, cx - 14, cy + 36, 6, 4, 0xff, 0x88, 0x22, 180);
+  fillEllipse(png, cx, cy + 38, 5, 3, 0xff, 0xaa, 0x44, 160);
+  fillEllipse(png, cx + 14, cy + 36, 6, 4, 0xff, 0x88, 0x22, 180);
+
+  savePNG(png, "enemy_leviathan.png");
+}
+
+// ═══════════════════════════════════════════════
+// SPECIAL ENEMIES (Act 2) — unique abilities
+// ═══════════════════════════════════════════════
+
+function generateSplitter() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Teardrop/bulb shape — #22ccaa
+  fillPolygon(png, [
+    [cx, cy - 28],
+    [cx + 24, cy - 8],
+    [cx + 18, cy + 28],
+    [cx - 18, cy + 28],
+    [cx - 24, cy - 8],
+  ], 0x22, 0xcc, 0xaa);
+
+  // Inner hull
+  fillPolygon(png, [
+    [cx, cy - 20],
+    [cx + 16, cy - 4],
+    [cx + 12, cy + 20],
+    [cx - 12, cy + 20],
+    [cx - 16, cy - 4],
+  ], 0x1a, 0xaa, 0x88);
+
+  // Split line markings (X pattern showing where it splits)
+  drawLine(png, cx - 10, cy - 8, cx + 10, cy + 18, 0x88, 0xff, 0xdd, 180, 2);
+  drawLine(png, cx + 10, cy - 8, cx - 10, cy + 18, 0x88, 0xff, 0xdd, 180, 2);
+
+  // Outline glow
+  for (let i = 0; i < 5; i++) {
+    const pts = [
+      [cx, cy - 28], [cx + 24, cy - 8], [cx + 18, cy + 28],
+      [cx - 18, cy + 28], [cx - 24, cy - 8],
+    ];
+    const [x1, y1] = pts[i];
+    const [x2, y2] = pts[(i + 1) % 5];
+    drawLine(png, x1, y1, x2, y2, 0x66, 0xee, 0xcc, 160, 2);
+  }
+
+  // Core
+  fillCircle(png, cx, cy, 6, 0x66, 0xee, 0xcc);
+  fillCircle(png, cx, cy, 3, 0xaa, 0xff, 0xee);
+
+  savePNG(png, "enemy_splitter.png");
+}
+
+function generateSplitterMinor() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Simple triangle — smaller, #1a9980
+  fillPolygon(png, [
+    [cx, cy - 20],
+    [cx + 18, cy + 20],
+    [cx - 18, cy + 20],
+  ], 0x1a, 0x99, 0x80);
+
+  // Inner highlight
+  fillPolygon(png, [
+    [cx, cy - 12],
+    [cx + 10, cy + 12],
+    [cx - 10, cy + 12],
+  ], 0x22, 0xaa, 0x88, 200);
+
+  // Core dot
+  fillCircle(png, cx, cy + 2, 4, 0x44, 0xcc, 0xaa);
+  fillCircle(png, cx, cy + 2, 2, 0x88, 0xee, 0xcc);
+
+  savePNG(png, "enemy_splitter_minor.png");
+}
+
+function generateHealer() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Heal aura glow
+  fillCircle(png, cx, cy, 32, 0x44, 0xcc, 0x66, 30);
+
+  // Circular body — #44cc66
+  fillCircle(png, cx, cy, 24, 0x44, 0xcc, 0x66);
+
+  // Inner ring
+  fillCircle(png, cx, cy, 18, 0x33, 0xaa, 0x55);
+
+  // Outline ring
+  for (let angle = 0; angle < Math.PI * 2; angle += 0.04) {
+    const rx = cx + Math.cos(angle) * 24;
+    const ry = cy + Math.sin(angle) * 24;
+    setPixel(png, Math.round(rx), Math.round(ry), 0x66, 0xee, 0x88, 220);
+    setPixel(png, Math.round(rx + 1), Math.round(ry), 0x66, 0xee, 0x88, 140);
+    setPixel(png, Math.round(rx - 1), Math.round(ry), 0x66, 0xee, 0x88, 140);
+  }
+
+  // White cross (medical symbol)
+  const crossW = 7;
+  const crossH = 18;
+  fillRect(png, cx - crossW / 2, cy - crossH / 2, crossW, crossH, 0xff, 0xff, 0xff);
+  fillRect(png, cx - crossH / 2, cy - crossW / 2, crossH, crossW, 0xff, 0xff, 0xff);
+
+  // Cross inner shadow for depth
+  fillRect(png, cx - (crossW - 2) / 2, cy - (crossH - 2) / 2, crossW - 2, crossH - 2, 0xee, 0xff, 0xee);
+  fillRect(png, cx - (crossH - 2) / 2, cy - (crossW - 2) / 2, crossH - 2, crossW - 2, 0xee, 0xff, 0xee);
+
+  savePNG(png, "enemy_healer.png");
+}
+
+function generateTeleporter() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Outer phase ring
+  for (let angle = 0; angle < Math.PI * 2; angle += 0.04) {
+    const rx = cx + Math.cos(angle) * 28;
+    const ry = cy + Math.sin(angle) * 28;
+    setPixel(png, Math.round(rx), Math.round(ry), 0xaa, 0x44, 0xff, 120);
+    setPixel(png, Math.round(rx + 1), Math.round(ry), 0xaa, 0x44, 0xff, 60);
+    setPixel(png, Math.round(rx - 1), Math.round(ry), 0xaa, 0x44, 0xff, 60);
+    setPixel(png, Math.round(rx), Math.round(ry + 1), 0xaa, 0x44, 0xff, 60);
+    setPixel(png, Math.round(rx), Math.round(ry - 1), 0xaa, 0x44, 0xff, 60);
+  }
+
+  // Pentagon body — #aa44ff
+  fillPolygon(png, [
+    [cx, cy - 26],
+    [cx + 24, cy - 2],
+    [cx + 16, cy + 24],
+    [cx - 16, cy + 24],
+    [cx - 24, cy - 2],
+  ], 0xaa, 0x44, 0xff);
+
+  // Inner hull
+  fillPolygon(png, [
+    [cx, cy - 18],
+    [cx + 16, cy - 1],
+    [cx + 10, cy + 16],
+    [cx - 10, cy + 16],
+    [cx - 16, cy - 1],
+  ], 0x88, 0x33, 0xcc, 200);
+
+  // Phase distortion glow
+  fillCircle(png, cx, cy, 30, 0xaa, 0x44, 0xff, 15);
+
+  // Core
+  fillCircle(png, cx, cy, 6, 0xdd, 0x88, 0xff);
+  fillCircle(png, cx, cy, 3, 0xee, 0xaa, 0xff);
+
+  // Vertex accents
+  const pentPts = [
+    [cx, cy - 26], [cx + 24, cy - 2], [cx + 16, cy + 24],
+    [cx - 16, cy + 24], [cx - 24, cy - 2],
+  ];
+  for (const [px, py] of pentPts) {
+    fillCircle(png, px, py, 3, 0xcc, 0x66, 0xff, 180);
+  }
+
+  savePNG(png, "enemy_teleporter.png");
+}
+
+function generateMimic() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Shimmer aura
+  fillCircle(png, cx, cy, 28, 0xcc, 0xcc, 0xff, 20);
+
+  // Triangle body (disguised as player-like) — #ccccdd
+  fillPolygon(png, [
+    [cx - 22, cy - 22],
+    [cx + 22, cy - 22],
+    [cx, cy + 26],
+  ], 0xcc, 0xcc, 0xdd);
+
+  // Inner triangle
+  fillPolygon(png, [
+    [cx - 14, cy - 14],
+    [cx + 14, cy - 14],
+    [cx, cy + 18],
+  ], 0xaa, 0xaa, 0xbb);
+
+  // Outline
+  drawLine(png, cx - 22, cy - 22, cx + 22, cy - 22, 0xdd, 0xdd, 0xef, 200, 2);
+  drawLine(png, cx + 22, cy - 22, cx, cy + 26, 0xdd, 0xdd, 0xef, 200, 2);
+  drawLine(png, cx, cy + 26, cx - 22, cy - 22, 0xdd, 0xdd, 0xef, 200, 2);
+
+  // Deceptive "cockpit"
+  fillCircle(png, cx, cy - 6, 5, 0xdd, 0xdd, 0xef);
+  fillCircle(png, cx, cy - 6, 3, 0xee, 0xee, 0xff);
+
+  // Subtle shimmer marks
+  for (let i = 0; i < 5; i++) {
+    const angle = (Math.PI * 2 / 5) * i;
+    const sx = cx + Math.cos(angle) * 20;
+    const sy = cy + Math.sin(angle) * 16;
+    fillCircle(png, sx, sy, 2, 0xee, 0xee, 0xff, 120);
+  }
+
+  savePNG(png, "enemy_mimic.png");
+}
+
+function generateKamikaze() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Nose heat glow
+  fillCircle(png, cx, cy - 26, 10, 0xff, 0x88, 0x00, 100);
+
+  // Angular armored body — #cc3300 (red-orange danger colors)
+  fillPolygon(png, [
+    [cx, cy - 28],
+    [cx + 16, cy - 10],
+    [cx + 26, cy + 10],
+    [cx + 18, cy + 28],
+    [cx - 18, cy + 28],
+    [cx - 26, cy + 10],
+    [cx - 16, cy - 10],
+  ], 0xcc, 0x33, 0x00);
+
+  // Inner hull
+  fillPolygon(png, [
+    [cx, cy - 20],
+    [cx + 10, cy - 6],
+    [cx + 18, cy + 8],
+    [cx + 12, cy + 20],
+    [cx - 12, cy + 20],
+    [cx - 18, cy + 8],
+    [cx - 10, cy - 6],
+  ], 0xaa, 0x22, 0x00);
+
+  // Hot nose cone (warhead)
+  fillPolygon(png, [
+    [cx, cy - 28],
+    [cx + 8, cy - 10],
+    [cx - 8, cy - 10],
+  ], 0xff, 0x88, 0x00);
+  fillPolygon(png, [
+    [cx, cy - 24],
+    [cx + 5, cy - 12],
+    [cx - 5, cy - 12],
+  ], 0xff, 0xcc, 0x44);
+
+  // Danger markings — diagonal stripes
+  drawLine(png, cx - 14, cy + 4, cx - 6, cy + 16, 0xff, 0xaa, 0x00, 160, 2);
+  drawLine(png, cx + 14, cy + 4, cx + 6, cy + 16, 0xff, 0xaa, 0x00, 160, 2);
+
+  // Engine exhaust flame (trailing)
+  fillPolygon(png, [
+    [cx - 10, cy + 28],
+    [cx, cy + 42],
+    [cx + 10, cy + 28],
+  ], 0xff, 0xcc, 0x33, 200);
+  fillPolygon(png, [
+    [cx - 6, cy + 28],
+    [cx, cy + 38],
+    [cx + 6, cy + 28],
+  ], 0xff, 0xee, 0x88, 160);
+
+  // Panel rivets
+  for (const [rx, ry] of [[-12, 0], [12, 0], [-8, 12], [8, 12]]) {
+    fillCircle(png, cx + rx, cy + ry, 2, 0xdd, 0x44, 0x11);
+  }
+
+  savePNG(png, "enemy_kamikaze.png");
+}
+
+function generateJammer() {
+  const png = createPNG();
+  const cx = 64, cy = 64;
+
+  // Jamming field rings (static representation)
+  for (let i = 0; i < 3; i++) {
+    const radius = 20 + i * 10;
+    const alpha = 60 - i * 18;
+    for (let angle = 0; angle < Math.PI * 2; angle += 0.05) {
+      const rx = cx + Math.cos(angle) * radius;
+      const ry = cy + Math.sin(angle) * radius;
+      setPixel(png, Math.round(rx), Math.round(ry), 0xff, 0x3c, 0x3c, alpha);
+    }
+  }
+
+  // Trapezoidal hull — #666644
+  fillPolygon(png, [
+    [cx - 26, cy - 8],
+    [cx - 22, cy - 24],
+    [cx + 22, cy - 24],
+    [cx + 26, cy - 8],
+    [cx + 26, cy + 16],
+    [cx + 16, cy + 28],
+    [cx - 16, cy + 28],
+    [cx - 26, cy + 16],
+  ], 0x66, 0x66, 0x44);
+
+  // Inner plating
+  fillPolygon(png, [
+    [cx - 18, cy - 6],
+    [cx - 16, cy - 18],
+    [cx + 16, cy - 18],
+    [cx + 18, cy - 6],
+    [cx + 18, cy + 12],
+    [cx + 12, cy + 22],
+    [cx - 12, cy + 22],
+    [cx - 18, cy + 12],
+  ], 0x55, 0x55, 0x33);
+
+  // Antenna masts on top
+  drawLine(png, cx - 12, cy - 24, cx - 12, cy - 34, 0x88, 0x88, 0x66, 200, 2);
+  drawLine(png, cx, cy - 24, cx, cy - 36, 0x88, 0x88, 0x66, 200, 2);
+  drawLine(png, cx + 12, cy - 24, cx + 12, cy - 34, 0x88, 0x88, 0x66, 200, 2);
+
+  // Antenna tips
+  fillCircle(png, cx - 12, cy - 34, 2, 0xff, 0x3c, 0x3c, 200);
+  fillCircle(png, cx, cy - 36, 3, 0xff, 0x3c, 0x3c, 220);
+  fillCircle(png, cx + 12, cy - 34, 2, 0xff, 0x3c, 0x3c, 200);
+
+  // Central jamming core
+  fillCircle(png, cx, cy, 6, 0x88, 0x88, 0x66);
+  fillCircle(png, cx, cy, 4, 0xff, 0x3c, 0x3c, 180);
+  fillCircle(png, cx, cy, 2, 0xff, 0x88, 0x88);
+
+  // Panel lines
+  drawLine(png, cx - 16, cy + 4, cx + 16, cy + 4, 0x55, 0x55, 0x33, 100, 1);
+  drawLine(png, cx, cy - 18, cx, cy + 20, 0x55, 0x55, 0x33, 100, 1);
+
+  savePNG(png, "enemy_jammer.png");
+}
+
+// ═══════════════════════════════════════════════
 // Generate all sprites
 // ═══════════════════════════════════════════════
 
@@ -763,4 +1441,21 @@ generateWraith();
 generateCorsair();
 generateVulture();
 
-console.log("Done! All 12 Act 2 enemy sprites generated.");
+console.log("Generating Act 2 heavy enemy sprites...");
+generateTitan();
+generateBastion();
+generateSiegeEngine();
+generateColossus();
+generateWarden();
+generateLeviathan();
+
+console.log("Generating Act 2 special enemy sprites...");
+generateSplitter();
+generateSplitterMinor();
+generateHealer();
+generateTeleporter();
+generateMimic();
+generateKamikaze();
+generateJammer();
+
+console.log("Done! All 25 Act 2 enemy sprites generated.");
