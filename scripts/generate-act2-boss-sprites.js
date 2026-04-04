@@ -181,8 +181,8 @@ function generateBossMothership() {
   fillRect(png, cx - 58, cy - 18, 10, 8, 0x44, 0x55, 0x77);
   fillRect(png, cx + 48, cy - 18, 10, 8, 0x44, 0x55, 0x77);
   // Gun barrels
-  drawLine(png, cx - 58, cy - 14, cx - 62, cy - 14, 0x66, 0x77, 0x99, 220, 2);
-  drawLine(png, cx + 58, cy - 14, cx + 62, cy - 14, 0x66, 0x77, 0x99, 220, 2);
+  drawLine(png, cx - 54, cy - 14, cx - 59, cy - 14, 0x66, 0x77, 0x99, 220, 2);
+  drawLine(png, cx + 54, cy - 14, cx + 58, cy - 14, 0x66, 0x77, 0x99, 220, 2);
 
   // Command sensor array (center top)
   fillCircle(png, cx, cy - 20, 8, 0x33, 0x44, 0x66);
@@ -468,11 +468,11 @@ function generateBossArchitect() {
 
   // Charge beam cannon (primary weapon — pointing down, long barrel)
   fillRect(png, cx - 8, cy - 28, 16, 72, 0x22, 0x77, 0x77);
-  fillRect(png, cx - 5, cy + 20, 10, 50, 0x11, 0x66, 0x66);
+  fillRect(png, cx - 5, cy + 20, 10, 36, 0x11, 0x66, 0x66);
   // Energy lens at barrel tip
-  fillCircle(png, cx, cy + 54, 9, 0x22, 0xaa, 0xaa, 200);
-  fillCircle(png, cx, cy + 54, 6, 0x44, 0xcc, 0xcc, 220);
-  fillCircle(png, cx, cy + 54, 3, 0x88, 0xee, 0xee);
+  fillCircle(png, cx, cy + 48, 9, 0x22, 0xaa, 0xaa, 200);
+  fillCircle(png, cx, cy + 48, 6, 0x44, 0xcc, 0xcc, 220);
+  fillCircle(png, cx, cy + 48, 3, 0x88, 0xee, 0xee);
   // Barrel rings
   for (const ry of [cy + 22, cy + 34, cy + 46]) {
     fillRect(png, cx - 9, ry, 18, 3, 0x33, 0x88, 0x88);
@@ -568,8 +568,8 @@ function generateBossSwarmQueen() {
   // Left side
   fillPolygon(png, [
     [cx - 46, cy - 14],
-    [cx - 62, cy - 6],
-    [cx - 64, cy + 10],
+    [cx - 59, cy - 6],
+    [cx - 59, cy + 10],
     [cx - 50, cy + 18],
     [cx - 36, cy + 8],
   ], 0x55, 0x77, 0x44);
@@ -578,8 +578,8 @@ function generateBossSwarmQueen() {
   // Right side
   fillPolygon(png, [
     [cx + 46, cy - 14],
-    [cx + 62, cy - 6],
-    [cx + 64, cy + 10],
+    [cx + 59, cy - 6],
+    [cx + 59, cy + 10],
     [cx + 50, cy + 18],
     [cx + 36, cy + 8],
   ], 0x55, 0x77, 0x44);
@@ -587,10 +587,10 @@ function generateBossSwarmQueen() {
   fillCircle(png, cx + 53, cy + 2, 3, 0x77, 0xaa, 0x55, 200);
 
   // Antenna pair (top — sensing/communication)
-  drawLine(png, cx - 10, cy - 48, cx - 20, cy - 62, 0x55, 0x77, 0x44, 200, 2);
-  drawLine(png, cx + 10, cy - 48, cx + 20, cy - 62, 0x55, 0x77, 0x44, 200, 2);
-  fillCircle(png, cx - 20, cy - 62, 3, 0x88, 0xcc, 0x55);
-  fillCircle(png, cx + 20, cy - 62, 3, 0x88, 0xcc, 0x55);
+  drawLine(png, cx - 10, cy - 48, cx - 20, cy - 56, 0x55, 0x77, 0x44, 200, 2);
+  drawLine(png, cx + 10, cy - 48, cx + 20, cy - 56, 0x55, 0x77, 0x44, 200, 2);
+  fillCircle(png, cx - 20, cy - 56, 3, 0x88, 0xcc, 0x55);
+  fillCircle(png, cx + 20, cy - 56, 3, 0x88, 0xcc, 0x55);
 
   // Queen's compound eye (central sensor — 3 eye cluster)
   fillCircle(png, cx - 8, cy - 18, 6, 0x33, 0x55, 0x22);
@@ -604,10 +604,10 @@ function generateBossSwarmQueen() {
   fillCircle(png, cx, cy - 10, 1, 0xaa, 0xdd, 0x66);
 
   // Mandible-like forelegs (weapon appendages at bottom)
-  drawLine(png, cx - 20, cy + 50, cx - 34, cy + 62, 0x44, 0x66, 0x33, 220, 3);
-  drawLine(png, cx + 20, cy + 50, cx + 34, cy + 62, 0x44, 0x66, 0x33, 220, 3);
-  fillCircle(png, cx - 34, cy + 62, 4, 0x55, 0x77, 0x44);
-  fillCircle(png, cx + 34, cy + 62, 4, 0x55, 0x77, 0x44);
+  drawLine(png, cx - 20, cy + 44, cx - 34, cy + 54, 0x44, 0x66, 0x33, 220, 3);
+  drawLine(png, cx + 20, cy + 44, cx + 34, cy + 54, 0x44, 0x66, 0x33, 220, 3);
+  fillCircle(png, cx - 34, cy + 54, 4, 0x55, 0x77, 0x44);
+  fillCircle(png, cx + 34, cy + 54, 4, 0x55, 0x77, 0x44);
 
   // Engine exhausts at top
   fillEllipse(png, cx - 14, cy - 50, 7, 5, 0x44, 0xaa, 0x44, 190);
