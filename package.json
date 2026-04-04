@@ -23,7 +23,8 @@
     "version:minor": "npm version minor --no-git-tag-version",
     "version:major": "npm version major --no-git-tag-version",
     "sprites:act2": "node scripts/generate-act2-sprites.js",
-    "sprites:act2-bosses": "node scripts/generate-act2-boss-sprites.js"
+    "sprites:act2-bosses": "node scripts/generate-act2-boss-sprites.js",
+    "sprites:act2-projectiles": "node scripts/generate-act2-projectile-sprites.js"
   },
   "keywords": [
     "game",
