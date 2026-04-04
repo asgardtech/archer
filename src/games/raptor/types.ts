@@ -174,6 +174,8 @@ export const ENEMY_WEAPON_CONFIGS: Record<EnemyWeaponType, EnemyWeaponConfig> = 
 export interface ProjectileSkin {
   /** Override the weapon-type default sprite key. Optional. */
   spriteKey?: string;
+  /** Override sprite key specifically for spread-shot projectiles. Falls back to spriteKey. */
+  spreadSpriteKey?: string;
   /** Fallback fill color when no sprite is loaded. */
   fallbackColor: string;
   /** Inner core color for fallback rendering. */
@@ -208,20 +210,20 @@ export const ENEMY_PROJECTILE_SKINS: Partial<Record<EnemyVariant, ProjectileSkin
   spark:            { spriteKey: "bullet_enemy_blue",   fallbackColor: "#44eeff", coreColor: "#88ffff", glowColor: "#66eeff" },
   sentinel:         { spriteKey: "bullet_enemy_blue",   fallbackColor: "#66aacc", coreColor: "#aaccee", glowColor: "#88bbdd" },
   lancer:           { spriteKey: "bullet_enemy_orange", fallbackColor: "#ff9944", coreColor: "#ffcc88", glowColor: "#ffbb66" },
-  ravager:          { spriteKey: "bullet_enemy_orange", fallbackColor: "#ff4444", coreColor: "#ff8888", glowColor: "#ff6666" },
+  ravager:          { spriteKey: "bullet_enemy_orange", spreadSpriteKey: "bullet_spread_orange", fallbackColor: "#ff8844", coreColor: "#ffcc88", glowColor: "#ffbb66" },
   // Act 2 — Dominion heavy/elite units
   wraith:           { spriteKey: "bullet_enemy_purple", fallbackColor: "#8844cc", coreColor: "#bb88ee", glowColor: "#aa66dd" },
   corsair:          { spriteKey: "bullet_enemy_blue",   fallbackColor: "#99aabb", coreColor: "#bbccdd", glowColor: "#aabbcc" },
   vulture:          { spriteKey: "bullet_enemy_orange", fallbackColor: "#aa6633", coreColor: "#cc9966", glowColor: "#bb7744" },
-  titan:            { spriteKey: "bullet_enemy_blue",   fallbackColor: "#778899", coreColor: "#aabbcc", glowColor: "#8899aa" },
+  titan:            { spriteKey: "bullet_enemy_blue",   spreadSpriteKey: "bullet_spread_blue", fallbackColor: "#778899", coreColor: "#aabbcc", glowColor: "#8899aa" },
   bastion:          { spriteKey: "bullet_enemy_orange", fallbackColor: "#aa8833", coreColor: "#ccaa66", glowColor: "#bb9944" },
   siege_engine:     { spriteKey: "bullet_enemy_green",  fallbackColor: "#55aa55", coreColor: "#88cc88", glowColor: "#66bb66" },
   colossus:         { spriteKey: "bullet_enemy_purple", fallbackColor: "#5555aa", coreColor: "#8888cc", glowColor: "#6666bb" },
   warden:           { spriteKey: "bullet_enemy_blue",   fallbackColor: "#4488dd", coreColor: "#88bbff", glowColor: "#66aaee" },
   leviathan:        { spriteKey: "bullet_enemy_green",  fallbackColor: "#667744", coreColor: "#99aa77", glowColor: "#778855" },
   // Act 2 — Dominion bosses: use distinctive colored missile and bullet sprites
-  boss_mothership:  { spriteKey: "missile_enemy_blue",    fallbackColor: "#334466", coreColor: "#667799", glowColor: "#4d6688" },
-  boss_hydra:       { spriteKey: "bullet_enemy_blue",     fallbackColor: "#556666", coreColor: "#889999", glowColor: "#667777" },
+  boss_mothership:  { spriteKey: "missile_enemy_blue",    spreadSpriteKey: "bullet_spread_blue", fallbackColor: "#334466", coreColor: "#667799", glowColor: "#4d6688" },
+  boss_hydra:       { spriteKey: "bullet_enemy_blue",     spreadSpriteKey: "bullet_spread_blue", fallbackColor: "#556666", coreColor: "#889999", glowColor: "#667777" },
   boss_shadow:      { spriteKey: "bullet_enemy_purple",   fallbackColor: "#2a2a3a", coreColor: "#55556a", glowColor: "#3d3d55" },
   boss_behemoth:    { spriteKey: "missile_enemy_magenta", fallbackColor: "#444455", coreColor: "#777788", glowColor: "#555566" },
   boss_architect:   { spriteKey: "bullet_enemy_blue",     fallbackColor: "#228888", coreColor: "#55bbbb", glowColor: "#33aa9a" },

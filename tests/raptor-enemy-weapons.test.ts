@@ -8,6 +8,7 @@ import {
   ENEMY_WEAPON_CONFIGS,
   EnemyConfig,
   ENEMY_CONFIGS,
+  ENEMY_PROJECTILE_SKINS,
   RaptorSoundEvent,
 } from "../src/games/raptor/types";
 import { Enemy } from "../src/games/raptor/entities/Enemy";
@@ -24,8 +25,8 @@ describe("EnemyWeaponType", () => {
 // ─── ENEMY_WEAPON_CONFIGS record ──────────────────────────────────
 
 describe("ENEMY_WEAPON_CONFIGS", () => {
-  test("has exactly 4 entries", () => {
-    expect(Object.keys(ENEMY_WEAPON_CONFIGS)).toHaveLength(4);
+  test("has exactly 8 entries", () => {
+    expect(Object.keys(ENEMY_WEAPON_CONFIGS)).toHaveLength(8);
   });
 
   test("has a key for each EnemyWeaponType", () => {
@@ -203,5 +204,80 @@ describe("RaptorSoundEvent enemy weapon events", () => {
   test("enemy_laser_hit is a valid RaptorSoundEvent", () => {
     const event: RaptorSoundEvent = "enemy_laser_hit";
     expect(event).toBe("enemy_laser_hit");
+  });
+});
+
+// ─── Act 2 Dominion enemy spriteKey assignments ───────────────────
+
+describe("ENEMY_PROJECTILE_SKINS Act 2 Dominion assignments", () => {
+  test("wasp uses bullet_enemy_green", () => {
+    expect(ENEMY_PROJECTILE_SKINS["wasp"]?.spriteKey).toBe("bullet_enemy_green");
+  });
+
+  test("phantom uses bullet_enemy_purple", () => {
+    expect(ENEMY_PROJECTILE_SKINS["phantom"]?.spriteKey).toBe("bullet_enemy_purple");
+  });
+
+  test("glider uses bullet_enemy_blue", () => {
+    expect(ENEMY_PROJECTILE_SKINS["glider"]?.spriteKey).toBe("bullet_enemy_blue");
+  });
+
+  test("lancer uses bullet_enemy_orange", () => {
+    expect(ENEMY_PROJECTILE_SKINS["lancer"]?.spriteKey).toBe("bullet_enemy_orange");
+  });
+
+  test("ravager uses bullet_enemy_orange", () => {
+    expect(ENEMY_PROJECTILE_SKINS["ravager"]?.spriteKey).toBe("bullet_enemy_orange");
+  });
+
+  test("ravager fallbackColor is orange, not red", () => {
+    const color = ENEMY_PROJECTILE_SKINS["ravager"]?.fallbackColor ?? "";
+    // Must not be the old red (#ff4444); should be in the orange range
+    expect(color).not.toBe("#ff4444");
+    expect(color.toLowerCase()).toMatch(/^#ff[89a-f]/i);
+  });
+
+  test("wraith uses bullet_enemy_purple", () => {
+    expect(ENEMY_PROJECTILE_SKINS["wraith"]?.spriteKey).toBe("bullet_enemy_purple");
+  });
+
+  test("titan uses bullet_enemy_blue", () => {
+    expect(ENEMY_PROJECTILE_SKINS["titan"]?.spriteKey).toBe("bullet_enemy_blue");
+  });
+
+  test("leviathan uses bullet_enemy_green", () => {
+    expect(ENEMY_PROJECTILE_SKINS["leviathan"]?.spriteKey).toBe("bullet_enemy_green");
+  });
+
+  test("boss_mothership uses missile_enemy_blue", () => {
+    expect(ENEMY_PROJECTILE_SKINS["boss_mothership"]?.spriteKey).toBe("missile_enemy_blue");
+  });
+
+  test("boss_behemoth uses missile_enemy_magenta", () => {
+    expect(ENEMY_PROJECTILE_SKINS["boss_behemoth"]?.spriteKey).toBe("missile_enemy_magenta");
+  });
+
+  test("boss_shadow uses bullet_enemy_purple", () => {
+    expect(ENEMY_PROJECTILE_SKINS["boss_shadow"]?.spriteKey).toBe("bullet_enemy_purple");
+  });
+});
+
+// ─── Act 2 spread-shot spriteKey overrides ────────────────────────
+
+describe("ENEMY_PROJECTILE_SKINS spreadSpriteKey assignments", () => {
+  test("ravager has spreadSpriteKey bullet_spread_orange", () => {
+    expect(ENEMY_PROJECTILE_SKINS["ravager"]?.spreadSpriteKey).toBe("bullet_spread_orange");
+  });
+
+  test("titan has spreadSpriteKey bullet_spread_blue", () => {
+    expect(ENEMY_PROJECTILE_SKINS["titan"]?.spreadSpriteKey).toBe("bullet_spread_blue");
+  });
+
+  test("boss_mothership has spreadSpriteKey bullet_spread_blue", () => {
+    expect(ENEMY_PROJECTILE_SKINS["boss_mothership"]?.spreadSpriteKey).toBe("bullet_spread_blue");
+  });
+
+  test("boss_hydra has spreadSpriteKey bullet_spread_blue", () => {
+    expect(ENEMY_PROJECTILE_SKINS["boss_hydra"]?.spreadSpriteKey).toBe("bullet_spread_blue");
   });
 });
